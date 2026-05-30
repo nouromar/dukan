@@ -1,0 +1,2075 @@
+{
+  "kind": "configuration_pack",
+  "pack": "aliases",
+  "template_code": "grocery",
+  "version": 1,
+  "item_aliases": [
+    {
+      "item_code": "basmati_rice_25kg",
+      "aliases_en": [
+        "rice",
+        "bariis",
+        "basmati",
+        "25"
+      ],
+      "aliases_so": [
+        "bariis",
+        "rice",
+        "bariis",
+        "basmati",
+        "25"
+      ]
+    },
+    {
+      "item_code": "sugar_1kg",
+      "aliases_en": [
+        "1kg",
+        "sugar 1kg",
+        "s1",
+        "sugar",
+        "sonkor"
+      ],
+      "aliases_so": [
+        "sonkor",
+        "sugar",
+        "sonkor"
+      ]
+    },
+    {
+      "item_code": "wheat_flour_10kg",
+      "aliases_en": [
+        "flour",
+        "bur",
+        "qamadi"
+      ],
+      "aliases_so": [
+        "bur",
+        "flour",
+        "bur",
+        "qamadi"
+      ]
+    },
+    {
+      "item_code": "pasta_500g",
+      "aliases_en": [
+        "pasta",
+        "500g",
+        "baasto",
+        "p5",
+        "pasta 500g"
+      ],
+      "aliases_so": [
+        "baasto",
+        "pasta",
+        "baasto"
+      ]
+    },
+    {
+      "item_code": "salt_1kg",
+      "aliases_en": [
+        "salt 1kg",
+        "salt",
+        "1kg",
+        "s1",
+        "cusbo"
+      ],
+      "aliases_so": [
+        "cusbo",
+        "salt",
+        "cusbo"
+      ]
+    },
+    {
+      "item_code": "spaghetti_500g",
+      "aliases_en": [
+        "isbaageti",
+        "500g",
+        "s5",
+        "spaghetti 500g",
+        "spaghetti"
+      ],
+      "aliases_so": [
+        "isbaageti",
+        "spaghetti",
+        "isbaageti"
+      ]
+    },
+    {
+      "item_code": "lentils_1kg",
+      "aliases_en": [
+        "lentil",
+        "misir",
+        "1kg",
+        "lentils 1kg",
+        "l1",
+        "lentils"
+      ],
+      "aliases_so": [
+        "misir",
+        "lentil",
+        "misir"
+      ]
+    },
+    {
+      "item_code": "beans_1kg",
+      "aliases_en": [
+        "beans",
+        "digir",
+        "1kg",
+        "b1",
+        "beans 1kg"
+      ],
+      "aliases_so": [
+        "digir",
+        "beans",
+        "digir"
+      ]
+    },
+    {
+      "item_code": "corn_flour_1kg",
+      "aliases_en": [
+        "corn",
+        "1kg",
+        "flour",
+        "corn flour 1kg",
+        "galley",
+        "cf1"
+      ],
+      "aliases_so": [
+        "bur",
+        "corn",
+        "galley"
+      ]
+    },
+    {
+      "item_code": "toothbrush",
+      "aliases_en": [
+        "toothbrush",
+        "buraash",
+        "toothbrush"
+      ],
+      "aliases_so": [
+        "buraash",
+        "toothbrush",
+        "buraash"
+      ]
+    },
+    {
+      "item_code": "instant_noodles",
+      "aliases_en": [
+        "instant",
+        "in",
+        "instant noodles",
+        "noodles",
+        "degdeg"
+      ],
+      "aliases_so": [
+        "baasto",
+        "noodles",
+        "degdeg"
+      ]
+    },
+    {
+      "item_code": "rice_5kg",
+      "aliases_en": [
+        "rice 5kg",
+        "bariis yar",
+        "rice small bag"
+      ],
+      "aliases_so": [
+        "bariis",
+        "riso",
+        "biryani"
+      ]
+    },
+    {
+      "item_code": "rice_1kg",
+      "aliases_en": [
+        "1kg",
+        "rice 1kg",
+        "rice",
+        "r1",
+        "rice single"
+      ],
+      "aliases_so": [
+        "riso pcs",
+        "1kg",
+        "bariis yar",
+        "bariis 1kg",
+        "bariis"
+      ]
+    },
+    {
+      "item_code": "chickpea_1kg",
+      "aliases_en": [
+        "1kg",
+        "garbanzo",
+        "chickpeas",
+        "chickpeas 1kg",
+        "c1",
+        "chickpea"
+      ],
+      "aliases_so": [
+        "kabab 1kg",
+        "kabab cas",
+        "1kg",
+        "kabab"
+      ]
+    },
+    {
+      "item_code": "vermicelli_500g",
+      "aliases_en": [
+        "500g",
+        "thin pasta",
+        "vermicelli 500g",
+        "v5",
+        "vermicelli"
+      ],
+      "aliases_so": [
+        "shaah fiini",
+        "fiini shaah 500g",
+        "shaah",
+        "500g",
+        "fiini"
+      ]
+    },
+    {
+      "item_code": "black_pepper_50g",
+      "aliases_en": [
+        "black pepper",
+        "black pepper 50g",
+        "50g",
+        "black",
+        "bp5",
+        "peppercorn",
+        "pepper"
+      ],
+      "aliases_so": [
+        "digir madow",
+        "digir madow 50g",
+        "digir",
+        "50g",
+        "madow",
+        "pepper"
+      ]
+    },
+    {
+      "item_code": "toothbrush_pack",
+      "aliases_en": [
+        "pack",
+        "toothbrush",
+        "toothbrush pack",
+        "tp"
+      ],
+      "aliases_so": [
+        "baakad",
+        "buraash",
+        "buraash baakad",
+        "buraash ilko baakad",
+        "ilko"
+      ]
+    },
+    {
+      "item_code": "cooking_oil_1l",
+      "aliases_en": [
+        "cooking",
+        "saliid",
+        "1l",
+        "oil",
+        "co1",
+        "cooking oil 1l"
+      ],
+      "aliases_so": [
+        "saliid",
+        "oil",
+        "saliid"
+      ]
+    },
+    {
+      "item_code": "tomato_paste",
+      "aliases_en": [
+        "tomato paste",
+        "paste",
+        "yaanyo",
+        "tomato",
+        "tp"
+      ],
+      "aliases_so": [
+        "yaanyo",
+        "tomato",
+        "yaanyo"
+      ]
+    },
+    {
+      "item_code": "cardamom_50g",
+      "aliases_en": [
+        "cardamom 50g",
+        "hayl",
+        "50g",
+        "cardamom",
+        "c5"
+      ],
+      "aliases_so": [
+        "hayl",
+        "cardamom",
+        "hayl"
+      ]
+    },
+    {
+      "item_code": "cinnamon_100g",
+      "aliases_en": [
+        "100g",
+        "qorfe",
+        "cinnamon",
+        "cinnamon 100g",
+        "c1"
+      ],
+      "aliases_so": [
+        "qorfe",
+        "cinnamon",
+        "qorfe"
+      ]
+    },
+    {
+      "item_code": "chili_powder",
+      "aliases_en": [
+        "powder",
+        "chili",
+        "cp",
+        "basbaas",
+        "chili powder"
+      ],
+      "aliases_so": [
+        "basbaas",
+        "chili",
+        "basbaas"
+      ]
+    },
+    {
+      "item_code": "onion_1kg",
+      "aliases_en": [
+        "basal",
+        "o1",
+        "1kg",
+        "onion",
+        "onion 1kg"
+      ],
+      "aliases_so": [
+        "basal",
+        "onion",
+        "basal"
+      ]
+    },
+    {
+      "item_code": "garlic_250g",
+      "aliases_en": [
+        "g2",
+        "garlic",
+        "250g",
+        "toon",
+        "garlic 250g"
+      ],
+      "aliases_so": [
+        "toon",
+        "garlic",
+        "toon"
+      ]
+    },
+    {
+      "item_code": "eggs_tray",
+      "aliases_en": [
+        "eggs",
+        "et",
+        "eggs tray",
+        "ukun",
+        "tray"
+      ],
+      "aliases_so": [
+        "ukun",
+        "eggs",
+        "ukun"
+      ]
+    },
+    {
+      "item_code": "chicken_cube",
+      "aliases_en": [
+        "chicken cube",
+        "cc",
+        "cube",
+        "maraq",
+        "chicken"
+      ],
+      "aliases_so": [
+        "maraq",
+        "cube",
+        "maraq"
+      ]
+    },
+    {
+      "item_code": "beef_cube",
+      "aliases_en": [
+        "hilib",
+        "beef cube",
+        "bc",
+        "cube",
+        "beef"
+      ],
+      "aliases_so": [
+        "maraq",
+        "beef cube",
+        "hilib"
+      ]
+    },
+    {
+      "item_code": "peanut_butter",
+      "aliases_en": [
+        "peanut butter",
+        "pb",
+        "laws",
+        "peanut",
+        "butter"
+      ],
+      "aliases_so": [
+        "subag",
+        "peanut",
+        "laws"
+      ]
+    },
+    {
+      "item_code": "vinegar_500ml",
+      "aliases_en": [
+        "500ml",
+        "khal",
+        "vinegar 500ml",
+        "v5",
+        "vinegar"
+      ],
+      "aliases_so": [
+        "khal",
+        "vinegar",
+        "khal"
+      ]
+    },
+    {
+      "item_code": "margarine_500g",
+      "aliases_en": [
+        "margarine",
+        "m5",
+        "500g",
+        "margarine 500g",
+        "subag"
+      ],
+      "aliases_so": [
+        "subag",
+        "margarine",
+        "subag"
+      ]
+    },
+    {
+      "item_code": "sesame_oil",
+      "aliases_en": [
+        "so",
+        "sesame oil",
+        "sesame",
+        "oil",
+        "sinsin"
+      ],
+      "aliases_so": [
+        "saliid",
+        "sesame",
+        "sinsin"
+      ]
+    },
+    {
+      "item_code": "oil_5l",
+      "aliases_en": [
+        "oil 5l",
+        "bulk oil",
+        "cooking oil large"
+      ],
+      "aliases_so": [
+        "saliid 5l",
+        "saliid badan",
+        "saliid",
+        "cunto",
+        "saliid cunto 5l"
+      ]
+    },
+    {
+      "item_code": "oil_20l",
+      "aliases_en": [
+        "cooking",
+        "cooking oil 20l",
+        "oil",
+        "20l",
+        "wholesale oil",
+        "co2",
+        "oil 20l"
+      ],
+      "aliases_so": [
+        "saliid",
+        "cunto",
+        "saliid 20l",
+        "saliid gee",
+        "saliid cunto 20l",
+        "20l"
+      ]
+    },
+    {
+      "item_code": "ghee_400g",
+      "aliases_en": [
+        "gt4",
+        "ghee tin 400g",
+        "tin",
+        "clarified butter",
+        "ghee",
+        "400g"
+      ],
+      "aliases_so": [
+        "subag",
+        "subag 400g",
+        "subag qasacad",
+        "400g"
+      ]
+    },
+    {
+      "item_code": "tomatoes_400g",
+      "aliases_en": [
+        "tomatoes 400g",
+        "tomatoes canned",
+        "tomatoes",
+        "t4",
+        "400g"
+      ],
+      "aliases_so": [
+        "yaanyo",
+        "yaanyo 400g",
+        "yaanyo qasacad",
+        "400g"
+      ]
+    },
+    {
+      "item_code": "cumin_50g",
+      "aliases_en": [
+        "50g",
+        "jeera",
+        "cumin",
+        "c5",
+        "cumin 50g"
+      ],
+      "aliases_so": [
+        "50g",
+        "kamuun 50g",
+        "kamuun",
+        "cummin"
+      ]
+    },
+    {
+      "item_code": "turmeric_50g",
+      "aliases_en": [
+        "golden spice",
+        "turmeric",
+        "50g",
+        "turmeric 50g",
+        "t5"
+      ],
+      "aliases_so": [
+        "safran",
+        "turmeric",
+        "turmeric 50g",
+        "50g"
+      ]
+    },
+    {
+      "item_code": "coriander_50g",
+      "aliases_en": [
+        "coriander 50g",
+        "c5",
+        "50g",
+        "coriander",
+        "cilantro"
+      ],
+      "aliases_so": [
+        "qat",
+        "coriander",
+        "coriander 50g",
+        "50g"
+      ]
+    },
+    {
+      "item_code": "stock_cubes_pack",
+      "aliases_en": [
+        "cubes",
+        "stock cubes",
+        "pack",
+        "scp",
+        "stock cubes pack",
+        "stock",
+        "cube pack"
+      ],
+      "aliases_so": [
+        "baakad",
+        "maraq baakad",
+        "maraq cubes",
+        "maraq"
+      ]
+    },
+    {
+      "item_code": "vinegar_bottle",
+      "aliases_en": [
+        "500ml",
+        "vinegar 500ml",
+        "v5",
+        "acid",
+        "vinegar"
+      ],
+      "aliases_so": [
+        "saliid",
+        "500ml",
+        "saliid suuq 500ml",
+        "suuq",
+        "saliid suuq",
+        "vinegar"
+      ]
+    },
+    {
+      "item_code": "toilet_paper",
+      "aliases_en": [
+        "paper",
+        "toilet paper",
+        "toilet paper roll",
+        "toilet",
+        "roll",
+        "tpr",
+        "tissue"
+      ],
+      "aliases_so": [
+        "wara xaliimo",
+        "wara wax",
+        "wax",
+        "wara"
+      ]
+    },
+    {
+      "item_code": "mosquito_coils",
+      "aliases_en": [
+        "mosquito coils",
+        "coils",
+        "mc",
+        "mosquito"
+      ],
+      "aliases_so": [
+        "bood bokh",
+        "bood",
+        "bokh"
+      ]
+    },
+    {
+      "item_code": "black_tea_250g",
+      "aliases_en": [
+        "bt2",
+        "shaah",
+        "tea",
+        "black tea 250g",
+        "250g",
+        "black"
+      ],
+      "aliases_so": [
+        "shaah",
+        "tea",
+        "shaah"
+      ]
+    },
+    {
+      "item_code": "powder_milk_400g",
+      "aliases_en": [
+        "caano",
+        "powder",
+        "milk",
+        "powder milk 400g",
+        "pm4",
+        "400g"
+      ],
+      "aliases_so": [
+        "caano",
+        "milk",
+        "caano"
+      ]
+    },
+    {
+      "item_code": "mango_juice_1l",
+      "aliases_en": [
+        "juice",
+        "casiir",
+        "cambe"
+      ],
+      "aliases_so": [
+        "casiir",
+        "juice",
+        "casiir",
+        "cambe"
+      ]
+    },
+    {
+      "item_code": "bottled_water_500ml",
+      "aliases_en": [
+        "bottled",
+        "biyo",
+        "water",
+        "500ml",
+        "bottled water 500ml",
+        "bw5"
+      ],
+      "aliases_so": [
+        "biyo",
+        "water",
+        "biyo"
+      ]
+    },
+    {
+      "item_code": "soda_cola",
+      "aliases_en": [
+        "cola",
+        "sharaab",
+        "sc",
+        "soda cola",
+        "soda"
+      ],
+      "aliases_so": [
+        "sharaab",
+        "cola",
+        "sharaab"
+      ]
+    },
+    {
+      "item_code": "energy_drink",
+      "aliases_en": [
+        "energy",
+        "drink",
+        "tamar",
+        "energy drink",
+        "ed"
+      ],
+      "aliases_so": [
+        "cabitaan",
+        "energy",
+        "tamar"
+      ]
+    },
+    {
+      "item_code": "green_tea",
+      "aliases_en": [
+        "green",
+        "shaah cagaar",
+        "tea",
+        "green tea",
+        "gt"
+      ],
+      "aliases_so": [
+        "shaah",
+        "green tea",
+        "shaah cagaar"
+      ]
+    },
+    {
+      "item_code": "coffee_250g",
+      "aliases_en": [
+        "bun",
+        "coffee",
+        "250g",
+        "coffee 250g",
+        "c2"
+      ],
+      "aliases_so": [
+        "bun",
+        "coffee",
+        "bun"
+      ]
+    },
+    {
+      "item_code": "chocolate_bar",
+      "aliases_en": [
+        "chocolate",
+        "cb",
+        "shukulaato",
+        "bar",
+        "chocolate bar"
+      ],
+      "aliases_so": [
+        "shukulaato",
+        "chocolate",
+        "shukulaato"
+      ]
+    },
+    {
+      "item_code": "camel_milk_1l",
+      "aliases_en": [
+        "camel milk 1l",
+        "1l",
+        "camel",
+        "milk",
+        "cm1",
+        "caano geel",
+        "camel milk"
+      ],
+      "aliases_so": [
+        "caano",
+        "camel milk",
+        "caano geel"
+      ]
+    },
+    {
+      "item_code": "water_1_5l",
+      "aliases_en": [
+        "bottled",
+        "water",
+        "bw1",
+        "water 1.5l",
+        "large water",
+        "bottled water 1.5l",
+        "1.5l"
+      ],
+      "aliases_so": [
+        "biyo",
+        "dhalo",
+        "biyo dhalo 1.5l",
+        "1.5l"
+      ]
+    },
+    {
+      "item_code": "water_5l",
+      "aliases_en": [
+        "bottled",
+        "bulk water",
+        "water",
+        "bottled water 5l",
+        "water 5l",
+        "5l",
+        "bw5"
+      ],
+      "aliases_so": [
+        "biyo",
+        "dhalo",
+        "biyo dhalo 5l",
+        "biyo gallon"
+      ]
+    },
+    {
+      "item_code": "orange_soda",
+      "aliases_en": [
+        "orange",
+        "soda",
+        "orange soda",
+        "os"
+      ],
+      "aliases_so": [
+        "sharaab orange",
+        "sharaab liin",
+        "sharaab",
+        "liin"
+      ]
+    },
+    {
+      "item_code": "tang_sachet",
+      "aliases_en": [
+        "tang sachet",
+        "sachet",
+        "ts",
+        "tang",
+        "drink powder"
+      ],
+      "aliases_so": [
+        "baakad",
+        "tang",
+        "powder",
+        "tang baakad"
+      ]
+    },
+    {
+      "item_code": "hibiscus_tea",
+      "aliases_en": [
+        "somali tea",
+        "tea",
+        "ht2",
+        "hibiscus tea 200g",
+        "200g",
+        "hibiscus"
+      ],
+      "aliases_so": [
+        "shaah somali 200g",
+        "shaah",
+        "shaah somali",
+        "shaah calaacal",
+        "somali",
+        "200g"
+      ]
+    },
+    {
+      "item_code": "milk_powder_900g",
+      "aliases_en": [
+        "milk powder 900g",
+        "powder",
+        "bulk milk",
+        "milk",
+        "mp9",
+        "900g"
+      ],
+      "aliases_so": [
+        "900g",
+        "caano boore 900g",
+        "caano",
+        "boore"
+      ]
+    },
+    {
+      "item_code": "uht_milk_500ml",
+      "aliases_en": [
+        "500ml",
+        "milk",
+        "um5",
+        "uht milk 500ml",
+        "uht"
+      ],
+      "aliases_so": [
+        "caano uht",
+        "caano",
+        "500ml",
+        "caano karta",
+        "caano uht 500ml",
+        "uht"
+      ]
+    },
+    {
+      "item_code": "uht_milk_1l",
+      "aliases_en": [
+        "1l",
+        "milk",
+        "long life milk",
+        "uht",
+        "uht milk 1l",
+        "um1"
+      ],
+      "aliases_so": [
+        "uht",
+        "caano",
+        "caano badan",
+        "caano uht 1l"
+      ]
+    },
+    {
+      "item_code": "evaporated_milk",
+      "aliases_en": [
+        "evaporated milk",
+        "evaporated milk 400ml",
+        "evaporated",
+        "milk",
+        "em4",
+        "400ml"
+      ],
+      "aliases_so": [
+        "caano",
+        "caano kartin 400ml",
+        "kartin",
+        "400ml",
+        "caano kartin",
+        "caano qasacad"
+      ]
+    },
+    {
+      "item_code": "condensed_milk",
+      "aliases_en": [
+        "milk",
+        "sweet milk",
+        "condensed milk",
+        "condensed milk 397g",
+        "397g",
+        "cm3",
+        "condensed"
+      ],
+      "aliases_so": [
+        "caano",
+        "caano macaan 397g",
+        "caano qorol",
+        "caano macaan",
+        "397g",
+        "macaan"
+      ]
+    },
+    {
+      "item_code": "infant_formula",
+      "aliases_en": [
+        "infant",
+        "infant milk",
+        "infant formula 400g",
+        "formula",
+        "if4",
+        "baby formula",
+        "400g"
+      ],
+      "aliases_so": [
+        "caano",
+        "caano carruuq",
+        "caano carruuq 400g",
+        "carruuq",
+        "caano jarko",
+        "400g"
+      ]
+    },
+    {
+      "item_code": "dates_500g",
+      "aliases_en": [
+        "d5",
+        "dates",
+        "500g",
+        "timir",
+        "dates 500g"
+      ],
+      "aliases_so": [
+        "timir",
+        "dates",
+        "timir"
+      ]
+    },
+    {
+      "item_code": "tuna_tin",
+      "aliases_en": [
+        "tuna",
+        "tt",
+        "tuunno",
+        "tuna tin",
+        "tin"
+      ],
+      "aliases_so": [
+        "tuunno",
+        "tuna",
+        "tuunno"
+      ]
+    },
+    {
+      "item_code": "sardines_tin",
+      "aliases_en": [
+        "st",
+        "sardines",
+        "sardine",
+        "tin",
+        "sardines tin",
+        "sardiin"
+      ],
+      "aliases_so": [
+        "sardiin",
+        "sardine",
+        "sardiin"
+      ]
+    },
+    {
+      "item_code": "biscuits",
+      "aliases_en": [
+        "biscuits",
+        "buskud",
+        "biscuits"
+      ],
+      "aliases_so": [
+        "buskud",
+        "biscuits",
+        "buskud"
+      ]
+    },
+    {
+      "item_code": "candy_mix",
+      "aliases_en": [
+        "mix",
+        "nacnac",
+        "candy",
+        "cm",
+        "candy mix"
+      ],
+      "aliases_so": [
+        "nacnac",
+        "candy",
+        "nacnac"
+      ]
+    },
+    {
+      "item_code": "shampoo",
+      "aliases_en": [
+        "shaambo",
+        "shampoo",
+        "shampoo"
+      ],
+      "aliases_so": [
+        "shaambo",
+        "shampoo",
+        "shaambo"
+      ]
+    },
+    {
+      "item_code": "tissue_roll",
+      "aliases_en": [
+        "tr",
+        "tiish",
+        "roll",
+        "tissue roll",
+        "tissue"
+      ],
+      "aliases_so": [
+        "tiish",
+        "tissue",
+        "tiish"
+      ]
+    },
+    {
+      "item_code": "candle_pack",
+      "aliases_en": [
+        "shumac",
+        "pack",
+        "candle",
+        "candle pack",
+        "cp"
+      ],
+      "aliases_so": [
+        "shumac",
+        "candle",
+        "shumac"
+      ]
+    },
+    {
+      "item_code": "trash_bags",
+      "aliases_en": [
+        "qashin",
+        "tb",
+        "trash bags",
+        "trash",
+        "bags"
+      ],
+      "aliases_so": [
+        "bac",
+        "trash",
+        "qashin"
+      ]
+    },
+    {
+      "item_code": "bread_loaf",
+      "aliases_en": [
+        "rooti",
+        "loaf",
+        "bread",
+        "bread loaf",
+        "bl"
+      ],
+      "aliases_so": [
+        "rooti",
+        "bread",
+        "rooti"
+      ]
+    },
+    {
+      "item_code": "samosa_pack",
+      "aliases_en": [
+        "samosa",
+        "pack",
+        "sp",
+        "samosa pack",
+        "sambuus"
+      ],
+      "aliases_so": [
+        "sambuus",
+        "samosa",
+        "sambuus"
+      ]
+    },
+    {
+      "item_code": "crisps_pack",
+      "aliases_en": [
+        "packet",
+        "crisps",
+        "cp",
+        "potato chips",
+        "crisps packet"
+      ],
+      "aliases_so": [
+        "chips",
+        "crisps baakad",
+        "crisps",
+        "baakad"
+      ]
+    },
+    {
+      "item_code": "peanuts_150g",
+      "aliases_en": [
+        "150g",
+        "p1",
+        "peanuts 150g",
+        "groundnuts",
+        "peanuts"
+      ],
+      "aliases_so": [
+        "150g",
+        "peanuts 150g",
+        "peanuts",
+        "groundnut"
+      ]
+    },
+    {
+      "item_code": "sweets_mix",
+      "aliases_en": [
+        "sweets",
+        "sweets mixed 200g",
+        "mixed",
+        "candy mix",
+        "200g",
+        "sm2"
+      ],
+      "aliases_so": [
+        "nacnac",
+        "isku",
+        "nacnac isku dar",
+        "dar",
+        "nacnac isku dar 200g",
+        "200g"
+      ]
+    },
+    {
+      "item_code": "biscuits_advance",
+      "aliases_en": [
+        "biscuits",
+        "ab",
+        "advance biscuits",
+        "cookies",
+        "advance"
+      ],
+      "aliases_so": [
+        "buskud",
+        "advance",
+        "buskud advance",
+        "buskud qorka"
+      ]
+    },
+    {
+      "item_code": "bin_bags_pack",
+      "aliases_en": [
+        "pack",
+        "trash bags",
+        "bin bags pack",
+        "bbp",
+        "bags",
+        "bin bags",
+        "bin"
+      ],
+      "aliases_so": [
+        "plastic",
+        "shantiyada",
+        "bags plastic",
+        "shantiyada plastic"
+      ]
+    },
+    {
+      "item_code": "candles_10pack",
+      "aliases_en": [
+        "candles 10-pack",
+        "candles",
+        "10-pack",
+        "c1",
+        "light candles"
+      ],
+      "aliases_so": [
+        "shumac 10",
+        "shumac",
+        "shumac 10"
+      ]
+    },
+    {
+      "item_code": "laundry_soap",
+      "aliases_en": [
+        "laundry",
+        "ls",
+        "soap",
+        "saabuun",
+        "laundry soap"
+      ],
+      "aliases_so": [
+        "saabuun",
+        "soap",
+        "saabuun"
+      ]
+    },
+    {
+      "item_code": "dish_soap",
+      "aliases_en": [
+        "dish",
+        "soap",
+        "weel",
+        "dish soap",
+        "ds"
+      ],
+      "aliases_so": [
+        "saabuun",
+        "dish soap",
+        "weel"
+      ]
+    },
+    {
+      "item_code": "bleach",
+      "aliases_en": [
+        "warankiilo",
+        "bleach",
+        "bleach"
+      ],
+      "aliases_so": [
+        "warankiilo",
+        "bleach",
+        "warankiilo"
+      ]
+    },
+    {
+      "item_code": "napkins",
+      "aliases_en": [
+        "napkins",
+        "napkin",
+        "masax"
+      ],
+      "aliases_so": [
+        "masax",
+        "napkin",
+        "masax"
+      ]
+    },
+    {
+      "item_code": "detergent_powder_1kg",
+      "aliases_en": [
+        "dp1",
+        "detergent powder 1kg",
+        "powder",
+        "1kg",
+        "oomo",
+        "detergent"
+      ],
+      "aliases_so": [
+        "oomo",
+        "detergent",
+        "oomo"
+      ]
+    },
+    {
+      "item_code": "bar_soap",
+      "aliases_en": [
+        "bar soap",
+        "soap",
+        "bs",
+        "soap bar",
+        "bar",
+        "bathing soap"
+      ],
+      "aliases_so": [
+        "qalya",
+        "saabuun qalya",
+        "saabuun dhaqan",
+        "saabuun"
+      ]
+    },
+    {
+      "item_code": "dishwashing_liquid",
+      "aliases_en": [
+        "dishwashing liquid 500ml",
+        "500ml",
+        "dish soap",
+        "dl5",
+        "dish liquid",
+        "dishwashing",
+        "liquid"
+      ],
+      "aliases_so": [
+        "saabuun weel 500ml",
+        "saabuun weel",
+        "500ml",
+        "weel",
+        "saabuun"
+      ]
+    },
+    {
+      "item_code": "sponge",
+      "aliases_en": [
+        "sponge",
+        "scrub",
+        "sponge"
+      ],
+      "aliases_so": [
+        "loof cunto",
+        "cunto",
+        "loof"
+      ]
+    },
+    {
+      "item_code": "baby_diapers",
+      "aliases_en": [
+        "diapers",
+        "bd",
+        "baby",
+        "diaper",
+        "xafaayad",
+        "baby diapers"
+      ],
+      "aliases_so": [
+        "xafaayad",
+        "diaper",
+        "xafaayad"
+      ]
+    },
+    {
+      "item_code": "toothpaste",
+      "aliases_en": [
+        "ilko",
+        "toothpaste",
+        "toothpaste"
+      ],
+      "aliases_so": [
+        "daawo",
+        "toothpaste",
+        "ilko"
+      ]
+    },
+    {
+      "item_code": "body_lotion",
+      "aliases_en": [
+        "lotion",
+        "body lotion",
+        "body",
+        "bl",
+        "kareem"
+      ],
+      "aliases_so": [
+        "kareem",
+        "lotion",
+        "kareem"
+      ]
+    },
+    {
+      "item_code": "sanitary_pads",
+      "aliases_en": [
+        "pads",
+        "sanitary",
+        "sanitary pads",
+        "sp"
+      ],
+      "aliases_so": [
+        "haween pads",
+        "haween",
+        "haween"
+      ]
+    },
+    {
+      "item_code": "baby_diapers_30pk",
+      "aliases_en": [
+        "diapers",
+        "baby diapers 30pk",
+        "baby",
+        "large pack",
+        "bd3",
+        "30pk",
+        "diapers 30"
+      ],
+      "aliases_so": [
+        "xafaayad carruur 30",
+        "xafaayad 30",
+        "xafaayad caruurka",
+        "xafaayad",
+        "carruur"
+      ]
+    },
+    {
+      "item_code": "petroleum_jelly",
+      "aliases_en": [
+        "vaseline",
+        "100g",
+        "petroleum",
+        "pj1",
+        "jelly",
+        "petroleum jelly 100g"
+      ],
+      "aliases_so": [
+        "kareem jarbuuq",
+        "vaseline",
+        "vaseline"
+      ]
+    },
+    {
+      "item_code": "body_lotion_500ml",
+      "aliases_en": [
+        "body lotion 500ml",
+        "moisturizer",
+        "lotion",
+        "500ml",
+        "bl5",
+        "body"
+      ],
+      "aliases_so": [
+        "kareem jir",
+        "jir",
+        "500ml",
+        "kareem",
+        "kareem jir 500ml"
+      ]
+    },
+    {
+      "item_code": "razor_blades",
+      "aliases_en": [
+        "razor blades pack",
+        "razor blades",
+        "pack",
+        "rbp",
+        "blades",
+        "razor"
+      ],
+      "aliases_so": [
+        "baakad",
+        "ujada baakad",
+        "ujada"
+      ]
+    },
+    {
+      "item_code": "deodorant",
+      "aliases_en": [
+        "deodorant",
+        "spray",
+        "stick",
+        "ds",
+        "deodorant stick"
+      ],
+      "aliases_so": [
+        "deodorant",
+        "deodorant",
+        "deodorant"
+      ]
+    },
+    {
+      "item_code": "potato_1kg",
+      "aliases_en": [
+        "potato",
+        "1kg",
+        "baradho",
+        "p1",
+        "potato 1kg"
+      ],
+      "aliases_so": [
+        "baradho",
+        "potato",
+        "baradho"
+      ]
+    },
+    {
+      "item_code": "banana_1kg",
+      "aliases_en": [
+        "banana",
+        "1kg",
+        "moos",
+        "b1",
+        "banana 1kg"
+      ],
+      "aliases_so": [
+        "moos",
+        "banana",
+        "moos"
+      ]
+    },
+    {
+      "item_code": "orange_1kg",
+      "aliases_en": [
+        "orange",
+        "o1",
+        "1kg",
+        "liin",
+        "orange 1kg"
+      ],
+      "aliases_so": [
+        "liin",
+        "orange",
+        "liin"
+      ]
+    },
+    {
+      "item_code": "apple_1kg",
+      "aliases_en": [
+        "a1",
+        "1kg",
+        "tufaax",
+        "apple",
+        "apple 1kg"
+      ],
+      "aliases_so": [
+        "tufaax",
+        "apple",
+        "tufaax"
+      ]
+    },
+    {
+      "item_code": "matches",
+      "aliases_en": [
+        "taraq",
+        "matches",
+        "matches"
+      ],
+      "aliases_so": [
+        "taraq",
+        "matches",
+        "taraq"
+      ]
+    },
+    {
+      "item_code": "charcoal_5kg",
+      "aliases_en": [
+        "charcoal",
+        "charcoal 5kg",
+        "5kg",
+        "c5",
+        "dhuxul"
+      ],
+      "aliases_so": [
+        "dhuxul",
+        "charcoal",
+        "dhuxul"
+      ]
+    },
+    {
+      "item_code": "gas_refill_small",
+      "aliases_en": [
+        "gas",
+        "gaas",
+        "refill",
+        "gas refill small",
+        "small",
+        "grs"
+      ],
+      "aliases_so": [
+        "gaas",
+        "gas",
+        "gaas"
+      ]
+    },
+    {
+      "item_code": "phone_airtime_1",
+      "aliases_en": [
+        "pa\\",
+        "phone airtime \\$1",
+        "kaar",
+        "\\$1",
+        "airtime",
+        "phone"
+      ],
+      "aliases_so": [
+        "kaarka",
+        "airtime",
+        "kaar"
+      ]
+    },
+    {
+      "item_code": "phone_airtime_5",
+      "aliases_en": [
+        "pa\\",
+        "phone airtime \\$5",
+        "\\$5",
+        "airtime 5",
+        "kaar 5",
+        "airtime",
+        "phone"
+      ],
+      "aliases_so": [
+        "kaarka",
+        "airtime 5",
+        "kaar 5"
+      ]
+    },
+    {
+      "item_code": "battery_aa",
+      "aliases_en": [
+        "battery aa",
+        "ba",
+        "battery",
+        "batari"
+      ],
+      "aliases_so": [
+        "batariga",
+        "battery",
+        "batari"
+      ]
+    },
+    {
+      "item_code": "light_bulb",
+      "aliases_en": [
+        "light bulb",
+        "lb",
+        "bulb",
+        "nal",
+        "light"
+      ],
+      "aliases_so": [
+        "nal",
+        "bulb",
+        "nal"
+      ]
+    },
+    {
+      "item_code": "notebook",
+      "aliases_en": [
+        "buug",
+        "notebook",
+        "notebook"
+      ],
+      "aliases_so": [
+        "buug",
+        "notebook",
+        "buug"
+      ]
+    },
+    {
+      "item_code": "pen_blue",
+      "aliases_en": [
+        "pen",
+        "pb",
+        "pen blue",
+        "blue",
+        "qalin"
+      ],
+      "aliases_so": [
+        "qalin",
+        "pen",
+        "qalin"
+      ]
+    },
+    {
+      "item_code": "school_pencil",
+      "aliases_en": [
+        "qori",
+        "school",
+        "school pencil",
+        "sp",
+        "pencil"
+      ],
+      "aliases_so": [
+        "qalin",
+        "pencil",
+        "qori"
+      ]
+    },
+    {
+      "item_code": "cornflakes_500g",
+      "aliases_en": [
+        "quraac",
+        "500g",
+        "cornflakes 500g",
+        "cornflakes",
+        "c5"
+      ],
+      "aliases_so": [
+        "quraac",
+        "cornflakes",
+        "quraac"
+      ]
+    },
+    {
+      "item_code": "honey_250g",
+      "aliases_en": [
+        "honey 250g",
+        "honey",
+        "malab",
+        "250g",
+        "h2"
+      ],
+      "aliases_so": [
+        "malab",
+        "honey",
+        "malab"
+      ]
+    },
+    {
+      "item_code": "jam_250g",
+      "aliases_en": [
+        "jam 250g",
+        "macmacaan",
+        "250g",
+        "jam",
+        "j2"
+      ],
+      "aliases_so": [
+        "macmacaan",
+        "jam",
+        "macmacaan"
+      ]
+    },
+    {
+      "item_code": "mayonnaise",
+      "aliases_en": [
+        "mayoonees",
+        "mayonnaise",
+        "mayo"
+      ],
+      "aliases_so": [
+        "mayoonees",
+        "mayo",
+        "mayoonees"
+      ]
+    },
+    {
+      "item_code": "ketchup",
+      "aliases_en": [
+        "ketchup",
+        "ketchup",
+        "ketchup"
+      ],
+      "aliases_so": [
+        "ketchup",
+        "ketchup",
+        "ketchup"
+      ]
+    },
+    {
+      "item_code": "cheese_slices",
+      "aliases_en": [
+        "cheese",
+        "farmaajo",
+        "cheese slices",
+        "slices",
+        "cs"
+      ],
+      "aliases_so": [
+        "farmaajo",
+        "cheese",
+        "farmaajo"
+      ]
+    },
+    {
+      "item_code": "frozen_chicken",
+      "aliases_en": [
+        "digaag",
+        "frozen chicken",
+        "fc",
+        "frozen",
+        "chicken"
+      ],
+      "aliases_so": [
+        "digaag",
+        "chicken",
+        "digaag"
+      ]
+    },
+    {
+      "item_code": "frozen_fish",
+      "aliases_en": [
+        "frozen fish",
+        "kalluun",
+        "ff",
+        "frozen",
+        "fish"
+      ],
+      "aliases_so": [
+        "kalluun",
+        "fish",
+        "kalluun"
+      ]
+    },
+    {
+      "item_code": "beef_1kg",
+      "aliases_en": [
+        "hilib",
+        "1kg",
+        "b1",
+        "beef 1kg",
+        "beef"
+      ],
+      "aliases_so": [
+        "hilib",
+        "beef",
+        "hilib"
+      ]
+    },
+    {
+      "item_code": "yoghurt_cup",
+      "aliases_en": [
+        "cup",
+        "yoghurt cup",
+        "yoghurt",
+        "garoor",
+        "yc"
+      ],
+      "aliases_so": [
+        "garoor",
+        "yoghurt",
+        "garoor"
+      ]
+    },
+    {
+      "item_code": "ice_cream_cup",
+      "aliases_en": [
+        "cream",
+        "cup",
+        "ice cream",
+        "ice cream cup",
+        "ice",
+        "icc",
+        "jalaato"
+      ],
+      "aliases_so": [
+        "jalaato",
+        "ice cream",
+        "jalaato"
+      ]
+    },
+    {
+      "item_code": "floor_cleaner",
+      "aliases_en": [
+        "fc",
+        "cleaner",
+        "floor",
+        "floor cleaner",
+        "nadiifiye"
+      ],
+      "aliases_so": [
+        "nadiifiye",
+        "cleaner",
+        "nadiifiye"
+      ]
+    },
+    {
+      "item_code": "insect_spray",
+      "aliases_en": [
+        "insect",
+        "spray",
+        "insect spray",
+        "is",
+        "buufis"
+      ],
+      "aliases_so": [
+        "buufis",
+        "insect",
+        "buufis"
+      ]
+    },
+    {
+      "item_code": "plastic_cups",
+      "aliases_en": [
+        "plastic cups",
+        "plastic",
+        "pc",
+        "cups",
+        "koob"
+      ],
+      "aliases_so": [
+        "koob",
+        "cups",
+        "koob"
+      ]
+    },
+    {
+      "item_code": "plastic_plates",
+      "aliases_en": [
+        "pp",
+        "plates",
+        "plastic",
+        "plastic plates",
+        "saxan"
+      ],
+      "aliases_so": [
+        "saxan",
+        "plates",
+        "saxan"
+      ]
+    },
+    {
+      "item_code": "black_seed",
+      "aliases_en": [
+        "seed",
+        "bs",
+        "xabad sowdo",
+        "black seed",
+        "black"
+      ],
+      "aliases_so": [
+        "xabad",
+        "black seed",
+        "xabad sowdo"
+      ]
+    },
+    {
+      "item_code": "battery_aaa",
+      "aliases_en": [
+        "aaa",
+        "ba",
+        "battery aaa",
+        "battery"
+      ],
+      "aliases_so": [
+        "batariga",
+        "aaa",
+        "batariga aaa",
+        "batari"
+      ]
+    },
+    {
+      "item_code": "battery_d",
+      "aliases_en": [
+        "bds",
+        "battery d size",
+        "battery",
+        "battery d",
+        "size"
+      ],
+      "aliases_so": [
+        "batariga",
+        "batariga d",
+        "batari"
+      ]
+    },
+    {
+      "item_code": "led_bulb_7w",
+      "aliases_en": [
+        "led bulb",
+        "light bulb",
+        "7w",
+        "led bulb 7w",
+        "bulb",
+        "lb7",
+        "led"
+      ],
+      "aliases_so": [
+        "nal led",
+        "nal led 7w",
+        "nal",
+        "led"
+      ]
+    },
+    {
+      "item_code": "charcoal_25kg",
+      "aliases_en": [
+        "charcoal",
+        "large charcoal",
+        "25kg",
+        "c2",
+        "charcoal 25kg"
+      ],
+      "aliases_so": [
+        "25kg",
+        "dhuxul gee",
+        "dhuxul",
+        "dhuxul 25kg"
+      ]
+    }
+  ],
+  "party_alias_examples": [
+    {
+      "party_type": "supplier",
+      "canonical_name": "Xawaash Trading",
+      "aliases": [
+        "xawaash",
+        "xawash",
+        "xawaash wholesale"
+      ]
+    },
+    {
+      "party_type": "supplier",
+      "canonical_name": "Hodan Wholesale",
+      "aliases": [
+        "hodan",
+        "hodan wholesaler",
+        "hodan trading"
+      ]
+    }
+  ]
+}

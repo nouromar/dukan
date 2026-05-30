@@ -1,0 +1,55 @@
+{
+  "kind": "configuration_pack",
+  "pack": "ocr_mappings",
+  "template_code": "grocery",
+  "version": 1,
+  "bono_field_labels": {
+    "supplier": [
+      "supplier",
+      "vendor",
+      "from",
+      "qeybiye",
+      "iibiye"
+    ],
+    "date": [
+      "date",
+      "taariikh"
+    ],
+    "item": [
+      "item",
+      "product",
+      "description",
+      "alaab",
+      "shay"
+    ],
+    "quantity": [
+      "qty",
+      "quantity",
+      "tirada",
+      "qadar"
+    ],
+    "unit_cost": [
+      "unit price",
+      "price",
+      "cost",
+      "qiime"
+    ],
+    "line_total": [
+      "total",
+      "amount",
+      "wadar",
+      "jamac"
+    ]
+  },
+  "confidence_thresholds": {
+    "auto_select_candidate": 0.88,
+    "show_suggestion": 0.55,
+    "require_manual_review_below": 0.55
+  },
+  "matching_order": [
+    "shop_aliases",
+    "shop_items",
+    "template_aliases",
+    "catalog_items"
+  ]
+}

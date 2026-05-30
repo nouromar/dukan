@@ -1,0 +1,380 @@
+{
+  "kind": "configuration_pack",
+  "pack": "quick_actions",
+  "template_code": "grocery",
+  "version": 1,
+  "sale_favorites": [
+    {
+      "screen": "sale",
+      "position": 1,
+      "item_code": "basmati_rice_25kg",
+      "label_en": "Basmati Rice 25kg",
+      "label_so": "Bariis Basmati 25kg"
+    },
+    {
+      "screen": "sale",
+      "position": 2,
+      "item_code": "cooking_oil_1l",
+      "label_en": "Cooking Oil 1L",
+      "label_so": "Saliid Cunto 1L"
+    },
+    {
+      "screen": "sale",
+      "position": 3,
+      "item_code": "black_tea_250g",
+      "label_en": "Black Tea 250g",
+      "label_so": "Shaah Madow 250g"
+    },
+    {
+      "screen": "sale",
+      "position": 4,
+      "item_code": "eggs_tray",
+      "label_en": "Eggs Tray",
+      "label_so": "Ukun Kartoon"
+    },
+    {
+      "screen": "sale",
+      "position": 5,
+      "item_code": "dates_500g",
+      "label_en": "Dates 500g",
+      "label_so": "Timir 500g"
+    },
+    {
+      "screen": "sale",
+      "position": 6,
+      "item_code": "toilet_paper",
+      "label_en": "Toilet Paper Roll",
+      "label_so": "Wara Wax"
+    },
+    {
+      "screen": "sale",
+      "position": 7,
+      "item_code": "baby_diapers",
+      "label_en": "Baby Diapers",
+      "label_so": "Xafaayad Carruur"
+    },
+    {
+      "screen": "sale",
+      "position": 8,
+      "item_code": "potato_1kg",
+      "label_en": "Potato 1kg",
+      "label_so": "Baradho 1kg"
+    },
+    {
+      "screen": "sale",
+      "position": 9,
+      "item_code": "sugar_1kg",
+      "label_en": "Sugar 1kg",
+      "label_so": "Sonkor 1kg"
+    },
+    {
+      "screen": "sale",
+      "position": 10,
+      "item_code": "tomato_paste",
+      "label_en": "Tomato Paste",
+      "label_so": "Yaanyo Qasacad"
+    },
+    {
+      "screen": "sale",
+      "position": 11,
+      "item_code": "mango_juice_1l",
+      "label_en": "Mango Juice 1L",
+      "label_so": "Casiir Cambe 1L"
+    },
+    {
+      "screen": "sale",
+      "position": 12,
+      "item_code": "powder_milk_400g",
+      "label_en": "Powder Milk 400g",
+      "label_so": "Caano Boore 400g"
+    },
+    {
+      "screen": "sale",
+      "position": 13,
+      "item_code": "tuna_tin",
+      "label_en": "Tuna Tin",
+      "label_so": "Tuunno Qasacad"
+    },
+    {
+      "screen": "sale",
+      "position": 14,
+      "item_code": "tissue_roll",
+      "label_en": "Tissue Roll",
+      "label_so": "Tiish"
+    },
+    {
+      "screen": "sale",
+      "position": 15,
+      "item_code": "toothpaste",
+      "label_en": "Toothpaste",
+      "label_so": "Daawo Ilko"
+    },
+    {
+      "screen": "sale",
+      "position": 16,
+      "item_code": "banana_1kg",
+      "label_en": "Banana 1kg",
+      "label_so": "Moos 1kg"
+    },
+    {
+      "screen": "sale",
+      "position": 17,
+      "item_code": "wheat_flour_10kg",
+      "label_en": "Wheat Flour 10kg",
+      "label_so": "Bur Qamadi 10kg"
+    },
+    {
+      "screen": "sale",
+      "position": 18,
+      "item_code": "cardamom_50g",
+      "label_en": "Cardamom 50g",
+      "label_so": "Hayl 50g"
+    },
+    {
+      "screen": "sale",
+      "position": 19,
+      "item_code": "bottled_water_500ml",
+      "label_en": "Bottled Water 500ml",
+      "label_so": "Biyo Dhalo 500ml"
+    },
+    {
+      "screen": "sale",
+      "position": 20,
+      "item_code": "camel_milk_1l",
+      "label_en": "Camel Milk 1L",
+      "label_so": "Caano Geel 1L"
+    },
+    {
+      "screen": "sale",
+      "position": 21,
+      "item_code": "sardines_tin",
+      "label_en": "Sardines Tin",
+      "label_so": "Sardiin Qasacad"
+    },
+    {
+      "screen": "sale",
+      "position": 22,
+      "item_code": "trash_bags",
+      "label_en": "Trash Bags",
+      "label_so": "Bac Qashin"
+    },
+    {
+      "screen": "sale",
+      "position": 23,
+      "item_code": "body_lotion",
+      "label_en": "Body Lotion",
+      "label_so": "Kareem Jir"
+    },
+    {
+      "screen": "sale",
+      "position": 24,
+      "item_code": "orange_1kg",
+      "label_en": "Orange 1kg",
+      "label_so": "Liin Macaan 1kg"
+    },
+    {
+      "screen": "sale",
+      "position": 25,
+      "item_code": "pasta_500g",
+      "label_en": "Pasta 500g",
+      "label_so": "Baasto 500g"
+    },
+    {
+      "screen": "sale",
+      "position": 26,
+      "item_code": "cinnamon_100g",
+      "label_en": "Cinnamon 100g",
+      "label_so": "Qorfe 100g"
+    },
+    {
+      "screen": "sale",
+      "position": 27,
+      "item_code": "soda_cola",
+      "label_en": "Soda Cola",
+      "label_so": "Sharaab Koola"
+    },
+    {
+      "screen": "sale",
+      "position": 28,
+      "item_code": "milk_powder_900g",
+      "label_en": "Milk Powder 900g",
+      "label_so": "Caano Boore 900g"
+    },
+    {
+      "screen": "sale",
+      "position": 29,
+      "item_code": "biscuits",
+      "label_en": "Biscuits",
+      "label_so": "Buskud"
+    },
+    {
+      "screen": "sale",
+      "position": 30,
+      "item_code": "bin_bags_pack",
+      "label_en": "Bin Bags Pack",
+      "label_so": "Shantiyada Plastic"
+    },
+    {
+      "screen": "sale",
+      "position": 31,
+      "item_code": "sanitary_pads",
+      "label_en": "Sanitary Pads",
+      "label_so": "Haween"
+    },
+    {
+      "screen": "sale",
+      "position": 32,
+      "item_code": "apple_1kg",
+      "label_en": "Apple 1kg",
+      "label_so": "Tufaax 1kg"
+    },
+    {
+      "screen": "sale",
+      "position": 33,
+      "item_code": "salt_1kg",
+      "label_en": "Salt 1kg",
+      "label_so": "Cusbo 1kg"
+    },
+    {
+      "screen": "sale",
+      "position": 34,
+      "item_code": "chili_powder",
+      "label_en": "Chili Powder",
+      "label_so": "Basbaas Buddo"
+    },
+    {
+      "screen": "sale",
+      "position": 35,
+      "item_code": "energy_drink",
+      "label_en": "Energy Drink",
+      "label_so": "Cabitaan Tamar"
+    },
+    {
+      "screen": "sale",
+      "position": 36,
+      "item_code": "uht_milk_500ml",
+      "label_en": "UHT Milk 500ml",
+      "label_so": "Caano UHT 500ml"
+    },
+    {
+      "screen": "sale",
+      "position": 37,
+      "item_code": "candy_mix",
+      "label_en": "Candy Mix",
+      "label_so": "Nacnac Iskujir"
+    },
+    {
+      "screen": "sale",
+      "position": 38,
+      "item_code": "laundry_soap",
+      "label_en": "Laundry Soap",
+      "label_so": "Saabuun Dhar"
+    },
+    {
+      "screen": "sale",
+      "position": 39,
+      "item_code": "baby_diapers_30pk",
+      "label_en": "Baby Diapers 30pk",
+      "label_so": "Xafaayad Carruur 30"
+    },
+    {
+      "screen": "sale",
+      "position": 40,
+      "item_code": "matches",
+      "label_en": "Matches",
+      "label_so": "Taraq"
+    }
+  ],
+  "expense_shortcuts": [
+    {
+      "screen": "expense",
+      "position": 1,
+      "expense_category_code": "rent",
+      "label_en": "Rent",
+      "label_so": "Kiro"
+    },
+    {
+      "screen": "expense",
+      "position": 2,
+      "expense_category_code": "electricity",
+      "label_en": "Electricity",
+      "label_so": "Koronto"
+    },
+    {
+      "screen": "expense",
+      "position": 3,
+      "expense_category_code": "water",
+      "label_en": "Water",
+      "label_so": "Biyo"
+    },
+    {
+      "screen": "expense",
+      "position": 4,
+      "expense_category_code": "internet",
+      "label_en": "Internet",
+      "label_so": "Internet"
+    },
+    {
+      "screen": "expense",
+      "position": 5,
+      "expense_category_code": "salary",
+      "label_en": "Salary",
+      "label_so": "Mushahar"
+    },
+    {
+      "screen": "expense",
+      "position": 6,
+      "expense_category_code": "transport",
+      "label_en": "Transport",
+      "label_so": "Gaadiid"
+    },
+    {
+      "screen": "expense",
+      "position": 7,
+      "expense_category_code": "supplies",
+      "label_en": "Supplies",
+      "label_so": "Qalab"
+    },
+    {
+      "screen": "expense",
+      "position": 8,
+      "expense_category_code": "repairs",
+      "label_en": "Repairs",
+      "label_so": "Hagaajin"
+    }
+  ],
+  "category_order": [
+    {
+      "category": "Staples",
+      "sort_order": 1
+    },
+    {
+      "category": "Cooking essentials",
+      "sort_order": 2
+    },
+    {
+      "category": "Beverages",
+      "sort_order": 3
+    },
+    {
+      "category": "Dairy",
+      "sort_order": 4
+    },
+    {
+      "category": "Snacks",
+      "sort_order": 5
+    },
+    {
+      "category": "Household",
+      "sort_order": 6
+    },
+    {
+      "category": "Personal care",
+      "sort_order": 7
+    },
+    {
+      "category": "Other",
+      "sort_order": 8
+    }
+  ]
+}

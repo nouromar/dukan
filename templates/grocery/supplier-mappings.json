@@ -1,0 +1,805 @@
+{
+  "kind": "configuration_pack",
+  "pack": "supplier_mappings",
+  "template_code": "grocery",
+  "version": 1,
+  "supplier_types": [
+    {
+      "code": "grocery_wholesaler",
+      "name_en": "Grocery wholesaler",
+      "name_so": "Jumlad raashin"
+    },
+    {
+      "code": "beverage_supplier",
+      "name_en": "Beverage supplier",
+      "name_so": "Qeybiye cabitaan"
+    },
+    {
+      "code": "dairy_supplier",
+      "name_en": "Dairy supplier",
+      "name_so": "Qeybiye caano"
+    },
+    {
+      "code": "household_supplier",
+      "name_en": "Household supplier",
+      "name_so": "Qeybiye alaab guri"
+    },
+    {
+      "code": "snack_supplier",
+      "name_en": "Snack supplier",
+      "name_so": "Qeybiye cunto fudud"
+    }
+  ],
+  "supplier_items": [
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "cooking_oil_1l",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 1
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "tomato_paste",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 2
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "cardamom_50g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 3
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "cinnamon_100g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 4
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "chili_powder",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 5
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "onion_1kg",
+      "usual_receive_unit_code": "kg",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 6
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "garlic_250g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 7
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "chicken_cube",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 8
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "beef_cube",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 9
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "peanut_butter",
+      "usual_receive_unit_code": "jar",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 10
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "vinegar_500ml",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 11
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "margarine_500g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 12
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "sesame_oil",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 13
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "oil_5l",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 14
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "oil_20l",
+      "usual_receive_unit_code": "bag",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 15
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "ghee_400g",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 16
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "tomatoes_400g",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 17
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "cumin_50g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 18
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "turmeric_50g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 19
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "coriander_50g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 20
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "stock_cubes_pack",
+      "usual_receive_unit_code": "box",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 21
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "vinegar_bottle",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 22
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "mosquito_coils",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 23
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "honey_250g",
+      "usual_receive_unit_code": "jar",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 24
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "jam_250g",
+      "usual_receive_unit_code": "jar",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 25
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "mayonnaise",
+      "usual_receive_unit_code": "jar",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 26
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "ketchup",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 27
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "black_seed",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 28
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "basmati_rice_25kg",
+      "usual_receive_unit_code": "bag",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 29
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "sugar_1kg",
+      "usual_receive_unit_code": "kg",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 30
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "wheat_flour_10kg",
+      "usual_receive_unit_code": "bag",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 31
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "pasta_500g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 32
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "salt_1kg",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 33
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "spaghetti_500g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 34
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "lentils_1kg",
+      "usual_receive_unit_code": "kg",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 35
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "beans_1kg",
+      "usual_receive_unit_code": "kg",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 36
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "corn_flour_1kg",
+      "usual_receive_unit_code": "kg",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 37
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "toothbrush",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 38
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "instant_noodles",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 39
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "rice_5kg",
+      "usual_receive_unit_code": "bag",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 40
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "rice_1kg",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 41
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "chickpea_1kg",
+      "usual_receive_unit_code": "kg",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 42
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "vermicelli_500g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 43
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "black_pepper_50g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 44
+    },
+    {
+      "supplier_type_code": "grocery_wholesaler",
+      "item_code": "toothbrush_pack",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 45
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "black_tea_250g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 1
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "mango_juice_1l",
+      "usual_receive_unit_code": "carton",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 2
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "bottled_water_500ml",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 3
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "soda_cola",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 4
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "energy_drink",
+      "usual_receive_unit_code": "can",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 5
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "green_tea",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 6
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "coffee_250g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 7
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "chocolate_bar",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 8
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "water_1_5l",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 9
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "water_5l",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 10
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "orange_soda",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 11
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "tang_sachet",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 12
+    },
+    {
+      "supplier_type_code": "beverage_supplier",
+      "item_code": "hibiscus_tea",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 13
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "eggs_tray",
+      "usual_receive_unit_code": "bag",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 1
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "powder_milk_400g",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 2
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "camel_milk_1l",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 3
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "milk_powder_900g",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 4
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "uht_milk_500ml",
+      "usual_receive_unit_code": "carton",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 5
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "uht_milk_1l",
+      "usual_receive_unit_code": "carton",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 6
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "evaporated_milk",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 7
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "condensed_milk",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 8
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "infant_formula",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 9
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "cheese_slices",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 10
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "yoghurt_cup",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 11
+    },
+    {
+      "supplier_type_code": "dairy_supplier",
+      "item_code": "ice_cream_cup",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 12
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "toilet_paper",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 1
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "tissue_roll",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 2
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "trash_bags",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 3
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "bin_bags_pack",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 4
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "laundry_soap",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 5
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "dish_soap",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 6
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "bleach",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 7
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "napkins",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 8
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "detergent_powder_1kg",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 9
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "bar_soap",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 10
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "dishwashing_liquid",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 11
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "sponge",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 12
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "floor_cleaner",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 13
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "insect_spray",
+      "usual_receive_unit_code": "can",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 14
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "plastic_cups",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 15
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "plastic_plates",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 16
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "baby_diapers",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 17
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "toothpaste",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 18
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "body_lotion",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 19
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "sanitary_pads",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 20
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "baby_diapers_30pk",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 21
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "petroleum_jelly",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 22
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "body_lotion_500ml",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 23
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "razor_blades",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 24
+    },
+    {
+      "supplier_type_code": "household_supplier",
+      "item_code": "deodorant",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 25
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "dates_500g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 1
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "tuna_tin",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 2
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "sardines_tin",
+      "usual_receive_unit_code": "tin",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 3
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "biscuits",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 4
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "candy_mix",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 5
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "shampoo",
+      "usual_receive_unit_code": "bottle",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 6
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "candle_pack",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 7
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "bread_loaf",
+      "usual_receive_unit_code": "piece",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 8
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "samosa_pack",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 9
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "crisps_pack",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 10
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "peanuts_150g",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 11
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "sweets_mix",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 12
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "biscuits_advance",
+      "usual_receive_unit_code": "packet",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 13
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "candles_10pack",
+      "usual_receive_unit_code": "box",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 14
+    },
+    {
+      "supplier_type_code": "snack_supplier",
+      "item_code": "cornflakes_500g",
+      "usual_receive_unit_code": "box",
+      "cost_entry_mode": "unit_cost",
+      "sort_order": 15
+    }
+  ]
+}

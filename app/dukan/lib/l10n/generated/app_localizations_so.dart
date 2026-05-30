@@ -1,0 +1,231 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Somali (`so`).
+class AppLocalizationsSo extends AppLocalizations {
+  AppLocalizationsSo([String locale = 'so']) : super(locale);
+
+  @override
+  String get appTitle => 'Dukaan';
+
+  @override
+  String get languageEnglish => 'EN';
+
+  @override
+  String get languageSomali => 'SO';
+
+  @override
+  String get homeHint => 'Dooro shaqada maanta';
+
+  @override
+  String get sale => 'Iib';
+
+  @override
+  String get receive => 'Qaadasho';
+
+  @override
+  String get payment => 'Bixin';
+
+  @override
+  String get expense => 'Kharash';
+
+  @override
+  String get cash => 'KAASH';
+
+  @override
+  String get debt => 'DEYN';
+
+  @override
+  String get confirm => 'XAQIIJI';
+
+  @override
+  String get searchItems => 'Raadi alaab';
+
+  @override
+  String get favorites => 'Kuwa la jecel yahay';
+
+  @override
+  String get cart => 'GAARI';
+
+  @override
+  String itemsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count alaab',
+      one: '1 alaab',
+      zero: '0 alaab',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get total => 'Wadar';
+
+  @override
+  String get savedUndo => 'Waa la keydiyay.';
+
+  @override
+  String get undo => 'Ka noqo';
+
+  @override
+  String get quantity => 'Tiro';
+
+  @override
+  String get price => 'Qiime';
+
+  @override
+  String get optionalPrice => 'Qiime beddel';
+
+  @override
+  String get addToCart => 'KU DAR';
+
+  @override
+  String get cancel => 'Jooji';
+
+  @override
+  String get customerDebt => 'Macmiilka deynta';
+
+  @override
+  String get searchCustomers => 'Raadi macmiil';
+
+  @override
+  String get emptySaleHint => 'Taabo alaabta. Riix dheer tiro ama qiime.';
+
+  @override
+  String get receiveTitle => 'Qaadasho';
+
+  @override
+  String get supplierFirst => 'Marka hore dooro keenaha';
+
+  @override
+  String get recentSuppliers => 'Keenayaal dhawaan';
+
+  @override
+  String get searchSuppliers => 'Raadi keenaha';
+
+  @override
+  String get newSupplier => '+ Keene cusub';
+
+  @override
+  String get newSupplierStub => 'Keene cusub — magac iyo telefoon marka dambe.';
+
+  @override
+  String get repeatLastBono => 'Ku celi bonadii hore';
+
+  @override
+  String get bonoAttached => 'Bono waa la raaciyay';
+
+  @override
+  String get attachBono => 'Ku dar sawir bono';
+
+  @override
+  String receiveFrom(Object supplier) {
+    return 'Ka qaado $supplier';
+  }
+
+  @override
+  String get item => 'Alaab';
+
+  @override
+  String get searchItem => 'Raadi alaab';
+
+  @override
+  String get unit => 'Halbeeg';
+
+  @override
+  String get cost => 'Qiime gadasho';
+
+  @override
+  String get perUnit => 'midkiiba';
+
+  @override
+  String get line => 'xariiq';
+
+  @override
+  String get lineTotal => 'Wadarta xariiqda';
+
+  @override
+  String get addLine => 'KU DAR XARIIQ';
+
+  @override
+  String linesSoFar(Object count) {
+    return 'Xariiqyo: $count';
+  }
+
+  @override
+  String get bonoTotal => 'Wadarta bono';
+
+  @override
+  String get paidNow => 'Hadda la bixiyay';
+
+  @override
+  String get credit => 'Deyn';
+
+  @override
+  String get paidAll => 'Dhammaan bixi';
+
+  @override
+  String get mismatchWarning =>
+      'Wadarta bono way ka duwan tahay xariiqyada — waa OK.';
+
+  @override
+  String get chooseItemWarning => 'Dooro alaab, tiro, iyo qiime.';
+
+  @override
+  String get confirmReceive => 'XAQIIJI QAADASHO';
+
+  @override
+  String get numberDone => 'DHAMME';
+
+  @override
+  String get clear => 'TIRTIR';
+
+  @override
+  String get backspace => 'DEL';
+
+  @override
+  String get paymentTitle => 'Bixin macmiil';
+
+  @override
+  String get pickCustomer => 'Dooro macmiil';
+
+  @override
+  String get amount => 'Lacag';
+
+  @override
+  String get confirmPayment => 'XAQIIJI BIXIN';
+
+  @override
+  String get expenseTitle => 'Kharash';
+
+  @override
+  String get category => 'Nooc';
+
+  @override
+  String get confirmExpense => 'XAQIIJI KHARASH';
+
+  @override
+  String get rent => 'Kiro';
+
+  @override
+  String get power => 'Koronto';
+
+  @override
+  String get salary => 'Mushahar';
+
+  @override
+  String get water => 'Biyo';
+
+  @override
+  String get transport => 'Gaadiid';
+
+  @override
+  String get other => 'Kale';
+
+  @override
+  String get comingSoon => 'Shaashad tijaabo waa la keydiyay. Ka noqo?';
+}

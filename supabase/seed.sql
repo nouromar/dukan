@@ -1,0 +1,4 @@
+-- Development-only seed file.
+--
+-- Production lookup data is intentionally seeded in migrations so every
+-- Supabase environment receives the same required reference rows.

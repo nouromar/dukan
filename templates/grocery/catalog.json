@@ -1,0 +1,4320 @@
+{
+  "kind": "configuration_pack",
+  "pack": "catalog",
+  "template_code": "grocery",
+  "version": 1,
+  "description": "Product concepts, regional grocery catalog items, units, and item unit conversions. Daily shops receive shop-owned copies from these definitions.",
+  "units": [
+    {
+      "code": "piece"
+    },
+    {
+      "code": "kg"
+    },
+    {
+      "code": "gram"
+    },
+    {
+      "code": "litre"
+    },
+    {
+      "code": "ml"
+    },
+    {
+      "code": "bag"
+    },
+    {
+      "code": "box"
+    },
+    {
+      "code": "carton"
+    },
+    {
+      "code": "bottle"
+    },
+    {
+      "code": "packet"
+    },
+    {
+      "code": "sachet"
+    },
+    {
+      "code": "can"
+    },
+    {
+      "code": "tin"
+    },
+    {
+      "code": "jar"
+    }
+  ],
+  "items": [
+    {
+      "code": "basmati_rice_25kg",
+      "product_concept": {
+        "code": "basmati_rice",
+        "name_en": "Basmati Rice",
+        "name_so": "Bariis Basmati",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Basmati Rice 25kg",
+      "display_name_so": "Bariis Basmati 25kg",
+      "brand_name": null,
+      "package_quantity": 25,
+      "package_unit_code": "kg",
+      "package_label": "25kg",
+      "category": "Staples",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 26.0,
+      "reorder_threshold": 2,
+      "sort_order": 1,
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "sugar_1kg",
+      "product_concept": {
+        "code": "sugar",
+        "name_en": "Sugar",
+        "name_so": "Sonkor",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Sugar 1kg",
+      "display_name_so": "Sonkor 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Staples",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.4,
+      "reorder_threshold": 10,
+      "sort_order": 2,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "wheat_flour_10kg",
+      "product_concept": {
+        "code": "wheat_flour",
+        "name_en": "Wheat Flour",
+        "name_so": "Bur Qamadi",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Wheat Flour 10kg",
+      "display_name_so": "Bur Qamadi 10kg",
+      "brand_name": null,
+      "package_quantity": 10,
+      "package_unit_code": "kg",
+      "package_label": "10kg",
+      "category": "Staples",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 9.5,
+      "reorder_threshold": 2,
+      "sort_order": 3,
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "pasta_500g",
+      "product_concept": {
+        "code": "pasta",
+        "name_en": "Pasta",
+        "name_so": "Baasto",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Pasta 500g",
+      "display_name_so": "Baasto 500g",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "gram",
+      "package_label": "500g",
+      "category": "Staples",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 5,
+      "sort_order": 4,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "salt_1kg",
+      "product_concept": {
+        "code": "salt",
+        "name_en": "Salt",
+        "name_so": "Cusbo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Salt 1kg",
+      "display_name_so": "Cusbo 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Staples",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 5,
+      "sort_order": 5,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "spaghetti_500g",
+      "product_concept": {
+        "code": "spaghetti",
+        "name_en": "Spaghetti",
+        "name_so": "Isbaageti",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Spaghetti 500g",
+      "display_name_so": "Isbaageti 500g",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "gram",
+      "package_label": "500g",
+      "category": "Staples",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 5,
+      "sort_order": 6,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "lentils_1kg",
+      "product_concept": {
+        "code": "lentils",
+        "name_en": "Lentils",
+        "name_so": "Misir",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Lentils 1kg",
+      "display_name_so": "Misir 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Staples",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 10,
+      "sort_order": 7,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "beans_1kg",
+      "product_concept": {
+        "code": "beans",
+        "name_en": "Beans",
+        "name_so": "Digir",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Beans 1kg",
+      "display_name_so": "Digir 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Staples",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.6,
+      "reorder_threshold": 10,
+      "sort_order": 8,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "corn_flour_1kg",
+      "product_concept": {
+        "code": "corn_flour",
+        "name_en": "Corn Flour",
+        "name_so": "Bur Galley",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Corn Flour 1kg",
+      "display_name_so": "Bur Galley 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Staples",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 10,
+      "sort_order": 9,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "toothbrush",
+      "product_concept": {
+        "code": "toothbrush",
+        "name_en": "Toothbrush",
+        "name_so": "Buraash Ilko",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Toothbrush",
+      "display_name_so": "Buraash Ilko",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Staples",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 10,
+      "sort_order": 10,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "instant_noodles",
+      "product_concept": {
+        "code": "instant_noodles",
+        "name_en": "Instant Noodles",
+        "name_so": "Baasto Degdeg",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Instant Noodles",
+      "display_name_so": "Baasto Degdeg",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Staples",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.55,
+      "reorder_threshold": 5,
+      "sort_order": 11,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "rice_5kg",
+      "product_concept": {
+        "code": "rice",
+        "name_en": "Rice",
+        "name_so": "Bariis",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Rice 5kg",
+      "display_name_so": "Bariis 5kg",
+      "brand_name": null,
+      "package_quantity": 5,
+      "package_unit_code": "kg",
+      "package_label": "5kg",
+      "category": "Staples",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 6.5,
+      "reorder_threshold": 2,
+      "sort_order": 12,
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "rice_1kg",
+      "product_concept": {
+        "code": "rice",
+        "name_en": "Rice",
+        "name_so": "Bariis",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Rice 1kg",
+      "display_name_so": "Bariis 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Staples",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 5,
+      "sort_order": 13,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "chickpea_1kg",
+      "product_concept": {
+        "code": "chickpeas",
+        "name_en": "Chickpeas",
+        "name_so": "Kabab",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Chickpeas 1kg",
+      "display_name_so": "Kabab 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Staples",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 10,
+      "sort_order": 14,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "vermicelli_500g",
+      "product_concept": {
+        "code": "vermicelli",
+        "name_en": "Vermicelli",
+        "name_so": "Fiini Shaah",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Vermicelli 500g",
+      "display_name_so": "Fiini Shaah 500g",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "gram",
+      "package_label": "500g",
+      "category": "Staples",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 5,
+      "sort_order": 15,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "black_pepper_50g",
+      "product_concept": {
+        "code": "black_pepper",
+        "name_en": "Black Pepper",
+        "name_so": "Digir Madow",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Black Pepper 50g",
+      "display_name_so": "Digir Madow 50g",
+      "brand_name": null,
+      "package_quantity": 50,
+      "package_unit_code": "gram",
+      "package_label": "50g",
+      "category": "Staples",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 5,
+      "sort_order": 16,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "toothbrush_pack",
+      "product_concept": {
+        "code": "toothbrush",
+        "name_en": "Toothbrush",
+        "name_so": "Buraash Ilko Baakad",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Toothbrush Pack",
+      "display_name_so": "Buraash Ilko Baakad",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Staples",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 5,
+      "sort_order": 17,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "cooking_oil_1l",
+      "product_concept": {
+        "code": "cooking_oil",
+        "name_en": "Cooking Oil",
+        "name_so": "Saliid Cunto",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Cooking Oil 1L",
+      "display_name_so": "Saliid Cunto 1L",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "litre",
+      "package_label": "1L",
+      "category": "Cooking essentials",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 3.0,
+      "reorder_threshold": 4,
+      "sort_order": 1,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "tomato_paste",
+      "product_concept": {
+        "code": "tomato_paste",
+        "name_en": "Tomato Paste",
+        "name_so": "Yaanyo Qasacad",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Tomato Paste",
+      "display_name_so": "Yaanyo Qasacad",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 4,
+      "sort_order": 2,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "cardamom_50g",
+      "product_concept": {
+        "code": "cardamom",
+        "name_en": "Cardamom",
+        "name_so": "Hayl",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Cardamom 50g",
+      "display_name_so": "Hayl 50g",
+      "brand_name": null,
+      "package_quantity": 50,
+      "package_unit_code": "gram",
+      "package_label": "50g",
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 8,
+      "sort_order": 3,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "cinnamon_100g",
+      "product_concept": {
+        "code": "cinnamon",
+        "name_en": "Cinnamon",
+        "name_so": "Qorfe",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Cinnamon 100g",
+      "display_name_so": "Qorfe 100g",
+      "brand_name": null,
+      "package_quantity": 100,
+      "package_unit_code": "gram",
+      "package_label": "100g",
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 8,
+      "sort_order": 4,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "chili_powder",
+      "product_concept": {
+        "code": "chili_powder",
+        "name_en": "Chili Powder",
+        "name_so": "Basbaas Buddo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Chili Powder",
+      "display_name_so": "Basbaas Buddo",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 8,
+      "sort_order": 5,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "onion_1kg",
+      "product_concept": {
+        "code": "onion",
+        "name_en": "Onion",
+        "name_so": "Basal",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Onion 1kg",
+      "display_name_so": "Basal 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Cooking essentials",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 10,
+      "sort_order": 6,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "garlic_250g",
+      "product_concept": {
+        "code": "garlic",
+        "name_en": "Garlic",
+        "name_so": "Toon",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Garlic 250g",
+      "display_name_so": "Toon 250g",
+      "brand_name": null,
+      "package_quantity": 250,
+      "package_unit_code": "gram",
+      "package_label": "250g",
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 8,
+      "sort_order": 7,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "eggs_tray",
+      "product_concept": {
+        "code": "eggs",
+        "name_en": "Eggs",
+        "name_so": "Ukun Kartoon",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Eggs Tray",
+      "display_name_so": "Ukun Kartoon",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Dairy",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 5.2,
+      "reorder_threshold": 2,
+      "sort_order": 1,
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "chicken_cube",
+      "product_concept": {
+        "code": "chicken_cube",
+        "name_en": "Chicken Cube",
+        "name_so": "Maraq Digaag",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Chicken Cube",
+      "display_name_so": "Maraq Digaag",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.25,
+      "reorder_threshold": 8,
+      "sort_order": 8,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "beef_cube",
+      "product_concept": {
+        "code": "beef_cube",
+        "name_en": "Beef Cube",
+        "name_so": "Maraq Hilib",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Beef Cube",
+      "display_name_so": "Maraq Hilib",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.25,
+      "reorder_threshold": 8,
+      "sort_order": 9,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "peanut_butter",
+      "product_concept": {
+        "code": "peanut_butter",
+        "name_en": "Peanut Butter",
+        "name_so": "Subag Lawska",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Peanut Butter",
+      "display_name_so": "Subag Lawska",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "jar",
+      "default_sale_unit_code": "jar",
+      "default_receive_unit_code": "jar",
+      "suggested_sale_price_usd": 2.6,
+      "reorder_threshold": 10,
+      "sort_order": 10,
+      "unit_conversions": [
+        {
+          "unit_code": "jar",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "vinegar_500ml",
+      "product_concept": {
+        "code": "vinegar",
+        "name_en": "Vinegar",
+        "name_so": "Khal",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Vinegar 500ml",
+      "display_name_so": "Khal 500ml",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "ml",
+      "package_label": "500ml",
+      "category": "Cooking essentials",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 4,
+      "sort_order": 11,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "margarine_500g",
+      "product_concept": {
+        "code": "margarine",
+        "name_en": "Margarine",
+        "name_so": "Subag",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Margarine 500g",
+      "display_name_so": "Subag 500g",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "gram",
+      "package_label": "500g",
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 10,
+      "sort_order": 12,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "sesame_oil",
+      "product_concept": {
+        "code": "sesame_oil",
+        "name_en": "Sesame Oil",
+        "name_so": "Saliid Sinsin",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Sesame Oil",
+      "display_name_so": "Saliid Sinsin",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 4.0,
+      "reorder_threshold": 4,
+      "sort_order": 13,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "oil_5l",
+      "product_concept": {
+        "code": "cooking_oil",
+        "name_en": "Cooking Oil",
+        "name_so": "Saliid Cunto",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Cooking Oil 5L",
+      "display_name_so": "Saliid Cunto 5L",
+      "brand_name": null,
+      "package_quantity": 5,
+      "package_unit_code": "litre",
+      "package_label": "5L",
+      "category": "Cooking essentials",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 12.0,
+      "reorder_threshold": 4,
+      "sort_order": 14,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "oil_20l",
+      "product_concept": {
+        "code": "cooking_oil",
+        "name_en": "Cooking Oil",
+        "name_so": "Saliid Cunto",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Cooking Oil 20L",
+      "display_name_so": "Saliid Cunto 20L",
+      "brand_name": null,
+      "package_quantity": 20,
+      "package_unit_code": "litre",
+      "package_label": "20L",
+      "category": "Cooking essentials",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 42.0,
+      "reorder_threshold": 2,
+      "sort_order": 15,
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "ghee_400g",
+      "product_concept": {
+        "code": "ghee",
+        "name_en": "Ghee",
+        "name_so": "Subag",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Ghee Tin 400g",
+      "display_name_so": "Subag 400g",
+      "brand_name": null,
+      "package_quantity": 400,
+      "package_unit_code": "gram",
+      "package_label": "400g",
+      "category": "Cooking essentials",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 4.5,
+      "reorder_threshold": 4,
+      "sort_order": 16,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "tomatoes_400g",
+      "product_concept": {
+        "code": "tomatoes",
+        "name_en": "Tomatoes",
+        "name_so": "Yaanyo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Tomatoes 400g",
+      "display_name_so": "Yaanyo 400g",
+      "brand_name": null,
+      "package_quantity": 400,
+      "package_unit_code": "gram",
+      "package_label": "400g",
+      "category": "Cooking essentials",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 0.95,
+      "reorder_threshold": 4,
+      "sort_order": 17,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "cumin_50g",
+      "product_concept": {
+        "code": "cumin",
+        "name_en": "Cumin",
+        "name_so": "Kamuun",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Cumin 50g",
+      "display_name_so": "Kamuun 50g",
+      "brand_name": null,
+      "package_quantity": 50,
+      "package_unit_code": "gram",
+      "package_label": "50g",
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.95,
+      "reorder_threshold": 8,
+      "sort_order": 18,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "turmeric_50g",
+      "product_concept": {
+        "code": "turmeric",
+        "name_en": "Turmeric",
+        "name_so": "Turmeric",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Turmeric 50g",
+      "display_name_so": "Turmeric 50g",
+      "brand_name": null,
+      "package_quantity": 50,
+      "package_unit_code": "gram",
+      "package_label": "50g",
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.85,
+      "reorder_threshold": 8,
+      "sort_order": 19,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "coriander_50g",
+      "product_concept": {
+        "code": "coriander",
+        "name_en": "Coriander",
+        "name_so": "Coriander",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Coriander 50g",
+      "display_name_so": "Coriander 50g",
+      "brand_name": null,
+      "package_quantity": 50,
+      "package_unit_code": "gram",
+      "package_label": "50g",
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 8,
+      "sort_order": 20,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "stock_cubes_pack",
+      "product_concept": {
+        "code": "stock_cubes",
+        "name_en": "Stock Cubes",
+        "name_so": "Maraq Baakad",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Stock Cubes Pack",
+      "display_name_so": "Maraq Baakad",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "box",
+      "default_sale_unit_code": "box",
+      "default_receive_unit_code": "box",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 8,
+      "sort_order": 21,
+      "unit_conversions": [
+        {
+          "unit_code": "box",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "vinegar_bottle",
+      "product_concept": {
+        "code": "vinegar",
+        "name_en": "Vinegar",
+        "name_so": "Saliid Suuq",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Vinegar 500ml",
+      "display_name_so": "Saliid Suuq 500ml",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "ml",
+      "package_label": "500ml",
+      "category": "Cooking essentials",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 4,
+      "sort_order": 22,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "toilet_paper",
+      "product_concept": {
+        "code": "toilet_paper",
+        "name_en": "Toilet Paper",
+        "name_so": "Wara Wax",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Toilet Paper Roll",
+      "display_name_so": "Wara Wax",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.55,
+      "reorder_threshold": 10,
+      "sort_order": 1,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "mosquito_coils",
+      "product_concept": {
+        "code": "mosquito_coils",
+        "name_en": "Mosquito Coils",
+        "name_so": "Bood Bokh",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Mosquito Coils",
+      "display_name_so": "Bood Bokh",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 8,
+      "sort_order": 23,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "black_tea_250g",
+      "product_concept": {
+        "code": "black_tea",
+        "name_en": "Black Tea",
+        "name_so": "Shaah Madow",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Black Tea 250g",
+      "display_name_so": "Shaah Madow 250g",
+      "brand_name": null,
+      "package_quantity": 250,
+      "package_unit_code": "gram",
+      "package_label": "250g",
+      "category": "Beverages",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.2,
+      "reorder_threshold": 8,
+      "sort_order": 1,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "powder_milk_400g",
+      "product_concept": {
+        "code": "powder_milk",
+        "name_en": "Powder Milk",
+        "name_so": "Caano Boore",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Powder Milk 400g",
+      "display_name_so": "Caano Boore 400g",
+      "brand_name": null,
+      "package_quantity": 400,
+      "package_unit_code": "gram",
+      "package_label": "400g",
+      "category": "Dairy",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 4.8,
+      "reorder_threshold": 4,
+      "sort_order": 2,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "mango_juice_1l",
+      "product_concept": {
+        "code": "mango_juice",
+        "name_en": "Mango Juice",
+        "name_so": "Casiir Cambe",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Mango Juice 1L",
+      "display_name_so": "Casiir Cambe 1L",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "litre",
+      "package_label": "1L",
+      "category": "Beverages",
+      "base_unit_code": "carton",
+      "default_sale_unit_code": "carton",
+      "default_receive_unit_code": "carton",
+      "suggested_sale_price_usd": 1.7,
+      "reorder_threshold": 4,
+      "sort_order": 2,
+      "unit_conversions": [
+        {
+          "unit_code": "carton",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "bottled_water_500ml",
+      "product_concept": {
+        "code": "bottled_water",
+        "name_en": "Bottled Water",
+        "name_so": "Biyo Dhalo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Bottled Water 500ml",
+      "display_name_so": "Biyo Dhalo 500ml",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "ml",
+      "package_label": "500ml",
+      "category": "Beverages",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 0.35,
+      "reorder_threshold": 4,
+      "sort_order": 3,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "soda_cola",
+      "product_concept": {
+        "code": "soda_cola",
+        "name_en": "Soda Cola",
+        "name_so": "Sharaab Koola",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Soda Cola",
+      "display_name_so": "Sharaab Koola",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Beverages",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 4,
+      "sort_order": 4,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "energy_drink",
+      "product_concept": {
+        "code": "energy_drink",
+        "name_en": "Energy Drink",
+        "name_so": "Cabitaan Tamar",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Energy Drink",
+      "display_name_so": "Cabitaan Tamar",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Beverages",
+      "base_unit_code": "can",
+      "default_sale_unit_code": "can",
+      "default_receive_unit_code": "can",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 4,
+      "sort_order": 5,
+      "unit_conversions": [
+        {
+          "unit_code": "can",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "green_tea",
+      "product_concept": {
+        "code": "green_tea",
+        "name_en": "Green Tea",
+        "name_so": "Shaah Cagaar",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Green Tea",
+      "display_name_so": "Shaah Cagaar",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Beverages",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 8,
+      "sort_order": 6,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "coffee_250g",
+      "product_concept": {
+        "code": "coffee",
+        "name_en": "Coffee",
+        "name_so": "Bun",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Coffee 250g",
+      "display_name_so": "Bun 250g",
+      "brand_name": null,
+      "package_quantity": 250,
+      "package_unit_code": "gram",
+      "package_label": "250g",
+      "category": "Beverages",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 3.5,
+      "reorder_threshold": 8,
+      "sort_order": 7,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "chocolate_bar",
+      "product_concept": {
+        "code": "chocolate_bar",
+        "name_en": "Chocolate Bar",
+        "name_so": "Shukulaato",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Chocolate Bar",
+      "display_name_so": "Shukulaato",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Beverages",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 5,
+      "sort_order": 8,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "camel_milk_1l",
+      "product_concept": {
+        "code": "camel_milk",
+        "name_en": "Camel Milk",
+        "name_so": "Caano Geel",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Camel Milk 1L",
+      "display_name_so": "Caano Geel 1L",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "litre",
+      "package_label": "1L",
+      "category": "Dairy",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 4,
+      "sort_order": 3,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "water_1_5l",
+      "product_concept": {
+        "code": "bottled_water",
+        "name_en": "Bottled Water",
+        "name_so": "Biyo Dhalo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Bottled Water 1.5L",
+      "display_name_so": "Biyo Dhalo 1.5L",
+      "brand_name": null,
+      "package_quantity": 1.5,
+      "package_unit_code": "litre",
+      "package_label": "1.5L",
+      "category": "Beverages",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 0.55,
+      "reorder_threshold": 4,
+      "sort_order": 9,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "water_5l",
+      "product_concept": {
+        "code": "bottled_water",
+        "name_en": "Bottled Water",
+        "name_so": "Biyo Dhalo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Bottled Water 5L",
+      "display_name_so": "Biyo Dhalo 5L",
+      "brand_name": null,
+      "package_quantity": 5,
+      "package_unit_code": "litre",
+      "package_label": "5L",
+      "category": "Beverages",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 4,
+      "sort_order": 10,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "orange_soda",
+      "product_concept": {
+        "code": "orange_soda",
+        "name_en": "Orange Soda",
+        "name_so": "Sharaab Liin",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Orange Soda",
+      "display_name_so": "Sharaab Liin",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Beverages",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 4,
+      "sort_order": 11,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "tang_sachet",
+      "product_concept": {
+        "code": "tang",
+        "name_en": "Tang",
+        "name_so": "Tang Baakad",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Tang Sachet",
+      "display_name_so": "Tang Baakad",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Beverages",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.25,
+      "reorder_threshold": 8,
+      "sort_order": 12,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "hibiscus_tea",
+      "product_concept": {
+        "code": "hibiscus_tea",
+        "name_en": "Hibiscus Tea",
+        "name_so": "Shaah Somali",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Hibiscus Tea 200g",
+      "display_name_so": "Shaah Somali 200g",
+      "brand_name": null,
+      "package_quantity": 200,
+      "package_unit_code": "gram",
+      "package_label": "200g",
+      "category": "Beverages",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 8,
+      "sort_order": 13,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "milk_powder_900g",
+      "product_concept": {
+        "code": "milk_powder",
+        "name_en": "Milk Powder",
+        "name_so": "Caano Boore",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Milk Powder 900g",
+      "display_name_so": "Caano Boore 900g",
+      "brand_name": null,
+      "package_quantity": 900,
+      "package_unit_code": "gram",
+      "package_label": "900g",
+      "category": "Dairy",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 7.5,
+      "reorder_threshold": 4,
+      "sort_order": 4,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "uht_milk_500ml",
+      "product_concept": {
+        "code": "uht_milk",
+        "name_en": "UHT Milk",
+        "name_so": "Caano UHT",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "UHT Milk 500ml",
+      "display_name_so": "Caano UHT 500ml",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "ml",
+      "package_label": "500ml",
+      "category": "Dairy",
+      "base_unit_code": "carton",
+      "default_sale_unit_code": "carton",
+      "default_receive_unit_code": "carton",
+      "suggested_sale_price_usd": 0.95,
+      "reorder_threshold": 4,
+      "sort_order": 5,
+      "unit_conversions": [
+        {
+          "unit_code": "carton",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "uht_milk_1l",
+      "product_concept": {
+        "code": "uht_milk",
+        "name_en": "UHT Milk",
+        "name_so": "Caano UHT",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "UHT Milk 1L",
+      "display_name_so": "Caano UHT 1L",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "litre",
+      "package_label": "1L",
+      "category": "Dairy",
+      "base_unit_code": "carton",
+      "default_sale_unit_code": "carton",
+      "default_receive_unit_code": "carton",
+      "suggested_sale_price_usd": 1.6,
+      "reorder_threshold": 4,
+      "sort_order": 6,
+      "unit_conversions": [
+        {
+          "unit_code": "carton",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "evaporated_milk",
+      "product_concept": {
+        "code": "evaporated_milk",
+        "name_en": "Evaporated Milk",
+        "name_so": "Caano Kartin",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Evaporated Milk 400ml",
+      "display_name_so": "Caano Kartin 400ml",
+      "brand_name": null,
+      "package_quantity": 400,
+      "package_unit_code": "ml",
+      "package_label": "400ml",
+      "category": "Dairy",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 1.4,
+      "reorder_threshold": 4,
+      "sort_order": 7,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "condensed_milk",
+      "product_concept": {
+        "code": "condensed_milk",
+        "name_en": "Condensed Milk",
+        "name_so": "Caano Macaan",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Condensed Milk 397g",
+      "display_name_so": "Caano Macaan 397g",
+      "brand_name": null,
+      "package_quantity": 397,
+      "package_unit_code": "gram",
+      "package_label": "397g",
+      "category": "Dairy",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 2.2,
+      "reorder_threshold": 4,
+      "sort_order": 8,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "infant_formula",
+      "product_concept": {
+        "code": "infant_formula",
+        "name_en": "Infant Formula",
+        "name_so": "Caano Carruuq",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Infant Formula 400g",
+      "display_name_so": "Caano Carruuq 400g",
+      "brand_name": null,
+      "package_quantity": 400,
+      "package_unit_code": "gram",
+      "package_label": "400g",
+      "category": "Dairy",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 5.5,
+      "reorder_threshold": 4,
+      "sort_order": 9,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "dates_500g",
+      "product_concept": {
+        "code": "dates",
+        "name_en": "Dates",
+        "name_so": "Timir",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Dates 500g",
+      "display_name_so": "Timir 500g",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "gram",
+      "package_label": "500g",
+      "category": "Snacks",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 8,
+      "sort_order": 1,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "tuna_tin",
+      "product_concept": {
+        "code": "tuna",
+        "name_en": "Tuna",
+        "name_so": "Tuunno Qasacad",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Tuna Tin",
+      "display_name_so": "Tuunno Qasacad",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 4,
+      "sort_order": 2,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "sardines_tin",
+      "product_concept": {
+        "code": "sardines",
+        "name_en": "Sardines",
+        "name_so": "Sardiin Qasacad",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Sardines Tin",
+      "display_name_so": "Sardiin Qasacad",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 4,
+      "sort_order": 3,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "biscuits",
+      "product_concept": {
+        "code": "biscuits",
+        "name_en": "Biscuits",
+        "name_so": "Buskud",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Biscuits",
+      "display_name_so": "Buskud",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.6,
+      "reorder_threshold": 8,
+      "sort_order": 4,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "candy_mix",
+      "product_concept": {
+        "code": "candy_mix",
+        "name_en": "Candy Mix",
+        "name_so": "Nacnac Iskujir",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Candy Mix",
+      "display_name_so": "Nacnac Iskujir",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 8,
+      "sort_order": 5,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "shampoo",
+      "product_concept": {
+        "code": "shampoo",
+        "name_en": "Shampoo",
+        "name_so": "Shaambo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Shampoo",
+      "display_name_so": "Shaambo",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 4,
+      "sort_order": 6,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "tissue_roll",
+      "product_concept": {
+        "code": "tissue",
+        "name_en": "Tissue",
+        "name_so": "Tiish",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Tissue Roll",
+      "display_name_so": "Tiish",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.4,
+      "reorder_threshold": 5,
+      "sort_order": 2,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "candle_pack",
+      "product_concept": {
+        "code": "candle",
+        "name_en": "Candle",
+        "name_so": "Shumac Baakad",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Candle Pack",
+      "display_name_so": "Shumac Baakad",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 8,
+      "sort_order": 7,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "trash_bags",
+      "product_concept": {
+        "code": "trash_bags",
+        "name_en": "Trash Bags",
+        "name_so": "Bac Qashin",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Trash Bags",
+      "display_name_so": "Bac Qashin",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.4,
+      "reorder_threshold": 8,
+      "sort_order": 3,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "bread_loaf",
+      "product_concept": {
+        "code": "bread_loaf",
+        "name_en": "Bread Loaf",
+        "name_so": "Rooti",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Bread Loaf",
+      "display_name_so": "Rooti",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.6,
+      "reorder_threshold": 5,
+      "sort_order": 8,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "samosa_pack",
+      "product_concept": {
+        "code": "samosa",
+        "name_en": "Samosa",
+        "name_so": "Sambuus Baakad",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Samosa Pack",
+      "display_name_so": "Sambuus Baakad",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 8,
+      "sort_order": 9,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "crisps_pack",
+      "product_concept": {
+        "code": "crisps",
+        "name_en": "Crisps",
+        "name_so": "Crisps Baakad",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Crisps Packet",
+      "display_name_so": "Crisps Baakad",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 8,
+      "sort_order": 10,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "peanuts_150g",
+      "product_concept": {
+        "code": "peanuts",
+        "name_en": "Peanuts",
+        "name_so": "Peanuts",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Peanuts 150g",
+      "display_name_so": "Peanuts 150g",
+      "brand_name": null,
+      "package_quantity": 150,
+      "package_unit_code": "gram",
+      "package_label": "150g",
+      "category": "Snacks",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 8,
+      "sort_order": 11,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "sweets_mix",
+      "product_concept": {
+        "code": "sweets_mixed",
+        "name_en": "Sweets Mixed",
+        "name_so": "Nacnac Isku Dar",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Sweets Mixed 200g",
+      "display_name_so": "Nacnac Isku Dar 200g",
+      "brand_name": null,
+      "package_quantity": 200,
+      "package_unit_code": "gram",
+      "package_label": "200g",
+      "category": "Snacks",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 8,
+      "sort_order": 12,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "biscuits_advance",
+      "product_concept": {
+        "code": "advance_biscuits",
+        "name_en": "Advance Biscuits",
+        "name_so": "Buskud Advance",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Advance Biscuits",
+      "display_name_so": "Buskud Advance",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.75,
+      "reorder_threshold": 8,
+      "sort_order": 13,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "bin_bags_pack",
+      "product_concept": {
+        "code": "bin_bags",
+        "name_en": "Bin Bags",
+        "name_so": "Shantiyada Plastic",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Bin Bags Pack",
+      "display_name_so": "Shantiyada Plastic",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 8,
+      "sort_order": 4,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "candles_10pack",
+      "product_concept": {
+        "code": "candles_10",
+        "name_en": "Candles 10",
+        "name_so": "Shumac 10",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Candles 10-pack",
+      "display_name_so": "Shumac 10",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Snacks",
+      "base_unit_code": "box",
+      "default_sale_unit_code": "box",
+      "default_receive_unit_code": "box",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 8,
+      "sort_order": 14,
+      "unit_conversions": [
+        {
+          "unit_code": "box",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "laundry_soap",
+      "product_concept": {
+        "code": "laundry_soap",
+        "name_en": "Laundry Soap",
+        "name_so": "Saabuun Dhar",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Laundry Soap",
+      "display_name_so": "Saabuun Dhar",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 5,
+      "sort_order": 5,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "dish_soap",
+      "product_concept": {
+        "code": "dish_soap",
+        "name_en": "Dish Soap",
+        "name_so": "Saabuun Weel",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Dish Soap",
+      "display_name_so": "Saabuun Weel",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 4,
+      "sort_order": 6,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "bleach",
+      "product_concept": {
+        "code": "bleach",
+        "name_en": "Bleach",
+        "name_so": "Warankiilo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Bleach",
+      "display_name_so": "Warankiilo",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 4,
+      "sort_order": 7,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "napkins",
+      "product_concept": {
+        "code": "napkins",
+        "name_en": "Napkins",
+        "name_so": "Masax",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Napkins",
+      "display_name_so": "Masax",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 8,
+      "sort_order": 8,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "detergent_powder_1kg",
+      "product_concept": {
+        "code": "detergent_powder",
+        "name_en": "Detergent Powder",
+        "name_so": "Oomo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Detergent Powder 1kg",
+      "display_name_so": "Oomo 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Household",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.1,
+      "reorder_threshold": 8,
+      "sort_order": 9,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "bar_soap",
+      "product_concept": {
+        "code": "bar_soap",
+        "name_en": "Bar Soap",
+        "name_so": "Saabuun Qalya",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Bar Soap",
+      "display_name_so": "Saabuun Qalya",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.65,
+      "reorder_threshold": 5,
+      "sort_order": 10,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "dishwashing_liquid",
+      "product_concept": {
+        "code": "dishwashing_liquid",
+        "name_en": "Dishwashing Liquid",
+        "name_so": "Saabuun Weel",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Dishwashing Liquid 500ml",
+      "display_name_so": "Saabuun Weel 500ml",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "ml",
+      "package_label": "500ml",
+      "category": "Household",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 4,
+      "sort_order": 11,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "sponge",
+      "product_concept": {
+        "code": "sponge",
+        "name_en": "Sponge",
+        "name_so": "Loof Cunto",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Sponge",
+      "display_name_so": "Loof Cunto",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.45,
+      "reorder_threshold": 5,
+      "sort_order": 12,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "baby_diapers",
+      "product_concept": {
+        "code": "baby_diapers",
+        "name_en": "Baby Diapers",
+        "name_so": "Xafaayad Carruur",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Baby Diapers",
+      "display_name_so": "Xafaayad Carruur",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Personal care",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 4.5,
+      "reorder_threshold": 8,
+      "sort_order": 1,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "toothpaste",
+      "product_concept": {
+        "code": "toothpaste",
+        "name_en": "Toothpaste",
+        "name_so": "Daawo Ilko",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Toothpaste",
+      "display_name_so": "Daawo Ilko",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Personal care",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 8,
+      "sort_order": 2,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "body_lotion",
+      "product_concept": {
+        "code": "body_lotion",
+        "name_en": "Body Lotion",
+        "name_so": "Kareem Jir",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Body Lotion",
+      "display_name_so": "Kareem Jir",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Personal care",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 4,
+      "sort_order": 3,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "sanitary_pads",
+      "product_concept": {
+        "code": "sanitary_pads",
+        "name_en": "Sanitary Pads",
+        "name_so": "Haween",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Sanitary Pads",
+      "display_name_so": "Haween",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Personal care",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 3.5,
+      "reorder_threshold": 8,
+      "sort_order": 4,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "baby_diapers_30pk",
+      "product_concept": {
+        "code": "baby_diapers",
+        "name_en": "Baby Diapers",
+        "name_so": "Xafaayad Carruur 30",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Baby Diapers 30pk",
+      "display_name_so": "Xafaayad Carruur 30",
+      "brand_name": null,
+      "package_quantity": 30,
+      "package_unit_code": "packet",
+      "package_label": "30pk",
+      "category": "Personal care",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 12.0,
+      "reorder_threshold": 8,
+      "sort_order": 5,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "petroleum_jelly",
+      "product_concept": {
+        "code": "petroleum_jelly",
+        "name_en": "Petroleum Jelly",
+        "name_so": "Vaseline",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Petroleum Jelly 100g",
+      "display_name_so": "Vaseline",
+      "brand_name": null,
+      "package_quantity": 100,
+      "package_unit_code": "gram",
+      "package_label": "100g",
+      "category": "Personal care",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 4,
+      "sort_order": 6,
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "body_lotion_500ml",
+      "product_concept": {
+        "code": "body_lotion",
+        "name_en": "Body Lotion",
+        "name_so": "Kareem Jir",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Body Lotion 500ml",
+      "display_name_so": "Kareem Jir 500ml",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "ml",
+      "package_label": "500ml",
+      "category": "Personal care",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 3.8,
+      "reorder_threshold": 4,
+      "sort_order": 7,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "razor_blades",
+      "product_concept": {
+        "code": "razor_blades",
+        "name_en": "Razor Blades",
+        "name_so": "Ujada Baakad",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Razor Blades Pack",
+      "display_name_so": "Ujada Baakad",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Personal care",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 8,
+      "sort_order": 8,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "deodorant",
+      "product_concept": {
+        "code": "deodorant_stick",
+        "name_en": "Deodorant Stick",
+        "name_so": "Deodorant",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Deodorant Stick",
+      "display_name_so": "Deodorant",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Personal care",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 5,
+      "sort_order": 9,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "potato_1kg",
+      "product_concept": {
+        "code": "potato",
+        "name_en": "Potato",
+        "name_so": "Baradho",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Potato 1kg",
+      "display_name_so": "Baradho 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Other",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 5,
+      "sort_order": 1,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "banana_1kg",
+      "product_concept": {
+        "code": "banana",
+        "name_en": "Banana",
+        "name_so": "Moos",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Banana 1kg",
+      "display_name_so": "Moos 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Other",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 5,
+      "sort_order": 2,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "orange_1kg",
+      "product_concept": {
+        "code": "orange",
+        "name_en": "Orange",
+        "name_so": "Liin Macaan",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Orange 1kg",
+      "display_name_so": "Liin Macaan 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Other",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 5,
+      "sort_order": 3,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "apple_1kg",
+      "product_concept": {
+        "code": "apple",
+        "name_en": "Apple",
+        "name_so": "Tufaax",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Apple 1kg",
+      "display_name_so": "Tufaax 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Other",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 5,
+      "sort_order": 4,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "matches",
+      "product_concept": {
+        "code": "matches",
+        "name_en": "Matches",
+        "name_so": "Taraq",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Matches",
+      "display_name_so": "Taraq",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "box",
+      "default_sale_unit_code": "box",
+      "default_receive_unit_code": "box",
+      "suggested_sale_price_usd": 0.15,
+      "reorder_threshold": 8,
+      "sort_order": 5,
+      "unit_conversions": [
+        {
+          "unit_code": "box",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "charcoal_5kg",
+      "product_concept": {
+        "code": "charcoal",
+        "name_en": "Charcoal",
+        "name_so": "Dhuxul",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Charcoal 5kg",
+      "display_name_so": "Dhuxul 5kg",
+      "brand_name": null,
+      "package_quantity": 5,
+      "package_unit_code": "kg",
+      "package_label": "5kg",
+      "category": "Other",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 3.0,
+      "reorder_threshold": 2,
+      "sort_order": 6,
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "gas_refill_small",
+      "product_concept": {
+        "code": "gas_refill",
+        "name_en": "Gas Refill",
+        "name_so": "Gaas Yar",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Gas Refill Small",
+      "display_name_so": "Gaas Yar",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 8.0,
+      "reorder_threshold": 5,
+      "sort_order": 7,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "phone_airtime_1",
+      "product_concept": {
+        "code": "phone_airtime_1",
+        "name_en": "Phone Airtime \\$1",
+        "name_so": "Kaarka Taleefan \\$1",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Phone Airtime \\$1",
+      "display_name_so": "Kaarka Taleefan \\$1",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 5,
+      "sort_order": 8,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "phone_airtime_5",
+      "product_concept": {
+        "code": "phone_airtime_5",
+        "name_en": "Phone Airtime \\$5",
+        "name_so": "Kaarka Taleefan \\$5",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Phone Airtime \\$5",
+      "display_name_so": "Kaarka Taleefan \\$5",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 5.0,
+      "reorder_threshold": 5,
+      "sort_order": 9,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "battery_aa",
+      "product_concept": {
+        "code": "battery_aa",
+        "name_en": "Battery AA",
+        "name_so": "Batariga AA",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Battery AA",
+      "display_name_so": "Batariga AA",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 8,
+      "sort_order": 10,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "light_bulb",
+      "product_concept": {
+        "code": "light_bulb",
+        "name_en": "Light Bulb",
+        "name_so": "Nal",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Light Bulb",
+      "display_name_so": "Nal",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 5,
+      "sort_order": 11,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "notebook",
+      "product_concept": {
+        "code": "notebook",
+        "name_en": "Notebook",
+        "name_so": "Buug Qoraal",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Notebook",
+      "display_name_so": "Buug Qoraal",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 5,
+      "sort_order": 12,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "pen_blue",
+      "product_concept": {
+        "code": "pen_blue",
+        "name_en": "Pen Blue",
+        "name_so": "Qalin Buluug",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Pen Blue",
+      "display_name_so": "Qalin Buluug",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.2,
+      "reorder_threshold": 5,
+      "sort_order": 13,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "school_pencil",
+      "product_concept": {
+        "code": "school_pencil",
+        "name_en": "School Pencil",
+        "name_so": "Qalin Qori",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "School Pencil",
+      "display_name_so": "Qalin Qori",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.15,
+      "reorder_threshold": 5,
+      "sort_order": 14,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "cornflakes_500g",
+      "product_concept": {
+        "code": "cornflakes",
+        "name_en": "Cornflakes",
+        "name_so": "Quraac Galley",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Cornflakes 500g",
+      "display_name_so": "Quraac Galley 500g",
+      "brand_name": null,
+      "package_quantity": 500,
+      "package_unit_code": "gram",
+      "package_label": "500g",
+      "category": "Snacks",
+      "base_unit_code": "box",
+      "default_sale_unit_code": "box",
+      "default_receive_unit_code": "box",
+      "suggested_sale_price_usd": 3.2,
+      "reorder_threshold": 8,
+      "sort_order": 15,
+      "unit_conversions": [
+        {
+          "unit_code": "box",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "honey_250g",
+      "product_concept": {
+        "code": "honey",
+        "name_en": "Honey",
+        "name_so": "Malab",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Honey 250g",
+      "display_name_so": "Malab 250g",
+      "brand_name": null,
+      "package_quantity": 250,
+      "package_unit_code": "gram",
+      "package_label": "250g",
+      "category": "Cooking essentials",
+      "base_unit_code": "jar",
+      "default_sale_unit_code": "jar",
+      "default_receive_unit_code": "jar",
+      "suggested_sale_price_usd": 3.0,
+      "reorder_threshold": 5,
+      "sort_order": 24,
+      "unit_conversions": [
+        {
+          "unit_code": "jar",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "jam_250g",
+      "product_concept": {
+        "code": "jam",
+        "name_en": "Jam",
+        "name_so": "Macmacaan Dhalo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Jam 250g",
+      "display_name_so": "Macmacaan Dhalo",
+      "brand_name": null,
+      "package_quantity": 250,
+      "package_unit_code": "gram",
+      "package_label": "250g",
+      "category": "Cooking essentials",
+      "base_unit_code": "jar",
+      "default_sale_unit_code": "jar",
+      "default_receive_unit_code": "jar",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 5,
+      "sort_order": 25,
+      "unit_conversions": [
+        {
+          "unit_code": "jar",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "mayonnaise",
+      "product_concept": {
+        "code": "mayonnaise",
+        "name_en": "Mayonnaise",
+        "name_so": "Mayoonees",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Mayonnaise",
+      "display_name_so": "Mayoonees",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "jar",
+      "default_sale_unit_code": "jar",
+      "default_receive_unit_code": "jar",
+      "suggested_sale_price_usd": 2.1,
+      "reorder_threshold": 5,
+      "sort_order": 26,
+      "unit_conversions": [
+        {
+          "unit_code": "jar",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "ketchup",
+      "product_concept": {
+        "code": "ketchup",
+        "name_en": "Ketchup",
+        "name_so": "Ketchup",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Ketchup",
+      "display_name_so": "Ketchup",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 4,
+      "sort_order": 27,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "cheese_slices",
+      "product_concept": {
+        "code": "cheese_slices",
+        "name_en": "Cheese Slices",
+        "name_so": "Farmaajo Jeex",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Cheese Slices",
+      "display_name_so": "Farmaajo Jeex",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Dairy",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.4,
+      "reorder_threshold": 8,
+      "sort_order": 10,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "frozen_chicken",
+      "product_concept": {
+        "code": "frozen_chicken",
+        "name_en": "Frozen Chicken",
+        "name_so": "Digaag Qabow",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Frozen Chicken",
+      "display_name_so": "Digaag Qabow",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 3.4,
+      "reorder_threshold": 5,
+      "sort_order": 15,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "frozen_fish",
+      "product_concept": {
+        "code": "frozen_fish",
+        "name_en": "Frozen Fish",
+        "name_so": "Kalluun Qabow",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Frozen Fish",
+      "display_name_so": "Kalluun Qabow",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 3.0,
+      "reorder_threshold": 5,
+      "sort_order": 16,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "beef_1kg",
+      "product_concept": {
+        "code": "beef",
+        "name_en": "Beef",
+        "name_so": "Hilib Lo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Beef 1kg",
+      "display_name_so": "Hilib Lo 1kg",
+      "brand_name": null,
+      "package_quantity": 1,
+      "package_unit_code": "kg",
+      "package_label": "1kg",
+      "category": "Other",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 6.0,
+      "reorder_threshold": 5,
+      "sort_order": 17,
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "yoghurt_cup",
+      "product_concept": {
+        "code": "yoghurt_cup",
+        "name_en": "Yoghurt Cup",
+        "name_so": "Garoor Koob",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Yoghurt Cup",
+      "display_name_so": "Garoor Koob",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Dairy",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 5,
+      "sort_order": 11,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "ice_cream_cup",
+      "product_concept": {
+        "code": "ice_cream_cup",
+        "name_en": "Ice Cream Cup",
+        "name_so": "Jalaato Koob",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Ice Cream Cup",
+      "display_name_so": "Jalaato Koob",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Dairy",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 5,
+      "sort_order": 12,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "floor_cleaner",
+      "product_concept": {
+        "code": "floor_cleaner",
+        "name_en": "Floor Cleaner",
+        "name_so": "Nadiifiye Dhulka",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Floor Cleaner",
+      "display_name_so": "Nadiifiye Dhulka",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.6,
+      "reorder_threshold": 4,
+      "sort_order": 13,
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "insect_spray",
+      "product_concept": {
+        "code": "insect_spray",
+        "name_en": "Insect Spray",
+        "name_so": "Buufis Cayayaan",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Insect Spray",
+      "display_name_so": "Buufis Cayayaan",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "can",
+      "default_sale_unit_code": "can",
+      "default_receive_unit_code": "can",
+      "suggested_sale_price_usd": 2.8,
+      "reorder_threshold": 4,
+      "sort_order": 14,
+      "unit_conversions": [
+        {
+          "unit_code": "can",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "plastic_cups",
+      "product_concept": {
+        "code": "plastic_cups",
+        "name_en": "Plastic Cups",
+        "name_so": "Koob Caag",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Plastic Cups",
+      "display_name_so": "Koob Caag",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 8,
+      "sort_order": 15,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "plastic_plates",
+      "product_concept": {
+        "code": "plastic_plates",
+        "name_en": "Plastic Plates",
+        "name_so": "Saxan Caag",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Plastic Plates",
+      "display_name_so": "Saxan Caag",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Household",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 8,
+      "sort_order": 16,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "black_seed",
+      "product_concept": {
+        "code": "black_seed",
+        "name_en": "Black Seed",
+        "name_so": "Xabad Sowdo",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Black Seed",
+      "display_name_so": "Xabad Sowdo",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Cooking essentials",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.7,
+      "reorder_threshold": 8,
+      "sort_order": 28,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "battery_aaa",
+      "product_concept": {
+        "code": "battery_aaa",
+        "name_en": "Battery AAA",
+        "name_so": "Batariga AAA",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Battery AAA",
+      "display_name_so": "Batariga AAA",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 5,
+      "sort_order": 18,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "battery_d",
+      "product_concept": {
+        "code": "battery_d_size",
+        "name_en": "Battery D Size",
+        "name_so": "Batariga D",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Battery D Size",
+      "display_name_so": "Batariga D",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 5,
+      "sort_order": 19,
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "led_bulb_7w",
+      "product_concept": {
+        "code": "led_bulb_7w",
+        "name_en": "LED Bulb 7W",
+        "name_so": "Nal LED 7W",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "LED Bulb 7W",
+      "display_name_so": "Nal LED 7W",
+      "brand_name": null,
+      "package_quantity": null,
+      "package_unit_code": null,
+      "package_label": null,
+      "category": "Other",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 5,
+      "sort_order": 20,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "charcoal_25kg",
+      "product_concept": {
+        "code": "charcoal",
+        "name_en": "Charcoal",
+        "name_so": "Dhuxul",
+        "description_en": null,
+        "description_so": null
+      },
+      "display_name_en": "Charcoal 25kg",
+      "display_name_so": "Dhuxul 25kg",
+      "brand_name": null,
+      "package_quantity": 25,
+      "package_unit_code": "kg",
+      "package_label": "25kg",
+      "category": "Other",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 11.0,
+      "reorder_threshold": 2,
+      "sort_order": 21,
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "code": "example_candy_abc_bag_split",
+      "product_concept": {
+        "code": "candy",
+        "name_en": "Candy",
+        "name_so": "Nacnac",
+        "description_en": "Example split package item",
+        "description_so": "Tusaale nacnac baakad laga iibiyo xabbo"
+      },
+      "display_name_en": "Candy ABC bag",
+      "display_name_so": "Nacnac ABC bag",
+      "brand_name": "ABC",
+      "package_quantity": 100,
+      "package_unit_code": "piece",
+      "package_label": "100 pieces",
+      "category": "Snacks",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": null,
+      "reorder_threshold": null,
+      "sort_order": 999,
+      "is_example": true,
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": false,
+          "sort_order": 1
+        },
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 100,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 2
+        }
+      ]
+    },
+    {
+      "code": "example_sugar_abc_50kg_whole_bag",
+      "product_concept": {
+        "code": "sugar",
+        "name_en": "Sugar",
+        "name_so": "Sonkor",
+        "description_en": "Example whole-bag item",
+        "description_so": "Tusaale sonkor joonyad ahaan loo iibiyo"
+      },
+      "display_name_en": "Sugar ABC 50kg",
+      "display_name_so": "Sonkor ABC 50kg",
+      "brand_name": "ABC",
+      "package_quantity": 50,
+      "package_unit_code": "kg",
+      "package_label": "50kg",
+      "category": "Staples",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": null,
+      "reorder_threshold": null,
+      "sort_order": 998,
+      "is_example": true,
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    }
+  ]
+}

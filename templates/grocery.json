@@ -1,0 +1,3043 @@
+{
+  "kind": "shop_starter",
+  "code": "grocery",
+  "name_en": "Grocery (Somali neighbourhood shop)",
+  "name_so": "Dukaan raashin",
+  "version": 1,
+  "locale_default": "so",
+  "currency_default": "USD",
+  "units": [
+    "piece",
+    "kg",
+    "gram",
+    "litre",
+    "ml",
+    "bag",
+    "box",
+    "carton",
+    "bottle",
+    "packet",
+    "sachet",
+    "can",
+    "tin",
+    "jar"
+  ],
+  "expense_categories": [
+    {
+      "code": "rent",
+      "name_en": "Rent",
+      "name_so": "Kiro"
+    },
+    {
+      "code": "electricity",
+      "name_en": "Electricity",
+      "name_so": "Koronto"
+    },
+    {
+      "code": "water",
+      "name_en": "Water",
+      "name_so": "Biyo"
+    },
+    {
+      "code": "internet",
+      "name_en": "Internet",
+      "name_so": "Internet"
+    },
+    {
+      "code": "salary",
+      "name_en": "Salary",
+      "name_so": "Mushahar"
+    },
+    {
+      "code": "transport",
+      "name_en": "Transport",
+      "name_so": "Gaadiid"
+    },
+    {
+      "code": "supplies",
+      "name_en": "Supplies",
+      "name_so": "Qalab"
+    },
+    {
+      "code": "repairs",
+      "name_en": "Repairs",
+      "name_so": "Hagaajin"
+    },
+    {
+      "code": "tax_license",
+      "name_en": "Tax & licence",
+      "name_so": "Cashuur iyo shati"
+    },
+    {
+      "code": "other",
+      "name_en": "Other",
+      "name_so": "Kale"
+    }
+  ],
+  "items": [
+    {
+      "code": "basmati_rice_25kg",
+      "name_en": "Basmati Rice 25kg",
+      "name_so": "Bariis Basmati 25kg",
+      "unit_code": "bag",
+      "category": "Staples",
+      "suggested_sale_price_usd": 26.0,
+      "reorder_threshold": 2,
+      "sort_order": 1,
+      "aliases_en": [
+        "rice",
+        "bariis",
+        "basmati",
+        "25"
+      ],
+      "aliases_so": [
+        "bariis",
+        "rice",
+        "bariis",
+        "basmati",
+        "25"
+      ]
+    },
+    {
+      "code": "sugar_1kg",
+      "name_en": "Sugar 1kg",
+      "name_so": "Sonkor 1kg",
+      "unit_code": "kg",
+      "category": "Staples",
+      "suggested_sale_price_usd": 1.4,
+      "reorder_threshold": 10,
+      "sort_order": 2,
+      "aliases_en": [
+        "1kg",
+        "sugar 1kg",
+        "s1",
+        "sugar",
+        "sonkor"
+      ],
+      "aliases_so": [
+        "sonkor",
+        "sugar",
+        "sonkor"
+      ]
+    },
+    {
+      "code": "wheat_flour_10kg",
+      "name_en": "Wheat Flour 10kg",
+      "name_so": "Bur Qamadi 10kg",
+      "unit_code": "bag",
+      "category": "Staples",
+      "suggested_sale_price_usd": 9.5,
+      "reorder_threshold": 2,
+      "sort_order": 3,
+      "aliases_en": [
+        "flour",
+        "bur",
+        "qamadi"
+      ],
+      "aliases_so": [
+        "bur",
+        "flour",
+        "bur",
+        "qamadi"
+      ]
+    },
+    {
+      "code": "pasta_500g",
+      "name_en": "Pasta 500g",
+      "name_so": "Baasto 500g",
+      "unit_code": "packet",
+      "category": "Staples",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 5,
+      "sort_order": 4,
+      "aliases_en": [
+        "pasta",
+        "500g",
+        "baasto",
+        "p5",
+        "pasta 500g"
+      ],
+      "aliases_so": [
+        "baasto",
+        "pasta",
+        "baasto"
+      ]
+    },
+    {
+      "code": "salt_1kg",
+      "name_en": "Salt 1kg",
+      "name_so": "Cusbo 1kg",
+      "unit_code": "packet",
+      "category": "Staples",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 5,
+      "sort_order": 5,
+      "aliases_en": [
+        "salt 1kg",
+        "salt",
+        "1kg",
+        "s1",
+        "cusbo"
+      ],
+      "aliases_so": [
+        "cusbo",
+        "salt",
+        "cusbo"
+      ]
+    },
+    {
+      "code": "spaghetti_500g",
+      "name_en": "Spaghetti 500g",
+      "name_so": "Isbaageti 500g",
+      "unit_code": "packet",
+      "category": "Staples",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 5,
+      "sort_order": 6,
+      "aliases_en": [
+        "isbaageti",
+        "500g",
+        "s5",
+        "spaghetti 500g",
+        "spaghetti"
+      ],
+      "aliases_so": [
+        "isbaageti",
+        "spaghetti",
+        "isbaageti"
+      ]
+    },
+    {
+      "code": "lentils_1kg",
+      "name_en": "Lentils 1kg",
+      "name_so": "Misir 1kg",
+      "unit_code": "kg",
+      "category": "Staples",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 10,
+      "sort_order": 7,
+      "aliases_en": [
+        "lentil",
+        "misir",
+        "1kg",
+        "lentils 1kg",
+        "l1",
+        "lentils"
+      ],
+      "aliases_so": [
+        "misir",
+        "lentil",
+        "misir"
+      ]
+    },
+    {
+      "code": "beans_1kg",
+      "name_en": "Beans 1kg",
+      "name_so": "Digir 1kg",
+      "unit_code": "kg",
+      "category": "Staples",
+      "suggested_sale_price_usd": 1.6,
+      "reorder_threshold": 10,
+      "sort_order": 8,
+      "aliases_en": [
+        "beans",
+        "digir",
+        "1kg",
+        "b1",
+        "beans 1kg"
+      ],
+      "aliases_so": [
+        "digir",
+        "beans",
+        "digir"
+      ]
+    },
+    {
+      "code": "corn_flour_1kg",
+      "name_en": "Corn Flour 1kg",
+      "name_so": "Bur Galley 1kg",
+      "unit_code": "kg",
+      "category": "Staples",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 10,
+      "sort_order": 9,
+      "aliases_en": [
+        "corn",
+        "1kg",
+        "flour",
+        "corn flour 1kg",
+        "galley",
+        "cf1"
+      ],
+      "aliases_so": [
+        "bur",
+        "corn",
+        "galley"
+      ]
+    },
+    {
+      "code": "toothbrush",
+      "name_en": "Toothbrush",
+      "name_so": "Buraash Ilko",
+      "unit_code": "piece",
+      "category": "Staples",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 10,
+      "sort_order": 10,
+      "aliases_en": [
+        "toothbrush",
+        "buraash",
+        "toothbrush"
+      ],
+      "aliases_so": [
+        "buraash",
+        "toothbrush",
+        "buraash"
+      ]
+    },
+    {
+      "code": "instant_noodles",
+      "name_en": "Instant Noodles",
+      "name_so": "Baasto Degdeg",
+      "unit_code": "packet",
+      "category": "Staples",
+      "suggested_sale_price_usd": 0.55,
+      "reorder_threshold": 5,
+      "sort_order": 11,
+      "aliases_en": [
+        "instant",
+        "in",
+        "instant noodles",
+        "noodles",
+        "degdeg"
+      ],
+      "aliases_so": [
+        "baasto",
+        "noodles",
+        "degdeg"
+      ]
+    },
+    {
+      "code": "rice_5kg",
+      "name_en": "Rice 5kg",
+      "name_so": "Bariis 5kg",
+      "unit_code": "bag",
+      "category": "Staples",
+      "suggested_sale_price_usd": 6.5,
+      "reorder_threshold": 2,
+      "sort_order": 12,
+      "aliases_en": [
+        "rice 5kg",
+        "bariis yar",
+        "rice small bag"
+      ],
+      "aliases_so": [
+        "bariis",
+        "riso",
+        "biryani"
+      ]
+    },
+    {
+      "code": "rice_1kg",
+      "name_en": "Rice 1kg",
+      "name_so": "Bariis 1kg",
+      "unit_code": "packet",
+      "category": "Staples",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 5,
+      "sort_order": 13,
+      "aliases_en": [
+        "1kg",
+        "rice 1kg",
+        "rice",
+        "r1",
+        "rice single"
+      ],
+      "aliases_so": [
+        "riso pcs",
+        "1kg",
+        "bariis yar",
+        "bariis 1kg",
+        "bariis"
+      ]
+    },
+    {
+      "code": "chickpea_1kg",
+      "name_en": "Chickpeas 1kg",
+      "name_so": "Kabab 1kg",
+      "unit_code": "kg",
+      "category": "Staples",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 10,
+      "sort_order": 14,
+      "aliases_en": [
+        "1kg",
+        "garbanzo",
+        "chickpeas",
+        "chickpeas 1kg",
+        "c1",
+        "chickpea"
+      ],
+      "aliases_so": [
+        "kabab 1kg",
+        "kabab cas",
+        "1kg",
+        "kabab"
+      ]
+    },
+    {
+      "code": "vermicelli_500g",
+      "name_en": "Vermicelli 500g",
+      "name_so": "Fiini Shaah 500g",
+      "unit_code": "packet",
+      "category": "Staples",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 5,
+      "sort_order": 15,
+      "aliases_en": [
+        "500g",
+        "thin pasta",
+        "vermicelli 500g",
+        "v5",
+        "vermicelli"
+      ],
+      "aliases_so": [
+        "shaah fiini",
+        "fiini shaah 500g",
+        "shaah",
+        "500g",
+        "fiini"
+      ]
+    },
+    {
+      "code": "black_pepper_50g",
+      "name_en": "Black Pepper 50g",
+      "name_so": "Digir Madow 50g",
+      "unit_code": "packet",
+      "category": "Staples",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 5,
+      "sort_order": 16,
+      "aliases_en": [
+        "black pepper",
+        "black pepper 50g",
+        "50g",
+        "black",
+        "bp5",
+        "peppercorn",
+        "pepper"
+      ],
+      "aliases_so": [
+        "digir madow",
+        "digir madow 50g",
+        "digir",
+        "50g",
+        "madow",
+        "pepper"
+      ]
+    },
+    {
+      "code": "toothbrush_pack",
+      "name_en": "Toothbrush Pack",
+      "name_so": "Buraash Ilko Baakad",
+      "unit_code": "packet",
+      "category": "Staples",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 5,
+      "sort_order": 17,
+      "aliases_en": [
+        "pack",
+        "toothbrush",
+        "toothbrush pack",
+        "tp"
+      ],
+      "aliases_so": [
+        "baakad",
+        "buraash",
+        "buraash baakad",
+        "buraash ilko baakad",
+        "ilko"
+      ]
+    },
+    {
+      "code": "cooking_oil_1l",
+      "name_en": "Cooking Oil 1L",
+      "name_so": "Saliid Cunto 1L",
+      "unit_code": "bottle",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 3.0,
+      "reorder_threshold": 4,
+      "sort_order": 1,
+      "aliases_en": [
+        "cooking",
+        "saliid",
+        "1l",
+        "oil",
+        "co1",
+        "cooking oil 1l"
+      ],
+      "aliases_so": [
+        "saliid",
+        "oil",
+        "saliid"
+      ]
+    },
+    {
+      "code": "tomato_paste",
+      "name_en": "Tomato Paste",
+      "name_so": "Yaanyo Qasacad",
+      "unit_code": "tin",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 4,
+      "sort_order": 2,
+      "aliases_en": [
+        "tomato paste",
+        "paste",
+        "yaanyo",
+        "tomato",
+        "tp"
+      ],
+      "aliases_so": [
+        "yaanyo",
+        "tomato",
+        "yaanyo"
+      ]
+    },
+    {
+      "code": "cardamom_50g",
+      "name_en": "Cardamom 50g",
+      "name_so": "Hayl 50g",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 8,
+      "sort_order": 3,
+      "aliases_en": [
+        "cardamom 50g",
+        "hayl",
+        "50g",
+        "cardamom",
+        "c5"
+      ],
+      "aliases_so": [
+        "hayl",
+        "cardamom",
+        "hayl"
+      ]
+    },
+    {
+      "code": "cinnamon_100g",
+      "name_en": "Cinnamon 100g",
+      "name_so": "Qorfe 100g",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 8,
+      "sort_order": 4,
+      "aliases_en": [
+        "100g",
+        "qorfe",
+        "cinnamon",
+        "cinnamon 100g",
+        "c1"
+      ],
+      "aliases_so": [
+        "qorfe",
+        "cinnamon",
+        "qorfe"
+      ]
+    },
+    {
+      "code": "chili_powder",
+      "name_en": "Chili Powder",
+      "name_so": "Basbaas Buddo",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 8,
+      "sort_order": 5,
+      "aliases_en": [
+        "powder",
+        "chili",
+        "cp",
+        "basbaas",
+        "chili powder"
+      ],
+      "aliases_so": [
+        "basbaas",
+        "chili",
+        "basbaas"
+      ]
+    },
+    {
+      "code": "onion_1kg",
+      "name_en": "Onion 1kg",
+      "name_so": "Basal 1kg",
+      "unit_code": "kg",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 10,
+      "sort_order": 6,
+      "aliases_en": [
+        "basal",
+        "o1",
+        "1kg",
+        "onion",
+        "onion 1kg"
+      ],
+      "aliases_so": [
+        "basal",
+        "onion",
+        "basal"
+      ]
+    },
+    {
+      "code": "garlic_250g",
+      "name_en": "Garlic 250g",
+      "name_so": "Toon 250g",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 8,
+      "sort_order": 7,
+      "aliases_en": [
+        "g2",
+        "garlic",
+        "250g",
+        "toon",
+        "garlic 250g"
+      ],
+      "aliases_so": [
+        "toon",
+        "garlic",
+        "toon"
+      ]
+    },
+    {
+      "code": "eggs_tray",
+      "name_en": "Eggs Tray",
+      "name_so": "Ukun Kartoon",
+      "unit_code": "bag",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 5.2,
+      "reorder_threshold": 2,
+      "sort_order": 1,
+      "aliases_en": [
+        "eggs",
+        "et",
+        "eggs tray",
+        "ukun",
+        "tray"
+      ],
+      "aliases_so": [
+        "ukun",
+        "eggs",
+        "ukun"
+      ]
+    },
+    {
+      "code": "chicken_cube",
+      "name_en": "Chicken Cube",
+      "name_so": "Maraq Digaag",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.25,
+      "reorder_threshold": 8,
+      "sort_order": 8,
+      "aliases_en": [
+        "chicken cube",
+        "cc",
+        "cube",
+        "maraq",
+        "chicken"
+      ],
+      "aliases_so": [
+        "maraq",
+        "cube",
+        "maraq"
+      ]
+    },
+    {
+      "code": "beef_cube",
+      "name_en": "Beef Cube",
+      "name_so": "Maraq Hilib",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.25,
+      "reorder_threshold": 8,
+      "sort_order": 9,
+      "aliases_en": [
+        "hilib",
+        "beef cube",
+        "bc",
+        "cube",
+        "beef"
+      ],
+      "aliases_so": [
+        "maraq",
+        "beef cube",
+        "hilib"
+      ]
+    },
+    {
+      "code": "peanut_butter",
+      "name_en": "Peanut Butter",
+      "name_so": "Subag Lawska",
+      "unit_code": "jar",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 2.6,
+      "reorder_threshold": 10,
+      "sort_order": 10,
+      "aliases_en": [
+        "peanut butter",
+        "pb",
+        "laws",
+        "peanut",
+        "butter"
+      ],
+      "aliases_so": [
+        "subag",
+        "peanut",
+        "laws"
+      ]
+    },
+    {
+      "code": "vinegar_500ml",
+      "name_en": "Vinegar 500ml",
+      "name_so": "Khal 500ml",
+      "unit_code": "bottle",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 4,
+      "sort_order": 11,
+      "aliases_en": [
+        "500ml",
+        "khal",
+        "vinegar 500ml",
+        "v5",
+        "vinegar"
+      ],
+      "aliases_so": [
+        "khal",
+        "vinegar",
+        "khal"
+      ]
+    },
+    {
+      "code": "margarine_500g",
+      "name_en": "Margarine 500g",
+      "name_so": "Subag 500g",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 10,
+      "sort_order": 12,
+      "aliases_en": [
+        "margarine",
+        "m5",
+        "500g",
+        "margarine 500g",
+        "subag"
+      ],
+      "aliases_so": [
+        "subag",
+        "margarine",
+        "subag"
+      ]
+    },
+    {
+      "code": "sesame_oil",
+      "name_en": "Sesame Oil",
+      "name_so": "Saliid Sinsin",
+      "unit_code": "bottle",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 4.0,
+      "reorder_threshold": 4,
+      "sort_order": 13,
+      "aliases_en": [
+        "so",
+        "sesame oil",
+        "sesame",
+        "oil",
+        "sinsin"
+      ],
+      "aliases_so": [
+        "saliid",
+        "sesame",
+        "sinsin"
+      ]
+    },
+    {
+      "code": "oil_5l",
+      "name_en": "Cooking Oil 5L",
+      "name_so": "Saliid Cunto 5L",
+      "unit_code": "bottle",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 12.0,
+      "reorder_threshold": 4,
+      "sort_order": 14,
+      "aliases_en": [
+        "oil 5l",
+        "bulk oil",
+        "cooking oil large"
+      ],
+      "aliases_so": [
+        "saliid 5l",
+        "saliid badan",
+        "saliid",
+        "cunto",
+        "saliid cunto 5l"
+      ]
+    },
+    {
+      "code": "oil_20l",
+      "name_en": "Cooking Oil 20L",
+      "name_so": "Saliid Cunto 20L",
+      "unit_code": "bag",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 42.0,
+      "reorder_threshold": 2,
+      "sort_order": 15,
+      "aliases_en": [
+        "cooking",
+        "cooking oil 20l",
+        "oil",
+        "20l",
+        "wholesale oil",
+        "co2",
+        "oil 20l"
+      ],
+      "aliases_so": [
+        "saliid",
+        "cunto",
+        "saliid 20l",
+        "saliid gee",
+        "saliid cunto 20l",
+        "20l"
+      ]
+    },
+    {
+      "code": "ghee_400g",
+      "name_en": "Ghee Tin 400g",
+      "name_so": "Subag 400g",
+      "unit_code": "tin",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 4.5,
+      "reorder_threshold": 4,
+      "sort_order": 16,
+      "aliases_en": [
+        "gt4",
+        "ghee tin 400g",
+        "tin",
+        "clarified butter",
+        "ghee",
+        "400g"
+      ],
+      "aliases_so": [
+        "subag",
+        "subag 400g",
+        "subag qasacad",
+        "400g"
+      ]
+    },
+    {
+      "code": "tomatoes_400g",
+      "name_en": "Tomatoes 400g",
+      "name_so": "Yaanyo 400g",
+      "unit_code": "tin",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.95,
+      "reorder_threshold": 4,
+      "sort_order": 17,
+      "aliases_en": [
+        "tomatoes 400g",
+        "tomatoes canned",
+        "tomatoes",
+        "t4",
+        "400g"
+      ],
+      "aliases_so": [
+        "yaanyo",
+        "yaanyo 400g",
+        "yaanyo qasacad",
+        "400g"
+      ]
+    },
+    {
+      "code": "cumin_50g",
+      "name_en": "Cumin 50g",
+      "name_so": "Kamuun 50g",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.95,
+      "reorder_threshold": 8,
+      "sort_order": 18,
+      "aliases_en": [
+        "50g",
+        "jeera",
+        "cumin",
+        "c5",
+        "cumin 50g"
+      ],
+      "aliases_so": [
+        "50g",
+        "kamuun 50g",
+        "kamuun",
+        "cummin"
+      ]
+    },
+    {
+      "code": "turmeric_50g",
+      "name_en": "Turmeric 50g",
+      "name_so": "Turmeric 50g",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.85,
+      "reorder_threshold": 8,
+      "sort_order": 19,
+      "aliases_en": [
+        "golden spice",
+        "turmeric",
+        "50g",
+        "turmeric 50g",
+        "t5"
+      ],
+      "aliases_so": [
+        "safran",
+        "turmeric",
+        "turmeric 50g",
+        "50g"
+      ]
+    },
+    {
+      "code": "coriander_50g",
+      "name_en": "Coriander 50g",
+      "name_so": "Coriander 50g",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 8,
+      "sort_order": 20,
+      "aliases_en": [
+        "coriander 50g",
+        "c5",
+        "50g",
+        "coriander",
+        "cilantro"
+      ],
+      "aliases_so": [
+        "qat",
+        "coriander",
+        "coriander 50g",
+        "50g"
+      ]
+    },
+    {
+      "code": "stock_cubes_pack",
+      "name_en": "Stock Cubes Pack",
+      "name_so": "Maraq Baakad",
+      "unit_code": "box",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 8,
+      "sort_order": 21,
+      "aliases_en": [
+        "cubes",
+        "stock cubes",
+        "pack",
+        "scp",
+        "stock cubes pack",
+        "stock",
+        "cube pack"
+      ],
+      "aliases_so": [
+        "baakad",
+        "maraq baakad",
+        "maraq cubes",
+        "maraq"
+      ]
+    },
+    {
+      "code": "vinegar_bottle",
+      "name_en": "Vinegar 500ml",
+      "name_so": "Saliid Suuq 500ml",
+      "unit_code": "bottle",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 4,
+      "sort_order": 22,
+      "aliases_en": [
+        "500ml",
+        "vinegar 500ml",
+        "v5",
+        "acid",
+        "vinegar"
+      ],
+      "aliases_so": [
+        "saliid",
+        "500ml",
+        "saliid suuq 500ml",
+        "suuq",
+        "saliid suuq",
+        "vinegar"
+      ]
+    },
+    {
+      "code": "toilet_paper",
+      "name_en": "Toilet Paper Roll",
+      "name_so": "Wara Wax",
+      "unit_code": "piece",
+      "category": "Household",
+      "suggested_sale_price_usd": 0.55,
+      "reorder_threshold": 10,
+      "sort_order": 1,
+      "aliases_en": [
+        "paper",
+        "toilet paper",
+        "toilet paper roll",
+        "toilet",
+        "roll",
+        "tpr",
+        "tissue"
+      ],
+      "aliases_so": [
+        "wara xaliimo",
+        "wara wax",
+        "wax",
+        "wara"
+      ]
+    },
+    {
+      "code": "mosquito_coils",
+      "name_en": "Mosquito Coils",
+      "name_so": "Bood Bokh",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 8,
+      "sort_order": 23,
+      "aliases_en": [
+        "mosquito coils",
+        "coils",
+        "mc",
+        "mosquito"
+      ],
+      "aliases_so": [
+        "bood bokh",
+        "bood",
+        "bokh"
+      ]
+    },
+    {
+      "code": "black_tea_250g",
+      "name_en": "Black Tea 250g",
+      "name_so": "Shaah Madow 250g",
+      "unit_code": "packet",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 2.2,
+      "reorder_threshold": 8,
+      "sort_order": 1,
+      "aliases_en": [
+        "bt2",
+        "shaah",
+        "tea",
+        "black tea 250g",
+        "250g",
+        "black"
+      ],
+      "aliases_so": [
+        "shaah",
+        "tea",
+        "shaah"
+      ]
+    },
+    {
+      "code": "powder_milk_400g",
+      "name_en": "Powder Milk 400g",
+      "name_so": "Caano Boore 400g",
+      "unit_code": "tin",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 4.8,
+      "reorder_threshold": 4,
+      "sort_order": 2,
+      "aliases_en": [
+        "caano",
+        "powder",
+        "milk",
+        "powder milk 400g",
+        "pm4",
+        "400g"
+      ],
+      "aliases_so": [
+        "caano",
+        "milk",
+        "caano"
+      ]
+    },
+    {
+      "code": "mango_juice_1l",
+      "name_en": "Mango Juice 1L",
+      "name_so": "Casiir Cambe 1L",
+      "unit_code": "carton",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 1.7,
+      "reorder_threshold": 4,
+      "sort_order": 2,
+      "aliases_en": [
+        "juice",
+        "casiir",
+        "cambe"
+      ],
+      "aliases_so": [
+        "casiir",
+        "juice",
+        "casiir",
+        "cambe"
+      ]
+    },
+    {
+      "code": "bottled_water_500ml",
+      "name_en": "Bottled Water 500ml",
+      "name_so": "Biyo Dhalo 500ml",
+      "unit_code": "bottle",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 0.35,
+      "reorder_threshold": 4,
+      "sort_order": 3,
+      "aliases_en": [
+        "bottled",
+        "biyo",
+        "water",
+        "500ml",
+        "bottled water 500ml",
+        "bw5"
+      ],
+      "aliases_so": [
+        "biyo",
+        "water",
+        "biyo"
+      ]
+    },
+    {
+      "code": "soda_cola",
+      "name_en": "Soda Cola",
+      "name_so": "Sharaab Koola",
+      "unit_code": "bottle",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 4,
+      "sort_order": 4,
+      "aliases_en": [
+        "cola",
+        "sharaab",
+        "sc",
+        "soda cola",
+        "soda"
+      ],
+      "aliases_so": [
+        "sharaab",
+        "cola",
+        "sharaab"
+      ]
+    },
+    {
+      "code": "energy_drink",
+      "name_en": "Energy Drink",
+      "name_so": "Cabitaan Tamar",
+      "unit_code": "can",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 4,
+      "sort_order": 5,
+      "aliases_en": [
+        "energy",
+        "drink",
+        "tamar",
+        "energy drink",
+        "ed"
+      ],
+      "aliases_so": [
+        "cabitaan",
+        "energy",
+        "tamar"
+      ]
+    },
+    {
+      "code": "green_tea",
+      "name_en": "Green Tea",
+      "name_so": "Shaah Cagaar",
+      "unit_code": "packet",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 8,
+      "sort_order": 6,
+      "aliases_en": [
+        "green",
+        "shaah cagaar",
+        "tea",
+        "green tea",
+        "gt"
+      ],
+      "aliases_so": [
+        "shaah",
+        "green tea",
+        "shaah cagaar"
+      ]
+    },
+    {
+      "code": "coffee_250g",
+      "name_en": "Coffee 250g",
+      "name_so": "Bun 250g",
+      "unit_code": "packet",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 3.5,
+      "reorder_threshold": 8,
+      "sort_order": 7,
+      "aliases_en": [
+        "bun",
+        "coffee",
+        "250g",
+        "coffee 250g",
+        "c2"
+      ],
+      "aliases_so": [
+        "bun",
+        "coffee",
+        "bun"
+      ]
+    },
+    {
+      "code": "chocolate_bar",
+      "name_en": "Chocolate Bar",
+      "name_so": "Shukulaato",
+      "unit_code": "piece",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 5,
+      "sort_order": 8,
+      "aliases_en": [
+        "chocolate",
+        "cb",
+        "shukulaato",
+        "bar",
+        "chocolate bar"
+      ],
+      "aliases_so": [
+        "shukulaato",
+        "chocolate",
+        "shukulaato"
+      ]
+    },
+    {
+      "code": "camel_milk_1l",
+      "name_en": "Camel Milk 1L",
+      "name_so": "Caano Geel 1L",
+      "unit_code": "bottle",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 4,
+      "sort_order": 3,
+      "aliases_en": [
+        "camel milk 1l",
+        "1l",
+        "camel",
+        "milk",
+        "cm1",
+        "caano geel",
+        "camel milk"
+      ],
+      "aliases_so": [
+        "caano",
+        "camel milk",
+        "caano geel"
+      ]
+    },
+    {
+      "code": "water_1_5l",
+      "name_en": "Bottled Water 1.5L",
+      "name_so": "Biyo Dhalo 1.5L",
+      "unit_code": "bottle",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 0.55,
+      "reorder_threshold": 4,
+      "sort_order": 9,
+      "aliases_en": [
+        "bottled",
+        "water",
+        "bw1",
+        "water 1.5l",
+        "large water",
+        "bottled water 1.5l",
+        "1.5l"
+      ],
+      "aliases_so": [
+        "biyo",
+        "dhalo",
+        "biyo dhalo 1.5l",
+        "1.5l"
+      ]
+    },
+    {
+      "code": "water_5l",
+      "name_en": "Bottled Water 5L",
+      "name_so": "Biyo Dhalo 5L",
+      "unit_code": "bottle",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 4,
+      "sort_order": 10,
+      "aliases_en": [
+        "bottled",
+        "bulk water",
+        "water",
+        "bottled water 5l",
+        "water 5l",
+        "5l",
+        "bw5"
+      ],
+      "aliases_so": [
+        "biyo",
+        "dhalo",
+        "biyo dhalo 5l",
+        "biyo gallon"
+      ]
+    },
+    {
+      "code": "orange_soda",
+      "name_en": "Orange Soda",
+      "name_so": "Sharaab Liin",
+      "unit_code": "bottle",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 4,
+      "sort_order": 11,
+      "aliases_en": [
+        "orange",
+        "soda",
+        "orange soda",
+        "os"
+      ],
+      "aliases_so": [
+        "sharaab orange",
+        "sharaab liin",
+        "sharaab",
+        "liin"
+      ]
+    },
+    {
+      "code": "tang_sachet",
+      "name_en": "Tang Sachet",
+      "name_so": "Tang Baakad",
+      "unit_code": "packet",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 0.25,
+      "reorder_threshold": 8,
+      "sort_order": 12,
+      "aliases_en": [
+        "tang sachet",
+        "sachet",
+        "ts",
+        "tang",
+        "drink powder"
+      ],
+      "aliases_so": [
+        "baakad",
+        "tang",
+        "powder",
+        "tang baakad"
+      ]
+    },
+    {
+      "code": "hibiscus_tea",
+      "name_en": "Hibiscus Tea 200g",
+      "name_so": "Shaah Somali 200g",
+      "unit_code": "packet",
+      "category": "Beverages",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 8,
+      "sort_order": 13,
+      "aliases_en": [
+        "somali tea",
+        "tea",
+        "ht2",
+        "hibiscus tea 200g",
+        "200g",
+        "hibiscus"
+      ],
+      "aliases_so": [
+        "shaah somali 200g",
+        "shaah",
+        "shaah somali",
+        "shaah calaacal",
+        "somali",
+        "200g"
+      ]
+    },
+    {
+      "code": "milk_powder_900g",
+      "name_en": "Milk Powder 900g",
+      "name_so": "Caano Boore 900g",
+      "unit_code": "tin",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 7.5,
+      "reorder_threshold": 4,
+      "sort_order": 4,
+      "aliases_en": [
+        "milk powder 900g",
+        "powder",
+        "bulk milk",
+        "milk",
+        "mp9",
+        "900g"
+      ],
+      "aliases_so": [
+        "900g",
+        "caano boore 900g",
+        "caano",
+        "boore"
+      ]
+    },
+    {
+      "code": "uht_milk_500ml",
+      "name_en": "UHT Milk 500ml",
+      "name_so": "Caano UHT 500ml",
+      "unit_code": "carton",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 0.95,
+      "reorder_threshold": 4,
+      "sort_order": 5,
+      "aliases_en": [
+        "500ml",
+        "milk",
+        "um5",
+        "uht milk 500ml",
+        "uht"
+      ],
+      "aliases_so": [
+        "caano uht",
+        "caano",
+        "500ml",
+        "caano karta",
+        "caano uht 500ml",
+        "uht"
+      ]
+    },
+    {
+      "code": "uht_milk_1l",
+      "name_en": "UHT Milk 1L",
+      "name_so": "Caano UHT 1L",
+      "unit_code": "carton",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 1.6,
+      "reorder_threshold": 4,
+      "sort_order": 6,
+      "aliases_en": [
+        "1l",
+        "milk",
+        "long life milk",
+        "uht",
+        "uht milk 1l",
+        "um1"
+      ],
+      "aliases_so": [
+        "uht",
+        "caano",
+        "caano badan",
+        "caano uht 1l"
+      ]
+    },
+    {
+      "code": "evaporated_milk",
+      "name_en": "Evaporated Milk 400ml",
+      "name_so": "Caano Kartin 400ml",
+      "unit_code": "tin",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 1.4,
+      "reorder_threshold": 4,
+      "sort_order": 7,
+      "aliases_en": [
+        "evaporated milk",
+        "evaporated milk 400ml",
+        "evaporated",
+        "milk",
+        "em4",
+        "400ml"
+      ],
+      "aliases_so": [
+        "caano",
+        "caano kartin 400ml",
+        "kartin",
+        "400ml",
+        "caano kartin",
+        "caano qasacad"
+      ]
+    },
+    {
+      "code": "condensed_milk",
+      "name_en": "Condensed Milk 397g",
+      "name_so": "Caano Macaan 397g",
+      "unit_code": "tin",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 2.2,
+      "reorder_threshold": 4,
+      "sort_order": 8,
+      "aliases_en": [
+        "milk",
+        "sweet milk",
+        "condensed milk",
+        "condensed milk 397g",
+        "397g",
+        "cm3",
+        "condensed"
+      ],
+      "aliases_so": [
+        "caano",
+        "caano macaan 397g",
+        "caano qorol",
+        "caano macaan",
+        "397g",
+        "macaan"
+      ]
+    },
+    {
+      "code": "infant_formula",
+      "name_en": "Infant Formula 400g",
+      "name_so": "Caano Carruuq 400g",
+      "unit_code": "tin",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 5.5,
+      "reorder_threshold": 4,
+      "sort_order": 9,
+      "aliases_en": [
+        "infant",
+        "infant milk",
+        "infant formula 400g",
+        "formula",
+        "if4",
+        "baby formula",
+        "400g"
+      ],
+      "aliases_so": [
+        "caano",
+        "caano carruuq",
+        "caano carruuq 400g",
+        "carruuq",
+        "caano jarko",
+        "400g"
+      ]
+    },
+    {
+      "code": "dates_500g",
+      "name_en": "Dates 500g",
+      "name_so": "Timir 500g",
+      "unit_code": "packet",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 8,
+      "sort_order": 1,
+      "aliases_en": [
+        "d5",
+        "dates",
+        "500g",
+        "timir",
+        "dates 500g"
+      ],
+      "aliases_so": [
+        "timir",
+        "dates",
+        "timir"
+      ]
+    },
+    {
+      "code": "tuna_tin",
+      "name_en": "Tuna Tin",
+      "name_so": "Tuunno Qasacad",
+      "unit_code": "tin",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 4,
+      "sort_order": 2,
+      "aliases_en": [
+        "tuna",
+        "tt",
+        "tuunno",
+        "tuna tin",
+        "tin"
+      ],
+      "aliases_so": [
+        "tuunno",
+        "tuna",
+        "tuunno"
+      ]
+    },
+    {
+      "code": "sardines_tin",
+      "name_en": "Sardines Tin",
+      "name_so": "Sardiin Qasacad",
+      "unit_code": "tin",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 4,
+      "sort_order": 3,
+      "aliases_en": [
+        "st",
+        "sardines",
+        "sardine",
+        "tin",
+        "sardines tin",
+        "sardiin"
+      ],
+      "aliases_so": [
+        "sardiin",
+        "sardine",
+        "sardiin"
+      ]
+    },
+    {
+      "code": "biscuits",
+      "name_en": "Biscuits",
+      "name_so": "Buskud",
+      "unit_code": "packet",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 0.6,
+      "reorder_threshold": 8,
+      "sort_order": 4,
+      "aliases_en": [
+        "biscuits",
+        "buskud",
+        "biscuits"
+      ],
+      "aliases_so": [
+        "buskud",
+        "biscuits",
+        "buskud"
+      ]
+    },
+    {
+      "code": "candy_mix",
+      "name_en": "Candy Mix",
+      "name_so": "Nacnac Iskujir",
+      "unit_code": "packet",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 8,
+      "sort_order": 5,
+      "aliases_en": [
+        "mix",
+        "nacnac",
+        "candy",
+        "cm",
+        "candy mix"
+      ],
+      "aliases_so": [
+        "nacnac",
+        "candy",
+        "nacnac"
+      ]
+    },
+    {
+      "code": "shampoo",
+      "name_en": "Shampoo",
+      "name_so": "Shaambo",
+      "unit_code": "bottle",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 4,
+      "sort_order": 6,
+      "aliases_en": [
+        "shaambo",
+        "shampoo",
+        "shampoo"
+      ],
+      "aliases_so": [
+        "shaambo",
+        "shampoo",
+        "shaambo"
+      ]
+    },
+    {
+      "code": "tissue_roll",
+      "name_en": "Tissue Roll",
+      "name_so": "Tiish",
+      "unit_code": "piece",
+      "category": "Household",
+      "suggested_sale_price_usd": 0.4,
+      "reorder_threshold": 5,
+      "sort_order": 2,
+      "aliases_en": [
+        "tr",
+        "tiish",
+        "roll",
+        "tissue roll",
+        "tissue"
+      ],
+      "aliases_so": [
+        "tiish",
+        "tissue",
+        "tiish"
+      ]
+    },
+    {
+      "code": "candle_pack",
+      "name_en": "Candle Pack",
+      "name_so": "Shumac Baakad",
+      "unit_code": "packet",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 8,
+      "sort_order": 7,
+      "aliases_en": [
+        "shumac",
+        "pack",
+        "candle",
+        "candle pack",
+        "cp"
+      ],
+      "aliases_so": [
+        "shumac",
+        "candle",
+        "shumac"
+      ]
+    },
+    {
+      "code": "trash_bags",
+      "name_en": "Trash Bags",
+      "name_so": "Bac Qashin",
+      "unit_code": "packet",
+      "category": "Household",
+      "suggested_sale_price_usd": 1.4,
+      "reorder_threshold": 8,
+      "sort_order": 3,
+      "aliases_en": [
+        "qashin",
+        "tb",
+        "trash bags",
+        "trash",
+        "bags"
+      ],
+      "aliases_so": [
+        "bac",
+        "trash",
+        "qashin"
+      ]
+    },
+    {
+      "code": "bread_loaf",
+      "name_en": "Bread Loaf",
+      "name_so": "Rooti",
+      "unit_code": "piece",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 0.6,
+      "reorder_threshold": 5,
+      "sort_order": 8,
+      "aliases_en": [
+        "rooti",
+        "loaf",
+        "bread",
+        "bread loaf",
+        "bl"
+      ],
+      "aliases_so": [
+        "rooti",
+        "bread",
+        "rooti"
+      ]
+    },
+    {
+      "code": "samosa_pack",
+      "name_en": "Samosa Pack",
+      "name_so": "Sambuus Baakad",
+      "unit_code": "packet",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 8,
+      "sort_order": 9,
+      "aliases_en": [
+        "samosa",
+        "pack",
+        "sp",
+        "samosa pack",
+        "sambuus"
+      ],
+      "aliases_so": [
+        "sambuus",
+        "samosa",
+        "sambuus"
+      ]
+    },
+    {
+      "code": "crisps_pack",
+      "name_en": "Crisps Packet",
+      "name_so": "Crisps Baakad",
+      "unit_code": "packet",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 8,
+      "sort_order": 10,
+      "aliases_en": [
+        "packet",
+        "crisps",
+        "cp",
+        "potato chips",
+        "crisps packet"
+      ],
+      "aliases_so": [
+        "chips",
+        "crisps baakad",
+        "crisps",
+        "baakad"
+      ]
+    },
+    {
+      "code": "peanuts_150g",
+      "name_en": "Peanuts 150g",
+      "name_so": "Peanuts 150g",
+      "unit_code": "packet",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 8,
+      "sort_order": 11,
+      "aliases_en": [
+        "150g",
+        "p1",
+        "peanuts 150g",
+        "groundnuts",
+        "peanuts"
+      ],
+      "aliases_so": [
+        "150g",
+        "peanuts 150g",
+        "peanuts",
+        "groundnut"
+      ]
+    },
+    {
+      "code": "sweets_mix",
+      "name_en": "Sweets Mixed 200g",
+      "name_so": "Nacnac Isku Dar 200g",
+      "unit_code": "packet",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 8,
+      "sort_order": 12,
+      "aliases_en": [
+        "sweets",
+        "sweets mixed 200g",
+        "mixed",
+        "candy mix",
+        "200g",
+        "sm2"
+      ],
+      "aliases_so": [
+        "nacnac",
+        "isku",
+        "nacnac isku dar",
+        "dar",
+        "nacnac isku dar 200g",
+        "200g"
+      ]
+    },
+    {
+      "code": "biscuits_advance",
+      "name_en": "Advance Biscuits",
+      "name_so": "Buskud Advance",
+      "unit_code": "packet",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 0.75,
+      "reorder_threshold": 8,
+      "sort_order": 13,
+      "aliases_en": [
+        "biscuits",
+        "ab",
+        "advance biscuits",
+        "cookies",
+        "advance"
+      ],
+      "aliases_so": [
+        "buskud",
+        "advance",
+        "buskud advance",
+        "buskud qorka"
+      ]
+    },
+    {
+      "code": "bin_bags_pack",
+      "name_en": "Bin Bags Pack",
+      "name_so": "Shantiyada Plastic",
+      "unit_code": "packet",
+      "category": "Household",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 8,
+      "sort_order": 4,
+      "aliases_en": [
+        "pack",
+        "trash bags",
+        "bin bags pack",
+        "bbp",
+        "bags",
+        "bin bags",
+        "bin"
+      ],
+      "aliases_so": [
+        "plastic",
+        "shantiyada",
+        "bags plastic",
+        "shantiyada plastic"
+      ]
+    },
+    {
+      "code": "candles_10pack",
+      "name_en": "Candles 10-pack",
+      "name_so": "Shumac 10",
+      "unit_code": "box",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 8,
+      "sort_order": 14,
+      "aliases_en": [
+        "candles 10-pack",
+        "candles",
+        "10-pack",
+        "c1",
+        "light candles"
+      ],
+      "aliases_so": [
+        "shumac 10",
+        "shumac",
+        "shumac 10"
+      ]
+    },
+    {
+      "code": "laundry_soap",
+      "name_en": "Laundry Soap",
+      "name_so": "Saabuun Dhar",
+      "unit_code": "piece",
+      "category": "Household",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 5,
+      "sort_order": 5,
+      "aliases_en": [
+        "laundry",
+        "ls",
+        "soap",
+        "saabuun",
+        "laundry soap"
+      ],
+      "aliases_so": [
+        "saabuun",
+        "soap",
+        "saabuun"
+      ]
+    },
+    {
+      "code": "dish_soap",
+      "name_en": "Dish Soap",
+      "name_so": "Saabuun Weel",
+      "unit_code": "bottle",
+      "category": "Household",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 4,
+      "sort_order": 6,
+      "aliases_en": [
+        "dish",
+        "soap",
+        "weel",
+        "dish soap",
+        "ds"
+      ],
+      "aliases_so": [
+        "saabuun",
+        "dish soap",
+        "weel"
+      ]
+    },
+    {
+      "code": "bleach",
+      "name_en": "Bleach",
+      "name_so": "Warankiilo",
+      "unit_code": "bottle",
+      "category": "Household",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 4,
+      "sort_order": 7,
+      "aliases_en": [
+        "warankiilo",
+        "bleach",
+        "bleach"
+      ],
+      "aliases_so": [
+        "warankiilo",
+        "bleach",
+        "warankiilo"
+      ]
+    },
+    {
+      "code": "napkins",
+      "name_en": "Napkins",
+      "name_so": "Masax",
+      "unit_code": "packet",
+      "category": "Household",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 8,
+      "sort_order": 8,
+      "aliases_en": [
+        "napkins",
+        "napkin",
+        "masax"
+      ],
+      "aliases_so": [
+        "masax",
+        "napkin",
+        "masax"
+      ]
+    },
+    {
+      "code": "detergent_powder_1kg",
+      "name_en": "Detergent Powder 1kg",
+      "name_so": "Oomo 1kg",
+      "unit_code": "packet",
+      "category": "Household",
+      "suggested_sale_price_usd": 2.1,
+      "reorder_threshold": 8,
+      "sort_order": 9,
+      "aliases_en": [
+        "dp1",
+        "detergent powder 1kg",
+        "powder",
+        "1kg",
+        "oomo",
+        "detergent"
+      ],
+      "aliases_so": [
+        "oomo",
+        "detergent",
+        "oomo"
+      ]
+    },
+    {
+      "code": "bar_soap",
+      "name_en": "Bar Soap",
+      "name_so": "Saabuun Qalya",
+      "unit_code": "piece",
+      "category": "Household",
+      "suggested_sale_price_usd": 0.65,
+      "reorder_threshold": 5,
+      "sort_order": 10,
+      "aliases_en": [
+        "bar soap",
+        "soap",
+        "bs",
+        "soap bar",
+        "bar",
+        "bathing soap"
+      ],
+      "aliases_so": [
+        "qalya",
+        "saabuun qalya",
+        "saabuun dhaqan",
+        "saabuun"
+      ]
+    },
+    {
+      "code": "dishwashing_liquid",
+      "name_en": "Dishwashing Liquid 500ml",
+      "name_so": "Saabuun Weel 500ml",
+      "unit_code": "bottle",
+      "category": "Household",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 4,
+      "sort_order": 11,
+      "aliases_en": [
+        "dishwashing liquid 500ml",
+        "500ml",
+        "dish soap",
+        "dl5",
+        "dish liquid",
+        "dishwashing",
+        "liquid"
+      ],
+      "aliases_so": [
+        "saabuun weel 500ml",
+        "saabuun weel",
+        "500ml",
+        "weel",
+        "saabuun"
+      ]
+    },
+    {
+      "code": "sponge",
+      "name_en": "Sponge",
+      "name_so": "Loof Cunto",
+      "unit_code": "piece",
+      "category": "Household",
+      "suggested_sale_price_usd": 0.45,
+      "reorder_threshold": 5,
+      "sort_order": 12,
+      "aliases_en": [
+        "sponge",
+        "scrub",
+        "sponge"
+      ],
+      "aliases_so": [
+        "loof cunto",
+        "cunto",
+        "loof"
+      ]
+    },
+    {
+      "code": "baby_diapers",
+      "name_en": "Baby Diapers",
+      "name_so": "Xafaayad Carruur",
+      "unit_code": "packet",
+      "category": "Personal care",
+      "suggested_sale_price_usd": 4.5,
+      "reorder_threshold": 8,
+      "sort_order": 1,
+      "aliases_en": [
+        "diapers",
+        "bd",
+        "baby",
+        "diaper",
+        "xafaayad",
+        "baby diapers"
+      ],
+      "aliases_so": [
+        "xafaayad",
+        "diaper",
+        "xafaayad"
+      ]
+    },
+    {
+      "code": "toothpaste",
+      "name_en": "Toothpaste",
+      "name_so": "Daawo Ilko",
+      "unit_code": "packet",
+      "category": "Personal care",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 8,
+      "sort_order": 2,
+      "aliases_en": [
+        "ilko",
+        "toothpaste",
+        "toothpaste"
+      ],
+      "aliases_so": [
+        "daawo",
+        "toothpaste",
+        "ilko"
+      ]
+    },
+    {
+      "code": "body_lotion",
+      "name_en": "Body Lotion",
+      "name_so": "Kareem Jir",
+      "unit_code": "bottle",
+      "category": "Personal care",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 4,
+      "sort_order": 3,
+      "aliases_en": [
+        "lotion",
+        "body lotion",
+        "body",
+        "bl",
+        "kareem"
+      ],
+      "aliases_so": [
+        "kareem",
+        "lotion",
+        "kareem"
+      ]
+    },
+    {
+      "code": "sanitary_pads",
+      "name_en": "Sanitary Pads",
+      "name_so": "Haween",
+      "unit_code": "packet",
+      "category": "Personal care",
+      "suggested_sale_price_usd": 3.5,
+      "reorder_threshold": 8,
+      "sort_order": 4,
+      "aliases_en": [
+        "pads",
+        "sanitary",
+        "sanitary pads",
+        "sp"
+      ],
+      "aliases_so": [
+        "haween pads",
+        "haween",
+        "haween"
+      ]
+    },
+    {
+      "code": "baby_diapers_30pk",
+      "name_en": "Baby Diapers 30pk",
+      "name_so": "Xafaayad Carruur 30",
+      "unit_code": "packet",
+      "category": "Personal care",
+      "suggested_sale_price_usd": 12.0,
+      "reorder_threshold": 8,
+      "sort_order": 5,
+      "aliases_en": [
+        "diapers",
+        "baby diapers 30pk",
+        "baby",
+        "large pack",
+        "bd3",
+        "30pk",
+        "diapers 30"
+      ],
+      "aliases_so": [
+        "xafaayad carruur 30",
+        "xafaayad 30",
+        "xafaayad caruurka",
+        "xafaayad",
+        "carruur"
+      ]
+    },
+    {
+      "code": "petroleum_jelly",
+      "name_en": "Petroleum Jelly 100g",
+      "name_so": "Vaseline",
+      "unit_code": "tin",
+      "category": "Personal care",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 4,
+      "sort_order": 6,
+      "aliases_en": [
+        "vaseline",
+        "100g",
+        "petroleum",
+        "pj1",
+        "jelly",
+        "petroleum jelly 100g"
+      ],
+      "aliases_so": [
+        "kareem jarbuuq",
+        "vaseline",
+        "vaseline"
+      ]
+    },
+    {
+      "code": "body_lotion_500ml",
+      "name_en": "Body Lotion 500ml",
+      "name_so": "Kareem Jir 500ml",
+      "unit_code": "bottle",
+      "category": "Personal care",
+      "suggested_sale_price_usd": 3.8,
+      "reorder_threshold": 4,
+      "sort_order": 7,
+      "aliases_en": [
+        "body lotion 500ml",
+        "moisturizer",
+        "lotion",
+        "500ml",
+        "bl5",
+        "body"
+      ],
+      "aliases_so": [
+        "kareem jir",
+        "jir",
+        "500ml",
+        "kareem",
+        "kareem jir 500ml"
+      ]
+    },
+    {
+      "code": "razor_blades",
+      "name_en": "Razor Blades Pack",
+      "name_so": "Ujada Baakad",
+      "unit_code": "packet",
+      "category": "Personal care",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 8,
+      "sort_order": 8,
+      "aliases_en": [
+        "razor blades pack",
+        "razor blades",
+        "pack",
+        "rbp",
+        "blades",
+        "razor"
+      ],
+      "aliases_so": [
+        "baakad",
+        "ujada baakad",
+        "ujada"
+      ]
+    },
+    {
+      "code": "deodorant",
+      "name_en": "Deodorant Stick",
+      "name_so": "Deodorant",
+      "unit_code": "piece",
+      "category": "Personal care",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 5,
+      "sort_order": 9,
+      "aliases_en": [
+        "deodorant",
+        "spray",
+        "stick",
+        "ds",
+        "deodorant stick"
+      ],
+      "aliases_so": [
+        "deodorant",
+        "deodorant",
+        "deodorant"
+      ]
+    },
+    {
+      "code": "potato_1kg",
+      "name_en": "Potato 1kg",
+      "name_so": "Baradho 1kg",
+      "unit_code": "kg",
+      "category": "Other",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 5,
+      "sort_order": 1,
+      "aliases_en": [
+        "potato",
+        "1kg",
+        "baradho",
+        "p1",
+        "potato 1kg"
+      ],
+      "aliases_so": [
+        "baradho",
+        "potato",
+        "baradho"
+      ]
+    },
+    {
+      "code": "banana_1kg",
+      "name_en": "Banana 1kg",
+      "name_so": "Moos 1kg",
+      "unit_code": "kg",
+      "category": "Other",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 5,
+      "sort_order": 2,
+      "aliases_en": [
+        "banana",
+        "1kg",
+        "moos",
+        "b1",
+        "banana 1kg"
+      ],
+      "aliases_so": [
+        "moos",
+        "banana",
+        "moos"
+      ]
+    },
+    {
+      "code": "orange_1kg",
+      "name_en": "Orange 1kg",
+      "name_so": "Liin Macaan 1kg",
+      "unit_code": "kg",
+      "category": "Other",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 5,
+      "sort_order": 3,
+      "aliases_en": [
+        "orange",
+        "o1",
+        "1kg",
+        "liin",
+        "orange 1kg"
+      ],
+      "aliases_so": [
+        "liin",
+        "orange",
+        "liin"
+      ]
+    },
+    {
+      "code": "apple_1kg",
+      "name_en": "Apple 1kg",
+      "name_so": "Tufaax 1kg",
+      "unit_code": "kg",
+      "category": "Other",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 5,
+      "sort_order": 4,
+      "aliases_en": [
+        "a1",
+        "1kg",
+        "tufaax",
+        "apple",
+        "apple 1kg"
+      ],
+      "aliases_so": [
+        "tufaax",
+        "apple",
+        "tufaax"
+      ]
+    },
+    {
+      "code": "matches",
+      "name_en": "Matches",
+      "name_so": "Taraq",
+      "unit_code": "box",
+      "category": "Other",
+      "suggested_sale_price_usd": 0.15,
+      "reorder_threshold": 8,
+      "sort_order": 5,
+      "aliases_en": [
+        "taraq",
+        "matches",
+        "matches"
+      ],
+      "aliases_so": [
+        "taraq",
+        "matches",
+        "taraq"
+      ]
+    },
+    {
+      "code": "charcoal_5kg",
+      "name_en": "Charcoal 5kg",
+      "name_so": "Dhuxul 5kg",
+      "unit_code": "bag",
+      "category": "Other",
+      "suggested_sale_price_usd": 3.0,
+      "reorder_threshold": 2,
+      "sort_order": 6,
+      "aliases_en": [
+        "charcoal",
+        "charcoal 5kg",
+        "5kg",
+        "c5",
+        "dhuxul"
+      ],
+      "aliases_so": [
+        "dhuxul",
+        "charcoal",
+        "dhuxul"
+      ]
+    },
+    {
+      "code": "gas_refill_small",
+      "name_en": "Gas Refill Small",
+      "name_so": "Gaas Yar",
+      "unit_code": "piece",
+      "category": "Other",
+      "suggested_sale_price_usd": 8.0,
+      "reorder_threshold": 5,
+      "sort_order": 7,
+      "aliases_en": [
+        "gas",
+        "gaas",
+        "refill",
+        "gas refill small",
+        "small",
+        "grs"
+      ],
+      "aliases_so": [
+        "gaas",
+        "gas",
+        "gaas"
+      ]
+    },
+    {
+      "code": "phone_airtime_1",
+      "name_en": "Phone Airtime \\$1",
+      "name_so": "Kaarka Taleefan \\$1",
+      "unit_code": "piece",
+      "category": "Other",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 5,
+      "sort_order": 8,
+      "aliases_en": [
+        "pa\\",
+        "phone airtime \\$1",
+        "kaar",
+        "\\$1",
+        "airtime",
+        "phone"
+      ],
+      "aliases_so": [
+        "kaarka",
+        "airtime",
+        "kaar"
+      ]
+    },
+    {
+      "code": "phone_airtime_5",
+      "name_en": "Phone Airtime \\$5",
+      "name_so": "Kaarka Taleefan \\$5",
+      "unit_code": "piece",
+      "category": "Other",
+      "suggested_sale_price_usd": 5.0,
+      "reorder_threshold": 5,
+      "sort_order": 9,
+      "aliases_en": [
+        "pa\\",
+        "phone airtime \\$5",
+        "\\$5",
+        "airtime 5",
+        "kaar 5",
+        "airtime",
+        "phone"
+      ],
+      "aliases_so": [
+        "kaarka",
+        "airtime 5",
+        "kaar 5"
+      ]
+    },
+    {
+      "code": "battery_aa",
+      "name_en": "Battery AA",
+      "name_so": "Batariga AA",
+      "unit_code": "packet",
+      "category": "Other",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 8,
+      "sort_order": 10,
+      "aliases_en": [
+        "battery aa",
+        "ba",
+        "battery",
+        "batari"
+      ],
+      "aliases_so": [
+        "batariga",
+        "battery",
+        "batari"
+      ]
+    },
+    {
+      "code": "light_bulb",
+      "name_en": "Light Bulb",
+      "name_so": "Nal",
+      "unit_code": "piece",
+      "category": "Other",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 5,
+      "sort_order": 11,
+      "aliases_en": [
+        "light bulb",
+        "lb",
+        "bulb",
+        "nal",
+        "light"
+      ],
+      "aliases_so": [
+        "nal",
+        "bulb",
+        "nal"
+      ]
+    },
+    {
+      "code": "notebook",
+      "name_en": "Notebook",
+      "name_so": "Buug Qoraal",
+      "unit_code": "piece",
+      "category": "Other",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 5,
+      "sort_order": 12,
+      "aliases_en": [
+        "buug",
+        "notebook",
+        "notebook"
+      ],
+      "aliases_so": [
+        "buug",
+        "notebook",
+        "buug"
+      ]
+    },
+    {
+      "code": "pen_blue",
+      "name_en": "Pen Blue",
+      "name_so": "Qalin Buluug",
+      "unit_code": "piece",
+      "category": "Other",
+      "suggested_sale_price_usd": 0.2,
+      "reorder_threshold": 5,
+      "sort_order": 13,
+      "aliases_en": [
+        "pen",
+        "pb",
+        "pen blue",
+        "blue",
+        "qalin"
+      ],
+      "aliases_so": [
+        "qalin",
+        "pen",
+        "qalin"
+      ]
+    },
+    {
+      "code": "school_pencil",
+      "name_en": "School Pencil",
+      "name_so": "Qalin Qori",
+      "unit_code": "piece",
+      "category": "Other",
+      "suggested_sale_price_usd": 0.15,
+      "reorder_threshold": 5,
+      "sort_order": 14,
+      "aliases_en": [
+        "qori",
+        "school",
+        "school pencil",
+        "sp",
+        "pencil"
+      ],
+      "aliases_so": [
+        "qalin",
+        "pencil",
+        "qori"
+      ]
+    },
+    {
+      "code": "cornflakes_500g",
+      "name_en": "Cornflakes 500g",
+      "name_so": "Quraac Galley 500g",
+      "unit_code": "box",
+      "category": "Snacks",
+      "suggested_sale_price_usd": 3.2,
+      "reorder_threshold": 8,
+      "sort_order": 15,
+      "aliases_en": [
+        "quraac",
+        "500g",
+        "cornflakes 500g",
+        "cornflakes",
+        "c5"
+      ],
+      "aliases_so": [
+        "quraac",
+        "cornflakes",
+        "quraac"
+      ]
+    },
+    {
+      "code": "honey_250g",
+      "name_en": "Honey 250g",
+      "name_so": "Malab 250g",
+      "unit_code": "jar",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 3.0,
+      "reorder_threshold": 5,
+      "sort_order": 24,
+      "aliases_en": [
+        "honey 250g",
+        "honey",
+        "malab",
+        "250g",
+        "h2"
+      ],
+      "aliases_so": [
+        "malab",
+        "honey",
+        "malab"
+      ]
+    },
+    {
+      "code": "jam_250g",
+      "name_en": "Jam 250g",
+      "name_so": "Macmacaan Dhalo",
+      "unit_code": "jar",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 5,
+      "sort_order": 25,
+      "aliases_en": [
+        "jam 250g",
+        "macmacaan",
+        "250g",
+        "jam",
+        "j2"
+      ],
+      "aliases_so": [
+        "macmacaan",
+        "jam",
+        "macmacaan"
+      ]
+    },
+    {
+      "code": "mayonnaise",
+      "name_en": "Mayonnaise",
+      "name_so": "Mayoonees",
+      "unit_code": "jar",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 2.1,
+      "reorder_threshold": 5,
+      "sort_order": 26,
+      "aliases_en": [
+        "mayoonees",
+        "mayonnaise",
+        "mayo"
+      ],
+      "aliases_so": [
+        "mayoonees",
+        "mayo",
+        "mayoonees"
+      ]
+    },
+    {
+      "code": "ketchup",
+      "name_en": "Ketchup",
+      "name_so": "Ketchup",
+      "unit_code": "bottle",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 4,
+      "sort_order": 27,
+      "aliases_en": [
+        "ketchup",
+        "ketchup",
+        "ketchup"
+      ],
+      "aliases_so": [
+        "ketchup",
+        "ketchup",
+        "ketchup"
+      ]
+    },
+    {
+      "code": "cheese_slices",
+      "name_en": "Cheese Slices",
+      "name_so": "Farmaajo Jeex",
+      "unit_code": "packet",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 2.4,
+      "reorder_threshold": 8,
+      "sort_order": 10,
+      "aliases_en": [
+        "cheese",
+        "farmaajo",
+        "cheese slices",
+        "slices",
+        "cs"
+      ],
+      "aliases_so": [
+        "farmaajo",
+        "cheese",
+        "farmaajo"
+      ]
+    },
+    {
+      "code": "frozen_chicken",
+      "name_en": "Frozen Chicken",
+      "name_so": "Digaag Qabow",
+      "unit_code": "kg",
+      "category": "Other",
+      "suggested_sale_price_usd": 3.4,
+      "reorder_threshold": 5,
+      "sort_order": 15,
+      "aliases_en": [
+        "digaag",
+        "frozen chicken",
+        "fc",
+        "frozen",
+        "chicken"
+      ],
+      "aliases_so": [
+        "digaag",
+        "chicken",
+        "digaag"
+      ]
+    },
+    {
+      "code": "frozen_fish",
+      "name_en": "Frozen Fish",
+      "name_so": "Kalluun Qabow",
+      "unit_code": "kg",
+      "category": "Other",
+      "suggested_sale_price_usd": 3.0,
+      "reorder_threshold": 5,
+      "sort_order": 16,
+      "aliases_en": [
+        "frozen fish",
+        "kalluun",
+        "ff",
+        "frozen",
+        "fish"
+      ],
+      "aliases_so": [
+        "kalluun",
+        "fish",
+        "kalluun"
+      ]
+    },
+    {
+      "code": "beef_1kg",
+      "name_en": "Beef 1kg",
+      "name_so": "Hilib Lo 1kg",
+      "unit_code": "kg",
+      "category": "Other",
+      "suggested_sale_price_usd": 6.0,
+      "reorder_threshold": 5,
+      "sort_order": 17,
+      "aliases_en": [
+        "hilib",
+        "1kg",
+        "b1",
+        "beef 1kg",
+        "beef"
+      ],
+      "aliases_so": [
+        "hilib",
+        "beef",
+        "hilib"
+      ]
+    },
+    {
+      "code": "yoghurt_cup",
+      "name_en": "Yoghurt Cup",
+      "name_so": "Garoor Koob",
+      "unit_code": "piece",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 5,
+      "sort_order": 11,
+      "aliases_en": [
+        "cup",
+        "yoghurt cup",
+        "yoghurt",
+        "garoor",
+        "yc"
+      ],
+      "aliases_so": [
+        "garoor",
+        "yoghurt",
+        "garoor"
+      ]
+    },
+    {
+      "code": "ice_cream_cup",
+      "name_en": "Ice Cream Cup",
+      "name_so": "Jalaato Koob",
+      "unit_code": "piece",
+      "category": "Dairy",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 5,
+      "sort_order": 12,
+      "aliases_en": [
+        "cream",
+        "cup",
+        "ice cream",
+        "ice cream cup",
+        "ice",
+        "icc",
+        "jalaato"
+      ],
+      "aliases_so": [
+        "jalaato",
+        "ice cream",
+        "jalaato"
+      ]
+    },
+    {
+      "code": "floor_cleaner",
+      "name_en": "Floor Cleaner",
+      "name_so": "Nadiifiye Dhulka",
+      "unit_code": "bottle",
+      "category": "Household",
+      "suggested_sale_price_usd": 1.6,
+      "reorder_threshold": 4,
+      "sort_order": 13,
+      "aliases_en": [
+        "fc",
+        "cleaner",
+        "floor",
+        "floor cleaner",
+        "nadiifiye"
+      ],
+      "aliases_so": [
+        "nadiifiye",
+        "cleaner",
+        "nadiifiye"
+      ]
+    },
+    {
+      "code": "insect_spray",
+      "name_en": "Insect Spray",
+      "name_so": "Buufis Cayayaan",
+      "unit_code": "can",
+      "category": "Household",
+      "suggested_sale_price_usd": 2.8,
+      "reorder_threshold": 4,
+      "sort_order": 14,
+      "aliases_en": [
+        "insect",
+        "spray",
+        "insect spray",
+        "is",
+        "buufis"
+      ],
+      "aliases_so": [
+        "buufis",
+        "insect",
+        "buufis"
+      ]
+    },
+    {
+      "code": "plastic_cups",
+      "name_en": "Plastic Cups",
+      "name_so": "Koob Caag",
+      "unit_code": "packet",
+      "category": "Household",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 8,
+      "sort_order": 15,
+      "aliases_en": [
+        "plastic cups",
+        "plastic",
+        "pc",
+        "cups",
+        "koob"
+      ],
+      "aliases_so": [
+        "koob",
+        "cups",
+        "koob"
+      ]
+    },
+    {
+      "code": "plastic_plates",
+      "name_en": "Plastic Plates",
+      "name_so": "Saxan Caag",
+      "unit_code": "packet",
+      "category": "Household",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 8,
+      "sort_order": 16,
+      "aliases_en": [
+        "pp",
+        "plates",
+        "plastic",
+        "plastic plates",
+        "saxan"
+      ],
+      "aliases_so": [
+        "saxan",
+        "plates",
+        "saxan"
+      ]
+    },
+    {
+      "code": "black_seed",
+      "name_en": "Black Seed",
+      "name_so": "Xabad Sowdo",
+      "unit_code": "packet",
+      "category": "Cooking essentials",
+      "suggested_sale_price_usd": 1.7,
+      "reorder_threshold": 8,
+      "sort_order": 28,
+      "aliases_en": [
+        "seed",
+        "bs",
+        "xabad sowdo",
+        "black seed",
+        "black"
+      ],
+      "aliases_so": [
+        "xabad",
+        "black seed",
+        "xabad sowdo"
+      ]
+    },
+    {
+      "code": "battery_aaa",
+      "name_en": "Battery AAA",
+      "name_so": "Batariga AAA",
+      "unit_code": "packet",
+      "category": "Other",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 5,
+      "sort_order": 18,
+      "aliases_en": [
+        "aaa",
+        "ba",
+        "battery aaa",
+        "battery"
+      ],
+      "aliases_so": [
+        "batariga",
+        "aaa",
+        "batariga aaa",
+        "batari"
+      ]
+    },
+    {
+      "code": "battery_d",
+      "name_en": "Battery D Size",
+      "name_so": "Batariga D",
+      "unit_code": "packet",
+      "category": "Other",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 5,
+      "sort_order": 19,
+      "aliases_en": [
+        "bds",
+        "battery d size",
+        "battery",
+        "battery d",
+        "size"
+      ],
+      "aliases_so": [
+        "batariga",
+        "batariga d",
+        "batari"
+      ]
+    },
+    {
+      "code": "led_bulb_7w",
+      "name_en": "LED Bulb 7W",
+      "name_so": "Nal LED 7W",
+      "unit_code": "piece",
+      "category": "Other",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 5,
+      "sort_order": 20,
+      "aliases_en": [
+        "led bulb",
+        "light bulb",
+        "7w",
+        "led bulb 7w",
+        "bulb",
+        "lb7",
+        "led"
+      ],
+      "aliases_so": [
+        "nal led",
+        "nal led 7w",
+        "nal",
+        "led"
+      ]
+    },
+    {
+      "code": "charcoal_25kg",
+      "name_en": "Charcoal 25kg",
+      "name_so": "Dhuxul 25kg",
+      "unit_code": "bag",
+      "category": "Other",
+      "suggested_sale_price_usd": 11.0,
+      "reorder_threshold": 2,
+      "sort_order": 21,
+      "aliases_en": [
+        "charcoal",
+        "large charcoal",
+        "25kg",
+        "c2",
+        "charcoal 25kg"
+      ],
+      "aliases_so": [
+        "25kg",
+        "dhuxul gee",
+        "dhuxul",
+        "dhuxul 25kg"
+      ]
+    }
+  ]
+}

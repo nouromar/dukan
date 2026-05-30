@@ -1,0 +1,58 @@
+{
+  "kind": "configuration_pack",
+  "pack": "dashboard",
+  "template_code": "grocery",
+  "version": 1,
+  "home_attention_cards": [
+    {
+      "code": "customer_debts",
+      "label_en": "Customers owe money",
+      "label_so": "Macaamiil lacag baa lagu leeyahay",
+      "sort_order": 1
+    },
+    {
+      "code": "supplier_payables",
+      "label_en": "Supplier payables",
+      "label_so": "Lacagta qeybiyeyaasha",
+      "sort_order": 2
+    },
+    {
+      "code": "low_stock",
+      "label_en": "Low stock",
+      "label_so": "Alaab gabaabsi ah",
+      "sort_order": 3
+    }
+  ],
+  "reports": [
+    {
+      "code": "today_sales",
+      "label_en": "Today sales",
+      "label_so": "Iibka maanta",
+      "sort_order": 1
+    },
+    {
+      "code": "customer_debts",
+      "label_en": "Customer debts",
+      "label_so": "Deynta macaamiisha",
+      "sort_order": 2
+    },
+    {
+      "code": "supplier_payables",
+      "label_en": "Supplier payables",
+      "label_so": "Deynta qeybiyeyaasha",
+      "sort_order": 3
+    },
+    {
+      "code": "low_stock",
+      "label_en": "Low stock",
+      "label_so": "Alaab gabaabsi ah",
+      "sort_order": 4
+    },
+    {
+      "code": "profit",
+      "label_en": "Profit",
+      "label_so": "Faa’iido",
+      "sort_order": 5
+    }
+  ]
+}

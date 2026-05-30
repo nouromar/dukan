@@ -1,0 +1,22 @@
+{
+  "kind": "configuration_pack",
+  "pack": "settings",
+  "template_code": "grocery",
+  "version": 1,
+  "settings": {
+    "locale_default": "so",
+    "currency_default": "USD",
+    "timezone_default": "Africa/Mogadishu",
+    "sale_payment_default": "cash",
+    "receive_payment_default": "credit",
+    "negative_stock_policy": "warn",
+    "debt_sale_requires_customer": true,
+    "suggest_bono_photo_on_receive": true,
+    "suggest_receipt_photo_on_sale": false,
+    "rounding": {
+      "currency_decimals": 2,
+      "quantity_decimals": 3
+    },
+    "support_permissions": "setup_only"
+  }
+}
