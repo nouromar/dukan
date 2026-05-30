@@ -37,7 +37,7 @@ Recommended migration groups:
 | `0012_apply_template` | idempotent template application into shop setup |
 | `0013_reports_reconciliation` | reconciliation, sales/receive/expense/payment, daily, and monthly report views |
 | `0014_learning_profiles` | shop-scoped usage counters, learned defaults, and precomputed suggestions |
-| `0015_rls_storage` | Storage bucket policies |
+| `0015_rls_storage` | Supabase Storage bucket, object policies, and document deletion rules |
 
 Use Supabase Edge Functions for OCR, imports, and external integrations. Use Postgres functions for posting truth.
 
@@ -749,9 +749,9 @@ Storage:
 
 ```text
 Bucket: shop-documents
-Path: {shop_id}/documents/{document_id}/{original_filename}
+Path: {shop_id}/documents/{document_id}/image.(jpg|jpeg|png|webp)
 Allowed MIME: image/jpeg, image/png, image/webp
-Suggested max size: 8 MB
+Max size: 8 MB
 ```
 
 OCR never posts a transaction. It writes a draft/candidate result. The user confirms, edits, or rejects it.
@@ -1166,19 +1166,30 @@ Support policy:
 - Platform support cannot execute posting RPCs unless they are also a shop/org member with an allowed operational role, which should not be the normal support model.
 - No v1 support-session RLS is needed because support codes are disabled.
 
-## 14. Storage policy plan
+## 14. Storage policy
 
 Documents live in one bucket:
 
 ```text
-shop-documents/{shop_id}/documents/{document_id}/image.jpg
+shop-documents
 ```
 
-Policies:
+Object names must match:
 
-- Read: user can access shop by `{shop_id}` path segment.
-- Upload: user can access shop and document row belongs to same shop.
-- Delete: owner only, and only for unposted/draft documents if supported.
+```text
+{shop_id}/documents/{document_id}/image.(jpg|jpeg|png|webp)
+```
+
+The `document_id` segment is intentionally a directory prefix so future files for the same document can live together, for example OCR JSON output or derived thumbnails, without changing the document-level organization.
+
+Implemented in `0015_rls_storage`:
+
+- Bucket `shop-documents` is private, limited to 8 MB images (`image/jpeg`, `image/png`, `image/webp`).
+- `document.storage_path` is constrained to match the object path and include the same `shop_id` and `document.id`.
+- Read: authenticated users can read objects only when the path matches an existing `document` row for a shop they can access.
+- Upload/replace: authenticated users can write only when the path matches an existing `document` row for a shop they can access and they are the uploader or shop owner.
+- Direct Storage object delete by app users is not granted. Owners delete unattached `document` rows instead; an `after delete` trigger removes the matching Storage object.
+- Document metadata delete is owner-only and blocked once the document is attached to a transaction, payment, or inventory adjustment.
 - OCR Edge Function uses service role, but must verify `document.shop_id` and quota before calling Google Vision.
 
 ## 15. Indexes and constraints
@@ -1260,5 +1271,5 @@ Posting truth stays in Postgres RPC functions, not Edge Functions, because it mu
 
 ## 19. Recommended next implementation order
 
-1. Add Supabase Storage bucket/policies for `shop-documents/{shop_id}/...`.
-2. Wire Flutter prototype to Supabase for login, shop selection, template-applied items, Sale, Receive, Payment, Expense.
+1. Wire Flutter prototype to Supabase for login, shop selection, template-applied items, Sale, Receive, Payment, Expense.
+2. Add OCR Edge Function flow for uploaded document images when ready for image-to-draft.

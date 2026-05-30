@@ -29,8 +29,28 @@ docker exec -i "$CONTAINER_NAME" psql -U postgres -v ON_ERROR_STOP=1 -d postgres
 create role anon nologin;
 create role authenticated nologin;
 create schema auth;
+create schema storage;
 create table auth.users (
   id uuid primary key default gen_random_uuid()
+);
+create table storage.buckets (
+  id text primary key,
+  name text not null unique,
+  public boolean not null default false,
+  file_size_limit bigint,
+  allowed_mime_types text[],
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text not null references storage.buckets(id),
+  name text not null,
+  owner uuid,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (bucket_id, name)
 );
 create or replace function auth.uid()
 returns uuid
@@ -39,6 +59,9 @@ stable
 as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
 $$;
+grant usage on schema auth to authenticated, anon;
+grant select on auth.users to authenticated, anon;
+grant usage on schema storage to authenticated, anon;
 SQL
 
 for migration in "$ROOT_DIR"/supabase/migrations/*.sql; do
@@ -576,6 +599,208 @@ begin
 end;
 $$;
 
+create temp table document_test_ids (
+  purpose text primary key,
+  document_id uuid not null,
+  storage_path text not null
+);
+
+do $$
+declare
+  v_shop_id uuid;
+  v_document_id uuid;
+  v_receive_document_id uuid;
+  v_bad_document_id uuid;
+  v_storage_path text;
+  v_receive_storage_path text;
+  v_bad_path text;
+  v_failed boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+
+  if not exists (
+    select 1
+    from storage.buckets
+    where id = 'shop-documents'
+      and name = 'shop-documents'
+      and public = false
+      and file_size_limit = 8388608
+      and allowed_mime_types @> array['image/jpeg', 'image/png', 'image/webp']
+  ) then
+    raise exception 'shop-documents storage bucket was not configured';
+  end if;
+
+  v_document_id := gen_random_uuid();
+  v_storage_path := v_shop_id::text || '/documents/' || v_document_id::text || '/image.jpg';
+
+  insert into public.document (
+    id,
+    shop_id,
+    type_id,
+    storage_bucket,
+    storage_path,
+    mime_type,
+    size_bytes,
+    ocr_status_id
+  )
+  values (
+    v_document_id,
+    v_shop_id,
+    (select id from public.document_type where code = 'sale_receipt'),
+    'shop-documents',
+    v_storage_path,
+    'image/jpeg',
+    1024,
+    (select id from public.ocr_status where code = 'pending')
+  );
+
+  insert into storage.objects (bucket_id, name, owner, metadata)
+  values ('shop-documents', v_storage_path, auth.uid(), '{"mimetype":"image/jpeg"}');
+
+  if not exists (
+    select 1
+    from storage.objects
+    where bucket_id = 'shop-documents'
+      and name = v_storage_path
+  ) then
+    raise exception 'shop user could not read their uploaded document image';
+  end if;
+
+  v_bad_document_id := gen_random_uuid();
+  v_bad_path := v_shop_id::text || '/bad/' || v_bad_document_id::text || '/image.jpg';
+  v_failed := false;
+  begin
+    insert into public.document (
+      id,
+      shop_id,
+      type_id,
+      storage_bucket,
+      storage_path,
+      mime_type,
+      size_bytes,
+      ocr_status_id
+    )
+    values (
+      v_bad_document_id,
+      v_shop_id,
+      (select id from public.document_type where code = 'sale_receipt'),
+      'shop-documents',
+      v_bad_path,
+      'image/jpeg',
+      1024,
+      (select id from public.ocr_status where code = 'pending')
+    );
+  exception
+    when check_violation then
+      v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'document allowed invalid storage path shape';
+  end if;
+
+  v_failed := false;
+  begin
+    insert into storage.objects (bucket_id, name, owner)
+    values (
+      'shop-documents',
+      v_shop_id::text || '/documents/' || gen_random_uuid()::text || '/image.jpg',
+      auth.uid()
+    );
+  exception
+    when insufficient_privilege or check_violation then
+      v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'storage policy allowed object without matching document metadata';
+  end if;
+
+  v_failed := false;
+  begin
+    update storage.objects
+    set name = v_storage_path || '/evil'
+    where bucket_id = 'shop-documents'
+      and name = v_storage_path;
+  exception
+    when insufficient_privilege or check_violation then
+      v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'storage policy allowed invalid object rename';
+  end if;
+
+  v_failed := false;
+  begin
+    delete from storage.objects
+    where bucket_id = 'shop-documents'
+      and name = v_storage_path;
+  exception
+    when insufficient_privilege then
+      v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'storage objects should not be directly deleted by clients';
+  end if;
+
+  delete from public.document
+  where id = v_document_id;
+
+  insert into document_test_ids (purpose, document_id, storage_path)
+  values ('deleted-before-posting', v_document_id, v_storage_path);
+
+  v_receive_document_id := gen_random_uuid();
+  v_receive_storage_path := v_shop_id::text || '/documents/' || v_receive_document_id::text || '/image.jpg';
+
+  insert into public.document (
+    id,
+    shop_id,
+    type_id,
+    storage_bucket,
+    storage_path,
+    mime_type,
+    size_bytes,
+    ocr_status_id
+  )
+  values (
+    v_receive_document_id,
+    v_shop_id,
+    (select id from public.document_type where code = 'bono'),
+    'shop-documents',
+    v_receive_storage_path,
+    'image/jpeg',
+    2048,
+    (select id from public.ocr_status where code = 'pending')
+  );
+
+  insert into storage.objects (bucket_id, name, owner, metadata)
+  values ('shop-documents', v_receive_storage_path, auth.uid(), '{"mimetype":"image/jpeg"}');
+
+  insert into document_test_ids (purpose, document_id, storage_path)
+  values ('receive-bono', v_receive_document_id, v_receive_storage_path);
+end;
+$$;
+
+reset role;
+do $$
+declare
+  v_deleted_path text;
+begin
+  select storage_path into v_deleted_path
+  from document_test_ids
+  where purpose = 'deleted-before-posting';
+
+  if exists (
+    select 1
+    from storage.objects
+    where bucket_id = 'shop-documents'
+      and name = v_deleted_path
+  ) then
+    raise exception 'document delete did not clean up the storage object';
+  end if;
+end;
+$$;
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
 do $$
 declare
   v_shop_id uuid;
@@ -588,6 +813,7 @@ declare
   v_txn_id uuid;
   v_replay_txn_id uuid;
   v_payment_id uuid;
+  v_receive_document_id uuid;
   v_failed boolean;
 begin
   select shop_id into v_shop_id from test_ids;
@@ -597,6 +823,9 @@ begin
   select id into v_expense_category_id from public.expense_category where shop_id = v_shop_id and code = 'rent';
   select id into v_piece_unit_id from public.unit where code = 'piece';
   select id into v_bag_unit_id from public.unit where code = 'bag';
+  select document_id into v_receive_document_id
+  from document_test_ids
+  where purpose = 'receive-bono';
 
   update public.shop
   set setup_status = 'template_applied'
@@ -637,7 +866,7 @@ begin
     )),
     20,
     'cash',
-    null,
+    v_receive_document_id,
     'receive-candy-1',
     null,
     'Receive candy'
@@ -654,7 +883,7 @@ begin
     )),
     20,
     'cash',
-    null,
+    v_receive_document_id,
     'receive-candy-1',
     null,
     'Receive candy replay'
@@ -666,6 +895,17 @@ begin
 
   if (select count(*) from public.txn where shop_id = v_shop_id and client_op_id = 'receive-candy-1') <> 1 then
     raise exception 'receive idempotency inserted duplicate transactions';
+  end if;
+
+  delete from public.document
+  where id = v_receive_document_id;
+
+  if not exists (
+    select 1
+    from public.document
+    where id = v_receive_document_id
+  ) then
+    raise exception 'referenced receive document was deleted';
   end if;
 
   if (select current_stock from public.item where shop_id = v_shop_id and id = v_item_id) <> 1005 then
@@ -1187,8 +1427,9 @@ begin
     + (select count(*) from public.shop_item_usage)
     + (select count(*) from public.shop_supplier_item_profile)
     + (select count(*) from public.shop_party_usage)
+    + (select count(*) from storage.objects)
   ) <> 0 then
-    raise exception 'unrelated user can see report or reconciliation rows';
+    raise exception 'unrelated user can see report, suggestion, or storage rows';
   end if;
 
   v_failed := false;
@@ -1200,6 +1441,22 @@ begin
   end;
   if not v_failed then
     raise exception 'unrelated user applied template';
+  end if;
+
+  v_failed := false;
+  begin
+    insert into storage.objects (bucket_id, name, owner)
+    values (
+      'shop-documents',
+      v_shop_id::text || '/documents/' || gen_random_uuid()::text || '/image.jpg',
+      auth.uid()
+    );
+  exception
+    when insufficient_privilege or check_violation then
+      v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'unrelated user uploaded a shop document image';
   end if;
 
   v_failed := false;

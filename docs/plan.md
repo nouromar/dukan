@@ -62,7 +62,7 @@ This lets the engine handle new transaction types by inserting a row, not adding
 - RLS policy: a row is visible/writable only if the requesting user has active `shop_membership` for that `shop_id` or org-level access through `organization_membership` (looked up via `auth.uid()`).
 - **No JWT shop claim is trusted for authorization.** The app may hold `current_shop_id` in app state for UX only.
 - **Composite foreign keys on `shop_id`** enforce cross-row tenant integrity (RLS alone does not).
-- Storage buckets partitioned by `shop_id/...` path with matching storage policies.
+- Storage uses private bucket `shop-documents`; object names are `{shop_id}/documents/{document_id}/image.(jpg|jpeg|png|webp)` and policies verify the matching `document` row plus shop access.
 - V1 support uses a Help icon that opens WhatsApp/email. In-app support codes are disabled for v1. Any future support-session access must be setup-only and cannot post transactions or payments.
 
 ### i18n strategy
@@ -212,10 +212,10 @@ Stock-count workflow, first-class returns, multi-location/transfers/warehouses, 
 - `docs/templates-and-learning.md` — operating-template reference: setup defaults, fast-entry mappings, and shop-specific learning techniques.
 - `docs/admin-portal.md` — admin/setup portal scope, roles, functionality, security boundary, and MVP.
 - `docs/backend-schema.md` — Supabase/Postgres schema draft, migration order, RLS plan, RPC posting functions, Storage policy, reporting/reconciliation views, and learning/suggestion profiles.
-- `supabase/migrations/0001_extensions.sql` through `0014_learning_profiles.sql` — backend foundation plus setup, catalog/templates, shop items/units, suppliers/customers, aliases, documents/OCR, transaction/payment/stock ledgers, reports, learning profiles, precomputed suggestions, RLS helpers, bootstrap RPCs, and posting RPCs.
+- `supabase/migrations/0001_extensions.sql` through `0015_rls_storage.sql` — backend foundation plus setup, catalog/templates, shop items/units, suppliers/customers, aliases, documents/OCR, Storage bucket/object policies, transaction/payment/stock ledgers, reports, learning profiles, precomputed suggestions, RLS helpers, bootstrap RPCs, and posting RPCs.
 - `supabase/seed.sql` — development-only seed placeholder; required production lookup data lives in migrations.
 - `scripts/test-backend-migrations.sh` — Docker-based backend migration/RLS test harness.
 - `.github/copilot-instructions.md` — binding principles summary for AI/human contributors.
 - `docs/decisions.md` (in progress, Track B) — recommended answers to the open questions above.
 
-Next: add documents/OCR, transactions/payments/stock, report/reconciliation views, and posting RPCs; then wire the Flutter prototype against the backend while continuing the Phase 1.5 UX prototype.
+Next: wire the Flutter prototype against Supabase for auth, shop selection, template-applied items, and the core Sale/Receive/Payment/Expense flows while continuing the Phase 1.5 UX prototype.
