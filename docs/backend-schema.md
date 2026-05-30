@@ -1263,7 +1263,7 @@ Posting truth stays in Postgres RPC functions, not Edge Functions, because it mu
 ## 18. Open backend decisions before migration
 
 1. Confirm v1 roles: organization roles `org_owner`/`org_admin`; shop roles likely `owner`/`cashier`; add `manager`, `accountant`, or `viewer` only if needed for pilot.
-2. Confirm auth method: phone OTP vs email/invite-assisted onboarding.
+2. Auth method is decided: phone OTP for shop users on mobile and web; prefer WhatsApp OTP delivery through existing Meta/Facebook WhatsApp API access, with SMS fallback after testing.
 3. Confirm Supabase region after a Somalia real-device latency test.
 4. Confirm negative stock default for pilot UX. Current backend-safe default is `warn`.
 5. Confirm whether void window is fixed at 7 days for owner self-service.

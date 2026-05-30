@@ -181,7 +181,7 @@ Stock-count workflow, first-class returns, multi-location/transfers/warehouses, 
 > See **`docs/decisions.md`** for recommended answers (Track B research, in progress).
 
 1. **Currency policy for pilot:** **DECIDED — USD as default per shop** (one currency per shop; no mixed-currency totals). SLSH supported for Hargeisa shops. SOS not in v1 unless a pilot shop specifically requests it.
-2. **Auth method:** Phone OTP is the natural fit but SMS delivery into Somalia must be validated (cost, deliverability). Fallbacks: WhatsApp OTP, email OTP, invite-code + owner-assisted onboarding. Decide before Phase 1.
+2. **Auth method:** **DECIDED — phone OTP for shop users on mobile and web.** Prefer WhatsApp OTP delivery through existing Meta/Facebook WhatsApp API access; use SMS aggregator fallback only after real delivery testing. Owners self-register the first shop; workers are owner/admin-invited.
 3. **Supabase region:** pick closest region with acceptable latency from Somalia; validate with a real-device test before pilot.
 4. **Pricing model** for SaaS (free pilot? per-shop monthly?) — doesn't affect schema much but affects org/plan model.
 5. **Receipt printer** at point of sale: required for pilot or skip?

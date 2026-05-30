@@ -5,7 +5,7 @@
    ┌─────────────────────┐         ┌──────────────────────────────┐
    │  Flutter app        │  HTTPS  │  Supabase (managed)          │
    │  (Android/iOS/Web)  │ ───────▶│  • Postgres (schema + RLS)   │
-   │                     │         │  • Auth (email/OTP, phone)   │
+   │                     │         │  • Auth (phone OTP; staff SSO)│
    │  • i18n: en, so     │ Realtime│  • Storage (images)          │
    │  • Local cache      │ ◀───────│  • Edge Functions (OCR glue) │
    │  • Write queue      │         └──────────────┬───────────────┘
@@ -22,6 +22,26 @@
 - Device never holds the Google Vision API key. It only talks to Supabase.
 - All writes go through PostgREST/Supabase client → RLS enforces tenant isolation.
 - Image uploads go to Storage; a Storage webhook (or a triggered Edge Function on document insert) kicks the OCR pipeline.
+
+### Authentication and onboarding
+
+Shop users authenticate with **phone OTP** on both mobile and web. The phone number is the login identity, but business rows reference the stable Supabase `auth.users.id`.
+
+OTP delivery should prefer Dukan's existing Meta/Facebook WhatsApp API access where feasible, with Supabase Auth remaining the identity/session source of truth. SMS providers such as Twilio or Africa's Talking are fallback delivery channels, not the default assumption.
+
+For mass adoption, the default owner path is self-serve:
+
+1. Owner enters phone number and verifies OTP.
+2. Dukan creates an organization, first shop, and owner membership.
+3. Owner chooses language, currency, and business template.
+4. Template applies starter setup.
+5. Owner completes setup checklist and invites workers.
+
+Workers/cashiers are invited or added by an owner/admin using their phone number. They cannot self-join a shop. Internal Dukan staff use staff auth such as email/password or SSO with platform roles, not the shopkeeper phone-first flow.
+
+Access changes are handled by memberships. If a worker leaves, disable their `shop_membership`; historical rows keep `created_by` for audit. If a user loses a phone, they re-verify the same phone on a new device and old sessions should be revoked where supported. Access is current; audit is permanent.
+
+Simultaneous login is allowed but should be visible and controllable. Owners/admins may use mobile plus web; workers should have a smaller active-device limit later. Settings should show active devices/sessions, support revoking other sessions, and require recent re-auth for sensitive actions such as owner transfer, user removal, business-phone changes, or report export.
 
 ## 2. Multi-tenancy
 
@@ -350,7 +370,7 @@ Notes:
 - Full offline-first deferred to post-pilot.
 
 ## 7. Security & ops
-- **Supabase Auth method TBD** — see Track B `docs/decisions.md`. Likely primary: phone OTP (pending Somalia SMS deliverability validation); fallback: invite-code + concierge onboarding.
+- **Auth:** shop users use phone OTP on mobile and web; OTP delivery prefers WhatsApp through existing Meta/Facebook WhatsApp API access, with SMS/provider fallback after real-device testing. Internal Dukan staff use email/password or SSO with platform roles.
 - RLS on every business table; **deny by default**, allow via direct shop membership or org-level access. Future in-app support sessions may add setup-scoped support access, but v1 disables support codes.
 - Storage policies mirror RLS (path-prefixed by `shop_id`).
 - Audit columns on every table (`created_by`, `created_at`, `updated_at`); structured `audit_log` for setup/support changes.

@@ -590,6 +590,7 @@ Sections:
 - Suppliers.
 - Expense categories.
 - Users.
+- Active devices / sessions.
 - Help icon: WhatsApp chat and email support.
 - Export data.
 
@@ -597,6 +598,7 @@ Rules:
 
 - No settings needed during Sale/Receive.
 - Use setup checklist for incomplete shops.
+- Active devices must support "logout other devices" for lost-phone and suspicious-login cases.
 
 ## 6.6 Setup checklist
 

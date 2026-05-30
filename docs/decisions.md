@@ -1,6 +1,6 @@
 # Dukan — Open Questions: Decisions & Recommendations
 
-> **Status:** Pending review. Each recommendation is the research sub-agent's best synthesis of available evidence. Mark each as ACCEPTED / MODIFIED / REJECTED before Phase 1 schema work begins.
+> **Status:** Living decision log. Accepted decisions should be treated as binding until explicitly changed.
 >
 > **Sources:** Supabase docs, Wikipedia (Hormuud, Telesom, Golis, Somali Shilling, Telecommunications in Somalia, SEACOM), DataReportal Digital 2024 & 2026 Somalia reports, plan.md, architecture.md, ux.md.
 
@@ -10,7 +10,7 @@
 
 | # | Question | Recommended Answer | Confidence |
 |---|---|---|---|
-| 1 | Auth method | **Phone OTP via Twilio** (primary) + **WhatsApp OTP** (fallback A) + **invite-code** (fallback B for concierge onboarding) | Low — must test in-country |
+| 1 | Auth method | **Phone OTP for shop users** on mobile and web; prefer WhatsApp OTP through existing Meta/Facebook WhatsApp API access; owner self-registers first shop; workers are owner/admin-invited; internal staff use email/SSO | DECIDED 2026-05-30 |
 | 2 | Pilot currency | **USD as default** (DECIDED 2026-05-29 by @nouromar). SLSH supported for Hargeisa shops; SOS not in v1 unless a pilot shop specifically requests it. | DECIDED |
 | 3 | Supabase region | **eu-central-1 (Frankfurt)**, validate with real-device latency test | Medium |
 | 4 | Roles for v1 | **Owner + Cashier only**; Manager & Viewer seeded in reference table, not surfaced in UI | High |
@@ -25,6 +25,52 @@
 
 ## Question 1 — Auth Method
 
+### Decision — ACCEPTED / MODIFIED 2026-05-30
+
+For mass adoption across thousands of shops, Dukan uses **self-serve owner onboarding by phone OTP** with assisted setup fallback.
+
+| Area | Decision |
+|---|---|
+| Shop user identity | Phone number is the primary login identity; app data references stable `auth.users.id`, not phone text. |
+| Mobile shop app | Phone OTP. |
+| Shopkeeper/owner web app | Phone OTP using the same account as mobile. |
+| Owner onboarding | Owner enters phone, verifies OTP, creates organization + first shop, chooses language/currency/business template, then completes setup checklist. |
+| Worker/cashier onboarding | Owner/admin invites or adds workers by phone number. Workers cannot self-join a shop. |
+| Pilot fallback | Concierge/support-assisted setup is allowed, but the account is still tied to the owner's phone. |
+| OTP delivery | Prefer WhatsApp OTP through existing Meta/Facebook WhatsApp API access to avoid Twilio cost where feasible. Use SMS aggregator fallback only if WhatsApp is unavailable or delivery is poor. |
+| Simultaneous sessions | Allow mobile + web and limited multi-device use; make active sessions visible and revocable. |
+| Email/social login | Not primary for shop users. Avoid Google/Facebook for v1 to reduce confusion and duplicate accounts. |
+| Internal Dukan staff | Email/password or SSO with platform roles, separate from shopkeeper phone-first login. |
+
+Operational incidents:
+
+| Incident | Handling |
+|---|---|
+| Worker fired/leaves | Disable/remove their `shop_membership`; historical `created_by` records remain unchanged. |
+| Lost phone | Re-verify same phone on new device; revoke old sessions where supported. |
+| Phone number changed | Invite/verify the new phone, transfer active memberships, then disable the old account or membership. |
+| Owner leaves/sells business | Another owner/admin or platform support transfers owner role; transaction history remains immutable. |
+| Suspicious activity | Disable membership, review rows by `created_by`, and correct through reversal transactions rather than deleting posted records. |
+
+Core rule: **access is current, audit is permanent**.
+
+Session/device policy:
+
+| User type | Policy |
+|---|---|
+| Owner/admin | Allow multiple active sessions for mobile + web, with a practical device limit later. |
+| Cashier/worker | Allow limited sessions, preferably 1-2 active devices later. |
+| Internal Dukan staff | Allow multiple sessions under staff auth/SSO controls. |
+
+Required controls:
+
+- Show active devices/sessions in Settings.
+- Allow logout/revoke from other devices.
+- Revoke sessions for lost phone or suspicious activity where Supabase/Auth tooling supports it.
+- Notify user/owner when a new device logs in.
+- Rate-limit OTP attempts.
+- Require recent OTP/re-auth later for sensitive actions such as ownership transfer, changing business phone, deleting users, or exporting reports.
+
 ### Options
 
 | Option | Mechanism | Supabase support? |
@@ -34,7 +80,8 @@
 | C | Phone OTP via SMS (MessageBird / Bird) | ✅ native |
 | D | Phone OTP via SMS (TextLocal) | ✅ community-supported |
 | E | Phone OTP via SMS (Africa's Talking) | ⚠️ custom — via Edge Function wrapping AT API |
-| F | WhatsApp OTP (Twilio Verify WhatsApp channel) | ✅ native — Supabase supports WhatsApp OTP via Twilio |
+| F | WhatsApp OTP via existing Meta/Facebook WhatsApp API access | ⚠️ custom — keep Supabase Auth as the identity/session system, but send OTP through an Edge Function/custom SMS hook |
+| F2 | WhatsApp OTP (Twilio Verify WhatsApp channel) | ✅ native — simpler Supabase integration, but paid Twilio dependency |
 | G | Email OTP | ✅ native (Supabase built-in) |
 | H | Invite code / owner-issued 6-digit code | 🔧 custom (no 3rd-party delivery) |
 
@@ -70,7 +117,8 @@
 
 **WhatsApp as channel:**
 - WhatsApp is widely used in Somalia. DataReportal 2026 shows 3.51M social media identities; Hormuud's own WAAFI app includes WhatsApp-style messaging, indicating smartphone and OTT-app familiarity.
-- Twilio Verify supports WhatsApp OTP natively, and Supabase's phone login can be configured to deliver via WhatsApp through Twilio.
+- Dukan can use existing Meta/Facebook WhatsApp API access for OTP delivery, reducing Twilio dependency and per-message cost. This still should use approved WhatsApp authentication message templates and must keep OTP generation/session issuance inside Supabase Auth or a tightly controlled auth service.
+- Twilio Verify supports WhatsApp OTP natively, and Supabase's phone login can be configured to deliver via WhatsApp through Twilio. This remains a fallback if the direct Meta integration is slower to implement or unreliable.
 - WhatsApp OTP is more reliable than SMS in markets where international SMS routing is weak, because WhatsApp uses data (app-to-app) rather than the SS7 voice/SMS network.
 - Prerequisite: user must have WhatsApp installed and an active data connection.
 
@@ -84,23 +132,25 @@
 
 ### Recommendation
 
-**Primary:** Phone OTP via **Twilio** (simplest integration with Supabase; widest coverage claims). Extend the OTP expiry from 60 seconds to **5 minutes** for the pilot (configurable in Supabase Auth settings) — 60 seconds is tight for a user who may need to switch apps or have slow SMS delivery.
+**Primary:** Phone OTP for shop users, delivered by **WhatsApp through Dukan's existing Meta/Facebook WhatsApp API access** where feasible. Keep Supabase Auth as the user/session source of truth; use a custom OTP sender hook or Edge Function rather than building a separate auth system. Extend the OTP expiry from 60 seconds to **5 minutes** for the pilot where configurable — 60 seconds is tight for a user who may need to switch apps or have slow delivery.
 
-**Fallback A:** **WhatsApp OTP** via Twilio Verify. Configure as automatic fallback when SMS fails (Twilio Verify handles this automatically). For smartphone-using shopkeepers with WhatsApp (likely majority of pilot users given 4G penetration), this is more reliable than SMS routing.
+**Fallback A:** SMS OTP via Twilio/Vonage/MessageBird/Africa's Talking if WhatsApp OTP cannot be delivered. Test delivery on Hormuud, Telesom, Golis, and Somtel before launch.
 
 **Fallback B:** **Invite-code + support-seeded account** for the concierge-onboarding path. Since every pilot shop is onboarded with support involvement, the first login can use a temporary password or magic link delivered out-of-band (e.g., support staff reads or shares a link via WhatsApp). Phone OTP takes over for subsequent logins once the account exists.
 
 **Do not use:** Email OTP. The audience does not have reliable email.
 
-**Africa's Talking as alternative aggregator:** If Twilio shows poor deliverability to Hormuud/Golis in initial testing, Africa's Talking is the fallback SMS aggregator. Integration requires a small Edge Function wrapper; ~1 day of work.
+**Twilio as fallback, not default:** Twilio remains useful because it is a simpler hosted Verify integration, but it should not be the first choice if the existing WhatsApp API can reliably deliver authentication templates.
 
-**Critical pre-pilot action:** Before Phase 1 schema is final, send **10 test SMS messages to real Hormuud, Telesom, Golis, and Somtel numbers** using Twilio and/or Africa's Talking. Record delivery rate and latency. If < 90% in under 2 minutes, switch to WhatsApp OTP as primary.
+**Africa's Talking as alternative SMS aggregator:** If WhatsApp OTP is insufficient and Twilio shows poor SMS deliverability to Hormuud/Golis in initial testing, Africa's Talking is the fallback SMS aggregator. Integration requires a small Edge Function wrapper.
+
+**Critical pre-pilot action:** Before launch, send **10 test OTP messages to real Hormuud, Telesom, Golis, and Somtel numbers** using the Meta WhatsApp API path, then test SMS fallback providers only where WhatsApp fails. Record delivery rate and latency.
 
 ### Confidence: **Low**
-The technical path is clear, but actual Somalia SMS deliverability from Twilio/Vonage is **unverified from public sources**. This is the highest-risk decision in the list because a failed auth method blocks the entire pilot.
+The technical path is clear, but WhatsApp authentication template approval, user WhatsApp availability, and Somalia SMS fallback deliverability must be tested. This is the highest-risk decision because a failed auth method blocks the entire pilot.
 
 ### Implication if Wrong
-If SMS OTP fails (say 40% delivery rate to Hormuud numbers), users cannot log in. Fallback to invite-code still works for the pilot but removes self-service signup capability entirely. Must be tested before Phase 1 is complete, not after.
+If WhatsApp OTP or SMS OTP fails for many users, users cannot log in. Fallback to invite-code/support-seeded accounts still works for the pilot but removes self-service signup capability. Must be tested before launch, not after.
 
 ---
 
@@ -574,7 +624,7 @@ These items cannot be resolved from desks and require real-world testing in Soma
 
 | Item | Action needed | When |
 |---|---|---|
-| SMS OTP deliverability to Hormuud/Telesom/Golis | Send 10 test OTPs to real numbers on each network via Twilio and Africa's Talking; record delivery rate and latency | Before Phase 1 is complete |
+| OTP deliverability to Hormuud/Telesom/Golis/Somtel | Send 10 test WhatsApp OTPs to real numbers on each network through the Meta/Facebook WhatsApp API path; then test SMS fallback providers only where WhatsApp fails | Before launch |
 | Supabase region latency | Ping test from Android device on Hormuud 4G (Mogadishu) and Telesom 4G (Hargeisa) to Frankfurt and Mumbai Supabase URLs | Before provisioning Supabase project |
 | Currency preference in shops | Ask 5–10 pilot shopkeepers: "Do you track your stock costs in USD or SOS?" | Phase 1.5 usability testing |
 | Receipt / paper trail expectations | Ask during usability testing: "Do your customers expect a written receipt? Do you give one?" | Phase 1.5 usability testing |
