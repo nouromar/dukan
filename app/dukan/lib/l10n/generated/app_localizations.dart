@@ -655,6 +655,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign out'**
   String get signOut;
+
+  /// No description provided for @invalidPhoneMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid phone number, for example +252612345678.'**
+  String get invalidPhoneMessage;
+
+  /// No description provided for @missingPendingPhoneMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with your phone number first.'**
+  String get missingPendingPhoneMessage;
+
+  /// No description provided for @missingShopNamesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter both business name and shop name.'**
+  String get missingShopNamesMessage;
+
+  /// No description provided for @sendOtpFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not send the code. Check the phone number or internet and try again.'**
+  String get sendOtpFailedMessage;
+
+  /// No description provided for @verifyOtpFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The code is wrong or expired. Check the code and try again.'**
+  String get verifyOtpFailedMessage;
+
+  /// No description provided for @createShopFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not create the shop. Check your internet and try again.'**
+  String get createShopFailedMessage;
+
+  /// No description provided for @shopLoadFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open shops'**
+  String get shopLoadFailedTitle;
+
+  /// No description provided for @shopLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your internet and try again. If this continues, ask the shop owner to check your access.'**
+  String get shopLoadFailedMessage;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'TRY AGAIN'**
+  String get tryAgain;
 }
 
 class _AppLocalizationsDelegate

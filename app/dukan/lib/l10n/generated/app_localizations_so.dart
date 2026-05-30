@@ -310,4 +310,38 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get signOut => 'Ka bax';
+
+  @override
+  String get invalidPhoneMessage =>
+      'Geli lambar telefoon sax ah, tusaale +252612345678.';
+
+  @override
+  String get missingPendingPhoneMessage =>
+      'Marka hore ku bilow lambarka telefoonkaaga.';
+
+  @override
+  String get missingShopNamesMessage =>
+      'Geli magaca ganacsiga iyo magaca dukaanka labadaba.';
+
+  @override
+  String get sendOtpFailedMessage =>
+      'Koodka lama diri karin. Hubi lambarka ama internetka, ka dib mar kale isku day.';
+
+  @override
+  String get verifyOtpFailedMessage =>
+      'Koodku waa khalad ama wuu dhacay. Hubi koodka, ka dib mar kale isku day.';
+
+  @override
+  String get createShopFailedMessage =>
+      'Dukaanka lama abuuri karin. Hubi internetka, ka dib mar kale isku day.';
+
+  @override
+  String get shopLoadFailedTitle => 'Dukaamada lama furi karin';
+
+  @override
+  String get shopLoadFailedMessage =>
+      'Hubi internetka, ka dib mar kale isku day. Haddii ay sii socoto, milkiilaha ha kuu hubiyo gelitaanka.';
+
+  @override
+  String get tryAgain => 'MAR KALE ISKU DAY';
 }

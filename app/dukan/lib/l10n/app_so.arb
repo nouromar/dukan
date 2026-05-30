@@ -92,5 +92,14 @@
   "chooseShopTitle": "Dooro dukaan",
   "shopSetupStatus": "Diyaarin: {status}",
   "activeShopLabel": "Dukaan: {shop}",
-  "signOut": "Ka bax"
+  "signOut": "Ka bax",
+  "invalidPhoneMessage": "Geli lambar telefoon sax ah, tusaale +252612345678.",
+  "missingPendingPhoneMessage": "Marka hore ku bilow lambarka telefoonkaaga.",
+  "missingShopNamesMessage": "Geli magaca ganacsiga iyo magaca dukaanka labadaba.",
+  "sendOtpFailedMessage": "Koodka lama diri karin. Hubi lambarka ama internetka, ka dib mar kale isku day.",
+  "verifyOtpFailedMessage": "Koodku waa khalad ama wuu dhacay. Hubi koodka, ka dib mar kale isku day.",
+  "createShopFailedMessage": "Dukaanka lama abuuri karin. Hubi internetka, ka dib mar kale isku day.",
+  "shopLoadFailedTitle": "Dukaamada lama furi karin",
+  "shopLoadFailedMessage": "Hubi internetka, ka dib mar kale isku day. Haddii ay sii socoto, milkiilaha ha kuu hubiyo gelitaanka.",
+  "tryAgain": "MAR KALE ISKU DAY"
 }

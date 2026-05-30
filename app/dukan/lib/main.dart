@@ -267,6 +267,15 @@ class AuthRouter extends StatelessWidget {
       return const LoadingScreen();
     }
 
+    if (auth.shopLoadFailed) {
+      return FriendlyErrorScreen(
+        title: tr(context).shopLoadFailedTitle,
+        message: tr(context).shopLoadFailedMessage,
+        onRetry: () => auth.loadShops(),
+        onSignOut: () => auth.signOut(),
+      );
+    }
+
     if (auth.shops.isEmpty) {
       return const OwnerOnboardingScreen();
     }
@@ -289,6 +298,69 @@ class LoadingScreen extends StatelessWidget {
     return Scaffold(
       appBar: dukanAppBar(context, l.appTitle),
       body: const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class FriendlyErrorScreen extends StatelessWidget {
+  const FriendlyErrorScreen({
+    required this.title,
+    required this.message,
+    required this.onRetry,
+    required this.onSignOut,
+    super.key,
+  });
+
+  final String title;
+  final String message;
+  final VoidCallback onRetry;
+  final VoidCallback onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return Scaffold(
+      appBar: dukanAppBar(
+        context,
+        title,
+        actions: [
+          IconButton(
+            tooltip: l.signOut,
+            onPressed: onSignOut,
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Icon(
+              Icons.wifi_off,
+              size: 72,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: Text(l.tryAgain),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -318,10 +390,14 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const OtpVerificationScreen()));
-    } on FormatException catch (error) {
-      _showError(context, error.message);
-    } on AuthException catch (error) {
-      _showError(context, error.message);
+    } on AuthInputException catch (error) {
+      if (mounted) {
+        _showError(context, _authInputErrorMessage(context, error.issue));
+      }
+    } on AuthException {
+      if (mounted) {
+        _showError(context, tr(context).sendOtpFailedMessage);
+      }
     } finally {
       if (mounted) {
         setState(() => _sending = false);
@@ -400,10 +476,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       await context.read<AuthController>().verifyOtp(_otpController.text);
       if (!mounted) return;
       Navigator.of(context).pop();
-    } on FormatException catch (error) {
-      _showError(context, error.message);
-    } on AuthException catch (error) {
-      _showError(context, error.message);
+    } on AuthInputException catch (error) {
+      if (mounted) {
+        _showError(context, _authInputErrorMessage(context, error.issue));
+      }
+    } on AuthException {
+      if (mounted) {
+        _showError(context, tr(context).verifyOtpFailedMessage);
+      }
     } finally {
       if (mounted) {
         setState(() => _verifying = false);
@@ -482,13 +562,13 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
         businessName: _businessNameController.text,
         shopName: _shopNameController.text,
       );
-    } on FormatException catch (error) {
+    } on AuthInputException catch (error) {
       if (mounted) {
-        _showError(context, error.message);
+        _showError(context, _authInputErrorMessage(context, error.issue));
       }
-    } on PostgrestException catch (error) {
+    } on PostgrestException {
       if (mounted) {
-        _showError(context, error.message);
+        _showError(context, tr(context).createShopFailedMessage);
       }
     } finally {
       if (mounted) {
@@ -689,6 +769,15 @@ class HomeScreen extends StatelessWidget {
 
 void _showError(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+String _authInputErrorMessage(BuildContext context, AuthInputIssue issue) {
+  final l = tr(context);
+  return switch (issue) {
+    AuthInputIssue.invalidPhone => l.invalidPhoneMessage,
+    AuthInputIssue.missingPendingPhone => l.missingPendingPhoneMessage,
+    AuthInputIssue.missingShopNames => l.missingShopNamesMessage,
+  };
 }
 
 void push(BuildContext context, Widget screen) =>

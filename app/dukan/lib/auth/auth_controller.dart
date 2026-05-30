@@ -10,6 +10,14 @@ class DukanOtpDelivery {
   static const verifyType = OtpType.sms;
 }
 
+enum AuthInputIssue { invalidPhone, missingPendingPhone, missingShopNames }
+
+class AuthInputException implements Exception {
+  const AuthInputException(this.issue);
+
+  final AuthInputIssue issue;
+}
+
 class ShopSummary {
   const ShopSummary({
     required this.id,
@@ -46,6 +54,7 @@ class AuthController extends ChangeNotifier {
   Session? _session;
   bool _initialized = false;
   bool _shopsLoading = false;
+  bool _shopLoadFailed = false;
   List<ShopSummary> _shops = const [];
   ShopSummary? _selectedShop;
   String? _pendingPhone;
@@ -53,6 +62,7 @@ class AuthController extends ChangeNotifier {
   Session? get session => _session;
   bool get initialized => _initialized;
   bool get shopsLoading => _shopsLoading;
+  bool get shopLoadFailed => _shopLoadFailed;
   List<ShopSummary> get shops => _shops;
   ShopSummary? get selectedShop =>
       _selectedShop ?? (_shops.length == 1 ? _shops.first : null);
@@ -67,6 +77,7 @@ class AuthController extends ChangeNotifier {
       if (_session == null) {
         _shops = const [];
         _selectedShop = null;
+        _shopLoadFailed = false;
       } else {
         await loadShops();
       }
@@ -94,7 +105,7 @@ class AuthController extends ChangeNotifier {
   Future<void> verifyOtp(String token) async {
     final phone = _pendingPhone;
     if (phone == null) {
-      throw const FormatException('Start with your phone number first.');
+      throw const AuthInputException(AuthInputIssue.missingPendingPhone);
     }
 
     await _client.auth.verifyOTP(
@@ -126,6 +137,17 @@ class AuthController extends ChangeNotifier {
           !_shops.any((shop) => shop.id == _selectedShop!.id)) {
         _selectedShop = null;
       }
+      _shopLoadFailed = false;
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan auth',
+          context: ErrorDescription('loading authorized shops'),
+        ),
+      );
+      _shopLoadFailed = true;
     } finally {
       _shopsLoading = false;
       notifyListeners();
@@ -140,7 +162,7 @@ class AuthController extends ChangeNotifier {
     final cleanShopName = shopName.trim();
 
     if (cleanBusinessName.isEmpty || cleanShopName.isEmpty) {
-      throw const FormatException('Enter both business name and shop name.');
+      throw const AuthInputException(AuthInputIssue.missingShopNames);
     }
 
     await _client.rpc(
@@ -186,9 +208,7 @@ String normalizePhoneNumber(String rawPhone) {
 
   final isValidE164 = RegExp(r'^\+[1-9]\d{7,14}$').hasMatch(phone);
   if (!isValidE164) {
-    throw const FormatException(
-      'Enter a valid phone number, for example +252612345678.',
-    );
+    throw const AuthInputException(AuthInputIssue.invalidPhone);
   }
 
   return phone;

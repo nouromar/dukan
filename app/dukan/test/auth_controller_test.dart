@@ -17,7 +17,10 @@ void main() {
     });
 
     test('rejects invalid phone numbers', () {
-      expect(() => normalizePhoneNumber('123'), throwsFormatException);
+      expect(
+        () => normalizePhoneNumber('123'),
+        throwsA(isA<AuthInputException>()),
+      );
     });
   });
 }

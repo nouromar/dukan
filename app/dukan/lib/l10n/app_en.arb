@@ -92,5 +92,14 @@
   "chooseShopTitle": "Choose shop",
   "shopSetupStatus": "Setup: {status}",
   "activeShopLabel": "Shop: {shop}",
-  "signOut": "Sign out"
+  "signOut": "Sign out",
+  "invalidPhoneMessage": "Enter a valid phone number, for example +252612345678.",
+  "missingPendingPhoneMessage": "Start with your phone number first.",
+  "missingShopNamesMessage": "Enter both business name and shop name.",
+  "sendOtpFailedMessage": "We could not send the code. Check the phone number or internet and try again.",
+  "verifyOtpFailedMessage": "The code is wrong or expired. Check the code and try again.",
+  "createShopFailedMessage": "We could not create the shop. Check your internet and try again.",
+  "shopLoadFailedTitle": "Could not open shops",
+  "shopLoadFailedMessage": "Check your internet and try again. If this continues, ask the shop owner to check your access.",
+  "tryAgain": "TRY AGAIN"
 }

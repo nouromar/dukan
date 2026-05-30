@@ -312,4 +312,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signOut => 'Sign out';
+
+  @override
+  String get invalidPhoneMessage =>
+      'Enter a valid phone number, for example +252612345678.';
+
+  @override
+  String get missingPendingPhoneMessage =>
+      'Start with your phone number first.';
+
+  @override
+  String get missingShopNamesMessage =>
+      'Enter both business name and shop name.';
+
+  @override
+  String get sendOtpFailedMessage =>
+      'We could not send the code. Check the phone number or internet and try again.';
+
+  @override
+  String get verifyOtpFailedMessage =>
+      'The code is wrong or expired. Check the code and try again.';
+
+  @override
+  String get createShopFailedMessage =>
+      'We could not create the shop. Check your internet and try again.';
+
+  @override
+  String get shopLoadFailedTitle => 'Could not open shops';
+
+  @override
+  String get shopLoadFailedMessage =>
+      'Check your internet and try again. If this continues, ask the shop owner to check your access.';
+
+  @override
+  String get tryAgain => 'TRY AGAIN';
 }
