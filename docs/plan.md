@@ -213,9 +213,10 @@ Stock-count workflow, first-class returns, multi-location/transfers/warehouses, 
 - `docs/admin-portal.md` — admin/setup portal scope, roles, functionality, security boundary, and MVP.
 - `docs/backend-schema.md` — Supabase/Postgres schema draft, migration order, RLS plan, RPC posting functions, Storage policy, reporting/reconciliation views, and learning/suggestion profiles.
 - `supabase/migrations/0001_extensions.sql` through `0015_rls_storage.sql` — backend foundation plus setup, catalog/templates, shop items/units, suppliers/customers, aliases, documents/OCR, Storage bucket/object policies, transaction/payment/stock ledgers, reports, learning profiles, precomputed suggestions, RLS helpers, bootstrap RPCs, and posting RPCs.
+- `app/dukan` — Flutter app now has Supabase bootstrap via `--dart-define`, phone OTP login, OTP verification, RLS-backed shop loading, shop picker, and first-shop owner onboarding placeholder.
 - `supabase/seed.sql` — development-only seed placeholder; required production lookup data lives in migrations.
 - `scripts/test-backend-migrations.sh` — Docker-based backend migration/RLS test harness.
 - `.github/copilot-instructions.md` — binding principles summary for AI/human contributors.
 - `docs/decisions.md` (in progress, Track B) — recommended answers to the open questions above.
 
-Next: wire the Flutter prototype against Supabase for auth, shop selection, template-applied items, and the core Sale/Receive/Payment/Expense flows while continuing the Phase 1.5 UX prototype.
+Next: wire the Flutter prototype against Supabase data for template-applied items and the core Sale/Receive/Payment/Expense flows, then replace the owner-onboarding placeholder with the full setup checklist.

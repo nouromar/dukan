@@ -228,4 +228,86 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get comingSoon => 'Shaashad tijaabo waa la keydiyay. Ka noqo?';
+
+  @override
+  String get supabaseConfigTitle => 'Dukaan ku xir Supabase';
+
+  @override
+  String get supabaseConfigMessage =>
+      'Ku dar Supabase URL iyo anon key si login loo isticmaalo. Weli waad furi kartaa shaashadaha tijaabada.';
+
+  @override
+  String get supabaseConfigCommand =>
+      'flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...';
+
+  @override
+  String get openPrototype => 'Fur tijaabada';
+
+  @override
+  String get loginTitle => 'Soo gal';
+
+  @override
+  String get loginHeadline => 'Isticmaal telefoonkaaga';
+
+  @override
+  String get loginBody =>
+      'Waxaan kuu diraynaa kood hal mar la isticmaalo. Dukaan wuxuu backend-ka uga diri karaa WhatsApp.';
+
+  @override
+  String get phoneNumberLabel => 'Lambarka telefoonka';
+
+  @override
+  String get sendOtpButton => 'DIR KOOD';
+
+  @override
+  String get verifyOtpTitle => 'Geli kood';
+
+  @override
+  String get verifyOtpHeadline => 'Eeg telefoonkaaga';
+
+  @override
+  String verifyOtpBody(Object phone) {
+    return 'Geli koodka loo diray $phone.';
+  }
+
+  @override
+  String get otpCodeLabel => 'Kood';
+
+  @override
+  String get verifyOtpButton => 'XAQIIJI';
+
+  @override
+  String get ownerOnboardingTitle => 'Abuur dukaan';
+
+  @override
+  String get ownerOnboardingHeadline => 'Diyaari dukaanka koowaad';
+
+  @override
+  String get ownerOnboardingBody =>
+      'Geli magaca ganacsiga iyo dukaanka. Shaqaale waad ku dari kartaa marka dambe.';
+
+  @override
+  String get businessNameLabel => 'Magaca ganacsiga';
+
+  @override
+  String get shopNameLabel => 'Magaca dukaanka';
+
+  @override
+  String get createShopButton => 'ABUUR DUKAAN';
+
+  @override
+  String get chooseShopTitle => 'Dooro dukaan';
+
+  @override
+  String shopSetupStatus(Object status) {
+    return 'Diyaarin: $status';
+  }
+
+  @override
+  String activeShopLabel(Object shop) {
+    return 'Dukaan: $shop';
+  }
+
+  @override
+  String get signOut => 'Ka bax';
 }

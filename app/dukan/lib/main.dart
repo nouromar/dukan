@@ -1,15 +1,30 @@
 import 'dart:math' as math;
 
+import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/config/app_config.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/mock/mock_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const DukanPrototype());
+
+  final appConfig = AppConfig.fromEnvironment();
+  SupabaseClient? supabaseClient;
+
+  if (appConfig.hasSupabase) {
+    await Supabase.initialize(
+      url: appConfig.supabaseUrl,
+      anonKey: appConfig.supabaseAnonKey,
+    );
+    supabaseClient = Supabase.instance.client;
+  }
+
+  runApp(DukanPrototype(supabaseClient: supabaseClient));
 }
 
 class LocaleController extends ChangeNotifier {
@@ -24,7 +39,9 @@ class LocaleController extends ChangeNotifier {
 }
 
 class DukanPrototype extends StatelessWidget {
-  const DukanPrototype({super.key});
+  const DukanPrototype({super.key, this.supabaseClient});
+
+  final SupabaseClient? supabaseClient;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +109,9 @@ class DukanPrototype extends StatelessWidget {
               ),
             ),
           ),
-          home: const HomeScreen(),
+          home: supabaseClient == null
+              ? const SupabaseConfigScreen()
+              : AuthBootstrap(supabaseClient: supabaseClient!),
         ),
       ),
     );
@@ -133,24 +152,475 @@ class LanguageToggle extends StatelessWidget {
   }
 }
 
-PreferredSizeWidget dukanAppBar(BuildContext context, String title) => AppBar(
+PreferredSizeWidget dukanAppBar(
+  BuildContext context,
+  String title, {
+  List<Widget> actions = const [],
+}) => AppBar(
   title: Text(title),
-  actions: const [
-    Padding(
+  actions: [
+    ...actions,
+    const Padding(
       padding: EdgeInsetsDirectional.only(end: 12),
       child: LanguageToggle(),
     ),
   ],
 );
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class SupabaseConfigScreen extends StatelessWidget {
+  const SupabaseConfigScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
     return Scaffold(
       appBar: dukanAppBar(context, l.appTitle),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Icon(
+              Icons.cloud_off,
+              size: 72,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              l.supabaseConfigTitle,
+              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l.supabaseConfigMessage,
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: SelectableText(l.supabaseConfigCommand),
+              ),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton(
+              onPressed: () => push(context, const HomeScreen()),
+              child: Text(l.openPrototype),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AuthBootstrap extends StatefulWidget {
+  const AuthBootstrap({required this.supabaseClient, super.key});
+
+  final SupabaseClient supabaseClient;
+
+  @override
+  State<AuthBootstrap> createState() => _AuthBootstrapState();
+}
+
+class _AuthBootstrapState extends State<AuthBootstrap> {
+  late final AuthController _authController;
+
+  @override
+  void initState() {
+    super.initState();
+    _authController = AuthController(widget.supabaseClient)..start();
+  }
+
+  @override
+  void dispose() {
+    _authController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<AuthController>.value(
+      value: _authController,
+      child: const AuthRouter(),
+    );
+  }
+}
+
+class AuthRouter extends StatelessWidget {
+  const AuthRouter({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthController>();
+
+    if (!auth.initialized) {
+      return const LoadingScreen();
+    }
+
+    if (auth.session == null) {
+      return const PhoneLoginScreen();
+    }
+
+    if (auth.shopsLoading) {
+      return const LoadingScreen();
+    }
+
+    if (auth.shops.isEmpty) {
+      return const OwnerOnboardingScreen();
+    }
+
+    final selectedShop = auth.selectedShop;
+    if (selectedShop == null) {
+      return const ShopPickerScreen();
+    }
+
+    return HomeScreen(shop: selectedShop, onSignOut: () => auth.signOut());
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return Scaffold(
+      appBar: dukanAppBar(context, l.appTitle),
+      body: const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class PhoneLoginScreen extends StatefulWidget {
+  const PhoneLoginScreen({super.key});
+
+  @override
+  State<PhoneLoginScreen> createState() => _PhoneLoginScreenState();
+}
+
+class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
+  final _phoneController = TextEditingController(text: '+252');
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendOtp() async {
+    setState(() => _sending = true);
+    try {
+      await context.read<AuthController>().sendOtp(_phoneController.text);
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const OtpVerificationScreen()));
+    } on FormatException catch (error) {
+      _showError(context, error.message);
+    } on AuthException catch (error) {
+      _showError(context, error.message);
+    } finally {
+      if (mounted) {
+        setState(() => _sending = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return Scaffold(
+      appBar: dukanAppBar(context, l.loginTitle),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Icon(
+              Icons.phone_android,
+              size: 72,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              l.loginHeadline,
+              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l.loginBody,
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(labelText: l.phoneNumberLabel),
+              onSubmitted: (_) => _sending ? null : _sendOtp(),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: _sending ? null : _sendOtp,
+              child: _sending
+                  ? const CircularProgressIndicator()
+                  : Text(l.sendOtpButton),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class OtpVerificationScreen extends StatefulWidget {
+  const OtpVerificationScreen({super.key});
+
+  @override
+  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
+}
+
+class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
+  final _otpController = TextEditingController();
+  bool _verifying = false;
+
+  @override
+  void dispose() {
+    _otpController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verifyOtp() async {
+    setState(() => _verifying = true);
+    try {
+      await context.read<AuthController>().verifyOtp(_otpController.text);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } on FormatException catch (error) {
+      _showError(context, error.message);
+    } on AuthException catch (error) {
+      _showError(context, error.message);
+    } finally {
+      if (mounted) {
+        setState(() => _verifying = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final pendingPhone = context.watch<AuthController>().pendingPhone;
+    return Scaffold(
+      appBar: dukanAppBar(context, l.verifyOtpTitle),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text(
+              l.verifyOtpHeadline,
+              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l.verifyOtpBody(pendingPhone ?? ''),
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _otpController,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              maxLength: 6,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(labelText: l.otpCodeLabel),
+              onSubmitted: (_) => _verifying ? null : _verifyOtp(),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: _verifying ? null : _verifyOtp,
+              child: _verifying
+                  ? const CircularProgressIndicator()
+                  : Text(l.verifyOtpButton),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class OwnerOnboardingScreen extends StatefulWidget {
+  const OwnerOnboardingScreen({super.key});
+
+  @override
+  State<OwnerOnboardingScreen> createState() => _OwnerOnboardingScreenState();
+}
+
+class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
+  final _businessNameController = TextEditingController();
+  final _shopNameController = TextEditingController();
+  bool _creating = false;
+
+  @override
+  void dispose() {
+    _businessNameController.dispose();
+    _shopNameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _createShop() async {
+    setState(() => _creating = true);
+    try {
+      await context.read<AuthController>().createFirstShop(
+        businessName: _businessNameController.text,
+        shopName: _shopNameController.text,
+      );
+    } on FormatException catch (error) {
+      if (mounted) {
+        _showError(context, error.message);
+      }
+    } on PostgrestException catch (error) {
+      if (mounted) {
+        _showError(context, error.message);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _creating = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return Scaffold(
+      appBar: dukanAppBar(
+        context,
+        l.ownerOnboardingTitle,
+        actions: [
+          IconButton(
+            tooltip: l.signOut,
+            onPressed: () => context.read<AuthController>().signOut(),
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text(
+              l.ownerOnboardingHeadline,
+              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l.ownerOnboardingBody,
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _businessNameController,
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(labelText: l.businessNameLabel),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _shopNameController,
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(labelText: l.shopNameLabel),
+              onSubmitted: (_) => _creating ? null : _createShop(),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: _creating ? null : _createShop,
+              child: _creating
+                  ? const CircularProgressIndicator()
+                  : Text(l.createShopButton),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ShopPickerScreen extends StatelessWidget {
+  const ShopPickerScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final auth = context.watch<AuthController>();
+    return Scaffold(
+      appBar: dukanAppBar(
+        context,
+        l.chooseShopTitle,
+        actions: [
+          IconButton(
+            tooltip: l.signOut,
+            onPressed: () => context.read<AuthController>().signOut(),
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: ListView.separated(
+          padding: const EdgeInsets.all(20),
+          itemCount: auth.shops.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final shop = auth.shops[index];
+            return Card(
+              child: ListTile(
+                minVerticalPadding: 18,
+                title: Text(
+                  shop.name,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                subtitle: Text(l.shopSetupStatus(shop.setupStatus)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.read<AuthController>().selectShop(shop),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key, this.shop, this.onSignOut});
+
+  final ShopSummary? shop;
+  final VoidCallback? onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return Scaffold(
+      appBar: dukanAppBar(
+        context,
+        l.appTitle,
+        actions: [
+          if (onSignOut != null)
+            IconButton(
+              tooltip: l.signOut,
+              onPressed: onSignOut,
+              icon: const Icon(Icons.logout),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -167,6 +637,13 @@ class HomeScreen extends StatelessWidget {
                     l.homeHint,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
+                  if (shop != null) ...[
+                    const SizedBox(height: 12),
+                    Chip(
+                      avatar: const Icon(Icons.storefront),
+                      label: Text(l.activeShopLabel(shop!.name)),
+                    ),
+                  ],
                   const Spacer(),
                   SizedBox(
                     height: buttonAreaHeight,
@@ -208,6 +685,10 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showError(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 void push(BuildContext context, Widget screen) =>

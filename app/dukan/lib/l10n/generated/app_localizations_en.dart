@@ -230,4 +230,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get comingSoon => 'Mock screen saved. Undo?';
+
+  @override
+  String get supabaseConfigTitle => 'Connect Dukan to Supabase';
+
+  @override
+  String get supabaseConfigMessage =>
+      'Add Supabase URL and anon key to use login. You can still open the prototype screens.';
+
+  @override
+  String get supabaseConfigCommand =>
+      'flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...';
+
+  @override
+  String get openPrototype => 'Open prototype';
+
+  @override
+  String get loginTitle => 'Login';
+
+  @override
+  String get loginHeadline => 'Use your phone number';
+
+  @override
+  String get loginBody =>
+      'We will send a one-time code. Dukan can deliver it by WhatsApp from the backend.';
+
+  @override
+  String get phoneNumberLabel => 'Phone number';
+
+  @override
+  String get sendOtpButton => 'SEND CODE';
+
+  @override
+  String get verifyOtpTitle => 'Enter code';
+
+  @override
+  String get verifyOtpHeadline => 'Check your phone';
+
+  @override
+  String verifyOtpBody(Object phone) {
+    return 'Enter the code sent to $phone.';
+  }
+
+  @override
+  String get otpCodeLabel => 'Code';
+
+  @override
+  String get verifyOtpButton => 'VERIFY';
+
+  @override
+  String get ownerOnboardingTitle => 'Create shop';
+
+  @override
+  String get ownerOnboardingHeadline => 'Set up your first shop';
+
+  @override
+  String get ownerOnboardingBody =>
+      'Enter the business and shop names. You can add workers later.';
+
+  @override
+  String get businessNameLabel => 'Business name';
+
+  @override
+  String get shopNameLabel => 'Shop name';
+
+  @override
+  String get createShopButton => 'CREATE SHOP';
+
+  @override
+  String get chooseShopTitle => 'Choose shop';
+
+  @override
+  String shopSetupStatus(Object status) {
+    return 'Setup: $status';
+  }
+
+  @override
+  String activeShopLabel(Object shop) {
+    return 'Shop: $shop';
+  }
+
+  @override
+  String get signOut => 'Sign out';
 }

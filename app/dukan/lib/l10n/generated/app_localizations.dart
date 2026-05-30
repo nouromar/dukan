@@ -511,6 +511,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mock screen saved. Undo?'**
   String get comingSoon;
+
+  /// No description provided for @supabaseConfigTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Dukan to Supabase'**
+  String get supabaseConfigTitle;
+
+  /// No description provided for @supabaseConfigMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Supabase URL and anon key to use login. You can still open the prototype screens.'**
+  String get supabaseConfigMessage;
+
+  /// No description provided for @supabaseConfigCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...'**
+  String get supabaseConfigCommand;
+
+  /// No description provided for @openPrototype.
+  ///
+  /// In en, this message translates to:
+  /// **'Open prototype'**
+  String get openPrototype;
+
+  /// No description provided for @loginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get loginTitle;
+
+  /// No description provided for @loginHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your phone number'**
+  String get loginHeadline;
+
+  /// No description provided for @loginBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We will send a one-time code. Dukan can deliver it by WhatsApp from the backend.'**
+  String get loginBody;
+
+  /// No description provided for @phoneNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get phoneNumberLabel;
+
+  /// No description provided for @sendOtpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SEND CODE'**
+  String get sendOtpButton;
+
+  /// No description provided for @verifyOtpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter code'**
+  String get verifyOtpTitle;
+
+  /// No description provided for @verifyOtpHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your phone'**
+  String get verifyOtpHeadline;
+
+  /// No description provided for @verifyOtpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code sent to {phone}.'**
+  String verifyOtpBody(Object phone);
+
+  /// No description provided for @otpCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get otpCodeLabel;
+
+  /// No description provided for @verifyOtpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'VERIFY'**
+  String get verifyOtpButton;
+
+  /// No description provided for @ownerOnboardingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create shop'**
+  String get ownerOnboardingTitle;
+
+  /// No description provided for @ownerOnboardingHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your first shop'**
+  String get ownerOnboardingHeadline;
+
+  /// No description provided for @ownerOnboardingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the business and shop names. You can add workers later.'**
+  String get ownerOnboardingBody;
+
+  /// No description provided for @businessNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Business name'**
+  String get businessNameLabel;
+
+  /// No description provided for @shopNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop name'**
+  String get shopNameLabel;
+
+  /// No description provided for @createShopButton.
+  ///
+  /// In en, this message translates to:
+  /// **'CREATE SHOP'**
+  String get createShopButton;
+
+  /// No description provided for @chooseShopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose shop'**
+  String get chooseShopTitle;
+
+  /// No description provided for @shopSetupStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup: {status}'**
+  String shopSetupStatus(Object status);
+
+  /// No description provided for @activeShopLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop: {shop}'**
+  String activeShopLabel(Object shop);
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOut;
 }
 
 class _AppLocalizationsDelegate

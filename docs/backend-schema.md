@@ -1271,5 +1271,6 @@ Posting truth stays in Postgres RPC functions, not Edge Functions, because it mu
 
 ## 19. Recommended next implementation order
 
-1. Wire Flutter prototype to Supabase for login, shop selection, template-applied items, Sale, Receive, Payment, Expense.
-2. Add OCR Edge Function flow for uploaded document images when ready for image-to-draft.
+1. Continue wiring Flutter to Supabase data: template-applied items, Sale, Receive, Payment, and Expense.
+2. Replace the current Flutter owner-onboarding placeholder with the full setup flow: language, currency, template selection, opening stock, and worker invites.
+3. Add OCR Edge Function flow for uploaded document images when ready for image-to-draft.

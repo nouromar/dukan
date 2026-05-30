@@ -29,6 +29,8 @@ Shop users authenticate with **phone OTP** on both mobile and web. The phone num
 
 OTP delivery should prefer Dukan's existing Meta/Facebook WhatsApp API access where feasible, with Supabase Auth remaining the identity/session source of truth. SMS providers such as Twilio or Africa's Talking are fallback delivery channels, not the default assumption.
 
+The Flutter app reads Supabase configuration from `--dart-define` values (`SUPABASE_URL`, `SUPABASE_ANON_KEY`). If either value is missing, the app shows a setup screen and does not initialize or touch the Supabase client. Phone input is normalized to E.164 (defaulting local numbers to Somalia `+252`). After login, the app lists shops by querying `public.shop` through RLS so both direct shop members and organization owners/admins see their authorized shops.
+
 For mass adoption, the default owner path is self-serve:
 
 1. Owner enters phone number and verifies OTP.
