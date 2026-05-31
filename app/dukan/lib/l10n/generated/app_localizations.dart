@@ -596,6 +596,12 @@ abstract class AppLocalizations {
   /// **'VERIFY'**
   String get verifyOtpButton;
 
+  /// No description provided for @changePhoneButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Change phone number'**
+  String get changePhoneButton;
+
   /// No description provided for @ownerOnboardingTitle.
   ///
   /// In en, this message translates to:

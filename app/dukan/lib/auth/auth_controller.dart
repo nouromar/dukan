@@ -113,6 +113,14 @@ class AuthController extends ChangeNotifier {
       token: token.trim(),
       type: DukanOtpDelivery.verifyType,
     );
+    _pendingPhone = null;
+    notifyListeners();
+  }
+
+  void cancelOtp() {
+    if (_pendingPhone == null) return;
+    _pendingPhone = null;
+    notifyListeners();
   }
 
   Future<void> loadShops() async {

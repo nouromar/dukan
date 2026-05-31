@@ -83,6 +83,7 @@
   "verifyOtpBody": "Enter the code sent to {phone}.",
   "otpCodeLabel": "Code",
   "verifyOtpButton": "VERIFY",
+  "changePhoneButton": "Change phone number",
   "ownerOnboardingTitle": "Create shop",
   "ownerOnboardingHeadline": "Set up your first shop",
   "ownerOnboardingBody": "Enter the business and shop names. You can add workers later.",

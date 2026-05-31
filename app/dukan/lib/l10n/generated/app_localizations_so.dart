@@ -277,6 +277,9 @@ class AppLocalizationsSo extends AppLocalizations {
   String get verifyOtpButton => 'XAQIIJI';
 
   @override
+  String get changePhoneButton => 'Bedel lambarka telefoonka';
+
+  @override
   String get ownerOnboardingTitle => 'Abuur dukaan';
 
   @override

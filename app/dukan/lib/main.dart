@@ -4,6 +4,7 @@ import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/config/app_config.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/mock/mock_data.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -25,6 +26,42 @@ Future<void> main() async {
   }
 
   runApp(DukanPrototype(supabaseClient: supabaseClient));
+}
+
+class _FallbackMaterialLocalizationsDelegate
+    extends LocalizationsDelegate<MaterialLocalizations> {
+  const _FallbackMaterialLocalizationsDelegate();
+  @override
+  bool isSupported(Locale locale) => true;
+  @override
+  Future<MaterialLocalizations> load(Locale locale) =>
+      DefaultMaterialLocalizations.load(locale);
+  @override
+  bool shouldReload(_FallbackMaterialLocalizationsDelegate old) => false;
+}
+
+class _FallbackWidgetsLocalizationsDelegate
+    extends LocalizationsDelegate<WidgetsLocalizations> {
+  const _FallbackWidgetsLocalizationsDelegate();
+  @override
+  bool isSupported(Locale locale) => true;
+  @override
+  Future<WidgetsLocalizations> load(Locale locale) =>
+      DefaultWidgetsLocalizations.load(locale);
+  @override
+  bool shouldReload(_FallbackWidgetsLocalizationsDelegate old) => false;
+}
+
+class _FallbackCupertinoLocalizationsDelegate
+    extends LocalizationsDelegate<CupertinoLocalizations> {
+  const _FallbackCupertinoLocalizationsDelegate();
+  @override
+  bool isSupported(Locale locale) => true;
+  @override
+  Future<CupertinoLocalizations> load(Locale locale) =>
+      DefaultCupertinoLocalizations.load(locale);
+  @override
+  bool shouldReload(_FallbackCupertinoLocalizationsDelegate old) => false;
 }
 
 class LocaleController extends ChangeNotifier {
@@ -58,6 +95,12 @@ class DukanPrototype extends StatelessWidget {
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
+            // Somali is not in the Global*Localizations supported set, so
+            // fall back to the built-in English defaults for framework chrome
+            // (tooltips, dialog buttons). App copy still comes from L10n.
+            _FallbackMaterialLocalizationsDelegate(),
+            _FallbackWidgetsLocalizationsDelegate(),
+            _FallbackCupertinoLocalizationsDelegate(),
           ],
           theme: ThemeData(
             useMaterial3: true,
@@ -260,7 +303,9 @@ class AuthRouter extends StatelessWidget {
     }
 
     if (auth.session == null) {
-      return const PhoneLoginScreen();
+      return auth.pendingPhone != null
+          ? const OtpVerificationScreen()
+          : const PhoneLoginScreen();
     }
 
     if (auth.shopsLoading) {
@@ -386,10 +431,6 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
     setState(() => _sending = true);
     try {
       await context.read<AuthController>().sendOtp(_phoneController.text);
-      if (!mounted) return;
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const OtpVerificationScreen()));
     } on AuthInputException catch (error) {
       if (mounted) {
         _showError(context, _authInputErrorMessage(context, error.issue));
@@ -474,8 +515,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     setState(() => _verifying = true);
     try {
       await context.read<AuthController>().verifyOtp(_otpController.text);
-      if (!mounted) return;
-      Navigator.of(context).pop();
     } on AuthInputException catch (error) {
       if (mounted) {
         _showError(context, _authInputErrorMessage(context, error.issue));
@@ -528,6 +567,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               child: _verifying
                   ? const CircularProgressIndicator()
                   : Text(l.verifyOtpButton),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: _verifying
+                  ? null
+                  : () => context.read<AuthController>().cancelOtp(),
+              child: Text(l.changePhoneButton),
             ),
           ],
         ),

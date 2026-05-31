@@ -279,6 +279,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verifyOtpButton => 'VERIFY';
 
   @override
+  String get changePhoneButton => 'Change phone number';
+
+  @override
   String get ownerOnboardingTitle => 'Create shop';
 
   @override

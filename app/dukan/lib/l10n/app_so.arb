@@ -83,6 +83,7 @@
   "verifyOtpBody": "Geli koodka loo diray {phone}.",
   "otpCodeLabel": "Kood",
   "verifyOtpButton": "XAQIIJI",
+  "changePhoneButton": "Bedel lambarka telefoonka",
   "ownerOnboardingTitle": "Abuur dukaan",
   "ownerOnboardingHeadline": "Diyaari dukaanka koowaad",
   "ownerOnboardingBody": "Geli magaca ganacsiga iyo dukaanka. Shaqaale waad ku dari kartaa marka dambe.",
