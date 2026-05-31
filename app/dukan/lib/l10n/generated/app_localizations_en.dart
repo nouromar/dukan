@@ -349,4 +349,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tryAgain => 'TRY AGAIN';
+
+  @override
+  String get setupChecklistTitle => 'Set up your shop';
+
+  @override
+  String get setupChecklistHeadline =>
+      'Two quick steps before you can start selling';
+
+  @override
+  String get setupStepTemplateTitle => 'Choose your shop type';
+
+  @override
+  String get setupStepTemplateBody =>
+      'Pick a starter pack so common items and settings are ready for you.';
+
+  @override
+  String setupStepTemplateDone(Object name) {
+    return 'Type chosen: $name';
+  }
+
+  @override
+  String get setupStepFinishTitle => 'Finish setup';
+
+  @override
+  String get setupStepFinishBody => 'Confirm and start using your shop.';
+
+  @override
+  String get setupStepFinishButton => 'FINISH SETUP';
+
+  @override
+  String get templatePickerTitle => 'Choose your shop type';
+
+  @override
+  String get applyTemplateButton => 'USE THIS';
+
+  @override
+  String get applyTemplateFailedMessage =>
+      'Could not apply the template. Check your internet and try again.';
+
+  @override
+  String get completeSetupFailedMessage => 'Could not finish setup. Try again.';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get openSettings => 'Settings';
+
+  @override
+  String get settingsShopNameLabel => 'Shop name';
+
+  @override
+  String get settingsCurrencyLabel => 'Currency';
+
+  @override
+  String get settingsLanguageLabel => 'Default language';
+
+  @override
+  String get settingsTimezoneLabel => 'Timezone';
+
+  @override
+  String get settingsSaveButton => 'SAVE';
+
+  @override
+  String get settingsSavedToast => 'Settings saved';
+
+  @override
+  String get settingsSaveFailedMessage => 'Could not save settings. Try again.';
 }

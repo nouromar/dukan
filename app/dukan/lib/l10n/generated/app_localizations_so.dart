@@ -347,4 +347,74 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get tryAgain => 'MAR KALE ISKU DAY';
+
+  @override
+  String get setupChecklistTitle => 'Diyaari dukaankaaga';
+
+  @override
+  String get setupChecklistHeadline =>
+      'Laba tallaabo oo degdeg ah ka hor inta aanad bilaabin iibinta';
+
+  @override
+  String get setupStepTemplateTitle => 'Dooro nooca dukaankaaga';
+
+  @override
+  String get setupStepTemplateBody =>
+      'Dooro xirmo bilow si waxyaalaha caadiga ah iyo goobaha loo diyaariyo.';
+
+  @override
+  String setupStepTemplateDone(Object name) {
+    return 'Nooca la doortay: $name';
+  }
+
+  @override
+  String get setupStepFinishTitle => 'Dhamee diyaarinta';
+
+  @override
+  String get setupStepFinishBody => 'Xaqiiji oo bilow isticmaalka dukaankaaga.';
+
+  @override
+  String get setupStepFinishButton => 'DHAMEE DIYAARINTA';
+
+  @override
+  String get templatePickerTitle => 'Dooro nooca dukaankaaga';
+
+  @override
+  String get applyTemplateButton => 'ISTICMAAL TAN';
+
+  @override
+  String get applyTemplateFailedMessage =>
+      'Xirmada lama dabaqi karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get completeSetupFailedMessage =>
+      'Diyaarinta lama dhamayn karin. Isku day mar kale.';
+
+  @override
+  String get settingsTitle => 'Diyaarinta';
+
+  @override
+  String get openSettings => 'Diyaarinta';
+
+  @override
+  String get settingsShopNameLabel => 'Magaca dukaanka';
+
+  @override
+  String get settingsCurrencyLabel => 'Lacagta';
+
+  @override
+  String get settingsLanguageLabel => 'Luuqada caadiga ah';
+
+  @override
+  String get settingsTimezoneLabel => 'Saacadda goobta';
+
+  @override
+  String get settingsSaveButton => 'KEYDI';
+
+  @override
+  String get settingsSavedToast => 'Diyaarintu waa la keydiyay';
+
+  @override
+  String get settingsSaveFailedMessage =>
+      'Diyaarinta lama keydin karin. Isku day mar kale.';
 }

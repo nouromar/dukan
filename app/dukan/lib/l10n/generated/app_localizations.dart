@@ -715,6 +715,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'TRY AGAIN'**
   String get tryAgain;
+
+  /// No description provided for @setupChecklistTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your shop'**
+  String get setupChecklistTitle;
+
+  /// No description provided for @setupChecklistHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Two quick steps before you can start selling'**
+  String get setupChecklistHeadline;
+
+  /// No description provided for @setupStepTemplateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your shop type'**
+  String get setupStepTemplateTitle;
+
+  /// No description provided for @setupStepTemplateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a starter pack so common items and settings are ready for you.'**
+  String get setupStepTemplateBody;
+
+  /// No description provided for @setupStepTemplateDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Type chosen: {name}'**
+  String setupStepTemplateDone(Object name);
+
+  /// No description provided for @setupStepFinishTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish setup'**
+  String get setupStepFinishTitle;
+
+  /// No description provided for @setupStepFinishBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm and start using your shop.'**
+  String get setupStepFinishBody;
+
+  /// No description provided for @setupStepFinishButton.
+  ///
+  /// In en, this message translates to:
+  /// **'FINISH SETUP'**
+  String get setupStepFinishButton;
+
+  /// No description provided for @templatePickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your shop type'**
+  String get templatePickerTitle;
+
+  /// No description provided for @applyTemplateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'USE THIS'**
+  String get applyTemplateButton;
+
+  /// No description provided for @applyTemplateFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not apply the template. Check your internet and try again.'**
+  String get applyTemplateFailedMessage;
+
+  /// No description provided for @completeSetupFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not finish setup. Try again.'**
+  String get completeSetupFailedMessage;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get openSettings;
+
+  /// No description provided for @settingsShopNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop name'**
+  String get settingsShopNameLabel;
+
+  /// No description provided for @settingsCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get settingsCurrencyLabel;
+
+  /// No description provided for @settingsLanguageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Default language'**
+  String get settingsLanguageLabel;
+
+  /// No description provided for @settingsTimezoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Timezone'**
+  String get settingsTimezoneLabel;
+
+  /// No description provided for @settingsSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get settingsSaveButton;
+
+  /// No description provided for @settingsSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings saved'**
+  String get settingsSavedToast;
+
+  /// No description provided for @settingsSaveFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save settings. Try again.'**
+  String get settingsSaveFailedMessage;
 }
 
 class _AppLocalizationsDelegate

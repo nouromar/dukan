@@ -397,14 +397,33 @@ begin
     raise exception 'template item did not start with safe operational defaults';
   end if;
 
-  if (
-    select count(*)
-    from public.item_alias
+  -- Lazy activation: shop's item_alias is empty after apply_template;
+  -- catalog and template aliases stay where they were, available for
+  -- cross-shop search via the catalog tables.
+  if exists (
+    select 1 from public.item_alias
     where shop_id = v_second_shop_id
       and item_id = v_second_sugar_item_id
-      and alias_text in ('white sugar', 'sonkor')
-  ) <> 2 then
-    raise exception 'template application did not create catalog and template aliases';
+      and source = 'template'
+  ) then
+    raise exception 'lazy apply_template should not copy template aliases into shop item_alias';
+  end if;
+
+  if not exists (
+    select 1 from public.catalog_item_alias cia
+    join public.catalog_item ci on ci.id = cia.catalog_item_id
+    where ci.code = 'sugar_generic_bag' and cia.alias_text = 'white sugar'
+  ) then
+    raise exception 'catalog alias rows missing — search would have nothing to match';
+  end if;
+
+  if not exists (
+    select 1 from public.template_item_alias
+    where template_id = v_template_id
+      and item_code = 'sugar_generic_bag'
+      and alias_text = 'sonkor'
+  ) then
+    raise exception 'template alias rows missing — search would lose template-specific aliases';
   end if;
 
   if not exists (
@@ -1487,6 +1506,194 @@ begin
   end if;
 end;
 $$;
+
+-- 0016 + 0017 + 0018 coverage: seeded grocery template drives the setup
+-- checklist end-to-end with LAZY catalog activation. apply_template
+-- pre-activates only template_quick_action favorites, leaves the rest
+-- in the catalog. ensure_shop_item activates the rest on first use.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+do $$
+declare
+  v_org_id uuid;
+  v_third_shop_id uuid;
+  v_grocery_template_id uuid;
+  v_rice_item_id uuid;
+  v_milk_catalog_id uuid;
+  v_milk_item_id uuid;
+  v_milk_item_id_2 uuid;
+  v_kg_unit_id uuid;
+  v_packet_unit_id uuid;
+  v_cashier_role_id uuid;
+  v_failed boolean;
+begin
+  select organization_id into v_org_id from test_ids;
+  v_third_shop_id := public.create_shop(v_org_id, 'Setup Checklist Shop');
+
+  select id into v_grocery_template_id
+  from public.template
+  where code = 'grocery' and version = 1;
+  if v_grocery_template_id is null then
+    raise exception 'seeded grocery template (0016) is not visible';
+  end if;
+
+  if (
+    select value #>> '{}'
+    from public.template_setting
+    where template_id = v_grocery_template_id and key = 'timezone_default'
+  ) <> 'Africa/Mogadishu' then
+    raise exception 'seeded grocery template missing timezone_default setting';
+  end if;
+
+  perform public.apply_template(v_third_shop_id, v_grocery_template_id, null);
+
+  -- 0017: shop defaults written from template on first apply.
+  if (
+    select currency_code = 'USD'
+       and default_language_code = 'so'
+       and timezone = 'Africa/Mogadishu'
+       and setup_status = 'template_applied'
+    from public.shop
+    where id = v_third_shop_id
+  ) is not true then
+    raise exception 'apply_template did not write shop defaults from template';
+  end if;
+
+  -- Lazy activation: favorite items WERE pre-activated.
+  select id into v_rice_item_id
+  from public.item
+  where shop_id = v_third_shop_id and code = 'rice_basmati_25kg';
+  if v_rice_item_id is null then
+    raise exception 'favorite item rice_basmati_25kg was not pre-activated';
+  end if;
+
+  -- Lazy activation: non-favorite items were NOT pre-activated.
+  if exists (
+    select 1 from public.item
+    where shop_id = v_third_shop_id and code = 'milk_powder_400g'
+  ) then
+    raise exception 'non-favorite milk_powder_400g was incorrectly pre-activated';
+  end if;
+
+  -- Exact count: 5 favorites × 1 shop = 5 item rows total.
+  if (select count(*) from public.item where shop_id = v_third_shop_id) <> 5 then
+    raise exception 'apply_template materialized more than the favorites subset';
+  end if;
+
+  select id into v_kg_unit_id from public.unit where code = 'kg';
+
+  -- setup_status gating still works: post_sale denied before ready.
+  v_failed := false;
+  begin
+    perform public.post_sale(
+      v_third_shop_id, null,
+      jsonb_build_array(jsonb_build_object(
+        'item_id', v_rice_item_id, 'quantity', 1, 'unit_id', v_kg_unit_id, 'unit_price', 2
+      )),
+      2, 'cash', null, 'gated-sale-1', null, 'Sale before ready should be denied'
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'post_sale ran on a shop whose setup is not ready';
+  end if;
+
+  -- Skip opening-stock step (now optional) and go straight to ready.
+  perform public.complete_shop_setup(v_third_shop_id);
+
+  if (select setup_status from public.shop where id = v_third_shop_id) <> 'ready' then
+    raise exception 'complete_shop_setup did not flip third shop to ready';
+  end if;
+
+  -- Same sale call should now succeed (post-ready, favorite already activated).
+  perform public.post_sale(
+    v_third_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'item_id', v_rice_item_id, 'quantity', 1, 'unit_id', v_kg_unit_id, 'unit_price', 2
+    )),
+    2, 'cash', null, 'gated-sale-1', null, 'Sale after ready should succeed'
+  );
+
+  -- 0018: ensure_shop_item lazily activates a non-favorite catalog item.
+  select id into v_milk_catalog_id from public.catalog_item where code = 'milk_powder_400g';
+  v_milk_item_id := public.ensure_shop_item(v_third_shop_id, v_milk_catalog_id);
+  if v_milk_item_id is null then
+    raise exception 'ensure_shop_item returned null for milk_powder_400g';
+  end if;
+
+  if not exists (
+    select 1 from public.item
+    where shop_id = v_third_shop_id and id = v_milk_item_id and catalog_item_id = v_milk_catalog_id
+  ) then
+    raise exception 'ensure_shop_item did not link the new shop item to the catalog item';
+  end if;
+
+  -- Idempotency: second call returns the same id, does not duplicate.
+  v_milk_item_id_2 := public.ensure_shop_item(v_third_shop_id, v_milk_catalog_id);
+  if v_milk_item_id_2 <> v_milk_item_id then
+    raise exception 'ensure_shop_item is not idempotent';
+  end if;
+
+  -- Posting against the freshly activated item works end-to-end.
+  select id into v_packet_unit_id from public.unit where code = 'packet';
+  perform public.post_sale(
+    v_third_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'item_id', v_milk_item_id, 'quantity', 1, 'unit_id', v_packet_unit_id, 'unit_price', 3
+    )),
+    3, 'cash', null, 'lazy-milk-sale', null, 'Lazy-activated sale'
+  );
+
+  -- Invite the cashier so the next role-denial block can use this shop.
+  select id into v_cashier_role_id from public.shop_role where code = 'cashier';
+  insert into public.shop_membership (shop_id, user_id, role_id)
+  values (v_third_shop_id, '00000000-0000-0000-0000-000000000002', v_cashier_role_id);
+end;
+$$;
+
+-- Cashier session: denied on setup RPCs but allowed to ensure_shop_item
+-- (the relaxed activate_catalog_item permission in 0018).
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_template_id uuid;
+  v_water_catalog_id uuid;
+  v_water_item_id uuid;
+  v_failed boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_template_id from public.template where code = 'grocery' and version = 1;
+  select id into v_water_catalog_id from public.catalog_item where code = 'water_bottled_500ml';
+
+  v_failed := false;
+  begin
+    perform public.apply_template(v_shop_id, v_template_id, null);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'cashier was allowed to apply template';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.complete_shop_setup(v_shop_id);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'cashier was allowed to complete shop setup';
+  end if;
+
+  -- Positive test: cashier IS allowed to activate (lazy entry point).
+  v_water_item_id := public.ensure_shop_item(v_shop_id, v_water_catalog_id);
+  if v_water_item_id is null then
+    raise exception 'cashier was denied ensure_shop_item — lazy entry point broken';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
 reset role;
 SQL

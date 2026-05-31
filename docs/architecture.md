@@ -438,7 +438,25 @@ template_quantity_suggestion(template_id fk, item_code text null,
                             quantity numeric(14,3), unit_code text)
 ```
 
-Templates are **operating profiles**, not product lists. They are composed from modular configuration packs (`catalog.json`, `settings.json`, `quick-actions.json`, etc.) so catalog configuration, UX shortcuts, OCR mappings, and dashboard defaults can evolve independently. They seed products, translations, aliases, settings, fast-entry layouts, supplier-item mappings, and quantity suggestions so daily flows start with useful defaults. See `templates-and-learning.md`.
+Templates are **operating profiles**, not product lists. They are composed from modular configuration packs (`catalog.json`, `settings.json`, `quick-actions.json`, etc.) so catalog configuration, UX shortcuts, OCR mappings, and dashboard defaults can evolve independently. They seed settings, expense categories, supplier types, fast-entry layouts, supplier-item mappings, and quantity suggestions so daily flows start with useful defaults. See `templates-and-learning.md`.
+
+### Lazy catalog activation (locked 2026-05-31)
+
+`template_item` rows enumerate **candidate** products for a shop kind, but **`apply_template` does not bulk-materialize them into `public.item` rows.** A shop that uses 30 of 131 catalog items must have 30 `item` rows, not 131. Catalog metadata stays canonical in the `catalog_*` tables; shop projections are created on demand.
+
+Per-shop `item` rows are created lazily through one of these entry points:
+
+1. **First Sale** of a catalog item — `post_sale` accepts `catalog_item_id` in a line and runs `activate_catalog_item` inline before posting.
+2. **First Receive** of a catalog item — `post_receive` does the same; the receive's `unit_cost` bootstraps `avg_cost`.
+3. **First inventory adjustment** (opening / spoilage / correction) — `post_inventory_adjustment` accepts `catalog_item_id` and may be called from `ready` state (no longer setup-only) so owners can record initial stock whenever they realize they want to.
+4. **Owner pins a favorite** to Home — explicit `activate_catalog_item` call so the Home chip has a real `item_id` to render with stock.
+5. **Custom off-catalog item** — direct insert into `public.item` with `catalog_item_id IS NULL` (escape hatch for hyper-local products and service charges).
+6. **Template-marked starter favorites** — `apply_template` pre-activates only items appearing in `template_quick_action`, so Home is usable on day one without forcing every catalog row into the shop.
+7. **OCR match (Phase 7)** — same path as 2, kicked off from a bono Draft.
+8. **Barcode scan (v2 hook)** — same path as 1, kicked off from a scan.
+9. **Concierge / admin pre-activation (admin portal)** — support staff bulk-activate a curated subset for a specific shop.
+
+All paths funnel through `activate_catalog_item(shop_id, catalog_item_id, …)`. Custom items (path 5) are the only path that does not link back to the catalog.
 
 ### Application & traceability (per shop)
 ```
@@ -449,7 +467,7 @@ template_pack_application(id pk, template_application_id fk, pack_code text,
    -- 'first_apply'  → insert all rows
    -- 'merge_update' → insert new rows, leave existing shop-modified rows alone
 ```
-Stored procedure `apply_template(shop_id, template_id, pack_codes)` is **idempotent**: it records the template/version/packs applied, creates only missing setup rows matched by stable shop codes, and uses `activate_catalog_item()` for catalog-backed items. Shop edits are never overwritten when a newer template version is re-applied, and stock/cost fields are not seeded by templates.
+Stored procedure `apply_template(shop_id, template_id, pack_codes)` is **idempotent** and writes only: `template_application` traceability, the `Default` `location`, `shop_setting` from `template_setting`, `expense_category` from `template_expense_category`, `supplier_type` from `template_supplier_type`, the small pre-activated favorites set via `activate_catalog_item`, and (on first apply) shop defaults (`currency_code`, `default_language_code`, `timezone`) from the template. Shop edits are never overwritten when a newer template version is re-applied, and stock/cost fields are never seeded by templates.
 
 ### Shop-specific learning profile (per shop; UX acceleration only)
 ```
@@ -484,10 +502,11 @@ These rows are not accounting truth and never post transactions. They only rank 
 ### Onboarding state machine on `shop`
 ```
 shop.setup_status text default 'not_started'
-   -- not_started → template_applied → opening_stock_done → ready
+   -- not_started → template_applied → ready          (default flow, lazy activation)
+   -- not_started → template_applied → opening_stock_done → ready   (legacy / opt-in)
 shop.setup_completed_at timestamptz null
 ```
-Daily flows (Sale, Receive, Payment, Expense) are gated behind `setup_status = 'ready'`. The Settings UI shows a one-tap checklist that drives the state machine.
+Daily flows (Sale, Receive, Payment, Expense) are gated behind `setup_status = 'ready'`. With lazy activation, the default checklist is two steps: apply template → finish setup. The `opening_stock_done` state is retained for compatibility but is no longer required — opening adjustments can be posted any time after `setup_status = 'ready'`. The Settings UI shows the checklist that drives this state machine.
 
 ### V1 help channels and future support sessions
 

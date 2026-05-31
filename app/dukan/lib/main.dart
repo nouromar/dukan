@@ -330,6 +330,10 @@ class AuthRouter extends StatelessWidget {
       return const ShopPickerScreen();
     }
 
+    if (!selectedShop.isReady) {
+      return SetupChecklistScreen(shop: selectedShop);
+    }
+
     return HomeScreen(shop: selectedShop, onSignOut: () => auth.signOut());
   }
 }
@@ -725,6 +729,437 @@ class ShopPickerScreen extends StatelessWidget {
   }
 }
 
+class SetupChecklistScreen extends StatelessWidget {
+  const SetupChecklistScreen({required this.shop, super.key});
+
+  final ShopSummary shop;
+
+  Future<void> _openTemplatePicker(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => TemplatePickerSheet(shopId: shop.id),
+    );
+  }
+
+  Future<void> _finish(BuildContext context) async {
+    final l = tr(context);
+    try {
+      await context.read<AuthController>().completeSetup(shopId: shop.id);
+    } on PostgrestException {
+      if (context.mounted) {
+        _showError(context, l.completeSetupFailedMessage);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final templateDone = shop.isTemplateApplied;
+
+    return Scaffold(
+      appBar: dukanAppBar(
+        context,
+        l.setupChecklistTitle,
+        actions: [
+          IconButton(
+            tooltip: l.signOut,
+            onPressed: () => context.read<AuthController>().signOut(),
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text(
+              l.setupChecklistHeadline,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 20),
+            _ChecklistCard(
+              index: 1,
+              title: l.setupStepTemplateTitle,
+              body: l.setupStepTemplateBody,
+              doneLabel: templateDone ? l.setupStepTemplateDone(shop.name) : null,
+              enabled: !templateDone,
+              done: templateDone,
+              onTap: templateDone ? null : () => _openTemplatePicker(context),
+            ),
+            const SizedBox(height: 14),
+            _ChecklistCard(
+              index: 2,
+              title: l.setupStepFinishTitle,
+              body: l.setupStepFinishBody,
+              enabled: templateDone,
+              done: false,
+              onTap: null,
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: templateDone ? () => _finish(context) : null,
+              child: Text(l.setupStepFinishButton),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChecklistCard extends StatelessWidget {
+  const _ChecklistCard({
+    required this.index,
+    required this.title,
+    required this.body,
+    required this.enabled,
+    required this.done,
+    this.doneLabel,
+    this.onTap,
+  });
+
+  final int index;
+  final String title;
+  final String body;
+  final bool enabled;
+  final bool done;
+  final String? doneLabel;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final foreground = enabled
+        ? colorScheme.onSurface
+        : colorScheme.onSurface.withValues(alpha: 0.5);
+    final stepColor = done
+        ? colorScheme.primary
+        : (enabled ? colorScheme.primary : colorScheme.outline);
+
+    return Card(
+      elevation: enabled || done ? 1 : 0,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: stepColor,
+                foregroundColor: colorScheme.onPrimary,
+                child: done
+                    ? const Icon(Icons.check)
+                    : Text(
+                        '$index',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: foreground,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      doneLabel ?? body,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: foreground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (onTap != null) const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TemplatePickerSheet extends StatefulWidget {
+  const TemplatePickerSheet({required this.shopId, super.key});
+
+  final String shopId;
+
+  @override
+  State<TemplatePickerSheet> createState() => _TemplatePickerSheetState();
+}
+
+class _TemplatePickerSheetState extends State<TemplatePickerSheet> {
+  late Future<List<TemplateOption>> _future;
+  String? _applyingId;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = context.read<AuthController>().listAvailableTemplates();
+  }
+
+  Future<void> _apply(TemplateOption option) async {
+    setState(() => _applyingId = option.id);
+    try {
+      await context.read<AuthController>().applyTemplate(
+        shopId: widget.shopId,
+        templateId: option.id,
+      );
+      if (mounted) Navigator.of(context).pop();
+    } on PostgrestException {
+      if (mounted) {
+        _showError(context, tr(context).applyTemplateFailedMessage);
+      }
+    } finally {
+      if (mounted) setState(() => _applyingId = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l.templatePickerTitle,
+              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            FutureBuilder<List<TemplateOption>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 32),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      l.applyTemplateFailedMessage,
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
+                final options = snapshot.data ?? const <TemplateOption>[];
+                return Column(
+                  children: [
+                    for (final option in options) ...[
+                      Card(
+                        child: ListTile(
+                          minVerticalPadding: 18,
+                          title: Text(
+                            option.name,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          trailing: _applyingId == option.id
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : TextButton(
+                                  onPressed: _applyingId == null
+                                      ? () => _apply(option)
+                                      : null,
+                                  child: Text(l.applyTemplateButton),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({required this.shop, super.key});
+
+  final ShopSummary shop;
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _timezoneController;
+  late String _currencyCode;
+  late String _languageCode;
+  late Future<_SettingsReferenceData> _refsFuture;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.shop.name);
+    _timezoneController = TextEditingController(text: widget.shop.timezone);
+    _currencyCode = widget.shop.currencyCode;
+    _languageCode = widget.shop.defaultLanguageCode;
+    final auth = context.read<AuthController>();
+    _refsFuture = Future.wait([auth.listCurrencies(), auth.listLanguages()])
+        .then(
+          (results) => _SettingsReferenceData(
+            currencies: results[0],
+            languages: results[1],
+          ),
+        );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _timezoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    final l = tr(context);
+    try {
+      await context.read<AuthController>().updateShopDefaults(
+        shopId: widget.shop.id,
+        name: _nameController.text,
+        currencyCode: _currencyCode,
+        defaultLanguageCode: _languageCode,
+        timezone: _timezoneController.text,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.settingsSavedToast)),
+      );
+      Navigator.of(context).pop();
+    } on PostgrestException {
+      if (mounted) {
+        _showError(context, l.settingsSaveFailedMessage);
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return Scaffold(
+      appBar: dukanAppBar(context, l.settingsTitle),
+      body: SafeArea(
+        child: FutureBuilder<_SettingsReferenceData>(
+          future: _refsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError || snapshot.data == null) {
+              return Center(child: Text(l.settingsSaveFailedMessage));
+            }
+            final refs = snapshot.data!;
+            return ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                TextField(
+                  controller: _nameController,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(labelText: l.settingsShopNameLabel),
+                ),
+                const SizedBox(height: 14),
+                DropdownButtonFormField<String>(
+                  initialValue: _currencyCode,
+                  decoration: InputDecoration(
+                    labelText: l.settingsCurrencyLabel,
+                  ),
+                  items: [
+                    for (final c in refs.currencies)
+                      DropdownMenuItem(
+                        value: c.code,
+                        child: Text('${c.code} (${c.label})'),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) setState(() => _currencyCode = value);
+                  },
+                ),
+                const SizedBox(height: 14),
+                DropdownButtonFormField<String>(
+                  initialValue: _languageCode,
+                  decoration: InputDecoration(
+                    labelText: l.settingsLanguageLabel,
+                  ),
+                  items: [
+                    for (final lang in refs.languages)
+                      DropdownMenuItem(
+                        value: lang.code,
+                        child: Text(lang.label),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) setState(() => _languageCode = value);
+                  },
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _timezoneController,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: l.settingsTimezoneLabel,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: _saving ? null : _save,
+                  child: _saving
+                      ? const CircularProgressIndicator()
+                      : Text(l.settingsSaveButton),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsReferenceData {
+  const _SettingsReferenceData({
+    required this.currencies,
+    required this.languages,
+  });
+
+  final List<ReferenceOption> currencies;
+  final List<ReferenceOption> languages;
+}
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.shop, this.onSignOut});
 
@@ -739,6 +1174,16 @@ class HomeScreen extends StatelessWidget {
         context,
         l.appTitle,
         actions: [
+          if (shop != null)
+            IconButton(
+              tooltip: l.openSettings,
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SettingsScreen(shop: shop!),
+                ),
+              ),
+              icon: const Icon(Icons.settings),
+            ),
           if (onSignOut != null)
             IconButton(
               tooltip: l.signOut,

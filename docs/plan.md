@@ -143,7 +143,7 @@ See **`docs/ux.md`** — the binding reference for UX principles, speed contract
 - **Money spine:** `txn` (logical Transaction: Sale, Receive, Expense) + `transaction_line` + `payment` + `payment_allocation` + `document`. Posted = immutable; void via reversing entry. COGS snapshotted on sale lines.
 - **Inventory spine:** `item` with embedded `current_stock`, `avg_cost`, `last_cost` (single location, single row), plus `item_unit` conversions for receive/sale units. `stock_movement` as the immutable ledger in the item's base unit. `inventory_adjustment` (+ `_line`) with an `adjustment_reason` reference table — v1 reasons: `opening`, `spoilage`, `correction`.
 - **Catalog inheritance:** central `catalog_item` + immutable `catalog_item_revision` + `catalog_item_unit`; shops activate catalog rows into small shop-owned `item`/`item_unit` projections with local overrides instead of copying all product metadata blindly.
-- **Opening stock flow** at shop onboarding (mandatory — otherwise every report lies from day one).
+- **Opening stock entry** as an anytime affordance (Settings / Reports) — not a setup wall. With lazy catalog activation (see `decisions.md` Q11), the shop's `item` rows are created on demand; opening stock is recorded by `post_inventory_adjustment(reason='opening')` whenever the owner gets to it, including post-launch.
 - **Parties & balances:** `party` (supplier/customer/both) with cached `receivable`, `payable`; payments + allocations.
 - **Aliases:** `item_alias`, `party_alias` (used by fast search in v1; reused by OCR matching in v1.5).
 - **Platform layer:** modular `template` / `template_pack`, `template_application`, v1 help-channel config, future `support_session`, `audit_log`, `shop.setup_status` state machine.

@@ -20,6 +20,7 @@
 | 8 | Sales pricing model | **Confirm plan**: price defaults from item, override via long-press; no fixed-price enforcement | High |
 | 9 | Costing policy | **Confirm plan**: weighted-average at receive posting + COGS snapshotted on sale line | High |
 | 10 | Data export & admin recovery | **CSV export** (items + transactions + lines) + **owner self-service void** (≤7 days). **Support is setup-only — cannot post voids or any transactional changes** (DECIDED 2026-05-29 by @nouromar). | DECIDED |
+| 11 | Catalog activation strategy | **Lazy activation.** `apply_template` does NOT bulk-materialize per-shop `item` rows. Catalog metadata stays canonical in `catalog_*` tables; per-shop `item` rows are created on demand via `activate_catalog_item` at first Sale / Receive / inventory adjustment / favorite pin (and Phase 7+ OCR / barcode / admin pre-activation). Template-marked starter favorites are the only items pre-activated. (DECIDED 2026-05-31 by @nouromar) | DECIDED |
 
 ---
 
@@ -615,6 +616,46 @@ The CSV export and owner void are well-scoped. The exact scope of support correc
 
 ### Implication if Wrong
 If the correction path is too narrow (owner can't easily fix mistakes), shopkeepers will lose confidence in the app's data integrity and stop using it. This is a pilot-killer. Better to err on the side of making corrections easier — the immutability invariant is preserved because corrections are always reversing entries, never edits.
+
+---
+
+## Question 11 — Catalog Activation Strategy
+
+### Decision — ACCEPTED 2026-05-31
+
+A shop's `public.item` rows are **lazy projections** of the canonical `catalog_*` tables, not bulk copies. `apply_template` does not materialize the full `template_item` list; each per-shop `item` row is created on demand the first time the shop touches that catalog item.
+
+| Concern | Eager (rejected) | Lazy (accepted) |
+|---|---|---|
+| Per-shop row count when a shop uses 30 of 131 catalog items | 131 `item` rows + 250+ `item_unit` + 300+ `item_alias` rows, mostly zero-stock orphans | 30 `item` rows; the rest stay catalog-only |
+| Reports / low-stock / search noise | Polluted with items the shop never carries | Shows only what the shop actually carries |
+| Maximum useful template size | Small (otherwise shops drown) | Thousands of catalog rows cost nothing per shop |
+| Coherence with platform catalog edits | Each shop has an independent fork; central updates don't propagate | Canonical metadata lives in `catalog_item_revision`; shops point to it and can be migrated to new revisions |
+| Setup time before first sale | Owner must scroll through every theoretical item before going live | One-tap template choice → ready |
+
+**Server-side primitives** (single funnel point — `activate_catalog_item(shop_id, catalog_item_id, …)`):
+
+| Entry path | Trigger | Wiring |
+|---|---|---|
+| First Sale of a catalog item | User picks from search → adds to cart | `post_sale` line accepts `catalog_item_id`; activates inline before posting |
+| First Receive | Same | `post_receive` line accepts `catalog_item_id`; activates inline. Receive's `unit_cost` bootstraps `avg_cost` |
+| First inventory adjustment (opening / spoilage / correction) | Same | `post_inventory_adjustment` line accepts `catalog_item_id`; relaxed to allow `opening` reason from `ready` state |
+| Owner pins a favorite | Tap in favorites editor | Explicit `activate_catalog_item` call |
+| Off-catalog custom item | Owner creates a hyper-local product or service charge | Direct insert into `public.item` with `catalog_item_id IS NULL` (the only path that doesn't link back to the catalog) |
+| Template starter favorites | `apply_template` runs | Small pre-activation loop calls `activate_catalog_item` for items in `template_quick_action` only |
+| OCR match (Phase 7) | Bono Draft confirmation | Reuses the Receive line path |
+| Barcode scan (v2) | Scan in Sale | Reuses the Sale line path |
+| Concierge / admin pre-activation | Support flow via admin portal | Calls `activate_catalog_item` in a loop, scoped by `auth_can_manage_shop_setup` |
+
+**Implications:**
+
+- Sale / Receive search becomes a UNION of activated shop items (`public.item`) and catalog candidates (`public.catalog_item` + `catalog_item_alias`). The UI renders stock chips for activated items; catalog candidates are silently activated on first add.
+- Opening-stock entry is no longer a setup wall. It moves to an anytime affordance from Settings or Reports.
+- `shop.setup_status` simplifies to the default flow `not_started → template_applied → ready`. The `opening_stock_done` value is retained for backwards compatibility but is no longer required.
+- `apply_template` writes only: shop_setting, expense_category, supplier_type, location, template_application traceability, shop defaults (currency / language / timezone) on first apply, and pre-activated favorites. It no longer loops over every `template_item`.
+- `template_item` rows still exist — they're the **candidate list** the shop kind brings, used by search ranking and (later) OCR matching. They're not a materialization spec.
+
+**Rejected alternative (eager bulk activation):** simpler `apply_template`, but creates the K×N row-count and coherence-loss problems above. Pre-launch design walked into this; reversed before any of it shipped.
 
 ---
 
