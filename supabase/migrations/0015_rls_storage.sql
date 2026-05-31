@@ -20,6 +20,11 @@ set
   allowed_mime_types = excluded.allowed_mime_types,
   updated_at = now();
 
+-- Do not enable RLS on storage.objects here. Supabase owns and manages this
+-- Storage table in local and hosted projects, and project migrations may not
+-- be allowed to alter the table itself. The standalone Docker migration test
+-- harness enables RLS when it creates its mock storage.objects table.
+
 alter table public.document
   add constraint document_storage_path_shape
   check (
@@ -221,8 +226,6 @@ grant usage on schema storage to authenticated;
 grant select on storage.buckets to authenticated;
 grant select, insert, update on storage.objects to authenticated;
 grant delete on public.document to authenticated;
-
-alter table storage.objects enable row level security;
 
 drop policy if exists shop_documents_select on storage.objects;
 create policy shop_documents_select

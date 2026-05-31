@@ -52,6 +52,7 @@ create table storage.objects (
   updated_at timestamptz not null default now(),
   unique (bucket_id, name)
 );
+alter table storage.objects enable row level security;
 create or replace function auth.uid()
 returns uuid
 language sql
