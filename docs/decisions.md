@@ -22,6 +22,7 @@
 | 10 | Data export & admin recovery | **CSV export** (items + transactions + lines) + **owner self-service void** (≤7 days). **Support is setup-only — cannot post voids or any transactional changes** (DECIDED 2026-05-29 by @nouromar). | DECIDED |
 | 11 | Catalog activation strategy | **Lazy activation.** `apply_template` does NOT bulk-materialize per-shop `item` rows. Catalog metadata stays canonical in `catalog_*` tables; per-shop `item` rows are created on demand via `activate_catalog_item` at first Sale / Receive / inventory adjustment / favorite pin (and Phase 7+ OCR / barcode / admin pre-activation). Template-marked starter favorites are the only items pre-activated. (DECIDED 2026-05-31 by @nouromar) | DECIDED |
 | 12 | Sale undo strategy | **No 10-second in-app undo.** SAVE optimistically clears the UI and posts in the background with `client_op_id` idempotency. If the post later fails, restore the cart with a non-blocking warning. Corrections to already-posted sales go through the Void flow in Sales history (owner-only, ≤7 days; per Q10) once that surface exists. Avoids shipping a SnackBar "Undo" button that doesn't actually undo within its visible lifetime. (DECIDED 2026-06-01 by @nouromar) | DECIDED |
+| 13 | Multi-cart on Sale screen | **Defer to v2.** Pilot ships single-cart with persistence across back/forward + Clear-all button. Multi-cart design when revisited: app-bar `📋 N` chip (hidden when zero held), `Hold` button in expanded cart drawer header, held-carts bottom sheet with Resume / Discard. No permanent tab strip. Held carts are in-memory only, capped at 5, never hit the server. (DEFERRED 2026-06-01 by @nouromar) | DEFERRED |
 
 ---
 
@@ -692,6 +693,54 @@ The rule used to read: *"Optimistic save with 10-second undo. Never block on the
 It now reads: *"Optimistic save, no blocking dialogs. SAVE clears the UI immediately and runs the post in the background (idempotent via `client_op_id`). A 'Saved' toast replaces blocking confirm dialogs. If the post later fails, surface a non-blocking warning with the cart restored. Corrections to posted transactions go through the Void flow in Sales history (owner-only, ≤7 days) — no 10-second in-app undo button."*
 
 `ux-screens.md` § 9 dropped the "Undo state" requirement from the per-screen states checklist accordingly.
+
+---
+
+## Question 13 — Multi-Cart on the Sale Screen
+
+### Decision — DEFERRED to v2 (2026-06-01)
+
+Pilot ships **single-cart** on the Sale screen with cart persistence across back/forward navigation + an explicit `Clear all` button. The "park current cart and ring up the next customer while the first is paused" workflow is real but rare at a single-counter grocery shop; the cost of a multi-cart UI on every Sale-screen open is not warranted until pilots show real demand.
+
+### When we revisit, the design we'll start from
+
+Same surface as today, with two new affordances that are **invisible when the feature isn't being used:**
+
+- **App-bar `📋 N` chip** with the count of currently held carts. Hidden when N=0, so the default single-cart Sale screen has zero added chrome. Tap → Held-carts bottom sheet.
+- **`Hold` button in the expanded cart drawer header**, only rendered when the active cart is non-empty. Tap → optional one-line label (auto-fill `Cart {n+1}` or `Hold for {customer}` if Debt+customer already chosen) → cart clears for the next customer, held-carts counter increments.
+
+**Held-carts sheet (from the `📋 N` chip):**
+
+```
+┌──────────────────────────────────────┐
+│ Held carts                           │
+├──────────────────────────────────────┤
+│ Ahmed       3 items · $4.45     ⮌  ✕ │
+│ Cart 2      1 item · $2.50      ⮌  ✕ │
+├──────────────────────────────────────┤
+│            [ + Hold this cart ]      │  ← only if active cart non-empty
+└──────────────────────────────────────┘
+```
+
+- **⮌ Resume** swaps that held cart into the active slot. If the active cart is non-empty, the swap is two-way (active cart gets held under its existing label).
+- **✕ Discard** with confirmation dialog (destructive).
+
+### Constraints locked in upfront
+
+| | |
+|---|---|
+| Durability | In-memory only — app restart clears every held cart. Disk persistence (SharedPreferences / sqflite) deferred until pilots show real demand. |
+| Cap | At most 5 held carts. The 6th attempt to `Hold` shows a warning that forces the cashier to resume or discard one first. Prevents the "20 forgotten carts" pathology. |
+| Server | Held carts are pure UI state — no `txn` rows on the server until SAVE. |
+| Sale mode + customer | Held alongside the line items. Resuming restores the cart's Cash/Debt choice and the selected customer (if any). |
+
+### Rejected alternative — permanent tab strip across the top
+
+Restaurants (4+ tables open at once) need always-visible tabs. A grocery counter doesn't. Permanent tab chrome violates the "reduce clutter aggressively" rule in `ux.md` § 4 — even when the shopkeeper has no held carts they'd pay the visual cost.
+
+### V1 implication
+
+`CartController` (or the holding place for cart state in the slice-2-polish work) should be shaped so adding a `held: List<HeldCart>` field later is mechanical, not architectural. A single `activeCart` + `held: const []` today, with `hold(label)` / `resume(id)` / `discard(id)` methods stubbed as v2 work.
 
 ---
 
