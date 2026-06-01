@@ -716,18 +716,6 @@ abstract class AppLocalizations {
   /// **'TRY AGAIN'**
   String get tryAgain;
 
-  /// No description provided for @setupChecklistTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Set up your shop'**
-  String get setupChecklistTitle;
-
-  /// No description provided for @setupChecklistHeadline.
-  ///
-  /// In en, this message translates to:
-  /// **'Two quick steps before you can start selling'**
-  String get setupChecklistHeadline;
-
   /// No description provided for @setupStepTemplateTitle.
   ///
   /// In en, this message translates to:
@@ -781,6 +769,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not apply the template. Check your internet and try again.'**
   String get applyTemplateFailedMessage;
+
+  /// No description provided for @templatesEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No shop types are available yet. Contact support if this keeps happening.'**
+  String get templatesEmptyMessage;
 
   /// No description provided for @completeSetupFailedMessage.
   ///

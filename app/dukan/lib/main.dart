@@ -331,7 +331,7 @@ class AuthRouter extends StatelessWidget {
     }
 
     if (!selectedShop.isReady) {
-      return SetupChecklistScreen(shop: selectedShop);
+      return ShopTypeSetupScreen(shop: selectedShop);
     }
 
     return HomeScreen(shop: selectedShop, onSignOut: () => auth.signOut());
@@ -729,39 +729,72 @@ class ShopPickerScreen extends StatelessWidget {
   }
 }
 
-class SetupChecklistScreen extends StatelessWidget {
-  const SetupChecklistScreen({required this.shop, super.key});
+class ShopTypeSetupScreen extends StatefulWidget {
+  const ShopTypeSetupScreen({required this.shop, super.key});
 
   final ShopSummary shop;
 
-  Future<void> _openTemplatePicker(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => TemplatePickerSheet(shopId: shop.id),
-    );
+  @override
+  State<ShopTypeSetupScreen> createState() => _ShopTypeSetupScreenState();
+}
+
+class _ShopTypeSetupScreenState extends State<ShopTypeSetupScreen> {
+  late Future<List<TemplateOption>> _future;
+  String? _selectedId;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = context.read<AuthController>().listAvailableTemplates();
   }
 
-  Future<void> _finish(BuildContext context) async {
+  Future<void> _continue() async {
+    final id = _selectedId;
+    if (id == null) return;
+    setState(() => _busy = true);
+    final l = tr(context);
+    final auth = context.read<AuthController>();
+    try {
+      await auth.applyTemplate(shopId: widget.shop.id, templateId: id);
+      if (!mounted) return;
+      await auth.completeSetup(shopId: widget.shop.id);
+      // AuthRouter watches selectedShop.setupStatus and rebuilds into
+      // HomeScreen automatically — nothing to navigate here.
+    } on PostgrestException {
+      if (mounted) {
+        _showError(context, l.applyTemplateFailedMessage);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _resume() async {
+    setState(() => _busy = true);
     final l = tr(context);
     try {
-      await context.read<AuthController>().completeSetup(shopId: shop.id);
+      await context.read<AuthController>().completeSetup(
+        shopId: widget.shop.id,
+      );
     } on PostgrestException {
-      if (context.mounted) {
+      if (mounted) {
         _showError(context, l.completeSetupFailedMessage);
       }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    final templateDone = shop.isTemplateApplied;
+    final templateApplied = widget.shop.isTemplateApplied;
 
     return Scaffold(
       appBar: dukanAppBar(
         context,
-        l.setupChecklistTitle,
+        l.setupStepTemplateTitle,
         actions: [
           IconButton(
             tooltip: l.signOut,
@@ -771,236 +804,192 @@ class SetupChecklistScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(
-              l.setupChecklistHeadline,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 20),
-            _ChecklistCard(
-              index: 1,
-              title: l.setupStepTemplateTitle,
-              body: l.setupStepTemplateBody,
-              doneLabel: templateDone ? l.setupStepTemplateDone(shop.name) : null,
-              enabled: !templateDone,
-              done: templateDone,
-              onTap: templateDone ? null : () => _openTemplatePicker(context),
-            ),
-            const SizedBox(height: 14),
-            _ChecklistCard(
-              index: 2,
-              title: l.setupStepFinishTitle,
-              body: l.setupStepFinishBody,
-              enabled: templateDone,
-              done: false,
-              onTap: null,
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: templateDone ? () => _finish(context) : null,
-              child: Text(l.setupStepFinishButton),
-            ),
-          ],
-        ),
+        child: templateApplied
+            ? _ResumeBody(
+                shopName: widget.shop.name,
+                busy: _busy,
+                onFinish: _resume,
+              )
+            : _PickerBody(
+                future: _future,
+                selectedId: _selectedId,
+                busy: _busy,
+                onSelect: (v) => setState(() => _selectedId = v),
+                onContinue: _continue,
+              ),
       ),
     );
   }
 }
 
-class _ChecklistCard extends StatelessWidget {
-  const _ChecklistCard({
-    required this.index,
-    required this.title,
-    required this.body,
-    required this.enabled,
-    required this.done,
-    this.doneLabel,
-    this.onTap,
+class _PickerBody extends StatelessWidget {
+  const _PickerBody({
+    required this.future,
+    required this.selectedId,
+    required this.busy,
+    required this.onSelect,
+    required this.onContinue,
   });
 
-  final int index;
-  final String title;
-  final String body;
-  final bool enabled;
-  final bool done;
-  final String? doneLabel;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final foreground = enabled
-        ? colorScheme.onSurface
-        : colorScheme.onSurface.withValues(alpha: 0.5);
-    final stepColor = done
-        ? colorScheme.primary
-        : (enabled ? colorScheme.primary : colorScheme.outline);
-
-    return Card(
-      elevation: enabled || done ? 1 : 0,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: stepColor,
-                foregroundColor: colorScheme.onPrimary,
-                child: done
-                    ? const Icon(Icons.check)
-                    : Text(
-                        '$index',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: foreground,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      doneLabel ?? body,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: foreground,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (onTap != null) const Icon(Icons.chevron_right),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class TemplatePickerSheet extends StatefulWidget {
-  const TemplatePickerSheet({required this.shopId, super.key});
-
-  final String shopId;
-
-  @override
-  State<TemplatePickerSheet> createState() => _TemplatePickerSheetState();
-}
-
-class _TemplatePickerSheetState extends State<TemplatePickerSheet> {
-  late Future<List<TemplateOption>> _future;
-  String? _applyingId;
-
-  @override
-  void initState() {
-    super.initState();
-    _future = context.read<AuthController>().listAvailableTemplates();
-  }
-
-  Future<void> _apply(TemplateOption option) async {
-    setState(() => _applyingId = option.id);
-    try {
-      await context.read<AuthController>().applyTemplate(
-        shopId: widget.shopId,
-        templateId: option.id,
-      );
-      if (mounted) Navigator.of(context).pop();
-    } on PostgrestException {
-      if (mounted) {
-        _showError(context, tr(context).applyTemplateFailedMessage);
-      }
-    } finally {
-      if (mounted) setState(() => _applyingId = null);
-    }
-  }
+  final Future<List<TemplateOption>> future;
+  final String? selectedId;
+  final bool busy;
+  final ValueChanged<String?> onSelect;
+  final VoidCallback onContinue;
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l.templatePickerTitle,
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            FutureBuilder<List<TemplateOption>>(
-              future: _future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                if (snapshot.hasError) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+          child: Text(
+            l.setupStepTemplateBody,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ),
+        Expanded(
+          child: FutureBuilder<List<TemplateOption>>(
+            future: future,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
                     child: Text(
                       l.applyTemplateFailedMessage,
                       textAlign: TextAlign.center,
                     ),
-                  );
-                }
-                final options = snapshot.data ?? const <TemplateOption>[];
-                return Column(
-                  children: [
-                    for (final option in options) ...[
-                      Card(
-                        child: ListTile(
-                          minVerticalPadding: 18,
-                          title: Text(
-                            option.name,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          trailing: _applyingId == option.id
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                  ),
-                                )
-                              : TextButton(
-                                  onPressed: _applyingId == null
-                                      ? () => _apply(option)
-                                      : null,
-                                  child: Text(l.applyTemplateButton),
-                                ),
+                  ),
+                );
+              }
+              final options = snapshot.data ?? const <TemplateOption>[];
+              if (options.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      l.templatesEmptyMessage,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ),
+                );
+              }
+              return RadioGroup<String>(
+                groupValue: selectedId,
+                onChanged: (v) {
+                  if (busy) return;
+                  onSelect(v);
+                },
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: options.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) {
+                    final opt = options[i];
+                    final selected = selectedId == opt.id;
+                    return Card(
+                      elevation: selected ? 3 : 1,
+                      child: RadioListTile<String>(
+                        value: opt.id,
+                        title: Text(
+                          opt.name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                  ],
-                );
-              },
-            ),
-          ],
+                    );
+                  },
+                ),
+              );
+            },
+          ),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: FilledButton(
+            onPressed: selectedId == null || busy ? null : onContinue,
+            child: busy
+                ? const CircularProgressIndicator()
+                : Text(l.applyTemplateButton),
+          ),
+        ),
+      ],
     );
   }
 }
+
+class _ResumeBody extends StatelessWidget {
+  const _ResumeBody({
+    required this.shopName,
+    required this.busy,
+    required this.onFinish,
+  });
+
+  final String shopName;
+  final bool busy;
+  final VoidCallback onFinish;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return Column(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.check_circle, size: 28),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            l.setupStepTemplateDone(shopName),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l.setupStepFinishBody,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: FilledButton(
+            onPressed: busy ? null : onFinish,
+            child: busy
+                ? const CircularProgressIndicator()
+                : Text(l.setupStepFinishButton),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({required this.shop, super.key});
@@ -1177,11 +1166,17 @@ class HomeScreen extends StatelessWidget {
           if (shop != null)
             IconButton(
               tooltip: l.openSettings,
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => SettingsScreen(shop: shop!),
-                ),
-              ),
+              onPressed: () {
+                final auth = context.read<AuthController>();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChangeNotifierProvider<AuthController>.value(
+                      value: auth,
+                      child: SettingsScreen(shop: shop!),
+                    ),
+                  ),
+                );
+              },
               icon: const Icon(Icons.settings),
             ),
           if (onSignOut != null)

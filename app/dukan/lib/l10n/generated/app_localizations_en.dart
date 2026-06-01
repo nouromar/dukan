@@ -351,13 +351,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tryAgain => 'TRY AGAIN';
 
   @override
-  String get setupChecklistTitle => 'Set up your shop';
-
-  @override
-  String get setupChecklistHeadline =>
-      'Two quick steps before you can start selling';
-
-  @override
   String get setupStepTemplateTitle => 'Choose your shop type';
 
   @override
@@ -387,6 +380,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get applyTemplateFailedMessage =>
       'Could not apply the template. Check your internet and try again.';
+
+  @override
+  String get templatesEmptyMessage =>
+      'No shop types are available yet. Contact support if this keeps happening.';
 
   @override
   String get completeSetupFailedMessage => 'Could not finish setup. Try again.';

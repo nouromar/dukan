@@ -349,13 +349,6 @@ class AppLocalizationsSo extends AppLocalizations {
   String get tryAgain => 'MAR KALE ISKU DAY';
 
   @override
-  String get setupChecklistTitle => 'Diyaari dukaankaaga';
-
-  @override
-  String get setupChecklistHeadline =>
-      'Laba tallaabo oo degdeg ah ka hor inta aanad bilaabin iibinta';
-
-  @override
   String get setupStepTemplateTitle => 'Dooro nooca dukaankaaga';
 
   @override
@@ -385,6 +378,10 @@ class AppLocalizationsSo extends AppLocalizations {
   @override
   String get applyTemplateFailedMessage =>
       'Xirmada lama dabaqi karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get templatesEmptyMessage =>
+      'Weli ma jiraan noocyo dukaan oo la heli karo. La xiriir taageerada haddii ay sii socoto.';
 
   @override
   String get completeSetupFailedMessage =>
