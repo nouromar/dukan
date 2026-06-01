@@ -497,19 +497,10 @@ class _SaleCartStrip extends StatelessWidget {
                 child: expanded && canExpand
                     ? ConstrainedBox(
                         constraints: BoxConstraints(maxHeight: maxListHeight),
-                        child: Scrollbar(
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            itemCount: lines.length,
-                            separatorBuilder: (_, _) =>
-                                const Divider(height: 1),
-                            itemBuilder: (context, i) => _CartLineTile(
-                              entry: lines[i],
-                              enabled: !saving,
-                              onRemove: () => onRemoveLine(lines[i].key),
-                            ),
-                          ),
+                        child: _CartLineList(
+                          lines: lines,
+                          saving: saving,
+                          onRemoveLine: onRemoveLine,
                         ),
                       )
                     : const SizedBox.shrink(),
@@ -579,6 +570,54 @@ class _SaleCartStrip extends StatelessWidget {
           ),
         ),
       );
+  }
+}
+
+// Owns its own ScrollController so the Scrollbar doesn't pick up the
+// PrimaryScrollController already in use by the favorites grid above
+// (Scrollbar asserts on multiple ScrollPositions per controller).
+class _CartLineList extends StatefulWidget {
+  const _CartLineList({
+    required this.lines,
+    required this.saving,
+    required this.onRemoveLine,
+  });
+
+  final List<_CartLineEntry> lines;
+  final bool saving;
+  final void Function(String key) onRemoveLine;
+
+  @override
+  State<_CartLineList> createState() => _CartLineListState();
+}
+
+class _CartLineListState extends State<_CartLineList> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scrollbar(
+      controller: _scrollController,
+      child: ListView.separated(
+        controller: _scrollController,
+        primary: false,
+        shrinkWrap: true,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        itemCount: widget.lines.length,
+        separatorBuilder: (_, _) => const Divider(height: 1),
+        itemBuilder: (context, i) => _CartLineTile(
+          entry: widget.lines[i],
+          enabled: !widget.saving,
+          onRemove: () => widget.onRemoveLine(widget.lines[i].key),
+        ),
+      ),
+    );
   }
 }
 
