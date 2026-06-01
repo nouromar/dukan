@@ -426,8 +426,11 @@ class _SaleCartStrip extends StatelessWidget {
     final maxListHeight = MediaQuery.of(context).size.height * 0.25;
 
     return Material(
-      elevation: 10,
-      color: Theme.of(context).colorScheme.surface,
+      elevation: 8,
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
         child: Column(
