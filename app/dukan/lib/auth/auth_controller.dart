@@ -94,6 +94,41 @@ class ShopItem {
   final String baseUnitLabel;
 }
 
+class ItemSearchResult {
+  const ItemSearchResult({
+    required this.itemId,
+    required this.catalogItemId,
+    required this.name,
+    required this.baseUnitCode,
+    required this.baseUnitLabel,
+    required this.salePrice,
+    required this.currentStock,
+    required this.isActivated,
+  });
+
+  factory ItemSearchResult.fromJson(Map<String, dynamic> json) {
+    return ItemSearchResult(
+      itemId: json['item_id'] as String?,
+      catalogItemId: json['catalog_item_id'] as String?,
+      name: json['name'] as String,
+      baseUnitCode: json['base_unit_code'] as String,
+      baseUnitLabel: json['base_unit_label'] as String,
+      salePrice: (json['sale_price'] as num?)?.toDouble(),
+      currentStock: (json['current_stock'] as num?)?.toDouble(),
+      isActivated: json['is_activated'] as bool,
+    );
+  }
+
+  final String? itemId;
+  final String? catalogItemId;
+  final String name;
+  final String baseUnitCode;
+  final String baseUnitLabel;
+  final double? salePrice;
+  final double? currentStock;
+  final bool isActivated;
+}
+
 class CatalogSearchResult {
   const CatalogSearchResult({
     required this.id,
@@ -319,6 +354,27 @@ class AuthController extends ChangeNotifier {
       params: {'p_shop_id': shopId, 'p_catalog_item_id': catalogItemId},
     );
     return result as String;
+  }
+
+  Future<List<ItemSearchResult>> searchItems({
+    required String shopId,
+    String query = '',
+    int limit = 50,
+  }) async {
+    final rows = await _client.rpc(
+      'search_items',
+      params: {
+        'p_shop_id': shopId,
+        'p_query': query,
+        'p_limit': limit,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<ItemSearchResult>(
+          (row) => ItemSearchResult.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
   }
 
   Future<void> completeSetup({required String shopId}) async {

@@ -414,4 +414,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSaveFailedMessage => 'Could not save settings. Try again.';
+
+  @override
+  String get productsTitle => 'Products';
+
+  @override
+  String get productsSearchHint => 'Search Somali or English';
+
+  @override
+  String get productsInYourShop => 'In your shop';
+
+  @override
+  String get productsFromCatalog => 'From catalog';
+
+  @override
+  String productsStockLabel(Object quantity, Object unit) {
+    return '$quantity $unit in stock';
+  }
+
+  @override
+  String get productsNoStock => 'No stock yet';
+
+  @override
+  String get productsAddToShopButton => 'ADD';
+
+  @override
+  String get productsAddingToShop => 'Adding…';
+
+  @override
+  String productsAddedToShopToast(Object name) {
+    return '$name added to your shop';
+  }
+
+  @override
+  String productsAddToShopFailedMessage(Object name) {
+    return 'Could not add $name. Try again.';
+  }
+
+  @override
+  String get productsNewItemButton => '+ NEW ITEM';
+
+  @override
+  String get productsNewItemUnavailable =>
+      'Adding off-catalog items comes later.';
+
+  @override
+  String get productsEmptyMessage =>
+      'No items yet. Add one from the catalog below.';
+
+  @override
+  String productsSearchEmptyMessage(Object query) {
+    return 'Nothing matches “$query”.';
+  }
+
+  @override
+  String get productsLoadFailedMessage =>
+      'Could not load products. Check your internet and try again.';
 }

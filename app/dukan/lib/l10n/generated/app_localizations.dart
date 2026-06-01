@@ -835,6 +835,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save settings. Try again.'**
   String get settingsSaveFailedMessage;
+
+  /// No description provided for @productsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get productsTitle;
+
+  /// No description provided for @productsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Somali or English'**
+  String get productsSearchHint;
+
+  /// No description provided for @productsInYourShop.
+  ///
+  /// In en, this message translates to:
+  /// **'In your shop'**
+  String get productsInYourShop;
+
+  /// No description provided for @productsFromCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'From catalog'**
+  String get productsFromCatalog;
+
+  /// No description provided for @productsStockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{quantity} {unit} in stock'**
+  String productsStockLabel(Object quantity, Object unit);
+
+  /// No description provided for @productsNoStock.
+  ///
+  /// In en, this message translates to:
+  /// **'No stock yet'**
+  String get productsNoStock;
+
+  /// No description provided for @productsAddToShopButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD'**
+  String get productsAddToShopButton;
+
+  /// No description provided for @productsAddingToShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding…'**
+  String get productsAddingToShop;
+
+  /// No description provided for @productsAddedToShopToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} added to your shop'**
+  String productsAddedToShopToast(Object name);
+
+  /// No description provided for @productsAddToShopFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add {name}. Try again.'**
+  String productsAddToShopFailedMessage(Object name);
+
+  /// No description provided for @productsNewItemButton.
+  ///
+  /// In en, this message translates to:
+  /// **'+ NEW ITEM'**
+  String get productsNewItemButton;
+
+  /// No description provided for @productsNewItemUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding off-catalog items comes later.'**
+  String get productsNewItemUnavailable;
+
+  /// No description provided for @productsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No items yet. Add one from the catalog below.'**
+  String get productsEmptyMessage;
+
+  /// No description provided for @productsSearchEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches “{query}”.'**
+  String productsSearchEmptyMessage(Object query);
+
+  /// No description provided for @productsLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load products. Check your internet and try again.'**
+  String get productsLoadFailedMessage;
 }
 
 class _AppLocalizationsDelegate

@@ -122,5 +122,20 @@
   "settingsTimezoneLabel": "Timezone",
   "settingsSaveButton": "SAVE",
   "settingsSavedToast": "Settings saved",
-  "settingsSaveFailedMessage": "Could not save settings. Try again."
+  "settingsSaveFailedMessage": "Could not save settings. Try again.",
+  "productsTitle": "Products",
+  "productsSearchHint": "Search Somali or English",
+  "productsInYourShop": "In your shop",
+  "productsFromCatalog": "From catalog",
+  "productsStockLabel": "{quantity} {unit} in stock",
+  "productsNoStock": "No stock yet",
+  "productsAddToShopButton": "ADD",
+  "productsAddingToShop": "Adding…",
+  "productsAddedToShopToast": "{name} added to your shop",
+  "productsAddToShopFailedMessage": "Could not add {name}. Try again.",
+  "productsNewItemButton": "+ NEW ITEM",
+  "productsNewItemUnavailable": "Adding off-catalog items comes later.",
+  "productsEmptyMessage": "No items yet. Add one from the catalog below.",
+  "productsSearchEmptyMessage": "Nothing matches “{query}”.",
+  "productsLoadFailedMessage": "Could not load products. Check your internet and try again."
 }

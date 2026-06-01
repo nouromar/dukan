@@ -414,4 +414,60 @@ class AppLocalizationsSo extends AppLocalizations {
   @override
   String get settingsSaveFailedMessage =>
       'Diyaarinta lama keydin karin. Isku day mar kale.';
+
+  @override
+  String get productsTitle => 'Walxaha';
+
+  @override
+  String get productsSearchHint => 'Raadi Soomaali ama Ingiriis';
+
+  @override
+  String get productsInYourShop => 'Dukaankaaga ku jira';
+
+  @override
+  String get productsFromCatalog => 'Liiska guud';
+
+  @override
+  String productsStockLabel(Object quantity, Object unit) {
+    return '$quantity $unit oo kaydsan';
+  }
+
+  @override
+  String get productsNoStock => 'Wax kayd ah ma jiraan';
+
+  @override
+  String get productsAddToShopButton => 'KU DAR';
+
+  @override
+  String get productsAddingToShop => 'Lagu darayaa…';
+
+  @override
+  String productsAddedToShopToast(Object name) {
+    return '$name ayaa lagu daray dukaankaaga';
+  }
+
+  @override
+  String productsAddToShopFailedMessage(Object name) {
+    return '$name lama dari karin. Isku day mar kale.';
+  }
+
+  @override
+  String get productsNewItemButton => '+ WALAX CUSUB';
+
+  @override
+  String get productsNewItemUnavailable =>
+      'Walxaha aan liiska guud ku jirin waxaa la dari doonaa marka dambe.';
+
+  @override
+  String get productsEmptyMessage =>
+      'Walxo weli ma jiraan. Ka dar mid liiska guud.';
+
+  @override
+  String productsSearchEmptyMessage(Object query) {
+    return 'Wax la mid ah “$query” ma jiraan.';
+  }
+
+  @override
+  String get productsLoadFailedMessage =>
+      'Walxaha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
 }
