@@ -99,15 +99,17 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
   Widget build(BuildContext context) {
     final l = tr(context);
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+    final mediaHeight = MediaQuery.of(context).size.height;
+    // Target a ~55% sheet so the picker feels like a real surface rather
+    // than a tight content-hugged strip; clamp up to 70% so the favorites
+    // grid stays glanceable above it.
+    final sheetHeight = mediaHeight * 0.55;
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + viewInsets),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
+        child: SizedBox(
+          height: sheetHeight,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
@@ -126,7 +128,7 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
                 ),
               ),
               const SizedBox(height: 8),
-              Flexible(
+              Expanded(
                 child: FutureBuilder<List<PartySearchResult>>(
                   future: _resultsFuture,
                   builder: (context, snapshot) {
