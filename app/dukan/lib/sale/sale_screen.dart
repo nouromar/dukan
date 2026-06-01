@@ -9,6 +9,7 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/customer_picker_sheet.dart';
+import 'package:dukan/sale/line_editor_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -78,8 +79,74 @@ class _SaleScreenState extends State<SaleScreen> {
     });
   }
 
-  void _addItem(ItemSearchResult item) {
-    context.read<CartController>().addItem(item);
+  // Tap routes:
+  //   * priced item → fast-path add (the v1 speed contract).
+  //   * no-price item (salePrice null OR 0) → editor in price-required
+  //     mode. Treating 0 the same as null is intentional; see the design
+  //     discussion in the slice. The cashier can still confirm a free sale
+  //     by typing 0 explicitly inside the editor.
+  void _onTapTile(ItemSearchResult item) {
+    if (_isNoPrice(item)) {
+      _openEditorForTile(item, priceRequired: true);
+    } else {
+      context.read<CartController>().addItem(item);
+    }
+  }
+
+  void _onLongPressTile(ItemSearchResult item) {
+    _openEditorForTile(item, priceRequired: _isNoPrice(item));
+  }
+
+  Future<void> _openEditorForTile(
+    ItemSearchResult item, {
+    required bool priceRequired,
+  }) async {
+    // If the cashier already has a line for this item, seed the editor
+    // with the line's current qty/price so the long-press behaves as
+    // "edit" rather than "replace with 1".
+    final key = item.itemId ?? item.catalogItemId;
+    final existing = key == null
+        ? null
+        : context.read<CartController>().lines[key];
+    final result = await showLineEditor(
+      context,
+      itemName: item.name,
+      baseUnitLabel: item.baseUnitLabel,
+      initialQuantity: existing?.quantity ?? 1,
+      initialUnitPrice: priceRequired
+          ? existing?.unitPrice
+          : (existing?.unitPrice ?? item.salePrice),
+      priceRequired: priceRequired,
+    );
+    if (result == null || !mounted) return;
+    context.read<CartController>().addOrReplaceFromEditor(
+      item,
+      quantity: result.quantity,
+      unitPrice: result.unitPrice,
+    );
+    setState(() => _cartExpanded = true);
+  }
+
+  Future<void> _onLongPressCartLine(_CartLineEntry entry) async {
+    final line = entry.line;
+    final result = await showLineEditor(
+      context,
+      itemName: line.name,
+      baseUnitLabel: line.baseUnitLabel,
+      initialQuantity: line.quantity,
+      initialUnitPrice: line.unitPrice,
+    );
+    if (result == null || !mounted) return;
+    context.read<CartController>().updateLineFromEditor(
+      entry.key,
+      quantity: result.quantity,
+      unitPrice: result.unitPrice,
+    );
+  }
+
+  bool _isNoPrice(ItemSearchResult item) {
+    final p = item.salePrice;
+    return p == null || p == 0;
   }
 
   void _removeLine(String key) {
@@ -303,7 +370,9 @@ class _SaleScreenState extends State<SaleScreen> {
                       final item = results[i];
                       return _SaleItemTile(
                         item: item,
-                        onTap: _saving ? null : () => _addItem(item),
+                        onTap: _saving ? null : () => _onTapTile(item),
+                        onLongPress:
+                            _saving ? null : () => _onLongPressTile(item),
                       );
                     },
                   );
@@ -320,6 +389,7 @@ class _SaleScreenState extends State<SaleScreen> {
               expanded: _cartExpanded,
               onToggleExpand: _toggleCartExpanded,
               onRemoveLine: _removeLine,
+              onLongPressLine: _onLongPressCartLine,
               onClearAll: _confirmClearAll,
               onModeChanged: _toggleDebt,
               onPickCustomer: _pickCustomer,
@@ -333,19 +403,29 @@ class _SaleScreenState extends State<SaleScreen> {
 }
 
 class _SaleItemTile extends StatelessWidget {
-  const _SaleItemTile({required this.item, required this.onTap});
+  const _SaleItemTile({
+    required this.item,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   final ItemSearchResult item;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final noPrice = item.salePrice == null || item.salePrice == 0;
+    final priceText = noPrice
+        ? tr(context).lineEditorTilePriceMissing
+        : _formatMoney(item.salePrice!);
     return Card(
       color: Colors.white,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: Column(
@@ -363,9 +443,7 @@ class _SaleItemTile extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                item.salePrice == null
-                    ? item.baseUnitLabel
-                    : '${item.baseUnitLabel} · ${_formatMoney(item.salePrice!)}',
+                '${item.baseUnitLabel} · $priceText',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -398,6 +476,7 @@ class _SaleCartStrip extends StatelessWidget {
     required this.expanded,
     required this.onToggleExpand,
     required this.onRemoveLine,
+    required this.onLongPressLine,
     required this.onClearAll,
     required this.onModeChanged,
     required this.onPickCustomer,
@@ -413,6 +492,7 @@ class _SaleCartStrip extends StatelessWidget {
   final bool expanded;
   final VoidCallback onToggleExpand;
   final void Function(String key) onRemoveLine;
+  final void Function(_CartLineEntry entry) onLongPressLine;
   final VoidCallback onClearAll;
   final ValueChanged<bool> onModeChanged;
   final VoidCallback onPickCustomer;
@@ -489,6 +569,7 @@ class _SaleCartStrip extends StatelessWidget {
                         lines: lines,
                         saving: saving,
                         onRemoveLine: onRemoveLine,
+                        onLongPressLine: onLongPressLine,
                       ),
                     )
                   : const SizedBox.shrink(),
@@ -569,11 +650,13 @@ class _CartLineList extends StatefulWidget {
     required this.lines,
     required this.saving,
     required this.onRemoveLine,
+    required this.onLongPressLine,
   });
 
   final List<_CartLineEntry> lines;
   final bool saving;
   final void Function(String key) onRemoveLine;
+  final void Function(_CartLineEntry entry) onLongPressLine;
 
   @override
   State<_CartLineList> createState() => _CartLineListState();
@@ -603,6 +686,7 @@ class _CartLineListState extends State<_CartLineList> {
           entry: widget.lines[i],
           enabled: !widget.saving,
           onRemove: () => widget.onRemoveLine(widget.lines[i].key),
+          onLongPress: () => widget.onLongPressLine(widget.lines[i]),
         ),
       ),
     );
@@ -614,11 +698,13 @@ class _CartLineTile extends StatelessWidget {
     required this.entry,
     required this.enabled,
     required this.onRemove,
+    required this.onLongPress,
   });
 
   final _CartLineEntry entry;
   final bool enabled;
   final VoidCallback onRemove;
+  final VoidCallback onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -633,6 +719,7 @@ class _CartLineTile extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       dense: true,
       visualDensity: VisualDensity.compact,
+      onLongPress: enabled ? onLongPress : null,
       title: Text(
         line.name,
         maxLines: 1,

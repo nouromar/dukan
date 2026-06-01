@@ -332,6 +332,131 @@ void main() {
     expect(find.text(en.saleCartSummary(0, '\$0')), findsOneWidget);
   });
 
+  // --- Line editor wiring (no-price + long-press) -----------------------
+
+  testWidgets('tile shows — for items with no usable sale price (null)', (
+    tester,
+  ) async {
+    api.onSearchItems = (_, _, _, _, _) async => [
+      fakeActivatedItem(name: 'Free Sample', salePrice: null),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+
+    // Find the tile text that shows unit + price separator.
+    expect(find.textContaining('—'), findsOneWidget);
+  });
+
+  testWidgets('tile shows — for items with sale_price = 0', (tester) async {
+    api.onSearchItems = (_, _, _, _, _) async => [
+      fakeActivatedItem(name: 'Zero Priced', salePrice: 0),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('—'), findsOneWidget);
+  });
+
+  testWidgets('tapping a no-price item opens the editor (not fast-add)', (
+    tester,
+  ) async {
+    api.onSearchItems = (_, _, _, _, _) async => [
+      fakeActivatedItem(name: 'Free Sample', salePrice: null),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Free Sample'));
+    await tester.pumpAndSettle();
+
+    // Editor sheet should be on screen and cart still empty.
+    expect(find.text(en.lineEditorPriceRequiredHelper), findsOneWidget);
+    expect(cart.isEmpty, isTrue);
+
+    // Enter a price + confirm → line lands in the cart.
+    await tester.enterText(find.byType(TextField).last, '3.5');
+    await tester.pump();
+    await tester.tap(
+      find.widgetWithText(FilledButton, en.lineEditorDoneButton),
+    );
+    await tester.pumpAndSettle();
+
+    expect(cart.itemCount, 1);
+    expect(cart.lines.values.first.unitPrice, 3.5);
+  });
+
+  testWidgets('long-press on a priced tile opens the editor pre-filled', (
+    tester,
+  ) async {
+    api.onSearchItems = (_, _, _, _, _) async => [
+      fakeActivatedItem(name: 'Bariis', salePrice: 1.5),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    await tester.longPress(find.text('Bariis'));
+    await tester.pumpAndSettle();
+
+    // DONE should be enabled because the price field is pre-filled with
+    // the item's own sale price.
+    final done = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, en.lineEditorDoneButton),
+    );
+    expect(done.onPressed, isNotNull);
+
+    // Bump qty to 3, confirm.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
+    await tester.tap(
+      find.widgetWithText(FilledButton, en.lineEditorDoneButton),
+    );
+    await tester.pumpAndSettle();
+
+    expect(cart.itemCount, 3);
+    expect(cart.lines.values.first.unitPrice, 1.5);
+  });
+
+  testWidgets('long-press on a cart row opens editor and updates the line', (
+    tester,
+  ) async {
+    api.onSearchItems = (_, _, _, _, _) async => [
+      fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bariis'));
+    await tester.pumpAndSettle();
+
+    // Open the drawer so the row is hittable.
+    await tester.tap(find.text(en.saleCartSummary(1, '\$1.50')));
+    await tester.pumpAndSettle();
+
+    // Long-press the cart line (find the ListTile by its subtitle).
+    final lineTile = find.ancestor(
+      of: find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
+      matching: find.byType(ListTile),
+    );
+    await tester.longPress(lineTile);
+    await tester.pumpAndSettle();
+
+    // Change qty to 5, price stays at 1.5.
+    for (var i = 0; i < 4; i++) {
+      await tester.tap(find.byIcon(Icons.add));
+    }
+    await tester.pump();
+    await tester.tap(
+      find.widgetWithText(FilledButton, en.lineEditorDoneButton),
+    );
+    await tester.pumpAndSettle();
+
+    expect(cart.itemCount, 5);
+    expect(cart.lines.values.first.unitPrice, 1.5);
+  });
+
   testWidgets('cart state survives Navigator push/pop', (tester) async {
     api.onSearchItems = (_, _, _, _, _) async => [
       fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),

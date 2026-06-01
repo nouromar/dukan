@@ -614,4 +614,16 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get cartClearConfirmNo => 'JOOJI';
+
+  @override
+  String get lineEditorDoneButton => 'DHAMME';
+
+  @override
+  String get lineEditorPriceRequiredHelper => 'Geli qiimaha walaxdan';
+
+  @override
+  String get lineEditorInvalidPriceMessage => 'Geli lambar 0 ama wax ka badan';
+
+  @override
+  String get lineEditorTilePriceMissing => '—';
 }

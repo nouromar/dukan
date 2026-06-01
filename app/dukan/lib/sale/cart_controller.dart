@@ -95,6 +95,51 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Used by the long-press / no-price line editor. Replaces any existing
+  /// line for the item with the explicit quantity + unitPrice the cashier
+  /// confirmed in the sheet (no incrementing — the editor's quantity is
+  /// the authoritative one).
+  void addOrReplaceFromEditor(
+    ItemSearchResult item, {
+    required int quantity,
+    required num unitPrice,
+  }) {
+    final key = item.itemId ?? item.catalogItemId;
+    if (key == null) return;
+    _lines[key] = CartLine(
+      itemId: item.itemId,
+      catalogItemId: item.catalogItemId,
+      name: item.name,
+      baseUnitCode: item.baseUnitCode,
+      baseUnitLabel: item.baseUnitLabel,
+      unitPrice: unitPrice,
+      quantity: quantity,
+    );
+    notifyListeners();
+  }
+
+  /// Used by the long-press editor opened on an existing cart row. Mutates
+  /// the line in place (keys are stable). No-op if the line was already
+  /// removed between open and confirm.
+  void updateLineFromEditor(
+    String key, {
+    required int quantity,
+    required num unitPrice,
+  }) {
+    final existing = _lines[key];
+    if (existing == null) return;
+    _lines[key] = CartLine(
+      itemId: existing.itemId,
+      catalogItemId: existing.catalogItemId,
+      name: existing.name,
+      baseUnitCode: existing.baseUnitCode,
+      baseUnitLabel: existing.baseUnitLabel,
+      unitPrice: unitPrice,
+      quantity: quantity,
+    );
+    notifyListeners();
+  }
+
   void removeLine(String key) {
     if (_lines.remove(key) == null) return;
     notifyListeners();

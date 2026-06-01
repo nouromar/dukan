@@ -1135,6 +1135,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CANCEL'**
   String get cartClearConfirmNo;
+
+  /// No description provided for @lineEditorDoneButton.
+  ///
+  /// In en, this message translates to:
+  /// **'DONE'**
+  String get lineEditorDoneButton;
+
+  /// No description provided for @lineEditorPriceRequiredHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a price for this item'**
+  String get lineEditorPriceRequiredHelper;
+
+  /// No description provided for @lineEditorInvalidPriceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number 0 or more'**
+  String get lineEditorInvalidPriceMessage;
+
+  /// No description provided for @lineEditorTilePriceMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'—'**
+  String get lineEditorTilePriceMissing;
 }
 
 class _AppLocalizationsDelegate

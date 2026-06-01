@@ -172,5 +172,9 @@
   "cartClearConfirmTitle": "Clear {count, plural, =1{1 item} other{{count} items}} from cart?",
   "cartClearConfirmBody": "This won't undo any saved sale.",
   "cartClearConfirmYes": "CLEAR",
-  "cartClearConfirmNo": "CANCEL"
+  "cartClearConfirmNo": "CANCEL",
+  "lineEditorDoneButton": "DONE",
+  "lineEditorPriceRequiredHelper": "Set a price for this item",
+  "lineEditorInvalidPriceMessage": "Enter a number 0 or more",
+  "lineEditorTilePriceMissing": "—"
 }

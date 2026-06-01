@@ -613,4 +613,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cartClearConfirmNo => 'CANCEL';
+
+  @override
+  String get lineEditorDoneButton => 'DONE';
+
+  @override
+  String get lineEditorPriceRequiredHelper => 'Set a price for this item';
+
+  @override
+  String get lineEditorInvalidPriceMessage => 'Enter a number 0 or more';
+
+  @override
+  String get lineEditorTilePriceMissing => '—';
 }

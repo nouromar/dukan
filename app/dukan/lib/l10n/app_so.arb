@@ -172,5 +172,9 @@
   "cartClearConfirmBody": "Tan ma noqonayso iib hore loo keydiyay.",
   "cartClearConfirmYes": "TIRTIR",
   "cartClearConfirmNo": "JOOJI",
-  "tryAgain": "MAR KALE ISKU DAY"
+  "tryAgain": "MAR KALE ISKU DAY",
+  "lineEditorDoneButton": "DHAMME",
+  "lineEditorPriceRequiredHelper": "Geli qiimaha walaxdan",
+  "lineEditorInvalidPriceMessage": "Geli lambar 0 ama wax ka badan",
+  "lineEditorTilePriceMissing": "—"
 }
