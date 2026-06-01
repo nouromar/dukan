@@ -83,14 +83,20 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
   Widget build(BuildContext context) {
     final l = tr(context);
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + viewInsets),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
-          child: Column(
+    // Wrap in a transparent Scaffold so the sheet has its own
+    // ScaffoldMessenger — SnackBars triggered from inside the sheet
+    // (e.g. the "+ NEW CUSTOMER" placeholder toast) would otherwise queue
+    // on the host Scaffold's messenger and stay hidden behind the modal.
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + viewInsets),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -181,6 +187,7 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
                 child: Text(l.customerNewButton),
               ),
             ],
+            ),
           ),
         ),
       ),

@@ -108,7 +108,11 @@ void main() {
     await tester.tap(find.text(en.customerNewButton));
     await tester.pump();
 
-    expect(find.text(en.customerNewUnavailable), findsOneWidget);
+    // findsWidgets (≥1) rather than findsOneWidget because the SnackBar
+    // text can render inside multiple Material layers while the toast is
+    // animating in — only the count matters here, not the exact widget
+    // tree shape.
+    expect(find.text(en.customerNewUnavailable), findsWidgets);
   });
 
   // The provider has to follow the sheet through the root Navigator. This

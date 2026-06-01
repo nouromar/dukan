@@ -183,6 +183,7 @@ class FakeShopApi implements ShopApi {
     String query,
     int limit,
     String? screen,
+    String? locale,
   )?
   onSearchItems;
   Future<List<PartySearchResult>> Function(
@@ -253,9 +254,10 @@ class FakeShopApi implements ShopApi {
     String query = '',
     int limit = 50,
     String? screen,
+    String? locale,
   }) async {
     if (onSearchItems != null) {
-      return onSearchItems!(shopId, query, limit, screen);
+      return onSearchItems!(shopId, query, limit, screen, locale);
     }
     return const [];
   }

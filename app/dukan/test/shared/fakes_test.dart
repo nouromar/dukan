@@ -31,7 +31,7 @@ void main() {
     final api = FakeShopApi();
     String? capturedShop;
     String? capturedQuery;
-    api.onSearchItems = (shopId, query, limit, screen) async {
+    api.onSearchItems = (shopId, query, limit, screen, locale) async {
       capturedShop = shopId;
       capturedQuery = query;
       return [fakeActivatedItem(), fakeCatalogCandidate()];

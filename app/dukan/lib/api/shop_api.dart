@@ -61,6 +61,7 @@ class ShopApi {
     String query = '',
     int limit = 50,
     String? screen,
+    String? locale,
   }) async {
     final rows = await _client.rpc(
       'search_items',
@@ -69,6 +70,7 @@ class ShopApi {
         'p_query': query,
         'p_limit': limit,
         if (screen != null) 'p_screen': screen, // ignore: use_null_aware_elements
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];

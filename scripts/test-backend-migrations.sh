@@ -1907,6 +1907,47 @@ begin
 end;
 $$;
 
+-- 0022 coverage: search_items localizes returned names. Uses the third
+-- shop (Setup Checklist Shop) since its favorites came from the seeded
+-- grocery template, which has catalog_product_translation for both en
+-- and so. The Main Shop's items use the test fixture's catalog which
+-- only has English.
+do $$
+declare
+  v_shop_id uuid;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  if (
+    select name from public.search_items(v_shop_id, '', 50, null, 'so')
+    where is_activated and name ilike 'Bariis%'
+    limit 1
+  ) is null then
+    raise exception 'search_items did not return Somali name with p_locale=so';
+  end if;
+
+  if (
+    select name from public.search_items(v_shop_id, '', 50, null, 'en')
+    where is_activated and name ilike 'Basmati%'
+    limit 1
+  ) is null then
+    raise exception 'search_items did not return English name with p_locale=en';
+  end if;
+
+  -- Catalog candidates (non-activated) also get localized. Biscuit
+  -- isn't a favorite and wasn't activated earlier in the harness, so
+  -- it shows up here; with p_locale=so the Somali translation
+  -- 'Buskut' should appear instead of the canonical English name.
+  if (
+    select name from public.search_items(v_shop_id, '', 50, null, 'so')
+    where not is_activated and name ilike 'Buskut%'
+    limit 1
+  ) is null then
+    raise exception 'search_items did not localize catalog candidates';
+  end if;
+end;
+$$;
+
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
 reset role;

@@ -27,10 +27,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
   final Set<String> _adding = {};
   bool _loadFailed = false;
 
+  String? _locale;
+
   @override
-  void initState() {
-    super.initState();
-    _resultsFuture = _fetch('');
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final current = Localizations.localeOf(context).languageCode;
+    if (_locale != current) {
+      _locale = current;
+      _resultsFuture = _fetch(_activeQuery);
+    }
   }
 
   @override
@@ -45,6 +51,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       final results = await context.read<ShopApi>().searchItems(
         shopId: widget.shop.id,
         query: query,
+        locale: Localizations.localeOf(context).languageCode,
       );
       if (mounted && _loadFailed) {
         setState(() => _loadFailed = false);

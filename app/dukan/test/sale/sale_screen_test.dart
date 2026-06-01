@@ -34,7 +34,7 @@ void main() {
   testWidgets('shows favorites returned by the sale-screen search', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, screen) async {
+    api.onSearchItems = (_, _, _, screen, _) async {
       expect(screen, 'sale');
       return [
         fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
@@ -56,7 +56,7 @@ void main() {
   testWidgets('tapping an item adds it to the cart and updates the summary', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
     ];
 
@@ -73,7 +73,7 @@ void main() {
   });
 
   testWidgets('tapping the same item twice increments quantity', (tester) async {
-    api.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
     ];
 
@@ -91,7 +91,7 @@ void main() {
   });
 
   testWidgets('SAVE is disabled with an empty cart', (tester) async {
-    api.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati'),
     ];
 
@@ -107,7 +107,7 @@ void main() {
   testWidgets('cash sale calls post_sale with the cart and no party', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _) async => [
       fakeActivatedItem(
         itemId: 'item-rice',
         name: 'Bariis Basmati',
@@ -159,7 +159,7 @@ void main() {
   testWidgets('SAVE clears the cart optimistically and shows the toast', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
     ];
     api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';

@@ -36,10 +36,16 @@ class _SaleScreenState extends State<SaleScreen> {
   bool _saving = false;
   final _random = math.Random();
 
+  String? _locale;
+
   @override
-  void initState() {
-    super.initState();
-    _resultsFuture = _fetch('');
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final current = Localizations.localeOf(context).languageCode;
+    if (_locale != current) {
+      _locale = current;
+      _resultsFuture = _fetch(_activeQuery);
+    }
   }
 
   @override
@@ -54,6 +60,7 @@ class _SaleScreenState extends State<SaleScreen> {
       shopId: widget.shop.id,
       query: query,
       screen: 'sale',
+      locale: Localizations.localeOf(context).languageCode,
     );
   }
 
@@ -429,43 +436,27 @@ class _SaleCartStrip extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: SegmentedButton<bool>(
-                    showSelectedIcon: false,
-                    segments: [
-                      ButtonSegment(
-                        value: false,
-                        label: Text(l.saleCash),
-                        icon: const Icon(Icons.payments),
-                      ),
-                      ButtonSegment(
-                        value: true,
-                        label: Text(l.saleDebt),
-                        icon: const Icon(Icons.person),
-                      ),
-                    ],
-                    selected: {debt},
-                    onSelectionChanged: saving
-                        ? null
-                        : (set) => onModeChanged(set.first),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<bool>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: false,
+                    label: Text(l.saleCash),
+                    icon: const Icon(Icons.payments),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: canSave ? onSave : null,
-                    child: saving
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2.5),
-                          )
-                        : Text(l.saleSaveButton),
+                  ButtonSegment(
+                    value: true,
+                    label: Text(l.saleDebt),
+                    icon: const Icon(Icons.person),
                   ),
-                ),
-              ],
+                ],
+                selected: {debt},
+                onSelectionChanged: saving
+                    ? null
+                    : (set) => onModeChanged(set.first),
+              ),
             ),
             if (debt) ...[
               const SizedBox(height: 8),
@@ -491,6 +482,20 @@ class _SaleCartStrip extends StatelessWidget {
                       ),
               ),
             ],
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: canSave ? onSave : null,
+                child: saving
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      )
+                    : Text(l.saleSaveButton),
+              ),
+            ),
           ],
         ),
       ),
