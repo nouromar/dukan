@@ -1695,6 +1695,115 @@ $$;
 
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
+-- 0019 coverage: search_items returns activated + catalog candidates
+-- with consistent shape; activated rank above catalog; aliases match;
+-- cashier can call it; unrelated user denied.
+do $$
+declare
+  v_shop_id uuid;
+  v_activated_count int;
+  v_catalog_count int;
+  v_total_count int;
+  v_first_is_activated boolean;
+  v_water_match_id uuid;
+  v_water_via_alias_id uuid;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Empty query: returns 5 activated (favorites + water from ensure_shop_item earlier)
+  -- + the rest of the catalog candidates. At least: 6 activated, ≥ 4 catalog candidates.
+  select count(*) into v_activated_count
+  from public.search_items(v_shop_id, '', 100)
+  where is_activated;
+  select count(*) into v_catalog_count
+  from public.search_items(v_shop_id, '', 100)
+  where not is_activated;
+  if v_activated_count < 6 then
+    raise exception 'search_items empty query did not return activated items (got %)', v_activated_count;
+  end if;
+  if v_catalog_count < 4 then
+    raise exception 'search_items empty query did not return catalog candidates (got %)', v_catalog_count;
+  end if;
+
+  -- Activated rows must come first.
+  select is_activated into v_first_is_activated
+  from public.search_items(v_shop_id, '', 1);
+  if v_first_is_activated is not true then
+    raise exception 'search_items did not rank activated items above catalog';
+  end if;
+
+  -- Name search: "rice" should match Basmati Rice (activated favorite).
+  select item_id into v_water_match_id
+  from public.search_items(v_shop_id, 'rice', 10)
+  where is_activated and name ilike '%rice%'
+  limit 1;
+  if v_water_match_id is null then
+    raise exception 'search_items did not find activated rice by partial name';
+  end if;
+
+  -- Alias search: "biyo" (Somali alias for water) should match the activated water item.
+  select item_id into v_water_via_alias_id
+  from public.search_items(v_shop_id, 'biyo', 10)
+  where is_activated
+  limit 1;
+  if v_water_via_alias_id is null then
+    raise exception 'search_items did not match catalog alias "biyo" to activated item';
+  end if;
+
+  -- Catalog-side alias: "buskut" should match unactivated biscuit catalog candidate.
+  if not exists (
+    select 1
+    from public.search_items(v_shop_id, 'buskut', 10)
+    where not is_activated
+  ) then
+    raise exception 'search_items did not find catalog candidate via Somali alias';
+  end if;
+
+  -- A row's totals match either activated or catalog buckets.
+  select count(*) into v_total_count from public.search_items(v_shop_id, '', 100);
+  if v_total_count <> v_activated_count + v_catalog_count then
+    raise exception 'search_items row math does not add up';
+  end if;
+end;
+$$;
+
+-- Cashier session: also allowed to call search_items.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_n int;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select count(*) into v_n from public.search_items(v_shop_id, '', 50);
+  if v_n = 0 then
+    raise exception 'cashier search_items returned nothing — RLS or access check broken';
+  end if;
+end;
+$$;
+
+-- Unrelated user: denied.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_failed boolean := false;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  begin
+    perform * from public.search_items(v_shop_id, '', 10);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'unrelated user was allowed to call search_items';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
 reset role;
 SQL
 
