@@ -99,20 +99,17 @@ void main() {
     expect(find.text(en.customerPickerEmptyMessage), findsOneWidget);
   });
 
-  testWidgets('+ NEW CUSTOMER shows the not-yet-available toast', (
+  testWidgets('+ NEW CUSTOMER shows the not-yet-available dialog', (
     tester,
   ) async {
     api.onSearchParties = (_, _, _, _) async => const [];
 
     await pumpHostAndOpenSheet(tester);
     await tester.tap(find.text(en.customerNewButton));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    // findsWidgets (≥1) rather than findsOneWidget because the SnackBar
-    // text can render inside multiple Material layers while the toast is
-    // animating in — only the count matters here, not the exact widget
-    // tree shape.
-    expect(find.text(en.customerNewUnavailable), findsWidgets);
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text(en.customerNewUnavailable), findsOneWidget);
   });
 
   // The provider has to follow the sheet through the root Navigator. This

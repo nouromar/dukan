@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
-import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 
 /// Opens the customer picker as a bottom sheet. Returns the chosen party,
@@ -75,28 +74,39 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
     });
   }
 
-  void _onTapNewCustomer() {
-    showError(context, tr(context).customerNewUnavailable);
+  Future<void> _onTapNewCustomer() async {
+    // AlertDialog rather than SnackBar — a sheet doesn't have its own
+    // ScaffoldMessenger, and wrapping the sheet body in a transparent
+    // Scaffold to get one breaks the sheet's height cap (it ends up
+    // covering the screen). The dialog also reads more honestly for a
+    // "this feature isn't available yet" placeholder than a fading toast.
+    final l = tr(context);
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        content: Text(l.customerNewUnavailable),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(MaterialLocalizations.of(dialogCtx).okButtonLabel),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    // Wrap in a transparent Scaffold so the sheet has its own
-    // ScaffoldMessenger — SnackBars triggered from inside the sheet
-    // (e.g. the "+ NEW CUSTOMER" placeholder toast) would otherwise queue
-    // on the host Scaffold's messenger and stay hidden behind the modal.
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + viewInsets),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.7,
-            ),
-            child: Column(
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + viewInsets),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -187,7 +197,6 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
                 child: Text(l.customerNewButton),
               ),
             ],
-            ),
           ),
         ),
       ),
