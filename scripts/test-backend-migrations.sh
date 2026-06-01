@@ -2049,6 +2049,67 @@ begin
 end;
 $$;
 
+-- 0024 coverage: supplier-aware search_items. Uses Hodan Shop where the
+-- harness already posted a receive of 10 bags of candy at $50 from
+-- "Hodan Beverages" earlier. With p_party_id set + screen='receive':
+--   * last_cost is populated with the receive line's unit_amount
+--   * items received from this party rank above items without history
+-- With p_party_id unset OR screen != 'receive': last_cost is null
+-- (silently ignored — clients don't have to branch by screen).
+do $$
+declare
+  v_shop_id uuid;
+  v_supplier_id uuid;
+  v_candy_item_id uuid;
+  v_first_item_id uuid;
+  v_last_cost numeric;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_supplier_id
+    from public.party where shop_id = v_shop_id and name = 'Hodan Beverages';
+  select id into v_candy_item_id
+    from public.item where shop_id = v_shop_id and code = 'candy';
+
+  -- With party + receive screen: last_cost set on the supplier-history item.
+  select last_cost into v_last_cost
+  from public.search_items(v_shop_id, '', 50, 'receive', null, v_supplier_id)
+  where item_id = v_candy_item_id;
+  if v_last_cost is null then
+    raise exception 'search_items did not populate last_cost for receive screen with party';
+  end if;
+  -- post_receive recorded entered unit_cost via line_total ($50 / 10 bags = $5).
+  if v_last_cost <> 5 then
+    raise exception 'search_items last_cost = % (expected 5)', v_last_cost;
+  end if;
+
+  -- Without party: last_cost is null.
+  select last_cost into v_last_cost
+  from public.search_items(v_shop_id, '', 50, 'receive', null, null)
+  where item_id = v_candy_item_id;
+  if v_last_cost is not null then
+    raise exception 'search_items returned last_cost without p_party_id (got %)', v_last_cost;
+  end if;
+
+  -- With party but sale screen: last_cost is silently null (not surfaced).
+  select last_cost into v_last_cost
+  from public.search_items(v_shop_id, '', 50, 'sale', null, v_supplier_id)
+  where item_id = v_candy_item_id;
+  if v_last_cost is not null then
+    raise exception 'search_items leaked last_cost on sale screen (got %)', v_last_cost;
+  end if;
+
+  -- Supplier-history ranking: items with receive history for this party
+  -- come first among activated rows.
+  select item_id into v_first_item_id
+  from public.search_items(v_shop_id, '', 50, 'receive', null, v_supplier_id)
+  where is_activated
+  limit 1;
+  if v_first_item_id <> v_candy_item_id then
+    raise exception 'search_items did not rank supplier-history candy first (got %)', v_first_item_id;
+  end if;
+end;
+$$;
+
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
 reset role;
