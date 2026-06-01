@@ -21,6 +21,7 @@ class CartLine {
     required this.baseUnitLabel,
     required this.unitPrice,
     this.quantity = 1,
+    this.priceWasEntered = false,
   });
 
   final String? itemId;
@@ -30,6 +31,13 @@ class CartLine {
   final String baseUnitLabel;
   final num unitPrice;
   int quantity;
+
+  /// True if `unitPrice` came out of the long-press / no-price line
+  /// editor (tap on a no-price tile, long-press on any tile, long-press
+  /// on a cart row). The Sale SAVE flow uses this to call
+  /// `set_item_sale_price` so future taps on the same item fast-add at
+  /// the entered price instead of re-prompting.
+  final bool priceWasEntered;
 
   num get subtotal => unitPrice * quantity;
 }
@@ -98,7 +106,8 @@ class CartController extends ChangeNotifier {
   /// Used by the long-press / no-price line editor. Replaces any existing
   /// line for the item with the explicit quantity + unitPrice the cashier
   /// confirmed in the sheet (no incrementing — the editor's quantity is
-  /// the authoritative one).
+  /// the authoritative one). Marks the line so SAVE persists the price
+  /// back to item.sale_price.
   void addOrReplaceFromEditor(
     ItemSearchResult item, {
     required int quantity,
@@ -114,13 +123,15 @@ class CartController extends ChangeNotifier {
       baseUnitLabel: item.baseUnitLabel,
       unitPrice: unitPrice,
       quantity: quantity,
+      priceWasEntered: true,
     );
     notifyListeners();
   }
 
   /// Used by the long-press editor opened on an existing cart row. Mutates
   /// the line in place (keys are stable). No-op if the line was already
-  /// removed between open and confirm.
+  /// removed between open and confirm. Marks the line so SAVE persists
+  /// the price back to item.sale_price.
   void updateLineFromEditor(
     String key, {
     required int quantity,
@@ -136,6 +147,7 @@ class CartController extends ChangeNotifier {
       baseUnitLabel: existing.baseUnitLabel,
       unitPrice: unitPrice,
       quantity: quantity,
+      priceWasEntered: true,
     );
     notifyListeners();
   }
@@ -182,6 +194,7 @@ class CartController extends ChangeNotifier {
             baseUnitLabel: entry.value.baseUnitLabel,
             unitPrice: entry.value.unitPrice,
             quantity: entry.value.quantity,
+            priceWasEntered: entry.value.priceWasEntered,
           ),
       },
       debt: _debt,

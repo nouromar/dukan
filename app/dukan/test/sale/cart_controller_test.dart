@@ -108,5 +108,56 @@ void main() {
       expect(() => cart.resume('id'), throwsUnimplementedError);
       expect(() => cart.discard('id'), throwsUnimplementedError);
     });
+
+    // priceWasEntered drives whether SAVE persists the line's unit price
+    // back to item.sale_price via set_item_sale_price. Fast-path addItem
+    // must NOT set it; both editor entry points MUST set it; the flag
+    // also has to survive snapshot/restore so the SAVE retry path
+    // doesn't lose the signal after a transient failure.
+
+    test('addItem leaves priceWasEntered false (fast-path)', () {
+      final cart = CartController();
+      cart.addItem(fakeActivatedItem(itemId: 'i1', salePrice: 1.5));
+      expect(cart.lines['i1']!.priceWasEntered, isFalse);
+    });
+
+    test('addOrReplaceFromEditor marks priceWasEntered true', () {
+      final cart = CartController();
+      cart.addOrReplaceFromEditor(
+        fakeActivatedItem(itemId: 'i1', salePrice: 1.5),
+        quantity: 2,
+        unitPrice: 3,
+      );
+      final line = cart.lines['i1']!;
+      expect(line.priceWasEntered, isTrue);
+      expect(line.quantity, 2);
+      expect(line.unitPrice, 3);
+    });
+
+    test('updateLineFromEditor marks priceWasEntered true on an existing line',
+        () {
+      final cart = CartController();
+      cart.addItem(fakeActivatedItem(itemId: 'i1', salePrice: 1.5));
+      expect(cart.lines['i1']!.priceWasEntered, isFalse);
+
+      cart.updateLineFromEditor('i1', quantity: 5, unitPrice: 2);
+
+      expect(cart.lines['i1']!.priceWasEntered, isTrue);
+      expect(cart.lines['i1']!.quantity, 5);
+      expect(cart.lines['i1']!.unitPrice, 2);
+    });
+
+    test('snapshot/restore preserves priceWasEntered', () {
+      final cart = CartController();
+      cart.addOrReplaceFromEditor(
+        fakeActivatedItem(itemId: 'i1', salePrice: null),
+        quantity: 1,
+        unitPrice: 0.25,
+      );
+      final snapshot = cart.snapshot();
+      cart.clearAll();
+      cart.restore(snapshot);
+      expect(cart.lines['i1']!.priceWasEntered, isTrue);
+    });
   });
 }

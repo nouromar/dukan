@@ -56,6 +56,25 @@ class ShopApi {
     return result as String;
   }
 
+  /// Persists `sale_price` on a shop's item. Called by the Sale SAVE
+  /// flow after a successful post_sale for every line whose unit price
+  /// came out of the line editor — future taps on that tile then
+  /// fast-add at the entered price instead of re-prompting.
+  Future<void> setItemSalePrice({
+    required String shopId,
+    required String itemId,
+    required num salePrice,
+  }) async {
+    await _client.rpc(
+      'set_item_sale_price',
+      params: {
+        'p_shop_id': shopId,
+        'p_item_id': itemId,
+        'p_sale_price': salePrice,
+      },
+    );
+  }
+
   Future<List<ItemSearchResult>> searchItems({
     required String shopId,
     String query = '',

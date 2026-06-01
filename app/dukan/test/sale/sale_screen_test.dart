@@ -419,6 +419,81 @@ void main() {
     expect(cart.lines.values.first.unitPrice, 1.5);
   });
 
+  testWidgets(
+    'SAVE persists editor-entered prices via setItemSalePrice for each editor line',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _) async => [
+        fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
+        // No-price item — tapping it routes through the editor.
+        fakeActivatedItem(itemId: 'i2', name: 'Rooti', salePrice: 0),
+      ];
+      api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
+
+      await pumpSale(tester);
+      await tester.pumpAndSettle();
+
+      // Fast-path add on the priced tile.
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+
+      // Tap the no-price tile → editor opens; enter a price.
+      await tester.tap(find.text('Rooti'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, '0.25');
+      await tester.pump();
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.lineEditorDoneButton),
+      );
+      await tester.pumpAndSettle();
+
+      // SAVE the sale.
+      await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
+      await tester.pumpAndSettle();
+
+      // Only the editor-entered line should trigger setItemSalePrice.
+      expect(api.setItemSalePriceCalls, hasLength(1));
+      expect(api.setItemSalePriceCalls.first.itemId, 'i2');
+      expect(api.setItemSalePriceCalls.first.salePrice, 0.25);
+    },
+  );
+
+  testWidgets(
+    'SAVE swallows a setItemSalePrice failure without surfacing an error',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _) async => [
+        fakeActivatedItem(itemId: 'i1', name: 'Rooti', salePrice: 0),
+      ];
+      api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
+      api.onSetItemSalePrice = (_, _, _) async {
+        throw Exception('boom');
+      };
+
+      await pumpSale(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Rooti'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, '0.25');
+      await tester.pump();
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.lineEditorDoneButton),
+      );
+      await tester.pumpAndSettle();
+
+      // FlutterError will report through this zone — silence so the
+      // test passes even though the SAVE flow logs the failure.
+      FlutterError.onError = (_) {};
+
+      await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
+      await tester.pumpAndSettle();
+
+      // The "Saved" toast is still shown — the sale was posted, the
+      // failure is in the secondary price write-back which is non-fatal.
+      expect(find.text(en.saleSavedToast), findsWidgets);
+      expect(find.text(en.salePostFailedMessage), findsNothing);
+    },
+  );
+
   testWidgets('long-press on a cart row opens editor and updates the line', (
     tester,
   ) async {

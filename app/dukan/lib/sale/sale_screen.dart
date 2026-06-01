@@ -236,6 +236,10 @@ class _SaleScreenState extends State<SaleScreen> {
     try {
       final units = {for (final u in await api.listUnits()) u.code: u.id};
       final lines = <SaleLine>[];
+      // Pairs of (resolved itemId, entered price) for the lines whose
+      // unit price came from the editor — we'll seed item.sale_price
+      // after post_sale succeeds so future taps fast-add at this price.
+      final priceWriteBacks = <({String itemId, num salePrice})>[];
       for (final line in snapshot.lines.values) {
         var itemId = line.itemId;
         itemId ??= await api.ensureShopItem(
@@ -254,6 +258,9 @@ class _SaleScreenState extends State<SaleScreen> {
             unitPrice: line.unitPrice,
           ),
         );
+        if (line.priceWasEntered) {
+          priceWriteBacks.add((itemId: itemId, salePrice: line.unitPrice));
+        }
       }
 
       await api.postSale(
@@ -264,6 +271,29 @@ class _SaleScreenState extends State<SaleScreen> {
         paymentMethodCode: cashSale ? 'cash' : null,
         clientOpId: _generateClientOpId(),
       );
+
+      // Persist editor-entered prices. Failures here are non-fatal —
+      // the sale is already posted, the cashier just gets re-prompted
+      // for that item on the next sale. Reported to the error log so
+      // we'd notice a systematic failure.
+      for (final write in priceWriteBacks) {
+        try {
+          await api.setItemSalePrice(
+            shopId: widget.shop.id,
+            itemId: write.itemId,
+            salePrice: write.salePrice,
+          );
+        } catch (error, stackTrace) {
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: error,
+              stack: stackTrace,
+              library: 'dukan sale',
+              context: ErrorDescription('set_item_sale_price'),
+            ),
+          );
+        }
+      }
     } on PostgrestException catch (error, stackTrace) {
       _handleSaveFailure(snapshot, error, stackTrace, l.salePostFailedMessage);
     } catch (error, stackTrace) {

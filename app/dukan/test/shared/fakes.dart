@@ -178,6 +178,9 @@ class FakeShopApi implements ShopApi {
   Future<void> Function(String shopId)? onCompleteSetup;
   Future<String> Function(String shopId, String catalogItemId)?
   onEnsureShopItem;
+  Future<void> Function(String shopId, String itemId, num salePrice)?
+  onSetItemSalePrice;
+  final List<({String itemId, num salePrice})> setItemSalePriceCalls = [];
   Future<List<ItemSearchResult>> Function(
     String shopId,
     String query,
@@ -246,6 +249,18 @@ class FakeShopApi implements ShopApi {
       return onEnsureShopItem!(shopId, catalogItemId);
     }
     return 'fake-item-${catalogItemId.hashCode}';
+  }
+
+  @override
+  Future<void> setItemSalePrice({
+    required String shopId,
+    required String itemId,
+    required num salePrice,
+  }) async {
+    setItemSalePriceCalls.add((itemId: itemId, salePrice: salePrice));
+    if (onSetItemSalePrice != null) {
+      return onSetItemSalePrice!(shopId, itemId, salePrice);
+    }
   }
 
   @override

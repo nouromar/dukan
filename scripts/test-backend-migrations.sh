@@ -1644,6 +1644,68 @@ begin
     3, 'cash', null, 'lazy-milk-sale', null, 'Lazy-activated sale'
   );
 
+  -- 0023: set_item_sale_price persists an editor-entered price so future
+  -- Sale taps fast-add at it instead of re-prompting. Owner can call it.
+  perform public.set_item_sale_price(v_third_shop_id, v_milk_item_id, 3.25);
+  if (select sale_price from public.item where id = v_milk_item_id) <> 3.25 then
+    raise exception 'set_item_sale_price did not persist the price';
+  end if;
+
+  -- 0 is a valid explicit price (free-sale confirmation) — proves the
+  -- "0 means intentional" interpretation we use on the client.
+  perform public.set_item_sale_price(v_third_shop_id, v_milk_item_id, 0);
+  if (select sale_price from public.item where id = v_milk_item_id) <> 0 then
+    raise exception 'set_item_sale_price did not accept 0';
+  end if;
+
+  -- Negative price is rejected.
+  declare v_neg_failed boolean := false;
+  begin
+    begin
+      perform public.set_item_sale_price(v_third_shop_id, v_milk_item_id, -1);
+    exception when raise_exception then v_neg_failed := true;
+    end;
+    if not v_neg_failed then
+      raise exception 'set_item_sale_price accepted a negative price';
+    end if;
+  end;
+
+  -- Null price is rejected (the editor always sends a value).
+  declare v_null_failed boolean := false;
+  begin
+    begin
+      perform public.set_item_sale_price(v_third_shop_id, v_milk_item_id, null);
+    exception when raise_exception then v_null_failed := true;
+    end;
+    if not v_null_failed then
+      raise exception 'set_item_sale_price accepted a null price';
+    end if;
+  end;
+
+  -- Item from a different shop is rejected (cross-tenant guard).
+  declare
+    v_other_shop_id uuid;
+    v_other_item_id uuid;
+    v_xshop_failed boolean := false;
+  begin
+    select shop_id into v_other_shop_id from test_ids;
+    select id into v_other_item_id from public.item
+      where shop_id = v_other_shop_id limit 1;
+    if v_other_item_id is null then
+      raise exception 'fixture broken: no item in other shop';
+    end if;
+    begin
+      perform public.set_item_sale_price(v_third_shop_id, v_other_item_id, 5);
+    exception when raise_exception then v_xshop_failed := true;
+    end;
+    if not v_xshop_failed then
+      raise exception 'set_item_sale_price accepted an item from another shop';
+    end if;
+  end;
+
+  -- Restore the price so downstream tests see a deterministic value.
+  perform public.set_item_sale_price(v_third_shop_id, v_milk_item_id, 3);
+
   -- Invite the cashier so the next role-denial block can use this shop.
   select id into v_cashier_role_id from public.shop_role where code = 'cashier';
   insert into public.shop_membership (shop_id, user_id, role_id)
@@ -1689,6 +1751,45 @@ begin
   v_water_item_id := public.ensure_shop_item(v_shop_id, v_water_catalog_id);
   if v_water_item_id is null then
     raise exception 'cashier was denied ensure_shop_item — lazy entry point broken';
+  end if;
+
+  -- Cashier is also allowed to write item.sale_price via the editor's
+  -- save path (auth_can_post_shop covers both roles).
+  perform public.set_item_sale_price(v_shop_id, v_water_item_id, 0.75);
+  if (select sale_price from public.item where id = v_water_item_id) <> 0.75 then
+    raise exception 'cashier set_item_sale_price did not persist';
+  end if;
+end;
+$$;
+
+-- Unrelated user: set_item_sale_price denied even with a valid item id.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_item_id uuid;
+  v_failed boolean := false;
+begin
+  select id into v_shop_id from public.shop where name = 'Hodan Shop';
+  -- RLS hides items from a non-member, so fetch via SECURITY DEFINER
+  -- helper to grab a real id without leaking it through the policy.
+  select id into v_item_id from public.item where shop_id = v_shop_id limit 1;
+  if v_item_id is not null then
+    raise exception 'RLS leaked an item id to an unrelated user';
+  end if;
+
+  -- We do not have a real item id; use a synthetic uuid plus the known
+  -- shop id to prove the permission check fires before the lookup.
+  v_failed := false;
+  begin
+    perform public.set_item_sale_price(
+      v_shop_id, '00000000-0000-0000-0000-000000000999'::uuid, 1
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'unrelated user was allowed to set_item_sale_price';
   end if;
 end;
 $$;
