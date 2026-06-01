@@ -1,17 +1,21 @@
-// Hand-rolled AuthController stand-in for widget tests. Implements every
-// public method our screens reach for, returning canned data or replaying
-// caller-supplied callbacks. Letting each test override exactly the surface
-// it exercises keeps the assertions readable and the failure messages
-// pointing at the right thing.
+// Test stand-ins for AuthController + ShopApi. Each implements the same
+// surface the production code does so widget tests can drop them into the
+// providers wrapWithApp installs. Callers install per-test hooks
+// (onSearchItems, onPostSale, ...) to drive specific code paths and
+// assert what flowed through.
 //
-// We use ChangeNotifier + `implements AuthController` rather than mocktail's
-// `Mock` so the value works inside `ChangeNotifierProvider<AuthController>`
-// without special-casing the listener plumbing.
+// We use plain ChangeNotifier / class extensions rather than mocktail's
+// Mock so the fakes work inside the same Provider plumbing the real app
+// uses (Mock<ChangeNotifier> breaks listener tracking).
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
+
+// --- FakeAuthController ---------------------------------------------------
 
 class FakeAuthController extends ChangeNotifier implements AuthController {
   FakeAuthController({
@@ -30,8 +34,6 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
        _shopLoadFailed = shopLoadFailed,
        _pendingPhone = pendingPhone;
 
-  // --- mutable backing fields ---------------------------------------------
-
   List<ShopSummary> _shops;
   ShopSummary? _selectedShop;
   Session? _session;
@@ -40,56 +42,15 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
   bool _shopLoadFailed;
   String? _pendingPhone;
 
-  // --- caller-installable hooks (set per test) ----------------------------
-
-  Future<List<TemplateOption>> Function()? onListAvailableTemplates;
-  Future<void> Function(String shopId, String templateId)? onApplyTemplate;
-  Future<void> Function(String shopId)? onCompleteSetup;
-  Future<List<ItemSearchResult>> Function(
-    String shopId,
-    String query,
-    int limit,
-    String? screen,
-  )?
-  onSearchItems;
-  Future<List<PartySearchResult>> Function(
-    String shopId,
-    String query,
-    String type,
-    int limit,
-  )?
-  onSearchParties;
-  Future<List<UnitOption>> Function()? onListUnits;
-  Future<String> Function(
-    String shopId,
-    List<SaleLine> lines,
-    num paidAmount,
-    String? partyId,
-    String? paymentMethodCode,
-    String clientOpId,
-    String? notes,
-  )?
-  onPostSale;
-  Future<String> Function(String shopId, String catalogItemId)?
-  onEnsureShopItem;
-  Future<List<ReferenceOption>> Function()? onListLanguages;
-  Future<List<ReferenceOption>> Function()? onListCurrencies;
-  Future<void> Function(
-    String shopId, {
-    String? name,
-    String? currencyCode,
-    String? defaultLanguageCode,
-    String? timezone,
-  })?
-  onUpdateShopDefaults;
   Future<void> Function(String rawPhone)? onSendOtp;
   Future<void> Function(String token)? onVerifyOtp;
   Future<void> Function(String businessName, String shopName)?
   onCreateFirstShop;
   Future<void> Function()? onSignOut;
   Future<void> Function()? onLoadShops;
+  Future<void> Function()? onRefreshSelectedShop;
 
-  // --- mutation helpers for tests ----------------------------------------
+  int refreshSelectedShopCalls = 0;
 
   void setShops(List<ShopSummary> shops) {
     _shops = shops;
@@ -125,8 +86,6 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
     _initialized = value;
     notifyListeners();
   }
-
-  // --- AuthController surface --------------------------------------------
 
   @override
   Session? get session => _session;
@@ -187,6 +146,76 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
   }
 
   @override
+  Future<void> refreshSelectedShop() async {
+    refreshSelectedShopCalls++;
+    if (onRefreshSelectedShop != null) return onRefreshSelectedShop!();
+  }
+
+  @override
+  void selectShop(ShopSummary shop) {
+    _selectedShop = shop;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> signOut() async {
+    if (onSignOut != null) return onSignOut!();
+    _session = null;
+    _shops = const [];
+    _selectedShop = null;
+    _pendingPhone = null;
+    notifyListeners();
+  }
+}
+
+// --- FakeShopApi ----------------------------------------------------------
+
+class FakeShopApi implements ShopApi {
+  FakeShopApi();
+
+  Future<List<TemplateOption>> Function()? onListAvailableTemplates;
+  Future<void> Function(String shopId, String templateId)? onApplyTemplate;
+  Future<void> Function(String shopId)? onCompleteSetup;
+  Future<String> Function(String shopId, String catalogItemId)?
+  onEnsureShopItem;
+  Future<List<ItemSearchResult>> Function(
+    String shopId,
+    String query,
+    int limit,
+    String? screen,
+  )?
+  onSearchItems;
+  Future<List<PartySearchResult>> Function(
+    String shopId,
+    String query,
+    String type,
+    int limit,
+  )?
+  onSearchParties;
+  Future<List<UnitOption>> Function()? onListUnits;
+  Future<String> Function(
+    String shopId,
+    List<SaleLine> lines,
+    num paidAmount,
+    String? partyId,
+    String? paymentMethodCode,
+    String clientOpId,
+    String? notes,
+  )?
+  onPostSale;
+  Future<List<ReferenceOption>> Function()? onListLanguages;
+  Future<List<ReferenceOption>> Function()? onListCurrencies;
+  Future<void> Function(
+    String shopId, {
+    String? name,
+    String? currencyCode,
+    String? defaultLanguageCode,
+    String? timezone,
+  })?
+  onUpdateShopDefaults;
+  Future<ShopSummary?> Function(String shopId)? onFetchShop;
+
+  @override
   Future<List<TemplateOption>> listAvailableTemplates() async {
     if (onListAvailableTemplates != null) return onListAvailableTemplates!();
     return const [];
@@ -203,8 +232,8 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
   }
 
   @override
-  Future<List<ShopItem>> listShopItems({required String shopId}) async {
-    return const [];
+  Future<void> completeSetup({required String shopId}) async {
+    if (onCompleteSetup != null) return onCompleteSetup!(shopId);
   }
 
   @override
@@ -284,11 +313,6 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
   }
 
   @override
-  Future<void> completeSetup({required String shopId}) async {
-    if (onCompleteSetup != null) return onCompleteSetup!(shopId);
-  }
-
-  @override
   Future<List<ReferenceOption>> listLanguages() async {
     if (onListLanguages != null) return onListLanguages!();
     return const [
@@ -326,19 +350,9 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
   }
 
   @override
-  void selectShop(ShopSummary shop) {
-    _selectedShop = shop;
-    notifyListeners();
-  }
-
-  @override
-  Future<void> signOut() async {
-    if (onSignOut != null) return onSignOut!();
-    _session = null;
-    _shops = const [];
-    _selectedShop = null;
-    _pendingPhone = null;
-    notifyListeners();
+  Future<ShopSummary?> fetchShop(String shopId) async {
+    if (onFetchShop != null) return onFetchShop!(shopId);
+    return null;
   }
 }
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -24,7 +26,7 @@ class _ShopTypeSetupScreenState extends State<ShopTypeSetupScreen> {
   @override
   void initState() {
     super.initState();
-    _future = context.read<AuthController>().listAvailableTemplates();
+    _future = context.read<ShopApi>().listAvailableTemplates();
   }
 
   Future<void> _continue() async {
@@ -32,11 +34,13 @@ class _ShopTypeSetupScreenState extends State<ShopTypeSetupScreen> {
     if (id == null) return;
     setState(() => _busy = true);
     final l = tr(context);
+    final api = context.read<ShopApi>();
     final auth = context.read<AuthController>();
     try {
-      await auth.applyTemplate(shopId: widget.shop.id, templateId: id);
+      await api.applyTemplate(shopId: widget.shop.id, templateId: id);
       if (!mounted) return;
-      await auth.completeSetup(shopId: widget.shop.id);
+      await api.completeSetup(shopId: widget.shop.id);
+      await auth.refreshSelectedShop();
       // AuthRouter watches selectedShop.setupStatus and rebuilds into
       // HomeScreen automatically — nothing to navigate here.
     } on PostgrestException {
@@ -51,10 +55,11 @@ class _ShopTypeSetupScreenState extends State<ShopTypeSetupScreen> {
   Future<void> _resume() async {
     setState(() => _busy = true);
     final l = tr(context);
+    final api = context.read<ShopApi>();
+    final auth = context.read<AuthController>();
     try {
-      await context.read<AuthController>().completeSetup(
-        shopId: widget.shop.id,
-      );
+      await api.completeSetup(shopId: widget.shop.id);
+      await auth.refreshSelectedShop();
     } on PostgrestException {
       if (mounted) {
         showError(context, l.completeSetupFailedMessage);

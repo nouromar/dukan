@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/sale/sale_screen.dart';
 
@@ -10,25 +10,31 @@ import '../shared/wrap.dart';
 
 void main() {
   late FakeAuthController auth;
+  late FakeShopApi api;
   late ShopSummary shop;
   late AppLocalizations en;
 
   setUp(() {
     auth = FakeAuthController();
+    api = FakeShopApi();
     shop = fakeShop();
     en = lookupAppLocalizations(const Locale('en'));
   });
 
   Future<void> pumpSale(WidgetTester tester) async {
     await tester.pumpWidget(
-      wrapWithApp(SaleScreen(shop: shop), authController: auth),
+      wrapWithApp(
+        SaleScreen(shop: shop),
+        authController: auth,
+        shopApi: api,
+      ),
     );
   }
 
   testWidgets('shows favorites returned by the sale-screen search', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _, screen) async {
+    api.onSearchItems = (_, _, _, screen) async {
       expect(screen, 'sale');
       return [
         fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
@@ -50,7 +56,7 @@ void main() {
   testWidgets('tapping an item adds it to the cart and updates the summary', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
     ];
 
@@ -67,7 +73,7 @@ void main() {
   });
 
   testWidgets('tapping the same item twice increments quantity', (tester) async {
-    auth.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
     ];
 
@@ -85,7 +91,7 @@ void main() {
   });
 
   testWidgets('SAVE is disabled with an empty cart', (tester) async {
-    auth.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati'),
     ];
 
@@ -101,7 +107,7 @@ void main() {
   testWidgets('cash sale calls post_sale with the cart and no party', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(
         itemId: 'item-rice',
         name: 'Bariis Basmati',
@@ -110,7 +116,7 @@ void main() {
       ),
     ];
     Map<String, dynamic>? capturedCall;
-    auth.onPostSale = (
+    api.onPostSale = (
       shopId,
       lines,
       paidAmount,
@@ -153,10 +159,10 @@ void main() {
   testWidgets('SAVE clears the cart optimistically and shows the toast', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
     ];
-    auth.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
+    api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
 
     await pumpSale(tester);
     await tester.pumpAndSettle();

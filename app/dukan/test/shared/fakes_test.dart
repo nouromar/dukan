@@ -3,10 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'fakes.dart';
 
 void main() {
-  test('FakeAuthController returns canned default reference lists', () async {
-    final controller = FakeAuthController();
-    final languages = await controller.listLanguages();
-    final currencies = await controller.listCurrencies();
+  test('FakeShopApi returns canned default reference lists', () async {
+    final api = FakeShopApi();
+    final languages = await api.listLanguages();
+    final currencies = await api.listCurrencies();
     expect(languages.map((l) => l.code), containsAll(['en', 'so']));
     expect(currencies.map((c) => c.code), containsAll(['USD', 'SLSH']));
   });
@@ -27,17 +27,17 @@ void main() {
     expect(controller.pendingPhone, isNull);
   });
 
-  test('FakeAuthController.searchItems replays the installed callback', () async {
-    final controller = FakeAuthController();
+  test('FakeShopApi.searchItems replays the installed callback', () async {
+    final api = FakeShopApi();
     String? capturedShop;
     String? capturedQuery;
-    controller.onSearchItems = (shopId, query, limit, screen) async {
+    api.onSearchItems = (shopId, query, limit, screen) async {
       capturedShop = shopId;
       capturedQuery = query;
       return [fakeActivatedItem(), fakeCatalogCandidate()];
     };
 
-    final results = await controller.searchItems(
+    final results = await api.searchItems(
       shopId: 'shop-1',
       query: 'rice',
     );

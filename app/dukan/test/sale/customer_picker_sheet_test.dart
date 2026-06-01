@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/sale/customer_picker_sheet.dart';
 
@@ -11,10 +11,12 @@ import '../shared/wrap.dart';
 
 void main() {
   late FakeAuthController auth;
+  late FakeShopApi api;
   late AppLocalizations en;
 
   setUp(() {
     auth = FakeAuthController();
+    api = FakeShopApi();
     en = lookupAppLocalizations(const Locale('en'));
   });
 
@@ -42,7 +44,7 @@ void main() {
             ),
           ),
         ),
-        authController: auth,
+        authController: auth, shopApi: api,
       ),
     );
     await tester.tap(find.text('open'));
@@ -55,7 +57,7 @@ void main() {
   testWidgets('lists customers from searchParties with debt label', (
     tester,
   ) async {
-    auth.onSearchParties = (_, _, type, _) async {
+    api.onSearchParties = (_, _, type, _) async {
       expect(type, 'customer');
       return [
         fakeCustomer(name: 'Ahmed', receivable: 12.5),
@@ -74,7 +76,7 @@ void main() {
   testWidgets('tapping a customer pops the sheet and returns that party', (
     tester,
   ) async {
-    auth.onSearchParties = (_, _, _, _) async => [
+    api.onSearchParties = (_, _, _, _) async => [
       fakeCustomer(name: 'Ahmed', receivable: 12.5),
     ];
 
@@ -90,7 +92,7 @@ void main() {
   testWidgets('shows empty message when no customers and no query', (
     tester,
   ) async {
-    auth.onSearchParties = (_, _, _, _) async => const [];
+    api.onSearchParties = (_, _, _, _) async => const [];
 
     await pumpHostAndOpenSheet(tester);
 
@@ -100,7 +102,7 @@ void main() {
   testWidgets('+ NEW CUSTOMER shows the not-yet-available toast', (
     tester,
   ) async {
-    auth.onSearchParties = (_, _, _, _) async => const [];
+    api.onSearchParties = (_, _, _, _) async => const [];
 
     await pumpHostAndOpenSheet(tester);
     await tester.tap(find.text(en.customerNewButton));
@@ -113,7 +115,7 @@ void main() {
   // is a regression guard for the bug class we hit in the OTP/template
   // crashes.
   testWidgets('sheet sees AuthController via .value re-export', (tester) async {
-    auth.onSearchParties = (_, _, _, _) async => [fakeCustomer()];
+    api.onSearchParties = (_, _, _, _) async => [fakeCustomer()];
 
     await tester.pumpWidget(
       wrapWithApp(
@@ -127,7 +129,7 @@ void main() {
             ),
           ),
         ),
-        authController: auth,
+        authController: auth, shopApi: api,
       ),
     );
     await tester.tap(find.text('open'));

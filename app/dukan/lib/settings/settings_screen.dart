@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/products/products_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
@@ -32,8 +34,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _timezoneController = TextEditingController(text: widget.shop.timezone);
     _currencyCode = widget.shop.currencyCode;
     _languageCode = widget.shop.defaultLanguageCode;
-    final auth = context.read<AuthController>();
-    _refsFuture = Future.wait([auth.listCurrencies(), auth.listLanguages()])
+    final api = context.read<ShopApi>();
+    _refsFuture = Future.wait([api.listCurrencies(), api.listLanguages()])
         .then(
           (results) => _SettingsReferenceData(
             currencies: results[0],
@@ -52,14 +54,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     final l = tr(context);
+    final api = context.read<ShopApi>();
+    final auth = context.read<AuthController>();
     try {
-      await context.read<AuthController>().updateShopDefaults(
+      await api.updateShopDefaults(
         shopId: widget.shop.id,
         name: _nameController.text,
         currencyCode: _currencyCode,
         defaultLanguageCode: _languageCode,
         timezone: _timezoneController.text,
       );
+      await auth.refreshSelectedShop();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l.settingsSavedToast)),
@@ -161,11 +166,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
                       final auth = context.read<AuthController>();
+                      final api = context.read<ShopApi>();
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) =>
+                          builder: (_) => MultiProvider(
+                            providers: [
                               ChangeNotifierProvider<AuthController>.value(
-                            value: auth,
+                                value: auth,
+                              ),
+                              Provider<ShopApi>.value(value: api),
+                            ],
                             child: ProductsScreen(shop: widget.shop),
                           ),
                         ),

@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/sale/customer_picker_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -49,7 +50,7 @@ class _SaleScreenState extends State<SaleScreen> {
   }
 
   Future<List<ItemSearchResult>> _fetch(String query) {
-    return context.read<AuthController>().searchItems(
+    return context.read<ShopApi>().searchItems(
       shopId: widget.shop.id,
       query: query,
       screen: 'sale',
@@ -119,7 +120,7 @@ class _SaleScreenState extends State<SaleScreen> {
     }
 
     setState(() => _saving = true);
-    final auth = context.read<AuthController>();
+    final api = context.read<ShopApi>();
     final snapshot = _cart.values
         .map(
           (line) => _CartLine(
@@ -150,11 +151,11 @@ class _SaleScreenState extends State<SaleScreen> {
     try {
       // Resolve unit IDs (mostly base units since we don't yet support
       // per-line unit override) and lazy-activate any catalog candidates.
-      final units = {for (final u in await auth.listUnits()) u.code: u.id};
+      final units = {for (final u in await api.listUnits()) u.code: u.id};
       final lines = <SaleLine>[];
       for (final line in snapshot) {
         var itemId = line.itemId;
-        itemId ??= await auth.ensureShopItem(
+        itemId ??= await api.ensureShopItem(
           shopId: widget.shop.id,
           catalogItemId: line.catalogItemId!,
         );
@@ -172,7 +173,7 @@ class _SaleScreenState extends State<SaleScreen> {
         );
       }
 
-      await auth.postSale(
+      await api.postSale(
         shopId: widget.shop.id,
         lines: lines,
         paidAmount: cashSale ? total : 0,

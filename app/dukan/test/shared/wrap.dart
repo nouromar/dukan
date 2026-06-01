@@ -8,6 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
+import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/shared/fallback_localizations.dart';
@@ -24,6 +25,7 @@ import 'package:dukan/shared/locale_controller.dart';
 Widget wrapWithApp(
   Widget child, {
   AuthController? authController,
+  ShopApi? shopApi,
   LocaleController? localeController,
   Locale locale = const Locale('en'),
 }) {
@@ -33,6 +35,7 @@ Widget wrapWithApp(
     ),
     if (authController != null)
       ChangeNotifierProvider<AuthController>.value(value: authController),
+    if (shopApi != null) Provider<ShopApi>.value(value: shopApi),
   ];
 
   return MultiProvider(

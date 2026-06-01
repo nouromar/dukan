@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/products/products_screen.dart';
 
@@ -10,11 +10,13 @@ import '../shared/wrap.dart';
 
 void main() {
   late FakeAuthController auth;
+  late FakeShopApi api;
   late ShopSummary shop;
   late AppLocalizations en;
 
   setUp(() {
     auth = FakeAuthController();
+    api = FakeShopApi();
     shop = fakeShop();
     en = lookupAppLocalizations(const Locale('en'));
   });
@@ -24,6 +26,7 @@ void main() {
       wrapWithApp(
         ProductsScreen(shop: shop),
         authController: auth,
+        shopApi: api,
       ),
     );
   }
@@ -31,7 +34,7 @@ void main() {
   testWidgets('shows loading then empty state when search returns nothing', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _, _) async => const [];
+    api.onSearchItems = (_, _, _, _) async => const [];
 
     await pumpProducts(tester);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -43,7 +46,7 @@ void main() {
   testWidgets('renders activated + catalog sections with correct headers', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati'),
       fakeCatalogCandidate(name: 'Caano qalaylan'),
     ];
@@ -60,7 +63,7 @@ void main() {
   testWidgets('activated item shows stock label and sale price', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(
         name: 'Bariis Basmati',
         baseUnitLabel: 'Kg',
@@ -80,7 +83,7 @@ void main() {
   testWidgets('activated item with no stock shows "no stock" label', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(currentStock: 0),
     ];
 
@@ -95,15 +98,14 @@ void main() {
   ) async {
     String? activatedCatalogId;
     var searchCalls = 0;
-    auth
-      ..onSearchItems = (_, _, _, _) async {
-        searchCalls++;
-        return [fakeCatalogCandidate(catalogItemId: 'catalog-pasta')];
-      }
-      ..onEnsureShopItem = (_, catalogId) async {
-        activatedCatalogId = catalogId;
-        return 'new-item-id';
-      };
+    api.onSearchItems = (_, _, _, _) async {
+      searchCalls++;
+      return [fakeCatalogCandidate(catalogItemId: 'catalog-pasta')];
+    };
+    api.onEnsureShopItem = (_, catalogId) async {
+      activatedCatalogId = catalogId;
+      return 'new-item-id';
+    };
 
     await pumpProducts(tester);
     await tester.pumpAndSettle();
@@ -119,7 +121,7 @@ void main() {
 
   testWidgets('search input filters results after debounce', (tester) async {
     final queries = <String>[];
-    auth.onSearchItems = (_, query, _, _) async {
+    api.onSearchItems = (_, query, _, _) async {
       queries.add(query);
       return query.contains('rice')
           ? [fakeActivatedItem(name: 'Bariis Basmati')]
@@ -142,7 +144,7 @@ void main() {
   testWidgets('search-empty state shows the query-specific message', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _, _) async => const [];
+    api.onSearchItems = (_, _, _, _) async => const [];
 
     await pumpProducts(tester);
     await tester.pumpAndSettle();
@@ -156,7 +158,7 @@ void main() {
 
   testWidgets('search error shows retry, which re-fetches', (tester) async {
     var attempts = 0;
-    auth.onSearchItems = (_, _, _, _) async {
+    api.onSearchItems = (_, _, _, _) async {
       attempts++;
       if (attempts == 1) throw Exception('network down');
       return const <ItemSearchResult>[];
@@ -183,7 +185,7 @@ void main() {
   testWidgets('tap "+ NEW ITEM" shows the not-yet-available toast', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _, _) async => const [];
+    api.onSearchItems = (_, _, _, _) async => const [];
 
     await pumpProducts(tester);
     await tester.pumpAndSettle();

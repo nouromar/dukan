@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -41,7 +42,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   Future<List<ItemSearchResult>> _fetch(String query) async {
     try {
-      final results = await context.read<AuthController>().searchItems(
+      final results = await context.read<ShopApi>().searchItems(
         shopId: widget.shop.id,
         query: query,
       );
@@ -80,7 +81,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     setState(() => _adding.add(catalogItemId));
     final l = tr(context);
     try {
-      await context.read<AuthController>().ensureShopItem(
+      await context.read<ShopApi>().ensureShopItem(
         shopId: widget.shop.id,
         catalogItemId: catalogItemId,
       );

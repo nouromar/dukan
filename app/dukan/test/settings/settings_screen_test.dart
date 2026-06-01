@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/settings/settings_screen.dart';
 
@@ -10,11 +10,13 @@ import '../shared/wrap.dart';
 
 void main() {
   late FakeAuthController auth;
+  late FakeShopApi api;
   late ShopSummary shop;
   late AppLocalizations en;
 
   setUp(() {
     auth = FakeAuthController();
+    api = FakeShopApi();
     shop = fakeShop(
       name: 'Hodan Shop',
       currencyCode: 'USD',
@@ -29,6 +31,7 @@ void main() {
       wrapWithApp(
         SettingsScreen(shop: shop),
         authController: auth,
+        shopApi: api,
       ),
     );
   }
@@ -45,7 +48,7 @@ void main() {
     tester,
   ) async {
     Map<String, dynamic>? captured;
-    auth.onUpdateShopDefaults =
+    api.onUpdateShopDefaults =
         (
           shopId, {
           name,

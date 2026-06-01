@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/prototype/expense_screen.dart';
 import 'package:dukan/prototype/payment_screen.dart';
@@ -32,11 +34,16 @@ class HomeScreen extends StatelessWidget {
               tooltip: l.openSettings,
               onPressed: () {
                 final auth = context.read<AuthController>();
+                final api = context.read<ShopApi>();
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) =>
+                    builder: (_) => MultiProvider(
+                      providers: [
                         ChangeNotifierProvider<AuthController>.value(
-                      value: auth,
+                          value: auth,
+                        ),
+                        Provider<ShopApi>.value(value: api),
+                      ],
                       child: SettingsScreen(shop: shop!),
                     ),
                   ),
@@ -92,15 +99,18 @@ class HomeScreen extends StatelessWidget {
                               ? () {}
                               : () {
                                   final auth = context.read<AuthController>();
+                                  final api = context.read<ShopApi>();
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (_) =>
+                                      builder: (_) => MultiProvider(
+                                        providers: [
                                           ChangeNotifierProvider<
                                             AuthController
-                                          >.value(
-                                            value: auth,
-                                            child: SaleScreen(shop: shop!),
-                                          ),
+                                          >.value(value: auth),
+                                          Provider<ShopApi>.value(value: api),
+                                        ],
+                                        child: SaleScreen(shop: shop!),
+                                      ),
                                     ),
                                   );
                                 },

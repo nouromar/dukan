@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
+
 class DukanOtpDelivery {
   const DukanOtpDelivery._();
 
@@ -18,229 +21,13 @@ class AuthInputException implements Exception {
   final AuthInputIssue issue;
 }
 
-class ShopSummary {
-  const ShopSummary({
-    required this.id,
-    required this.name,
-    required this.setupStatus,
-    required this.currencyCode,
-    required this.defaultLanguageCode,
-    required this.timezone,
-  });
-
-  factory ShopSummary.fromJson(Map<String, dynamic> json) => ShopSummary(
-    id: json['id'] as String,
-    name: json['name'] as String,
-    setupStatus: json['setup_status'] as String,
-    currencyCode: json['currency_code'] as String,
-    defaultLanguageCode: json['default_language_code'] as String,
-    timezone: json['timezone'] as String,
-  );
-
-  final String id;
-  final String name;
-  final String setupStatus;
-  final String currencyCode;
-  final String defaultLanguageCode;
-  final String timezone;
-
-  bool get isReady => setupStatus == 'ready';
-  bool get isTemplateApplied =>
-      setupStatus == 'template_applied' || setupStatus == 'opening_stock_done';
-}
-
-class TemplateOption {
-  const TemplateOption({
-    required this.id,
-    required this.code,
-    required this.name,
-  });
-
-  factory TemplateOption.fromJson(Map<String, dynamic> json) => TemplateOption(
-    id: json['id'] as String,
-    code: json['code'] as String,
-    name: json['name'] as String,
-  );
-
-  final String id;
-  final String code;
-  final String name;
-}
-
-class ShopItem {
-  const ShopItem({
-    required this.id,
-    required this.code,
-    required this.name,
-    required this.baseUnitCode,
-    required this.baseUnitLabel,
-  });
-
-  factory ShopItem.fromJson(Map<String, dynamic> json) {
-    final unit = json['base_unit'] as Map<String, dynamic>;
-    return ShopItem(
-      id: json['id'] as String,
-      code: json['code'] as String,
-      name: json['name'] as String,
-      baseUnitCode: unit['code'] as String,
-      baseUnitLabel: unit['default_label'] as String,
-    );
-  }
-
-  final String id;
-  final String code;
-  final String name;
-  final String baseUnitCode;
-  final String baseUnitLabel;
-}
-
-class ItemSearchResult {
-  const ItemSearchResult({
-    required this.itemId,
-    required this.catalogItemId,
-    required this.name,
-    required this.baseUnitCode,
-    required this.baseUnitLabel,
-    required this.salePrice,
-    required this.currentStock,
-    required this.isActivated,
-  });
-
-  factory ItemSearchResult.fromJson(Map<String, dynamic> json) {
-    return ItemSearchResult(
-      itemId: json['item_id'] as String?,
-      catalogItemId: json['catalog_item_id'] as String?,
-      name: json['name'] as String,
-      baseUnitCode: json['base_unit_code'] as String,
-      baseUnitLabel: json['base_unit_label'] as String,
-      salePrice: (json['sale_price'] as num?)?.toDouble(),
-      currentStock: (json['current_stock'] as num?)?.toDouble(),
-      isActivated: json['is_activated'] as bool,
-    );
-  }
-
-  final String? itemId;
-  final String? catalogItemId;
-  final String name;
-  final String baseUnitCode;
-  final String baseUnitLabel;
-  final double? salePrice;
-  final double? currentStock;
-  final bool isActivated;
-}
-
-class CatalogSearchResult {
-  const CatalogSearchResult({
-    required this.id,
-    required this.name,
-    required this.baseUnitCode,
-    required this.baseUnitLabel,
-    required this.shopItemId,
-  });
-
-  factory CatalogSearchResult.fromJson(Map<String, dynamic> json) {
-    return CatalogSearchResult(
-      id: json['catalog_item_id'] as String,
-      name: json['name'] as String,
-      baseUnitCode: json['base_unit_code'] as String,
-      baseUnitLabel: json['base_unit_label'] as String,
-      shopItemId: json['shop_item_id'] as String?,
-    );
-  }
-
-  final String id;
-  final String name;
-  final String baseUnitCode;
-  final String baseUnitLabel;
-  final String? shopItemId;
-
-  bool get isActivated => shopItemId != null;
-}
-
-class ReferenceOption {
-  const ReferenceOption({required this.code, required this.label});
-
-  factory ReferenceOption.fromJson(Map<String, dynamic> json) =>
-      ReferenceOption(
-        code: json['code'] as String,
-        label: (json['name'] ?? json['symbol'] ?? json['code']) as String,
-      );
-
-  final String code;
-  final String label;
-}
-
-class UnitOption {
-  const UnitOption({
-    required this.id,
-    required this.code,
-    required this.label,
-  });
-
-  factory UnitOption.fromJson(Map<String, dynamic> json) => UnitOption(
-    id: json['id'] as String,
-    code: json['code'] as String,
-    label: json['default_label'] as String,
-  );
-
-  final String id;
-  final String code;
-  final String label;
-}
-
-class PartySearchResult {
-  const PartySearchResult({
-    required this.id,
-    required this.name,
-    required this.phone,
-    required this.typeCode,
-    required this.receivable,
-    required this.payable,
-  });
-
-  factory PartySearchResult.fromJson(Map<String, dynamic> json) =>
-      PartySearchResult(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        phone: json['phone'] as String?,
-        typeCode: json['type_code'] as String,
-        receivable: (json['receivable'] as num?)?.toDouble() ?? 0,
-        payable: (json['payable'] as num?)?.toDouble() ?? 0,
-      );
-
-  final String id;
-  final String name;
-  final String? phone;
-  final String typeCode;
-  final double receivable;
-  final double payable;
-}
-
-class SaleLine {
-  const SaleLine({
-    required this.itemId,
-    required this.quantity,
-    required this.unitId,
-    required this.unitPrice,
-  });
-
-  final String itemId;
-  final num quantity;
-  final String unitId;
-  final num unitPrice;
-
-  Map<String, dynamic> toJson() => {
-    'item_id': itemId,
-    'quantity': quantity,
-    'unit_id': unitId,
-    'unit_price': unitPrice,
-  };
-}
-
 class AuthController extends ChangeNotifier {
-  AuthController(this._client);
+  AuthController({required SupabaseClient client, required ShopApi shopApi})
+    : _client = client,
+      _shopApi = shopApi;
 
   final SupabaseClient _client;
+  final ShopApi _shopApi;
   StreamSubscription<AuthState>? _authSubscription;
 
   Session? _session;
@@ -375,223 +162,23 @@ class AuthController extends ChangeNotifier {
     await loadShops();
   }
 
-  Future<List<TemplateOption>> listAvailableTemplates() async {
-    final rows = await _client
-        .from('template')
-        .select('id, code, name')
-        .eq('is_active', true)
-        .order('name');
-    return rows
-        .map<TemplateOption>(
-          (row) => TemplateOption.fromJson(Map<String, dynamic>.from(row)),
-        )
-        .toList(growable: false);
-  }
-
-  Future<void> applyTemplate({
-    required String shopId,
-    required String templateId,
-  }) async {
-    await _client.rpc(
-      'apply_template',
-      params: {'p_shop_id': shopId, 'p_template_id': templateId},
-    );
-    await _refreshShop(shopId);
-  }
-
-  Future<List<ShopItem>> listShopItems({required String shopId}) async {
-    final rows = await _client
-        .from('item')
-        .select('id, code, name, base_unit:base_unit_id(code, default_label)')
-        .eq('shop_id', shopId)
-        .order('name');
-    return rows
-        .map<ShopItem>(
-          (row) => ShopItem.fromJson(Map<String, dynamic>.from(row)),
-        )
-        .toList(growable: false);
-  }
-
-  Future<String> ensureShopItem({
-    required String shopId,
-    required String catalogItemId,
-  }) async {
-    final result = await _client.rpc(
-      'ensure_shop_item',
-      params: {'p_shop_id': shopId, 'p_catalog_item_id': catalogItemId},
-    );
-    return result as String;
-  }
-
-  Future<List<ItemSearchResult>> searchItems({
-    required String shopId,
-    String query = '',
-    int limit = 50,
-    String? screen,
-  }) async {
-    final rows = await _client.rpc(
-      'search_items',
-      params: {
-        'p_shop_id': shopId,
-        'p_query': query,
-        'p_limit': limit,
-        if (screen != null) 'p_screen': screen, // ignore: use_null_aware_elements
-      },
-    );
-    if (rows is! List) return const [];
-    return rows
-        .map<ItemSearchResult>(
-          (row) => ItemSearchResult.fromJson(Map<String, dynamic>.from(row)),
-        )
-        .toList(growable: false);
-  }
-
-  Future<List<PartySearchResult>> searchParties({
-    required String shopId,
-    String query = '',
-    String type = 'customer',
-    int limit = 50,
-  }) async {
-    final rows = await _client.rpc(
-      'search_parties',
-      params: {
-        'p_shop_id': shopId,
-        'p_query': query,
-        'p_type': type,
-        'p_limit': limit,
-      },
-    );
-    if (rows is! List) return const [];
-    return rows
-        .map<PartySearchResult>(
-          (row) => PartySearchResult.fromJson(Map<String, dynamic>.from(row)),
-        )
-        .toList(growable: false);
-  }
-
-  List<UnitOption>? _unitsCache;
-  Future<List<UnitOption>>? _unitsFuture;
-
-  /// Loads the active unit table once per session and caches it. Used by
-  /// posting flows that need a unit_id (post_sale, post_receive,
-  /// post_inventory_adjustment) given a base_unit_code from search_items.
-  Future<List<UnitOption>> listUnits() {
-    if (_unitsCache != null) return Future.value(_unitsCache);
-    return _unitsFuture ??= _fetchUnits();
-  }
-
-  Future<List<UnitOption>> _fetchUnits() async {
-    final rows = await _client
-        .from('unit')
-        .select('id, code, default_label')
-        .eq('is_active', true)
-        .order('code');
-    final units = rows
-        .map<UnitOption>(
-          (row) => UnitOption.fromJson(Map<String, dynamic>.from(row)),
-        )
-        .toList(growable: false);
-    _unitsCache = units;
-    _unitsFuture = null;
-    return units;
-  }
-
-  Future<String> postSale({
-    required String shopId,
-    required List<SaleLine> lines,
-    required num paidAmount,
-    String? partyId,
-    String? paymentMethodCode,
-    required String clientOpId,
-    String? notes,
-  }) async {
-    if (lines.isEmpty) {
-      throw ArgumentError('post_sale requires at least one line');
-    }
-    final result = await _client.rpc(
-      'post_sale',
-      params: {
-        'p_shop_id': shopId,
-        'p_party_id': partyId,
-        'p_lines': lines.map((l) => l.toJson()).toList(),
-        'p_paid_amount': paidAmount,
-        'p_payment_method_code': paymentMethodCode,
-        'p_client_op_id': clientOpId,
-        'p_notes': notes,
-      },
-    );
-    return result as String;
-  }
-
-  Future<void> completeSetup({required String shopId}) async {
-    await _client.rpc('complete_shop_setup', params: {'p_shop_id': shopId});
-    await _refreshShop(shopId);
-  }
-
-  Future<List<ReferenceOption>> listLanguages() async {
-    final rows = await _client
-        .from('language')
-        .select('code, name')
-        .eq('is_active', true)
-        .order('name');
-    return rows
-        .map<ReferenceOption>(
-          (row) => ReferenceOption.fromJson(Map<String, dynamic>.from(row)),
-        )
-        .toList(growable: false);
-  }
-
-  Future<List<ReferenceOption>> listCurrencies() async {
-    final rows = await _client
-        .from('currency')
-        .select('code, symbol')
-        .eq('is_active', true)
-        .order('code');
-    return rows
-        .map<ReferenceOption>(
-          (row) => ReferenceOption.fromJson(Map<String, dynamic>.from(row)),
-        )
-        .toList(growable: false);
-  }
-
-  Future<void> updateShopDefaults({
-    required String shopId,
-    String? name,
-    String? currencyCode,
-    String? defaultLanguageCode,
-    String? timezone,
-  }) async {
-    final patch = <String, dynamic>{};
-    if (name != null && name.trim().isNotEmpty) patch['name'] = name.trim();
-    if (currencyCode != null) patch['currency_code'] = currencyCode;
-    if (defaultLanguageCode != null) {
-      patch['default_language_code'] = defaultLanguageCode;
-    }
-    if (timezone != null && timezone.trim().isNotEmpty) {
-      patch['timezone'] = timezone.trim();
-    }
-    if (patch.isEmpty) return;
-    await _client.from('shop').update(patch).eq('id', shopId);
-    await _refreshShop(shopId);
-  }
-
-  Future<void> _refreshShop(String shopId) async {
-    final row = await _client
-        .from('shop')
-        .select(
-          'id, name, setup_status, currency_code, default_language_code, timezone',
-        )
-        .eq('id', shopId)
-        .maybeSingle();
-    if (row == null) {
+  /// Pulls the currently-selected shop's row from the server and projects it
+  /// into local state so listeners (AuthRouter, screens that watch
+  /// selectedShop) see the new value. Used by callers after any ShopApi
+  /// write that affects shop-row fields — apply_template, complete_shop_setup,
+  /// update_shop_defaults, etc.
+  Future<void> refreshSelectedShop() async {
+    final current = _selectedShop?.id ?? (_shops.length == 1 ? _shops.first.id : null);
+    if (current == null) return;
+    final updated = await _shopApi.fetchShop(current);
+    if (updated == null) {
       await loadShops();
       return;
     }
-    final updated = ShopSummary.fromJson(Map<String, dynamic>.from(row));
     _shops = _shops
-        .map((shop) => shop.id == shopId ? updated : shop)
+        .map((shop) => shop.id == current ? updated : shop)
         .toList(growable: false);
-    if (_selectedShop?.id == shopId) {
+    if (_selectedShop?.id == current) {
       _selectedShop = updated;
     }
     notifyListeners();

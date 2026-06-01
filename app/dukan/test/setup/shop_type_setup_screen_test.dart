@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/setup/shop_type_setup_screen.dart';
 
@@ -10,10 +10,12 @@ import '../shared/wrap.dart';
 
 void main() {
   late FakeAuthController auth;
+  late FakeShopApi api;
   late AppLocalizations en;
 
   setUp(() {
     auth = FakeAuthController();
+    api = FakeShopApi();
     en = lookupAppLocalizations(const Locale('en'));
   });
 
@@ -22,6 +24,7 @@ void main() {
       wrapWithApp(
         ShopTypeSetupScreen(shop: shop),
         authController: auth,
+        shopApi: api,
       ),
     );
   }
@@ -30,7 +33,7 @@ void main() {
     final pickerShop = fakeShop(setupStatus: 'not_started');
 
     testWidgets('shows loading then templates list', (tester) async {
-      auth.onListAvailableTemplates = () async => [
+      api.onListAvailableTemplates = () async => [
         fakeTemplate(name: 'Grocery'),
         fakeTemplate(id: 't2', code: 'pharmacy', name: 'Pharmacy'),
       ];
@@ -46,7 +49,7 @@ void main() {
     testWidgets('shows empty message when no templates are available', (
       tester,
     ) async {
-      auth.onListAvailableTemplates = () async => const [];
+      api.onListAvailableTemplates = () async => const [];
 
       await pumpSetup(tester, pickerShop);
       await tester.pumpAndSettle();
@@ -57,7 +60,7 @@ void main() {
     testWidgets('USE THIS button is disabled until a template is selected', (
       tester,
     ) async {
-      auth.onListAvailableTemplates = () async => [fakeTemplate()];
+      api.onListAvailableTemplates = () async => [fakeTemplate()];
 
       await pumpSetup(tester, pickerShop);
       await tester.pumpAndSettle();
@@ -81,12 +84,12 @@ void main() {
     ) async {
       String? appliedTemplate;
       String? completedShop;
-      auth.onListAvailableTemplates =
+      api.onListAvailableTemplates =
           () async => [fakeTemplate(id: 't-grocery')];
-      auth.onApplyTemplate = (_, templateId) async {
+      api.onApplyTemplate = (_, templateId) async {
         appliedTemplate = templateId;
       };
-      auth.onCompleteSetup = (shopId) async {
+      api.onCompleteSetup = (shopId) async {
         completedShop = shopId;
       };
 
@@ -121,7 +124,7 @@ void main() {
 
     testWidgets('FINISH SETUP calls completeSetup', (tester) async {
       String? completedShop;
-      auth.onCompleteSetup = (shopId) async {
+      api.onCompleteSetup = (shopId) async {
         completedShop = shopId;
       };
 

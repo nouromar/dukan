@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/auth/otp_verification_screen.dart';
 import 'package:dukan/auth/owner_onboarding_screen.dart';
@@ -23,12 +24,16 @@ class AuthBootstrap extends StatefulWidget {
 }
 
 class _AuthBootstrapState extends State<AuthBootstrap> {
+  late final ShopApi _shopApi;
   late final AuthController _authController;
 
   @override
   void initState() {
     super.initState();
-    _authController = AuthController(widget.supabaseClient)..start();
+    _shopApi = ShopApi(widget.supabaseClient);
+    _authController =
+        AuthController(client: widget.supabaseClient, shopApi: _shopApi)
+          ..start();
   }
 
   @override
@@ -39,8 +44,11 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<AuthController>.value(
-      value: _authController,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthController>.value(value: _authController),
+        Provider<ShopApi>.value(value: _shopApi),
+      ],
       child: const AuthRouter(),
     );
   }

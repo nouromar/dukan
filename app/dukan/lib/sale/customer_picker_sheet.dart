@@ -3,25 +3,26 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 
 /// Opens the customer picker as a bottom sheet. Returns the chosen party,
 /// or null if the user dismissed without picking. Wraps the sheet child
-/// with `ChangeNotifierProvider<AuthController>.value` so the sheet sees
-/// the controller from the calling context (otherwise pushing through the
-/// root Navigator would lose the provider).
+/// with `Provider<ShopApi>.value` so the sheet sees the API from the
+/// calling context (otherwise pushing through the root Navigator would
+/// lose the provider).
 Future<PartySearchResult?> showCustomerPicker(
   BuildContext context, {
   required String shopId,
 }) {
-  final auth = context.read<AuthController>();
+  final api = context.read<ShopApi>();
   return showModalBottomSheet<PartySearchResult>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => ChangeNotifierProvider<AuthController>.value(
-      value: auth,
+    builder: (_) => Provider<ShopApi>.value(
+      value: api,
       child: _CustomerPickerBody(shopId: shopId),
     ),
   );
@@ -56,7 +57,7 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
   }
 
   Future<List<PartySearchResult>> _fetch(String query) {
-    return context.read<AuthController>().searchParties(
+    return context.read<ShopApi>().searchParties(
       shopId: widget.shopId,
       query: query,
       type: 'customer',
