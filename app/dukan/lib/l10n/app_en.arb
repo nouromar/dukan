@@ -163,5 +163,9 @@
   "customerPickerSearchEmptyMessage": "No customers match “{query}”.",
   "customerPickerLoadFailedMessage": "Could not load customers. Check your internet and try again.",
   "customerNewButton": "+ NEW CUSTOMER",
-  "customerNewUnavailable": "Adding new customers comes later."
+  "customerNewUnavailable": "Adding new customers comes later.",
+  "cartLineSubtotal": "{quantity} × {unitPrice} = {subtotal}",
+  "cartRemoveLineTooltip": "Remove {name}",
+  "cartExpandHint": "Show items",
+  "cartCollapseHint": "Hide items"
 }

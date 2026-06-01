@@ -34,6 +34,7 @@ class _SaleScreenState extends State<SaleScreen> {
   bool _debt = false;
   PartySearchResult? _customer;
   bool _saving = false;
+  bool _cartExpanded = false;
   final _random = math.Random();
 
   String? _locale;
@@ -100,6 +101,18 @@ class _SaleScreenState extends State<SaleScreen> {
     });
   }
 
+  void _removeLine(String key) {
+    setState(() {
+      _cart.remove(key);
+      if (_cart.isEmpty) _cartExpanded = false;
+    });
+  }
+
+  void _toggleCartExpanded() {
+    if (_cart.isEmpty) return;
+    setState(() => _cartExpanded = !_cartExpanded);
+  }
+
   void _toggleDebt(bool debt) {
     setState(() => _debt = debt);
     if (debt && _customer == null) {
@@ -150,6 +163,7 @@ class _SaleScreenState extends State<SaleScreen> {
       _cart.clear();
       _debt = false;
       _customer = null;
+      _cartExpanded = false;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l.saleSavedToast)),
@@ -305,11 +319,17 @@ class _SaleScreenState extends State<SaleScreen> {
               ),
             ),
             _SaleCartStrip(
-              itemCount: _itemCount,
+              lines: _cart.entries
+                  .map((e) => _CartLineEntry(key: e.key, line: e.value))
+                  .toList(growable: false),
               total: _total,
+              itemCount: _itemCount,
               debt: _debt,
               customer: _customer,
               saving: _saving,
+              expanded: _cartExpanded,
+              onToggleExpand: _toggleCartExpanded,
+              onRemoveLine: _removeLine,
               onModeChanged: _toggleDebt,
               onPickCustomer: _pickCustomer,
               onSave: _save,
@@ -392,23 +412,37 @@ class _SaleItemTile extends StatelessWidget {
   }
 }
 
+class _CartLineEntry {
+  const _CartLineEntry({required this.key, required this.line});
+  final String key;
+  final _CartLine line;
+}
+
 class _SaleCartStrip extends StatelessWidget {
   const _SaleCartStrip({
-    required this.itemCount,
+    required this.lines,
     required this.total,
+    required this.itemCount,
     required this.debt,
     required this.customer,
     required this.saving,
+    required this.expanded,
+    required this.onToggleExpand,
+    required this.onRemoveLine,
     required this.onModeChanged,
     required this.onPickCustomer,
     required this.onSave,
   });
 
-  final int itemCount;
+  final List<_CartLineEntry> lines;
   final double total;
+  final int itemCount;
   final bool debt;
   final PartySearchResult? customer;
   final bool saving;
+  final bool expanded;
+  final VoidCallback onToggleExpand;
+  final void Function(String key) onRemoveLine;
   final ValueChanged<bool> onModeChanged;
   final VoidCallback onPickCustomer;
   final VoidCallback onSave;
@@ -417,87 +451,174 @@ class _SaleCartStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     final canSave = itemCount > 0 && (!debt || customer != null) && !saving;
+    final canExpand = lines.isNotEmpty;
+    // The scrollable line list itself is capped so the buttons below
+    // stay visible. Anything longer scrolls internally. The overall
+    // strip height = header + (≤cap)list + bottom controls.
+    final maxListHeight = MediaQuery.of(context).size.height * 0.25;
+
     return Material(
       elevation: 10,
       color: Theme.of(context).colorScheme.surface,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l.saleCartSummary(itemCount, _formatMoney(total)),
-                    style: Theme.of(context).textTheme.titleMedium,
+              InkWell(
+                onTap: canExpand ? onToggleExpand : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Icon(
+                        canExpand
+                            ? (expanded
+                                  ? Icons.keyboard_arrow_down
+                                  : Icons.keyboard_arrow_up)
+                            : Icons.shopping_cart_outlined,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l.saleCartSummary(itemCount, _formatMoney(total)),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<bool>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: false,
-                    label: Text(l.saleCash),
-                    icon: const Icon(Icons.payments),
-                  ),
-                  ButtonSegment(
-                    value: true,
-                    label: Text(l.saleDebt),
-                    icon: const Icon(Icons.person),
-                  ),
-                ],
-                selected: {debt},
-                onSelectionChanged: saving
-                    ? null
-                    : (set) => onModeChanged(set.first),
               ),
-            ),
-            if (debt) ...[
+              AnimatedSize(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                alignment: Alignment.topCenter,
+                child: expanded && canExpand
+                    ? ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: maxListHeight),
+                        child: Scrollbar(
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            itemCount: lines.length,
+                            separatorBuilder: (_, _) =>
+                                const Divider(height: 1),
+                            itemBuilder: (context, i) => _CartLineTile(
+                              entry: lines[i],
+                              enabled: !saving,
+                              onRemove: () => onRemoveLine(lines[i].key),
+                            ),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
-                child: customer == null
-                    ? OutlinedButton.icon(
-                        onPressed: saving ? null : onPickCustomer,
-                        icon: const Icon(Icons.person_search),
-                        label: Text(l.salePickCustomerButton),
-                      )
-                    : InputChip(
-                        avatar: const Icon(Icons.person),
-                        label: Text(
-                          l.saleCustomerChip(
-                            customer!.name,
-                            _formatMoney(customer!.receivable),
+                child: SegmentedButton<bool>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: false,
+                      label: Text(l.saleCash),
+                      icon: const Icon(Icons.payments),
+                    ),
+                    ButtonSegment(
+                      value: true,
+                      label: Text(l.saleDebt),
+                      icon: const Icon(Icons.person),
+                    ),
+                  ],
+                  selected: {debt},
+                  onSelectionChanged: saving
+                      ? null
+                      : (set) => onModeChanged(set.first),
+                ),
+              ),
+              if (debt) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: customer == null
+                      ? OutlinedButton.icon(
+                          onPressed: saving ? null : onPickCustomer,
+                          icon: const Icon(Icons.person_search),
+                          label: Text(l.salePickCustomerButton),
+                        )
+                      : InputChip(
+                          avatar: const Icon(Icons.person),
+                          label: Text(
+                            l.saleCustomerChip(
+                              customer!.name,
+                              _formatMoney(customer!.receivable),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          onPressed: saving ? null : onPickCustomer,
                         ),
-                        onPressed: saving ? null : onPickCustomer,
-                      ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: canSave ? onSave : null,
+                  child: saving
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                        )
+                      : Text(l.saleSaveButton),
+                ),
               ),
             ],
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: canSave ? onSave : null,
-                child: saving
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      )
-                    : Text(l.saleSaveButton),
-              ),
-            ),
-          ],
+          ),
         ),
+      );
+  }
+}
+
+class _CartLineTile extends StatelessWidget {
+  const _CartLineTile({
+    required this.entry,
+    required this.enabled,
+    required this.onRemove,
+  });
+
+  final _CartLineEntry entry;
+  final bool enabled;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final line = entry.line;
+    final subtitle = l.cartLineSubtotal(
+      '${line.quantity}',
+      _formatMoney(line.unitPrice),
+      _formatMoney(line.subtotal),
+    );
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+      dense: true,
+      visualDensity: VisualDensity.compact,
+      title: Text(
+        line.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+      subtitle: Text(subtitle),
+      trailing: IconButton(
+        tooltip: l.cartRemoveLineTooltip(line.name),
+        icon: const Icon(Icons.close, size: 20),
+        onPressed: enabled ? onRemove : null,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
       ),
     );
   }

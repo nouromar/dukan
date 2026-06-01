@@ -175,4 +175,97 @@ void main() {
     expect(find.text(en.saleSavedToast), findsWidgets);
     expect(find.text(en.saleCartSummary(0, '\$0')), findsOneWidget);
   });
+
+  // --- Cart drawer (expandable inline lines) ---------------------------------
+
+  testWidgets('cart drawer is collapsed by default; tap summary expands it', (
+    tester,
+  ) async {
+    api.onSearchItems = (_, _, _, _, _) async => [
+      fakeActivatedItem(itemId: 'item-rice', name: 'Bariis Basmati', salePrice: 1.5),
+      fakeActivatedItem(itemId: 'item-sugar', name: 'Sonkor', salePrice: 1.0),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bariis Basmati'));
+    await tester.tap(find.text('Sonkor'));
+    await tester.pumpAndSettle();
+
+    // Collapsed: the line subtotals aren't rendered yet.
+    expect(
+      find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
+      findsNothing,
+    );
+
+    await tester.tap(find.text(en.saleCartSummary(2, '\$2.50')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
+      findsOneWidget,
+    );
+    expect(
+      find.text(en.cartLineSubtotal('1', '\$1', '\$1')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('tapping ✕ on a cart line removes it and updates the summary', (
+    tester,
+  ) async {
+    api.onSearchItems = (_, _, _, _, _) async => [
+      fakeActivatedItem(itemId: 'item-rice', name: 'Bariis Basmati', salePrice: 1.5),
+      fakeActivatedItem(itemId: 'item-sugar', name: 'Sonkor', salePrice: 1.0),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bariis Basmati'));
+    await tester.tap(find.text('Sonkor'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(en.saleCartSummary(2, '\$2.50')));
+    await tester.pumpAndSettle();
+
+    final sonkorRemove = find.descendant(
+      of: find.ancestor(
+        of: find.text(en.cartLineSubtotal('1', '\$1', '\$1')),
+        matching: find.byType(ListTile),
+      ),
+      matching: find.byIcon(Icons.close),
+    );
+    await tester.tap(sonkorRemove);
+    await tester.pumpAndSettle();
+
+    expect(find.text(en.saleCartSummary(1, '\$1.50')), findsOneWidget);
+    expect(find.text(en.cartLineSubtotal('1', '\$1', '\$1')), findsNothing);
+  });
+
+  testWidgets('SAVE button stays visible even with many cart lines', (
+    tester,
+  ) async {
+    // Eight items to stress the cart list — the drawer should scroll
+    // internally while SAVE remains visible at the bottom.
+    api.onSearchItems = (_, _, _, _, _) async => List.generate(
+      8,
+      (i) => fakeActivatedItem(
+        itemId: 'item-$i',
+        name: 'Item $i',
+        salePrice: 1.0,
+      ),
+    );
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 8; i++) {
+      await tester.tap(find.text('Item $i'));
+    }
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(en.saleCartSummary(8, '\$8')));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(FilledButton, en.saleSaveButton), findsOneWidget);
+  });
 }

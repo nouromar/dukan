@@ -575,4 +575,20 @@ class AppLocalizationsSo extends AppLocalizations {
   @override
   String get customerNewUnavailable =>
       'Macaamiisha cusub waxaa la dari doonaa marka dambe.';
+
+  @override
+  String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
+    return '$quantity × $unitPrice = $subtotal';
+  }
+
+  @override
+  String cartRemoveLineTooltip(Object name) {
+    return 'Ka saar $name';
+  }
+
+  @override
+  String get cartExpandHint => 'Muuji walxaha';
+
+  @override
+  String get cartCollapseHint => 'Qari walxaha';
 }

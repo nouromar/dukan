@@ -574,4 +574,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customerNewUnavailable => 'Adding new customers comes later.';
+
+  @override
+  String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
+    return '$quantity × $unitPrice = $subtotal';
+  }
+
+  @override
+  String cartRemoveLineTooltip(Object name) {
+    return 'Remove $name';
+  }
+
+  @override
+  String get cartExpandHint => 'Show items';
+
+  @override
+  String get cartCollapseHint => 'Hide items';
 }

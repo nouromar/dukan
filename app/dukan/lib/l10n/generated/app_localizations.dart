@@ -1081,6 +1081,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Adding new customers comes later.'**
   String get customerNewUnavailable;
+
+  /// No description provided for @cartLineSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{quantity} × {unitPrice} = {subtotal}'**
+  String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice);
+
+  /// No description provided for @cartRemoveLineTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}'**
+  String cartRemoveLineTooltip(Object name);
+
+  /// No description provided for @cartExpandHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Show items'**
+  String get cartExpandHint;
+
+  /// No description provided for @cartCollapseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide items'**
+  String get cartCollapseHint;
 }
 
 class _AppLocalizationsDelegate

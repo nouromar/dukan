@@ -163,5 +163,9 @@
   "customerPickerLoadFailedMessage": "Macaamiisha lama soo dejin karin. Hubi internetka oo isku day mar kale.",
   "customerNewButton": "+ MACMIIL CUSUB",
   "customerNewUnavailable": "Macaamiisha cusub waxaa la dari doonaa marka dambe.",
+  "cartLineSubtotal": "{quantity} × {unitPrice} = {subtotal}",
+  "cartRemoveLineTooltip": "Ka saar {name}",
+  "cartExpandHint": "Muuji walxaha",
+  "cartCollapseHint": "Qari walxaha",
   "tryAgain": "MAR KALE ISKU DAY"
 }
