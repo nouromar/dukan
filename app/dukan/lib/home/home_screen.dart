@@ -7,7 +7,7 @@ import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/prototype/expense_screen.dart';
 import 'package:dukan/prototype/payment_screen.dart';
 import 'package:dukan/prototype/receive_screen.dart';
-import 'package:dukan/prototype/sale_screen.dart';
+import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -88,7 +88,22 @@ class HomeScreen extends StatelessWidget {
                         HomeAction(
                           icon: Icons.point_of_sale,
                           label: l.sale,
-                          onTap: () => push(context, const SaleScreen()),
+                          onTap: shop == null
+                              ? () {}
+                              : () {
+                                  final auth = context.read<AuthController>();
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ChangeNotifierProvider<
+                                            AuthController
+                                          >.value(
+                                            value: auth,
+                                            child: SaleScreen(shop: shop!),
+                                          ),
+                                    ),
+                                  );
+                                },
                         ),
                         HomeAction(
                           icon: Icons.inventory_2,

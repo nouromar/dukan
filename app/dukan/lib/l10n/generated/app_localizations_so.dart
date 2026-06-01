@@ -470,4 +470,109 @@ class AppLocalizationsSo extends AppLocalizations {
   @override
   String get productsLoadFailedMessage =>
       'Walxaha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get saleTitle => 'Iibin';
+
+  @override
+  String get saleSearchHint => 'Raadi Soomaali ama Ingiriis';
+
+  @override
+  String saleCartSummary(num count, Object total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count walxood',
+      one: '1 walax',
+      zero: 'Wax walax ah ma jiraan',
+    );
+    return '$_temp0 · $total';
+  }
+
+  @override
+  String get saleEmptyFavoritesMessage =>
+      'Ka dar walxo liiska guud si aad halkan ku aragto.';
+
+  @override
+  String saleSearchEmptyMessage(Object query) {
+    return 'Wax la mid ah “$query” ma jiraan.';
+  }
+
+  @override
+  String get saleLoadFailedMessage =>
+      'Walxaha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get saleCash => 'Lacag';
+
+  @override
+  String get saleDebt => 'Deyn';
+
+  @override
+  String get salePickCustomerButton => 'Dooro macmiil';
+
+  @override
+  String saleCustomerChip(Object amount, Object name) {
+    return '$name · waxa la leeyahay $amount';
+  }
+
+  @override
+  String get saleSaveButton => 'KEYDI';
+
+  @override
+  String get saleSavedToast => 'Waa la keydiyay';
+
+  @override
+  String get salePostFailedMessage =>
+      'Iibka lama keydin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get saleNeedItemsMessage => 'Marka hore ku dar ugu yaraan hal walax.';
+
+  @override
+  String get saleNeedCustomerMessage => 'Dooro macmiilka iibka deynta ah.';
+
+  @override
+  String saleAddedItemToast(Object name) {
+    return '$name waa la daray';
+  }
+
+  @override
+  String saleAddItemFailedMessage(Object name) {
+    return '$name lama dari karin. Isku day mar kale.';
+  }
+
+  @override
+  String get customerPickerTitle => 'Dooro macmiil';
+
+  @override
+  String get customerPickerSearchHint => 'Raadi magaca ama telefoonka';
+
+  @override
+  String customerPickerOwesLabel(Object amount) {
+    return 'waxa la leeyahay $amount';
+  }
+
+  @override
+  String get customerPickerNoDebtLabel => 'deyn la\'aan';
+
+  @override
+  String get customerPickerEmptyMessage =>
+      'Wali macmiil ma jiro. Ku dar marka aad qorto iib deyn ah.';
+
+  @override
+  String customerPickerSearchEmptyMessage(Object query) {
+    return 'Macmiil la mid ah “$query” ma jiro.';
+  }
+
+  @override
+  String get customerPickerLoadFailedMessage =>
+      'Macaamiisha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get customerNewButton => '+ MACMIIL CUSUB';
+
+  @override
+  String get customerNewUnavailable =>
+      'Macaamiisha cusub waxaa la dari doonaa marka dambe.';
 }

@@ -925,6 +925,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load products. Check your internet and try again.'**
   String get productsLoadFailedMessage;
+
+  /// No description provided for @saleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale'**
+  String get saleTitle;
+
+  /// No description provided for @saleSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Somali or English'**
+  String get saleSearchHint;
+
+  /// No description provided for @saleCartSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No items} =1{1 item} other{{count} items}} · {total}'**
+  String saleCartSummary(num count, Object total);
+
+  /// No description provided for @saleEmptyFavoritesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add products from the catalog to see them here.'**
+  String get saleEmptyFavoritesMessage;
+
+  /// No description provided for @saleSearchEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches “{query}”.'**
+  String saleSearchEmptyMessage(Object query);
+
+  /// No description provided for @saleLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load items. Check your internet and try again.'**
+  String get saleLoadFailedMessage;
+
+  /// No description provided for @saleCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get saleCash;
+
+  /// No description provided for @saleDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get saleDebt;
+
+  /// No description provided for @salePickCustomerButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick customer'**
+  String get salePickCustomerButton;
+
+  /// No description provided for @saleCustomerChip.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · owes {amount}'**
+  String saleCustomerChip(Object amount, Object name);
+
+  /// No description provided for @saleSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get saleSaveButton;
+
+  /// No description provided for @saleSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get saleSavedToast;
+
+  /// No description provided for @salePostFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the sale. Check your internet and try again.'**
+  String get salePostFailedMessage;
+
+  /// No description provided for @saleNeedItemsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one item before saving.'**
+  String get saleNeedItemsMessage;
+
+  /// No description provided for @saleNeedCustomerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the customer for this debt sale.'**
+  String get saleNeedCustomerMessage;
+
+  /// No description provided for @saleAddedItemToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} added'**
+  String saleAddedItemToast(Object name);
+
+  /// No description provided for @saleAddItemFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add {name}. Try again.'**
+  String saleAddItemFailedMessage(Object name);
+
+  /// No description provided for @customerPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose customer'**
+  String get customerPickerTitle;
+
+  /// No description provided for @customerPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search name or phone'**
+  String get customerPickerSearchHint;
+
+  /// No description provided for @customerPickerOwesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'owes {amount}'**
+  String customerPickerOwesLabel(Object amount);
+
+  /// No description provided for @customerPickerNoDebtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'no debt'**
+  String get customerPickerNoDebtLabel;
+
+  /// No description provided for @customerPickerEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No customers yet. Add one when you record a debt sale.'**
+  String get customerPickerEmptyMessage;
+
+  /// No description provided for @customerPickerSearchEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No customers match “{query}”.'**
+  String customerPickerSearchEmptyMessage(Object query);
+
+  /// No description provided for @customerPickerLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load customers. Check your internet and try again.'**
+  String get customerPickerLoadFailedMessage;
+
+  /// No description provided for @customerNewButton.
+  ///
+  /// In en, this message translates to:
+  /// **'+ NEW CUSTOMER'**
+  String get customerNewButton;
+
+  /// No description provided for @customerNewUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding new customers comes later.'**
+  String get customerNewUnavailable;
 }
 
 class _AppLocalizationsDelegate

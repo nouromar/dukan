@@ -170,6 +170,73 @@ class ReferenceOption {
   final String label;
 }
 
+class UnitOption {
+  const UnitOption({
+    required this.id,
+    required this.code,
+    required this.label,
+  });
+
+  factory UnitOption.fromJson(Map<String, dynamic> json) => UnitOption(
+    id: json['id'] as String,
+    code: json['code'] as String,
+    label: json['default_label'] as String,
+  );
+
+  final String id;
+  final String code;
+  final String label;
+}
+
+class PartySearchResult {
+  const PartySearchResult({
+    required this.id,
+    required this.name,
+    required this.phone,
+    required this.typeCode,
+    required this.receivable,
+    required this.payable,
+  });
+
+  factory PartySearchResult.fromJson(Map<String, dynamic> json) =>
+      PartySearchResult(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        phone: json['phone'] as String?,
+        typeCode: json['type_code'] as String,
+        receivable: (json['receivable'] as num?)?.toDouble() ?? 0,
+        payable: (json['payable'] as num?)?.toDouble() ?? 0,
+      );
+
+  final String id;
+  final String name;
+  final String? phone;
+  final String typeCode;
+  final double receivable;
+  final double payable;
+}
+
+class SaleLine {
+  const SaleLine({
+    required this.itemId,
+    required this.quantity,
+    required this.unitId,
+    required this.unitPrice,
+  });
+
+  final String itemId;
+  final num quantity;
+  final String unitId;
+  final num unitPrice;
+
+  Map<String, dynamic> toJson() => {
+    'item_id': itemId,
+    'quantity': quantity,
+    'unit_id': unitId,
+    'unit_price': unitPrice,
+  };
+}
+
 class AuthController extends ChangeNotifier {
   AuthController(this._client);
 
@@ -360,6 +427,7 @@ class AuthController extends ChangeNotifier {
     required String shopId,
     String query = '',
     int limit = 50,
+    String? screen,
   }) async {
     final rows = await _client.rpc(
       'search_items',
@@ -367,6 +435,7 @@ class AuthController extends ChangeNotifier {
         'p_shop_id': shopId,
         'p_query': query,
         'p_limit': limit,
+        if (screen != null) 'p_screen': screen, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];
@@ -375,6 +444,83 @@ class AuthController extends ChangeNotifier {
           (row) => ItemSearchResult.fromJson(Map<String, dynamic>.from(row)),
         )
         .toList(growable: false);
+  }
+
+  Future<List<PartySearchResult>> searchParties({
+    required String shopId,
+    String query = '',
+    String type = 'customer',
+    int limit = 50,
+  }) async {
+    final rows = await _client.rpc(
+      'search_parties',
+      params: {
+        'p_shop_id': shopId,
+        'p_query': query,
+        'p_type': type,
+        'p_limit': limit,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<PartySearchResult>(
+          (row) => PartySearchResult.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  List<UnitOption>? _unitsCache;
+  Future<List<UnitOption>>? _unitsFuture;
+
+  /// Loads the active unit table once per session and caches it. Used by
+  /// posting flows that need a unit_id (post_sale, post_receive,
+  /// post_inventory_adjustment) given a base_unit_code from search_items.
+  Future<List<UnitOption>> listUnits() {
+    if (_unitsCache != null) return Future.value(_unitsCache);
+    return _unitsFuture ??= _fetchUnits();
+  }
+
+  Future<List<UnitOption>> _fetchUnits() async {
+    final rows = await _client
+        .from('unit')
+        .select('id, code, default_label')
+        .eq('is_active', true)
+        .order('code');
+    final units = rows
+        .map<UnitOption>(
+          (row) => UnitOption.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+    _unitsCache = units;
+    _unitsFuture = null;
+    return units;
+  }
+
+  Future<String> postSale({
+    required String shopId,
+    required List<SaleLine> lines,
+    required num paidAmount,
+    String? partyId,
+    String? paymentMethodCode,
+    required String clientOpId,
+    String? notes,
+  }) async {
+    if (lines.isEmpty) {
+      throw ArgumentError('post_sale requires at least one line');
+    }
+    final result = await _client.rpc(
+      'post_sale',
+      params: {
+        'p_shop_id': shopId,
+        'p_party_id': partyId,
+        'p_lines': lines.map((l) => l.toJson()).toList(),
+        'p_paid_amount': paidAmount,
+        'p_payment_method_code': paymentMethodCode,
+        'p_client_op_id': clientOpId,
+        'p_notes': notes,
+      },
+    );
+    return result as String;
   }
 
   Future<void> completeSetup({required String shopId}) async {

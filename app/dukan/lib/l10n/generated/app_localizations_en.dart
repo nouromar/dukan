@@ -470,4 +470,108 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get productsLoadFailedMessage =>
       'Could not load products. Check your internet and try again.';
+
+  @override
+  String get saleTitle => 'Sale';
+
+  @override
+  String get saleSearchHint => 'Search Somali or English';
+
+  @override
+  String saleCartSummary(num count, Object total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+      zero: 'No items',
+    );
+    return '$_temp0 · $total';
+  }
+
+  @override
+  String get saleEmptyFavoritesMessage =>
+      'Add products from the catalog to see them here.';
+
+  @override
+  String saleSearchEmptyMessage(Object query) {
+    return 'Nothing matches “$query”.';
+  }
+
+  @override
+  String get saleLoadFailedMessage =>
+      'Could not load items. Check your internet and try again.';
+
+  @override
+  String get saleCash => 'Cash';
+
+  @override
+  String get saleDebt => 'Debt';
+
+  @override
+  String get salePickCustomerButton => 'Pick customer';
+
+  @override
+  String saleCustomerChip(Object amount, Object name) {
+    return '$name · owes $amount';
+  }
+
+  @override
+  String get saleSaveButton => 'SAVE';
+
+  @override
+  String get saleSavedToast => 'Saved';
+
+  @override
+  String get salePostFailedMessage =>
+      'Could not save the sale. Check your internet and try again.';
+
+  @override
+  String get saleNeedItemsMessage => 'Add at least one item before saving.';
+
+  @override
+  String get saleNeedCustomerMessage => 'Pick the customer for this debt sale.';
+
+  @override
+  String saleAddedItemToast(Object name) {
+    return '$name added';
+  }
+
+  @override
+  String saleAddItemFailedMessage(Object name) {
+    return 'Could not add $name. Try again.';
+  }
+
+  @override
+  String get customerPickerTitle => 'Choose customer';
+
+  @override
+  String get customerPickerSearchHint => 'Search name or phone';
+
+  @override
+  String customerPickerOwesLabel(Object amount) {
+    return 'owes $amount';
+  }
+
+  @override
+  String get customerPickerNoDebtLabel => 'no debt';
+
+  @override
+  String get customerPickerEmptyMessage =>
+      'No customers yet. Add one when you record a debt sale.';
+
+  @override
+  String customerPickerSearchEmptyMessage(Object query) {
+    return 'No customers match “$query”.';
+  }
+
+  @override
+  String get customerPickerLoadFailedMessage =>
+      'Could not load customers. Check your internet and try again.';
+
+  @override
+  String get customerNewButton => '+ NEW CUSTOMER';
+
+  @override
+  String get customerNewUnavailable => 'Adding new customers comes later.';
 }

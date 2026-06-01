@@ -49,8 +49,27 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
     String shopId,
     String query,
     int limit,
+    String? screen,
   )?
   onSearchItems;
+  Future<List<PartySearchResult>> Function(
+    String shopId,
+    String query,
+    String type,
+    int limit,
+  )?
+  onSearchParties;
+  Future<List<UnitOption>> Function()? onListUnits;
+  Future<String> Function(
+    String shopId,
+    List<SaleLine> lines,
+    num paidAmount,
+    String? partyId,
+    String? paymentMethodCode,
+    String clientOpId,
+    String? notes,
+  )?
+  onPostSale;
   Future<String> Function(String shopId, String catalogItemId)?
   onEnsureShopItem;
   Future<List<ReferenceOption>> Function()? onListLanguages;
@@ -204,9 +223,64 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
     required String shopId,
     String query = '',
     int limit = 50,
+    String? screen,
   }) async {
-    if (onSearchItems != null) return onSearchItems!(shopId, query, limit);
+    if (onSearchItems != null) {
+      return onSearchItems!(shopId, query, limit, screen);
+    }
     return const [];
+  }
+
+  @override
+  Future<List<PartySearchResult>> searchParties({
+    required String shopId,
+    String query = '',
+    String type = 'customer',
+    int limit = 50,
+  }) async {
+    if (onSearchParties != null) {
+      return onSearchParties!(shopId, query, type, limit);
+    }
+    return const [];
+  }
+
+  @override
+  Future<List<UnitOption>> listUnits() async {
+    if (onListUnits != null) return onListUnits!();
+    return const [
+      UnitOption(id: 'unit-piece', code: 'piece', label: 'Piece'),
+      UnitOption(id: 'unit-kg', code: 'kg', label: 'Kg'),
+      UnitOption(id: 'unit-bag', code: 'bag', label: 'Bag'),
+      UnitOption(id: 'unit-litre', code: 'litre', label: 'Litre'),
+      UnitOption(id: 'unit-bottle', code: 'bottle', label: 'Bottle'),
+      UnitOption(id: 'unit-packet', code: 'packet', label: 'Packet'),
+      UnitOption(id: 'unit-box', code: 'box', label: 'Box'),
+      UnitOption(id: 'unit-carton', code: 'carton', label: 'Carton'),
+    ];
+  }
+
+  @override
+  Future<String> postSale({
+    required String shopId,
+    required List<SaleLine> lines,
+    required num paidAmount,
+    String? partyId,
+    String? paymentMethodCode,
+    required String clientOpId,
+    String? notes,
+  }) async {
+    if (onPostSale != null) {
+      return onPostSale!(
+        shopId,
+        lines,
+        paidAmount,
+        partyId,
+        paymentMethodCode,
+        clientOpId,
+        notes,
+      );
+    }
+    return 'fake-txn-${clientOpId.hashCode}';
   }
 
   @override
@@ -309,6 +383,20 @@ ItemSearchResult fakeActivatedItem({
   salePrice: salePrice,
   currentStock: currentStock,
   isActivated: true,
+);
+
+PartySearchResult fakeCustomer({
+  String id = 'party-1',
+  String name = 'Ahmed',
+  String? phone = '+252600000000',
+  double receivable = 12.5,
+}) => PartySearchResult(
+  id: id,
+  name: name,
+  phone: phone,
+  typeCode: 'customer',
+  receivable: receivable,
+  payable: 0,
 );
 
 ItemSearchResult fakeCatalogCandidate({

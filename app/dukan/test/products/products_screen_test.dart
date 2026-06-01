@@ -31,7 +31,7 @@ void main() {
   testWidgets('shows loading then empty state when search returns nothing', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _) async => const [];
+    auth.onSearchItems = (_, _, _, _) async => const [];
 
     await pumpProducts(tester);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -43,7 +43,7 @@ void main() {
   testWidgets('renders activated + catalog sections with correct headers', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _) async => [
+    auth.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati'),
       fakeCatalogCandidate(name: 'Caano qalaylan'),
     ];
@@ -60,7 +60,7 @@ void main() {
   testWidgets('activated item shows stock label and sale price', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _) async => [
+    auth.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(
         name: 'Bariis Basmati',
         baseUnitLabel: 'Kg',
@@ -80,7 +80,7 @@ void main() {
   testWidgets('activated item with no stock shows "no stock" label', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _) async => [
+    auth.onSearchItems = (_, _, _, _) async => [
       fakeActivatedItem(currentStock: 0),
     ];
 
@@ -96,7 +96,7 @@ void main() {
     String? activatedCatalogId;
     var searchCalls = 0;
     auth
-      ..onSearchItems = (_, _, _) async {
+      ..onSearchItems = (_, _, _, _) async {
         searchCalls++;
         return [fakeCatalogCandidate(catalogItemId: 'catalog-pasta')];
       }
@@ -119,7 +119,7 @@ void main() {
 
   testWidgets('search input filters results after debounce', (tester) async {
     final queries = <String>[];
-    auth.onSearchItems = (_, query, _) async {
+    auth.onSearchItems = (_, query, _, _) async {
       queries.add(query);
       return query.contains('rice')
           ? [fakeActivatedItem(name: 'Bariis Basmati')]
@@ -142,7 +142,7 @@ void main() {
   testWidgets('search-empty state shows the query-specific message', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _) async => const [];
+    auth.onSearchItems = (_, _, _, _) async => const [];
 
     await pumpProducts(tester);
     await tester.pumpAndSettle();
@@ -156,7 +156,7 @@ void main() {
 
   testWidgets('search error shows retry, which re-fetches', (tester) async {
     var attempts = 0;
-    auth.onSearchItems = (_, _, _) async {
+    auth.onSearchItems = (_, _, _, _) async {
       attempts++;
       if (attempts == 1) throw Exception('network down');
       return const <ItemSearchResult>[];
@@ -183,7 +183,7 @@ void main() {
   testWidgets('tap "+ NEW ITEM" shows the not-yet-available toast', (
     tester,
   ) async {
-    auth.onSearchItems = (_, _, _) async => const [];
+    auth.onSearchItems = (_, _, _, _) async => const [];
 
     await pumpProducts(tester);
     await tester.pumpAndSettle();

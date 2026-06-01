@@ -31,7 +31,7 @@ void main() {
     final controller = FakeAuthController();
     String? capturedShop;
     String? capturedQuery;
-    controller.onSearchItems = (shopId, query, limit) async {
+    controller.onSearchItems = (shopId, query, limit, screen) async {
       capturedShop = shopId;
       capturedQuery = query;
       return [fakeActivatedItem(), fakeCatalogCandidate()];
