@@ -187,6 +187,7 @@ class FakeShopApi implements ShopApi {
     int limit,
     String? screen,
     String? locale,
+    String? partyId,
   )?
   onSearchItems;
   Future<List<PartySearchResult>> Function(
@@ -207,6 +208,17 @@ class FakeShopApi implements ShopApi {
     String? notes,
   )?
   onPostSale;
+  Future<String> Function(
+    String shopId,
+    String partyId,
+    List<ReceiveLinePayload> lines,
+    num paidAmount,
+    String? paymentMethodCode,
+    String? documentId,
+    String clientOpId,
+    String? notes,
+  )?
+  onPostReceive;
   Future<List<ReferenceOption>> Function()? onListLanguages;
   Future<List<ReferenceOption>> Function()? onListCurrencies;
   Future<void> Function(
@@ -270,9 +282,10 @@ class FakeShopApi implements ShopApi {
     int limit = 50,
     String? screen,
     String? locale,
+    String? partyId,
   }) async {
     if (onSearchItems != null) {
-      return onSearchItems!(shopId, query, limit, screen, locale);
+      return onSearchItems!(shopId, query, limit, screen, locale, partyId);
     }
     return const [];
   }
@@ -327,6 +340,32 @@ class FakeShopApi implements ShopApi {
       );
     }
     return 'fake-txn-${clientOpId.hashCode}';
+  }
+
+  @override
+  Future<String> postReceive({
+    required String shopId,
+    required String partyId,
+    required List<ReceiveLinePayload> lines,
+    required num paidAmount,
+    String? paymentMethodCode,
+    String? documentId,
+    required String clientOpId,
+    String? notes,
+  }) async {
+    if (onPostReceive != null) {
+      return onPostReceive!(
+        shopId,
+        partyId,
+        lines,
+        paidAmount,
+        paymentMethodCode,
+        documentId,
+        clientOpId,
+        notes,
+      );
+    }
+    return 'fake-receive-${clientOpId.hashCode}';
   }
 
   @override
@@ -404,6 +443,7 @@ ItemSearchResult fakeActivatedItem({
   String baseUnitCode = 'kg',
   String baseUnitLabel = 'Kg',
   double? salePrice = 1.5,
+  double? lastCost,
   double? currentStock = 50,
 }) => ItemSearchResult(
   itemId: itemId,
@@ -412,6 +452,7 @@ ItemSearchResult fakeActivatedItem({
   baseUnitCode: baseUnitCode,
   baseUnitLabel: baseUnitLabel,
   salePrice: salePrice,
+  lastCost: lastCost,
   currentStock: currentStock,
   isActivated: true,
 );
@@ -436,6 +477,7 @@ ItemSearchResult fakeCatalogCandidate({
   String baseUnitCode = 'packet',
   String baseUnitLabel = 'Packet',
   double? salePrice = 3.0,
+  double? lastCost,
 }) => ItemSearchResult(
   itemId: null,
   catalogItemId: catalogItemId,
@@ -443,6 +485,7 @@ ItemSearchResult fakeCatalogCandidate({
   baseUnitCode: baseUnitCode,
   baseUnitLabel: baseUnitLabel,
   salePrice: salePrice,
+  lastCost: lastCost,
   currentStock: null,
   isActivated: false,
 );

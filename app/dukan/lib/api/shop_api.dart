@@ -81,6 +81,7 @@ class ShopApi {
     int limit = 50,
     String? screen,
     String? locale,
+    String? partyId,
   }) async {
     final rows = await _client.rpc(
       'search_items',
@@ -90,6 +91,7 @@ class ShopApi {
         'p_limit': limit,
         if (screen != null) 'p_screen': screen, // ignore: use_null_aware_elements
         if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (partyId != null) 'p_party_id': partyId, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];
@@ -147,6 +149,38 @@ class ShopApi {
         'p_lines': lines.map((l) => l.toJson()).toList(),
         'p_paid_amount': paidAmount,
         'p_payment_method_code': paymentMethodCode,
+        'p_client_op_id': clientOpId,
+        'p_notes': notes,
+      },
+    );
+    return result as String;
+  }
+
+  /// post_receive — supplier-attributed inventory + payable updates.
+  /// Always requires a party (the supplier); v1 sends per-unit cost
+  /// (`unit_cost`) and skips the alternative `line_total` shape.
+  Future<String> postReceive({
+    required String shopId,
+    required String partyId,
+    required List<ReceiveLinePayload> lines,
+    required num paidAmount,
+    String? paymentMethodCode,
+    String? documentId,
+    required String clientOpId,
+    String? notes,
+  }) async {
+    if (lines.isEmpty) {
+      throw ArgumentError('post_receive requires at least one line');
+    }
+    final result = await _client.rpc(
+      'post_receive',
+      params: {
+        'p_shop_id': shopId,
+        'p_party_id': partyId,
+        'p_lines': lines.map((l) => l.toJson()).toList(),
+        'p_paid_amount': paidAmount,
+        'p_payment_method_code': paymentMethodCode,
+        'p_document_id': documentId,
         'p_client_op_id': clientOpId,
         'p_notes': notes,
       },

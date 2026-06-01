@@ -38,7 +38,7 @@ void main() {
   testWidgets('shows favorites returned by the sale-screen search', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, screen, _) async {
+    api.onSearchItems = (_, _, _, screen, _, _) async {
       expect(screen, 'sale');
       return [
         fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
@@ -60,7 +60,7 @@ void main() {
   testWidgets('tapping an item adds it to the cart and updates the summary', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
     ];
 
@@ -77,7 +77,7 @@ void main() {
   });
 
   testWidgets('tapping the same item twice increments quantity', (tester) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
     ];
 
@@ -95,7 +95,7 @@ void main() {
   });
 
   testWidgets('SAVE is disabled with an empty cart', (tester) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati'),
     ];
 
@@ -111,7 +111,7 @@ void main() {
   testWidgets('cash sale calls post_sale with the cart and no party', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(
         itemId: 'item-rice',
         name: 'Bariis Basmati',
@@ -163,7 +163,7 @@ void main() {
   testWidgets('SAVE clears the cart optimistically and shows the toast', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
     ];
     api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
@@ -185,7 +185,7 @@ void main() {
   testWidgets('cart drawer is collapsed by default; tap summary expands it', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(itemId: 'item-rice', name: 'Bariis Basmati', salePrice: 1.5),
       fakeActivatedItem(itemId: 'item-sugar', name: 'Sonkor', salePrice: 1.0),
     ];
@@ -218,7 +218,7 @@ void main() {
   testWidgets('tapping ✕ on a cart line removes it and updates the summary', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(itemId: 'item-rice', name: 'Bariis Basmati', salePrice: 1.5),
       fakeActivatedItem(itemId: 'item-sugar', name: 'Sonkor', salePrice: 1.0),
     ];
@@ -251,7 +251,7 @@ void main() {
   ) async {
     // Eight items to stress the cart list — the drawer should scroll
     // internally while SAVE remains visible at the bottom.
-    api.onSearchItems = (_, _, _, _, _) async => List.generate(
+    api.onSearchItems = (_, _, _, _, _, _) async => List.generate(
       8,
       (i) => fakeActivatedItem(
         itemId: 'item-$i',
@@ -282,7 +282,7 @@ void main() {
     cart.addItem(
       fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
     );
-    api.onSearchItems = (_, _, _, _, _) async => const [];
+    api.onSearchItems = (_, _, _, _, _, _) async => const [];
 
     await pumpSale(tester);
     await tester.pumpAndSettle();
@@ -296,7 +296,7 @@ void main() {
   });
 
   testWidgets('Clear all button confirms and wipes the cart', (tester) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
       fakeActivatedItem(itemId: 'i2', name: 'Sonkor', salePrice: 1.0),
     ];
@@ -337,7 +337,7 @@ void main() {
   testWidgets('tile shows — for items with no usable sale price (null)', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(name: 'Free Sample', salePrice: null),
     ];
 
@@ -349,7 +349,7 @@ void main() {
   });
 
   testWidgets('tile shows — for items with sale_price = 0', (tester) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(name: 'Zero Priced', salePrice: 0),
     ];
 
@@ -362,7 +362,7 @@ void main() {
   testWidgets('tapping a no-price item opens the editor (not fast-add)', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(name: 'Free Sample', salePrice: null),
     ];
 
@@ -390,7 +390,7 @@ void main() {
   testWidgets('long-press on a priced tile opens the editor pre-filled', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(name: 'Bariis', salePrice: 1.5),
     ];
 
@@ -422,7 +422,7 @@ void main() {
   testWidgets(
     'SAVE persists editor-entered prices via setItemSalePrice for each editor line',
     (tester) async {
-      api.onSearchItems = (_, _, _, _, _) async => [
+      api.onSearchItems = (_, _, _, _, _, _) async => [
         fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
         // No-price item — tapping it routes through the editor.
         fakeActivatedItem(itemId: 'i2', name: 'Rooti', salePrice: 0),
@@ -460,7 +460,7 @@ void main() {
   testWidgets(
     'SAVE swallows a setItemSalePrice failure without surfacing an error',
     (tester) async {
-      api.onSearchItems = (_, _, _, _, _) async => [
+      api.onSearchItems = (_, _, _, _, _, _) async => [
         fakeActivatedItem(itemId: 'i1', name: 'Rooti', salePrice: 0),
       ];
       api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
@@ -497,7 +497,7 @@ void main() {
   testWidgets('long-press on a cart row opens editor and updates the line', (
     tester,
   ) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
     ];
 
@@ -533,7 +533,7 @@ void main() {
   });
 
   testWidgets('cart state survives Navigator push/pop', (tester) async {
-    api.onSearchItems = (_, _, _, _, _) async => [
+    api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
     ];
 

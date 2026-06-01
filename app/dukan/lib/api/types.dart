@@ -59,6 +59,7 @@ class ItemSearchResult {
     required this.baseUnitCode,
     required this.baseUnitLabel,
     required this.salePrice,
+    required this.lastCost,
     required this.currentStock,
     required this.isActivated,
   });
@@ -71,6 +72,7 @@ class ItemSearchResult {
       baseUnitCode: json['base_unit_code'] as String,
       baseUnitLabel: json['base_unit_label'] as String,
       salePrice: (json['sale_price'] as num?)?.toDouble(),
+      lastCost: (json['last_cost'] as num?)?.toDouble(),
       currentStock: (json['current_stock'] as num?)?.toDouble(),
       isActivated: json['is_activated'] as bool,
     );
@@ -82,6 +84,9 @@ class ItemSearchResult {
   final String baseUnitCode;
   final String baseUnitLabel;
   final double? salePrice;
+  /// Supplier-specific last unit cost. Populated only when the search
+  /// was called with a party_id on the Receive screen; null otherwise.
+  final double? lastCost;
   final double? currentStock;
   final bool isActivated;
 }
@@ -132,6 +137,30 @@ class SaleLine {
     'quantity': quantity,
     'unit_id': unitId,
     'unit_price': unitPrice,
+  };
+}
+
+/// post_receive line payload. v1 only sends per-unit cost; the line_total
+/// alternative the RPC also accepts is reserved for future bono-OCR
+/// flows that surface a line total without a unit cost.
+class ReceiveLinePayload {
+  const ReceiveLinePayload({
+    required this.itemId,
+    required this.quantity,
+    required this.unitId,
+    required this.unitCost,
+  });
+
+  final String itemId;
+  final num quantity;
+  final String unitId;
+  final num unitCost;
+
+  Map<String, dynamic> toJson() => {
+    'item_id': itemId,
+    'quantity': quantity,
+    'unit_id': unitId,
+    'unit_cost': unitCost,
   };
 }
 
