@@ -8,7 +8,9 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/prototype/expense_screen.dart';
 import 'package:dukan/prototype/payment_screen.dart';
-import 'package:dukan/prototype/receive_screen.dart';
+import 'package:dukan/receive/receive_controller.dart';
+import 'package:dukan/receive/receive_screen.dart';
+import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
@@ -123,7 +125,40 @@ class HomeScreen extends StatelessWidget {
                         HomeAction(
                           icon: Icons.inventory_2,
                           label: l.receive,
-                          onTap: () => push(context, const ReceiveScreen()),
+                          onTap: shop == null
+                              ? () {}
+                              : () {
+                                  final auth = context.read<AuthController>();
+                                  final api = context.read<ShopApi>();
+                                  final receive =
+                                      context.read<ReceiveController>();
+                                  // Resume a partial bono if one is in
+                                  // flight; otherwise start from the
+                                  // supplier picker. Supplier alone is
+                                  // not enough to count as "in flight"
+                                  // — we resume only when actual lines
+                                  // exist, so an aborted picker visit
+                                  // doesn't pin us to a stale supplier.
+                                  final destination = receive.isNotEmpty
+                                      ? ReceiveScreen(shop: shop!)
+                                      : SupplierPickerScreen(shop: shop!);
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => MultiProvider(
+                                        providers: [
+                                          ChangeNotifierProvider<
+                                            AuthController
+                                          >.value(value: auth),
+                                          Provider<ShopApi>.value(value: api),
+                                          ChangeNotifierProvider<
+                                            ReceiveController
+                                          >.value(value: receive),
+                                        ],
+                                        child: destination,
+                                      ),
+                                    ),
+                                  );
+                                },
                         ),
                         HomeAction(
                           icon: Icons.payments,

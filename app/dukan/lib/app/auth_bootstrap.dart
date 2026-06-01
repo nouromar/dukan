@@ -9,6 +9,7 @@ import 'package:dukan/auth/owner_onboarding_screen.dart';
 import 'package:dukan/auth/phone_login_screen.dart';
 import 'package:dukan/auth/shop_picker_screen.dart';
 import 'package:dukan/home/home_screen.dart';
+import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/setup/shop_type_setup_screen.dart';
 import 'package:dukan/shared/friendly_error_screen.dart';
@@ -28,6 +29,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   late final ShopApi _shopApi;
   late final AuthController _authController;
   late final CartController _cartController;
+  late final ReceiveController _receiveController;
   bool _hadSession = false;
 
   @override
@@ -38,9 +40,10 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
         AuthController(client: widget.supabaseClient, shopApi: _shopApi)
           ..start();
     _cartController = CartController();
-    // Clear the cart whenever the session transitions to null (sign-out
-    // or session expiry). Stops a held cart from leaking across users
-    // sharing the same device.
+    _receiveController = ReceiveController();
+    // Clear in-progress carts/bonos whenever the session transitions to
+    // null (sign-out or session expiry). Stops a held cart or partial
+    // bono from leaking across users sharing the same device.
     _authController.addListener(_onAuthChanged);
   }
 
@@ -48,6 +51,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     final hasSession = _authController.session != null;
     if (_hadSession && !hasSession) {
       _cartController.clearAll();
+      _receiveController.clearAll();
     }
     _hadSession = hasSession;
   }
@@ -55,6 +59,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   @override
   void dispose() {
     _authController.removeListener(_onAuthChanged);
+    _receiveController.dispose();
     _cartController.dispose();
     _authController.dispose();
     super.dispose();
@@ -67,6 +72,9 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
         ChangeNotifierProvider<AuthController>.value(value: _authController),
         Provider<ShopApi>.value(value: _shopApi),
         ChangeNotifierProvider<CartController>.value(value: _cartController),
+        ChangeNotifierProvider<ReceiveController>.value(
+          value: _receiveController,
+        ),
       ],
       child: const AuthRouter(),
     );

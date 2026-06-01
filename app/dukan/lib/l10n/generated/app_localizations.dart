@@ -1159,6 +1159,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'—'**
   String get lineEditorTilePriceMissing;
+
+  /// No description provided for @supplierPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick supplier'**
+  String get supplierPickerTitle;
+
+  /// No description provided for @supplierPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search name or phone'**
+  String get supplierPickerSearchHint;
+
+  /// No description provided for @supplierPickerOwesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'you owe {amount}'**
+  String supplierPickerOwesLabel(Object amount);
+
+  /// No description provided for @supplierPickerNoBonosLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'no bonos yet'**
+  String get supplierPickerNoBonosLabel;
+
+  /// No description provided for @supplierPickerEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No suppliers yet. Add one when you record a bono.'**
+  String get supplierPickerEmptyMessage;
+
+  /// No description provided for @supplierPickerSearchEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No suppliers match “{query}”.'**
+  String supplierPickerSearchEmptyMessage(Object query);
+
+  /// No description provided for @supplierPickerLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load suppliers. Check your internet and try again.'**
+  String get supplierPickerLoadFailedMessage;
+
+  /// No description provided for @supplierNewButton.
+  ///
+  /// In en, this message translates to:
+  /// **'+ NEW SUPPLIER'**
+  String get supplierNewButton;
+
+  /// No description provided for @supplierNewUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding new suppliers comes later.'**
+  String get supplierNewUnavailable;
+
+  /// No description provided for @receiveSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Somali or English'**
+  String get receiveSearchHint;
+
+  /// No description provided for @receiveLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load items. Check your internet and try again.'**
+  String get receiveLoadFailedMessage;
+
+  /// No description provided for @receiveEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap an item to start the bono. Search if it\'s not in the grid.'**
+  String get receiveEmptyMessage;
+
+  /// No description provided for @receiveLineQuantityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get receiveLineQuantityLabel;
+
+  /// No description provided for @receiveLineCostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost per {unit}'**
+  String receiveLineCostLabel(Object unit);
+
+  /// No description provided for @receiveAddLineButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD LINE'**
+  String get receiveAddLineButton;
+
+  /// No description provided for @receiveLineSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{quantity} × {unitCost} = {subtotal}'**
+  String receiveLineSubtotal(Object quantity, Object subtotal, Object unitCost);
+
+  /// No description provided for @receiveLineRemoveTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}'**
+  String receiveLineRemoveTooltip(Object name);
+
+  /// No description provided for @receiveLinesSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No lines} =1{1 line} other{{count} lines}} · {total}'**
+  String receiveLinesSummary(num count, Object total);
+
+  /// No description provided for @receiveLinesClearAllButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all'**
+  String get receiveLinesClearAllButton;
+
+  /// No description provided for @receiveLinesClearConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear {count, plural, =1{1 line} other{{count} lines}}?'**
+  String receiveLinesClearConfirmTitle(num count);
+
+  /// No description provided for @receiveLinesClearConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This won\'t undo any saved bono.'**
+  String get receiveLinesClearConfirmBody;
+
+  /// No description provided for @receiveLinesClearConfirmYes.
+  ///
+  /// In en, this message translates to:
+  /// **'CLEAR'**
+  String get receiveLinesClearConfirmYes;
+
+  /// No description provided for @receiveLinesClearConfirmNo.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get receiveLinesClearConfirmNo;
+
+  /// No description provided for @receivePaidNowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid now'**
+  String get receivePaidNowLabel;
+
+  /// No description provided for @receiveCreditLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit'**
+  String get receiveCreditLabel;
+
+  /// No description provided for @receiveSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get receiveSaveButton;
+
+  /// No description provided for @receiveSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono saved'**
+  String get receiveSavedToast;
+
+  /// No description provided for @receivePostFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the bono. Check your internet and try again.'**
+  String get receivePostFailedMessage;
+
+  /// No description provided for @receiveNeedSupplierMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a supplier before saving.'**
+  String get receiveNeedSupplierMessage;
+
+  /// No description provided for @receiveNeedLinesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one line before saving.'**
+  String get receiveNeedLinesMessage;
+
+  /// No description provided for @receivePaidExceedsTotalMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid amount cannot exceed the bono total.'**
+  String get receivePaidExceedsTotalMessage;
 }
 
 class _AppLocalizationsDelegate

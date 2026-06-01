@@ -626,4 +626,138 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get lineEditorTilePriceMissing => '—';
+
+  @override
+  String get supplierPickerTitle => 'Dooro keenaha';
+
+  @override
+  String get supplierPickerSearchHint => 'Raadi magaca ama telefoonka';
+
+  @override
+  String supplierPickerOwesLabel(Object amount) {
+    return 'waxaad ku leedahay $amount';
+  }
+
+  @override
+  String get supplierPickerNoBonosLabel => 'bono weli ma jirin';
+
+  @override
+  String get supplierPickerEmptyMessage =>
+      'Wali keene ma jiro. Ku dar marka aad qorto bono.';
+
+  @override
+  String supplierPickerSearchEmptyMessage(Object query) {
+    return 'Keene la mid ah “$query” ma jiro.';
+  }
+
+  @override
+  String get supplierPickerLoadFailedMessage =>
+      'Keenayaasha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get supplierNewButton => '+ KEENE CUSUB';
+
+  @override
+  String get supplierNewUnavailable =>
+      'Keenayaasha cusub waxaa la dari doonaa marka dambe.';
+
+  @override
+  String get receiveSearchHint => 'Raadi Soomaali ama Ingiriis';
+
+  @override
+  String get receiveLoadFailedMessage =>
+      'Walxaha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get receiveEmptyMessage =>
+      'Taabo walax si aad u bilowdo bono. Raadi haddii aysan ku jirin shabakada.';
+
+  @override
+  String get receiveLineQuantityLabel => 'Tirada';
+
+  @override
+  String receiveLineCostLabel(Object unit) {
+    return 'Qiimaha $unit';
+  }
+
+  @override
+  String get receiveAddLineButton => 'KU DAR XARIIQ';
+
+  @override
+  String receiveLineSubtotal(
+    Object quantity,
+    Object subtotal,
+    Object unitCost,
+  ) {
+    return '$quantity × $unitCost = $subtotal';
+  }
+
+  @override
+  String receiveLineRemoveTooltip(Object name) {
+    return 'Ka saar $name';
+  }
+
+  @override
+  String receiveLinesSummary(num count, Object total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count xariiqyo',
+      one: '1 xariiq',
+      zero: 'Wax xariiq ah ma jiraan',
+    );
+    return '$_temp0 · $total';
+  }
+
+  @override
+  String get receiveLinesClearAllButton => 'Tirtir dhammaan';
+
+  @override
+  String receiveLinesClearConfirmTitle(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count xariiqyo',
+      one: '1 xariiq',
+    );
+    return 'Tirtir $_temp0?';
+  }
+
+  @override
+  String get receiveLinesClearConfirmBody =>
+      'Tan ma noqonayso bono hore loo keydiyay.';
+
+  @override
+  String get receiveLinesClearConfirmYes => 'TIRTIR';
+
+  @override
+  String get receiveLinesClearConfirmNo => 'JOOJI';
+
+  @override
+  String get receivePaidNowLabel => 'Hadda la bixiyay';
+
+  @override
+  String get receiveCreditLabel => 'Deyn';
+
+  @override
+  String get receiveSaveButton => 'KEYDI';
+
+  @override
+  String get receiveSavedToast => 'Bono waa la keydiyay';
+
+  @override
+  String get receivePostFailedMessage =>
+      'Bonadu lama keydin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get receiveNeedSupplierMessage =>
+      'Dooro keene ka hor inta aadan keydin.';
+
+  @override
+  String get receiveNeedLinesMessage =>
+      'Marka hore ku dar ugu yaraan hal xariiq.';
+
+  @override
+  String get receivePaidExceedsTotalMessage =>
+      'Lacagta la bixiyay kama badnaan karto wadarta bono.';
 }

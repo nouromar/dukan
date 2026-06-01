@@ -625,4 +625,134 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lineEditorTilePriceMissing => '—';
+
+  @override
+  String get supplierPickerTitle => 'Pick supplier';
+
+  @override
+  String get supplierPickerSearchHint => 'Search name or phone';
+
+  @override
+  String supplierPickerOwesLabel(Object amount) {
+    return 'you owe $amount';
+  }
+
+  @override
+  String get supplierPickerNoBonosLabel => 'no bonos yet';
+
+  @override
+  String get supplierPickerEmptyMessage =>
+      'No suppliers yet. Add one when you record a bono.';
+
+  @override
+  String supplierPickerSearchEmptyMessage(Object query) {
+    return 'No suppliers match “$query”.';
+  }
+
+  @override
+  String get supplierPickerLoadFailedMessage =>
+      'Could not load suppliers. Check your internet and try again.';
+
+  @override
+  String get supplierNewButton => '+ NEW SUPPLIER';
+
+  @override
+  String get supplierNewUnavailable => 'Adding new suppliers comes later.';
+
+  @override
+  String get receiveSearchHint => 'Search Somali or English';
+
+  @override
+  String get receiveLoadFailedMessage =>
+      'Could not load items. Check your internet and try again.';
+
+  @override
+  String get receiveEmptyMessage =>
+      'Tap an item to start the bono. Search if it\'s not in the grid.';
+
+  @override
+  String get receiveLineQuantityLabel => 'Quantity';
+
+  @override
+  String receiveLineCostLabel(Object unit) {
+    return 'Cost per $unit';
+  }
+
+  @override
+  String get receiveAddLineButton => 'ADD LINE';
+
+  @override
+  String receiveLineSubtotal(
+    Object quantity,
+    Object subtotal,
+    Object unitCost,
+  ) {
+    return '$quantity × $unitCost = $subtotal';
+  }
+
+  @override
+  String receiveLineRemoveTooltip(Object name) {
+    return 'Remove $name';
+  }
+
+  @override
+  String receiveLinesSummary(num count, Object total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines',
+      one: '1 line',
+      zero: 'No lines',
+    );
+    return '$_temp0 · $total';
+  }
+
+  @override
+  String get receiveLinesClearAllButton => 'Clear all';
+
+  @override
+  String receiveLinesClearConfirmTitle(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines',
+      one: '1 line',
+    );
+    return 'Clear $_temp0?';
+  }
+
+  @override
+  String get receiveLinesClearConfirmBody => 'This won\'t undo any saved bono.';
+
+  @override
+  String get receiveLinesClearConfirmYes => 'CLEAR';
+
+  @override
+  String get receiveLinesClearConfirmNo => 'CANCEL';
+
+  @override
+  String get receivePaidNowLabel => 'Paid now';
+
+  @override
+  String get receiveCreditLabel => 'Credit';
+
+  @override
+  String get receiveSaveButton => 'SAVE';
+
+  @override
+  String get receiveSavedToast => 'Bono saved';
+
+  @override
+  String get receivePostFailedMessage =>
+      'Could not save the bono. Check your internet and try again.';
+
+  @override
+  String get receiveNeedSupplierMessage => 'Pick a supplier before saving.';
+
+  @override
+  String get receiveNeedLinesMessage => 'Add at least one line before saving.';
+
+  @override
+  String get receivePaidExceedsTotalMessage =>
+      'Paid amount cannot exceed the bono total.';
 }
