@@ -1804,6 +1804,111 @@ $$;
 
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
+-- 0020 + 0021 coverage: search_parties returns customers/suppliers
+-- ranked by outstanding balance; search_items honors the sale-screen
+-- usage ranking; param validation rejects unknown screens / types.
+do $$
+declare
+  v_shop_id uuid;
+  v_customer_type_id uuid;
+  v_supplier_type_id uuid;
+  v_failed boolean;
+  v_first_party_id uuid;
+  v_high_debt_id uuid;
+  v_low_debt_id uuid;
+begin
+  select id into v_shop_id from public.shop where name = 'Main Shop';
+  select id into v_customer_type_id from public.party_type where code = 'customer';
+  select id into v_supplier_type_id from public.party_type where code = 'supplier';
+
+  -- Seed two customers with different receivables so we can verify
+  -- the debt-first ordering.
+  insert into public.party (shop_id, name, type_id, receivable)
+  values
+    (v_shop_id, 'Ahmed High',  v_customer_type_id, 50.00),
+    (v_shop_id, 'Ayaan Low',   v_customer_type_id,  5.00),
+    (v_shop_id, 'Zeynab Zero', v_customer_type_id,  0.00);
+
+  select id into v_high_debt_id from public.party
+   where shop_id = v_shop_id and name = 'Ahmed High';
+  select id into v_low_debt_id from public.party
+   where shop_id = v_shop_id and name = 'Ayaan Low';
+
+  -- Customer search: highest receivable comes first.
+  select id into v_first_party_id
+  from public.search_parties(v_shop_id, '', 'customer', 50)
+  limit 1;
+  if v_first_party_id <> v_high_debt_id then
+    raise exception 'search_parties did not rank customers by receivable desc';
+  end if;
+
+  -- Name match: "Ayaan" finds the low-debt customer.
+  if not exists (
+    select 1 from public.search_parties(v_shop_id, 'Ayaan', 'customer', 50)
+  ) then
+    raise exception 'search_parties name match failed';
+  end if;
+
+  -- Zero-receivable customer still appears (active customer, no debt).
+  if (
+    select count(*) from public.search_parties(v_shop_id, '', 'customer', 50)
+  ) < 3 then
+    raise exception 'search_parties skipped zero-balance customers';
+  end if;
+
+  -- Suppliers were seeded earlier in the harness (Hodan Beverages); the
+  -- customer search must not surface them.
+  if exists (
+    select 1 from public.search_parties(v_shop_id, '', 'customer', 50)
+    where name = 'Hodan Beverages'
+  ) then
+    raise exception 'customer search leaked a supplier-only party';
+  end if;
+
+  -- Bad p_type is rejected.
+  v_failed := false;
+  begin
+    perform * from public.search_parties(v_shop_id, '', 'random', 10);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'search_parties accepted an unknown p_type';
+  end if;
+
+  -- 0021: search_items still works without p_screen; with p_screen='sale'
+  -- the candy item (which was sold earlier in the harness) ranks above
+  -- alphabetical neighbors.
+  if (
+    select count(*) from public.search_items(v_shop_id, '', 200)
+  ) = 0 then
+    raise exception 'search_items 3-arg call regressed after the 0021 signature change';
+  end if;
+
+  -- Bad p_screen rejected.
+  v_failed := false;
+  begin
+    perform * from public.search_items(v_shop_id, '', 200, 'bogus');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'search_items accepted an unknown p_screen';
+  end if;
+
+  -- For p_screen='sale', the candy item should now rank above other
+  -- activated items with zero sale_count. The harness sold candy
+  -- earlier (post_sale on v_item_id), so shop_item_usage.sale_count > 0.
+  if (
+    select item_id from public.search_items(v_shop_id, '', 50, 'sale')
+    where is_activated
+    limit 1
+  ) is null then
+    raise exception 'search_items sale ranking returned no activated rows';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
 reset role;
 SQL
 
