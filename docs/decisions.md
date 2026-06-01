@@ -744,6 +744,45 @@ Restaurants (4+ tables open at once) need always-visible tabs. A grocery counter
 
 ---
 
+## Question 14 — Editor-Entered Sale Prices
+
+### Decision — PERSIST ALWAYS (2026-06-01)
+
+Whenever the cashier confirms a sale line whose unit price came out of the line editor — either by tapping a no-price item (`item.sale_price IS NULL OR = 0`) or by long-pressing any tile/cart row — SAVE writes the entered price back to `item.sale_price` via a dedicated RPC. Future taps on the same tile then fast-add at that price instead of re-prompting.
+
+### Why
+
+The decision-free-daily-use principle (CLAUDE.md north-star) outweighs the "cashier shouldn't have implicit price-write capability" concern. Re-prompting for a price every sale of the same item violates the speed contract and confuses a semi-literate shopkeeper. Small-shop reality is that haggle-driven price updates happen daily; the cashier is already trusted with the cash drawer, so they can be trusted to set a default price too. Owner can fix mistakes via the Products admin screen (future).
+
+### Concrete rule
+
+| State of `item.sale_price` when the cashier tapped the tile | Tap routing | What SAVE does with the entered price |
+|---|---|---|
+| `> 0` (real price) | Fast-add, no editor | Nothing (line uses the default price; nothing to persist) |
+| `null` or `0` | Editor in price-required mode | Update `item.sale_price` to the entered price |
+| **Long-press on any tile/cart row** | Editor seeded with current price | Update `item.sale_price` to the entered price |
+
+### Footgun acknowledged
+
+A one-off long-press override (e.g., today's haggle) becomes the new permanent price. The cashier can long-press again to correct it. Less intrusive than re-prompting every sale of a no-price item. We accept this for v1.
+
+### Implementation
+
+- `supabase/migrations/0023_set_item_sale_price.sql` — SECURITY DEFINER RPC, `auth_can_post_shop` permission, validates non-negative + shop ownership.
+- `CartLine.priceWasEntered: bool` — flag set by `addOrReplaceFromEditor` and `updateLineFromEditor`, false in fast-path `addItem`.
+- Sale SAVE flow — after `post_sale` succeeds, calls `set_item_sale_price` for every line with `priceWasEntered: true`. Failures are non-fatal (logged, no toast); sale is already posted.
+
+### Free-sale edge case
+
+A shop that genuinely sells some items for $0 (samples, complimentary) confirms 0 in the editor → `item.sale_price = 0` → next tap still routes through the editor (0 is treated identically to null). Mildly annoying for those shops; defensible until pilots show real demand for an explicit "this is intentionally free" toggle.
+
+### Revisit if
+
+- Owners complain that cashiers are accidentally lowering prices via long-press → reintroduce a seed-only guard (only persist when current price is null/0).
+- The Products admin screen lands and gives owners a non-Sale price-management surface → tighten this rule.
+
+---
+
 ## Appendix: What Still Needs In-Country Validation
 
 These items cannot be resolved from desks and require real-world testing in Somalia:
