@@ -693,9 +693,12 @@ Each screen must define:
 - Loading state, only if unavoidable.
 - Offline state.
 - Saved state.
-- Undo state.
-- Warning state.
+- Warning state (e.g., a background post failed and the cart was restored).
 - Hard error state.
+
+(An in-app "Undo" state was originally listed here. It was dropped in
+favor of post-server Void via Sales history; see `ux.md` § 4 rule 8 and
+`decisions.md` Q12.)
 
 Do not ship a screen that only works in the happy path.
 

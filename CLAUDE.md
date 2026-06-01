@@ -30,7 +30,7 @@ Templates live in the platform layer (`docs/architecture.md` § 8aa) and are app
 - Defaults are sacred: today's date, shop currency, cash for sales, credit for receives, item's default price.
 - Type-ahead with recents on top and aliases (Somali + English + abbreviations).
 - Tap = the normal path. Long-press = power (quantity > 1, price overrides, notes).
-- Optimistic save with a 10-second undo. Never block on the network.
+- Optimistic save, no blocking dialogs. SAVE clears the UI immediately; the post runs in the background with `client_op_id` idempotency. Corrections to posted transactions go through Void in Sales history (owner-only, ≤7 days) — no 10-second in-app undo button.
 - No icon without a text label.
 - Both languages always one tap away; all strings translated, not just menus.
 - Big tap targets (≥ 56dp); primary actions live in the bottom third of the screen.

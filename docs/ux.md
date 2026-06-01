@@ -51,7 +51,7 @@ These apply to every screen.
 5. **Defaults are sacred.** Today's date, this shop's currency, cash, "credit" for receives, item's default price. The fastest tap is no tap.
 6. **Type-ahead everywhere** with **recents on top** and **aliases** (Somali + English + abbreviations). Two keystrokes should usually be enough.
 7. **Tap = the normal path. Long-press = power.** Quantity > 1, price override, line notes, etc. live behind long-press so the simple path stays clean.
-8. **Optimistic save with 10-second undo.** Never block on the network. A toast "Saved. Undo?" replaces blocking confirm dialogs.
+8. **Optimistic save, no blocking dialogs.** SAVE clears the UI immediately and runs the post in the background (idempotent via `client_op_id`). A "Saved" toast replaces blocking confirm dialogs. If the post later fails, surface a non-blocking warning with the cart restored. Corrections to posted transactions go through the Void flow in Sales history (owner-only, ≤7 days; see `decisions.md` Q10) — no 10-second in-app undo button.
 9. **No icon without a text label.** Pictures help, but a labeled icon is faster to learn than a mystery glyph.
 10. **Two languages always one tap away** at the top of every screen. *All* strings translated — button labels, errors, inline help — not just menus.
 11. **Empty states teach.** First-time screens show a 3-step illustrated hint that disappears after the first successful action.

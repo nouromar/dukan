@@ -21,6 +21,7 @@
 | 9 | Costing policy | **Confirm plan**: weighted-average at receive posting + COGS snapshotted on sale line | High |
 | 10 | Data export & admin recovery | **CSV export** (items + transactions + lines) + **owner self-service void** (≤7 days). **Support is setup-only — cannot post voids or any transactional changes** (DECIDED 2026-05-29 by @nouromar). | DECIDED |
 | 11 | Catalog activation strategy | **Lazy activation.** `apply_template` does NOT bulk-materialize per-shop `item` rows. Catalog metadata stays canonical in `catalog_*` tables; per-shop `item` rows are created on demand via `activate_catalog_item` at first Sale / Receive / inventory adjustment / favorite pin (and Phase 7+ OCR / barcode / admin pre-activation). Template-marked starter favorites are the only items pre-activated. (DECIDED 2026-05-31 by @nouromar) | DECIDED |
+| 12 | Sale undo strategy | **No 10-second in-app undo.** SAVE optimistically clears the UI and posts in the background with `client_op_id` idempotency. If the post later fails, restore the cart with a non-blocking warning. Corrections to already-posted sales go through the Void flow in Sales history (owner-only, ≤7 days; per Q10) once that surface exists. Avoids shipping a SnackBar "Undo" button that doesn't actually undo within its visible lifetime. (DECIDED 2026-06-01 by @nouromar) | DECIDED |
 
 ---
 
@@ -656,6 +657,41 @@ A shop's `public.item` rows are **lazy projections** of the canonical `catalog_*
 - `template_item` rows still exist — they're the **candidate list** the shop kind brings, used by search ranking and (later) OCR matching. They're not a materialization spec.
 
 **Rejected alternative (eager bulk activation):** simpler `apply_template`, but creates the K×N row-count and coherence-loss problems above. Pre-launch design walked into this; reversed before any of it shipped.
+
+---
+
+## Question 12 — Sale Undo Strategy
+
+### Decision — ACCEPTED 2026-06-01
+
+Drop the 10-second in-app SnackBar "Undo" button from the binding UX rules. Sales SAVE is **optimistic but non-undoable in-app**: the UI clears immediately, the post runs in the background, and the only correction path is Void via Sales history (owner-only, ≤7 days, per Q10) once that surface exists.
+
+| Aspect | Decision |
+|---|---|
+| Tap SAVE → UI behavior | Cart clears immediately, "Saved" toast briefly shows, app returns to ready state for the next sale. |
+| Network behavior | `post_sale` runs in the background. Idempotent via `client_op_id` (already in the schema since 0009 + later migrations); a retry after network blip dedupes server-side. |
+| Failure handling | If the post ultimately fails, surface a non-blocking warning AND restore the cart so the user can correct and re-save. |
+| Undoing a posted sale | Owner navigates to Sales history → taps the sale → taps Void → confirms. Backend writes a reversing `txn` (sign-flipped lines, sign-flipped stock_movements, reversed payment_allocation) with `reverses_transaction_id` pointing at the original. Both rows remain visible in the ledger forever — auditable. |
+| Cashier role | Cannot void. Only the owner can correct posted transactions (per Q10). |
+| Time window | ≤7 days from the original sale, per Q10. After that, the only path is a manual `inventory_adjustment` for stock or a `payment` reversal — same machinery, different reason code. |
+
+### Why not the 10-second SnackBar Undo
+
+The 10-second pre-server undo (transaction queued locally, flushed after 10s, discardable in-window) was the original `ux.md` rule 8. It works at the design level — see `architecture.md` § 8aa "Light offline: cache + write queue (client_op_id for idempotency)" — but it requires:
+
+1. A client-side write queue with per-transaction timers and durable storage so an app close inside the 10s window doesn't lose the sale.
+2. A flusher that retries on network failure.
+3. UX language that's honest about the trade-off: tapping Undo *prevents the sale from being recorded* (good), but force-closing the app within 10s *loses the sale* (bad).
+
+The void-via-history path covers the same correction need with stronger guarantees: the sale is always durable; corrections are always auditable; the ledger never has phantom holes from app crashes. The trade-off is the correction takes more taps (4-5) than tapping a SnackBar (1), but the gesture happens only when the owner actually wants to correct — not every save.
+
+### Implication for `ux.md` rule 8
+
+The rule used to read: *"Optimistic save with 10-second undo. Never block on the network. A toast 'Saved. Undo?' replaces blocking confirm dialogs."*
+
+It now reads: *"Optimistic save, no blocking dialogs. SAVE clears the UI immediately and runs the post in the background (idempotent via `client_op_id`). A 'Saved' toast replaces blocking confirm dialogs. If the post later fails, surface a non-blocking warning with the cart restored. Corrections to posted transactions go through the Void flow in Sales history (owner-only, ≤7 days) — no 10-second in-app undo button."*
+
+`ux-screens.md` § 9 dropped the "Undo state" requirement from the per-screen states checklist accordingly.
 
 ---
 
