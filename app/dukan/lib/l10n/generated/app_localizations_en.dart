@@ -590,4 +590,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cartCollapseHint => 'Hide items';
+
+  @override
+  String get cartClearAllButton => 'Clear all';
+
+  @override
+  String cartClearConfirmTitle(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return 'Clear $_temp0 from cart?';
+  }
+
+  @override
+  String get cartClearConfirmBody => 'This won\'t undo any saved sale.';
+
+  @override
+  String get cartClearConfirmYes => 'CLEAR';
+
+  @override
+  String get cartClearConfirmNo => 'CANCEL';
 }

@@ -1105,6 +1105,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hide items'**
   String get cartCollapseHint;
+
+  /// No description provided for @cartClearAllButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all'**
+  String get cartClearAllButton;
+
+  /// No description provided for @cartClearConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear {count, plural, =1{1 item} other{{count} items}} from cart?'**
+  String cartClearConfirmTitle(num count);
+
+  /// No description provided for @cartClearConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This won\'t undo any saved sale.'**
+  String get cartClearConfirmBody;
+
+  /// No description provided for @cartClearConfirmYes.
+  ///
+  /// In en, this message translates to:
+  /// **'CLEAR'**
+  String get cartClearConfirmYes;
+
+  /// No description provided for @cartClearConfirmNo.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get cartClearConfirmNo;
 }
 
 class _AppLocalizationsDelegate

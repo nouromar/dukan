@@ -167,5 +167,10 @@
   "cartRemoveLineTooltip": "Ka saar {name}",
   "cartExpandHint": "Muuji walxaha",
   "cartCollapseHint": "Qari walxaha",
+  "cartClearAllButton": "Tirtir dhammaan",
+  "cartClearConfirmTitle": "Ka tirtir {count, plural, =1{1 walax} other{{count} walxood}} gaariga?",
+  "cartClearConfirmBody": "Tan ma noqonayso iib hore loo keydiyay.",
+  "cartClearConfirmYes": "TIRTIR",
+  "cartClearConfirmNo": "JOOJI",
   "tryAgain": "MAR KALE ISKU DAY"
 }

@@ -9,6 +9,7 @@ import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/prototype/expense_screen.dart';
 import 'package:dukan/prototype/payment_screen.dart';
 import 'package:dukan/prototype/receive_screen.dart';
+import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
@@ -100,6 +101,7 @@ class HomeScreen extends StatelessWidget {
                               : () {
                                   final auth = context.read<AuthController>();
                                   final api = context.read<ShopApi>();
+                                  final cart = context.read<CartController>();
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (_) => MultiProvider(
@@ -108,6 +110,9 @@ class HomeScreen extends StatelessWidget {
                                             AuthController
                                           >.value(value: auth),
                                           Provider<ShopApi>.value(value: api),
+                                          ChangeNotifierProvider<
+                                            CartController
+                                          >.value(value: cart),
                                         ],
                                         child: SaleScreen(shop: shop!),
                                       ),

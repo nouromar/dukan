@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/customer_picker_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -26,18 +27,19 @@ class _SaleScreenState extends State<SaleScreen> {
   late Future<List<ItemSearchResult>> _resultsFuture;
   String _activeQuery = '';
   Timer? _debounce;
-
-  // Cart keyed by either item_id (activated) or catalog_item_id (will
-  // activate on save). Either may be null on the search result; we
-  // require at least one to be non-null before adding.
-  final Map<String, _CartLine> _cart = {};
-  bool _debt = false;
-  PartySearchResult? _customer;
   bool _saving = false;
   bool _cartExpanded = false;
   final _random = math.Random();
-
   String? _locale;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-expand the drawer when reopening the Sale screen with a
+    // non-empty cart: the cashier needs to see at a glance whether the
+    // existing items are theirs to continue or a stale cart to clear.
+    _cartExpanded = context.read<CartController>().isNotEmpty;
+  }
 
   @override
   void didChangeDependencies() {
@@ -76,46 +78,55 @@ class _SaleScreenState extends State<SaleScreen> {
     });
   }
 
-  double get _total =>
-      _cart.values.fold(0, (sum, line) => sum + line.subtotal);
-  int get _itemCount =>
-      _cart.values.fold(0, (sum, line) => sum + line.quantity);
-
   void _addItem(ItemSearchResult item) {
-    final key = item.itemId ?? item.catalogItemId;
-    if (key == null) return;
-    setState(() {
-      final existing = _cart[key];
-      if (existing != null) {
-        existing.quantity += 1;
-      } else {
-        _cart[key] = _CartLine(
-          itemId: item.itemId,
-          catalogItemId: item.catalogItemId,
-          name: item.name,
-          baseUnitCode: item.baseUnitCode,
-          baseUnitLabel: item.baseUnitLabel,
-          unitPrice: item.salePrice ?? 0,
-        );
-      }
-    });
+    context.read<CartController>().addItem(item);
   }
 
   void _removeLine(String key) {
-    setState(() {
-      _cart.remove(key);
-      if (_cart.isEmpty) _cartExpanded = false;
-    });
+    final cart = context.read<CartController>();
+    cart.removeLine(key);
+    if (cart.isEmpty) {
+      setState(() => _cartExpanded = false);
+    }
   }
 
   void _toggleCartExpanded() {
-    if (_cart.isEmpty) return;
+    final cart = context.read<CartController>();
+    if (cart.isEmpty) return;
     setState(() => _cartExpanded = !_cartExpanded);
   }
 
+  Future<void> _confirmClearAll() async {
+    final l = tr(context);
+    final cart = context.read<CartController>();
+    final count = cart.itemCount;
+    final cleared = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text(l.cartClearConfirmTitle(count)),
+        content: Text(l.cartClearConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: Text(l.cartClearConfirmNo),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: Text(l.cartClearConfirmYes),
+          ),
+        ],
+      ),
+    );
+    if (cleared == true && mounted) {
+      cart.clearAll();
+      setState(() => _cartExpanded = false);
+    }
+  }
+
   void _toggleDebt(bool debt) {
-    setState(() => _debt = debt);
-    if (debt && _customer == null) {
+    final cart = context.read<CartController>();
+    cart.setDebt(debt);
+    if (debt && cart.customer == null) {
       _pickCustomer();
     }
   }
@@ -123,17 +134,18 @@ class _SaleScreenState extends State<SaleScreen> {
   Future<void> _pickCustomer() async {
     final picked = await showCustomerPicker(context, shopId: widget.shop.id);
     if (picked != null && mounted) {
-      setState(() => _customer = picked);
+      context.read<CartController>().setCustomer(picked);
     }
   }
 
   Future<void> _save() async {
     final l = tr(context);
-    if (_cart.isEmpty) {
+    final cart = context.read<CartController>();
+    if (cart.isEmpty) {
       showError(context, l.saleNeedItemsMessage);
       return;
     }
-    if (_debt && _customer == null) {
+    if (cart.debt && cart.customer == null) {
       showError(context, l.saleNeedCustomerMessage);
       _pickCustomer();
       return;
@@ -141,40 +153,23 @@ class _SaleScreenState extends State<SaleScreen> {
 
     setState(() => _saving = true);
     final api = context.read<ShopApi>();
-    final snapshot = _cart.values
-        .map(
-          (line) => _CartLine(
-            itemId: line.itemId,
-            catalogItemId: line.catalogItemId,
-            name: line.name,
-            baseUnitCode: line.baseUnitCode,
-            baseUnitLabel: line.baseUnitLabel,
-            unitPrice: line.unitPrice,
-            quantity: line.quantity,
-          ),
-        )
-        .toList(growable: false);
-    final cashSale = !_debt;
-    final partyId = _debt ? _customer!.id : null;
-    final total = _total;
+    final snapshot = cart.snapshot();
+    final cashSale = !snapshot.debt;
+    final partyId = snapshot.debt ? snapshot.customer!.id : null;
+    final total = snapshot.lines.values
+        .fold<double>(0, (sum, line) => sum + line.subtotal.toDouble());
 
     // Optimistic clear: UI returns to fresh state immediately.
-    setState(() {
-      _cart.clear();
-      _debt = false;
-      _customer = null;
-      _cartExpanded = false;
-    });
+    cart.clearAll();
+    setState(() => _cartExpanded = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l.saleSavedToast)),
     );
 
     try {
-      // Resolve unit IDs (mostly base units since we don't yet support
-      // per-line unit override) and lazy-activate any catalog candidates.
       final units = {for (final u in await api.listUnits()) u.code: u.id};
       final lines = <SaleLine>[];
-      for (final line in snapshot) {
+      for (final line in snapshot.lines.values) {
         var itemId = line.itemId;
         itemId ??= await api.ensureShopItem(
           shopId: widget.shop.id,
@@ -212,7 +207,7 @@ class _SaleScreenState extends State<SaleScreen> {
   }
 
   void _handleSaveFailure(
-    List<_CartLine> snapshot,
+    CartSnapshot snapshot,
     Object error,
     StackTrace stackTrace,
     String message,
@@ -226,14 +221,7 @@ class _SaleScreenState extends State<SaleScreen> {
       ),
     );
     if (!mounted) return;
-    setState(() {
-      _cart
-        ..clear()
-        ..addAll({
-          for (final line in snapshot)
-            (line.itemId ?? line.catalogItemId!): line,
-        });
-    });
+    context.read<CartController>().restore(snapshot);
     showError(context, message);
   }
 
@@ -246,6 +234,10 @@ class _SaleScreenState extends State<SaleScreen> {
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
+    final cart = context.watch<CartController>();
+    final lines = cart.lines.entries
+        .map((e) => _CartLineEntry(key: e.key, line: e.value))
+        .toList(growable: false);
     return Scaffold(
       appBar: dukanAppBar(context, l.saleTitle),
       body: SafeArea(
@@ -319,17 +311,16 @@ class _SaleScreenState extends State<SaleScreen> {
               ),
             ),
             _SaleCartStrip(
-              lines: _cart.entries
-                  .map((e) => _CartLineEntry(key: e.key, line: e.value))
-                  .toList(growable: false),
-              total: _total,
-              itemCount: _itemCount,
-              debt: _debt,
-              customer: _customer,
+              lines: lines,
+              total: cart.total,
+              itemCount: cart.itemCount,
+              debt: cart.debt,
+              customer: cart.customer,
               saving: _saving,
               expanded: _cartExpanded,
               onToggleExpand: _toggleCartExpanded,
               onRemoveLine: _removeLine,
+              onClearAll: _confirmClearAll,
               onModeChanged: _toggleDebt,
               onPickCustomer: _pickCustomer,
               onSave: _save,
@@ -339,28 +330,6 @@ class _SaleScreenState extends State<SaleScreen> {
       ),
     );
   }
-}
-
-class _CartLine {
-  _CartLine({
-    required this.itemId,
-    required this.catalogItemId,
-    required this.name,
-    required this.baseUnitCode,
-    required this.baseUnitLabel,
-    required this.unitPrice,
-    this.quantity = 1,
-  });
-
-  final String? itemId;
-  final String? catalogItemId;
-  final String name;
-  final String baseUnitCode;
-  final String baseUnitLabel;
-  final num unitPrice;
-  int quantity;
-
-  num get subtotal => unitPrice * quantity;
 }
 
 class _SaleItemTile extends StatelessWidget {
@@ -415,7 +384,7 @@ class _SaleItemTile extends StatelessWidget {
 class _CartLineEntry {
   const _CartLineEntry({required this.key, required this.line});
   final String key;
-  final _CartLine line;
+  final CartLine line;
 }
 
 class _SaleCartStrip extends StatelessWidget {
@@ -429,6 +398,7 @@ class _SaleCartStrip extends StatelessWidget {
     required this.expanded,
     required this.onToggleExpand,
     required this.onRemoveLine,
+    required this.onClearAll,
     required this.onModeChanged,
     required this.onPickCustomer,
     required this.onSave,
@@ -443,6 +413,7 @@ class _SaleCartStrip extends StatelessWidget {
   final bool expanded;
   final VoidCallback onToggleExpand;
   final void Function(String key) onRemoveLine;
+  final VoidCallback onClearAll;
   final ValueChanged<bool> onModeChanged;
   final VoidCallback onPickCustomer;
   final VoidCallback onSave;
@@ -452,9 +423,6 @@ class _SaleCartStrip extends StatelessWidget {
     final l = tr(context);
     final canSave = itemCount > 0 && (!debt || customer != null) && !saving;
     final canExpand = lines.isNotEmpty;
-    // The scrollable line list itself is capped so the buttons below
-    // stay visible. Anything longer scrolls internally. The overall
-    // strip height = header + (≤cap)list + bottom controls.
     final maxListHeight = MediaQuery.of(context).size.height * 0.25;
 
     return Material(
@@ -465,111 +433,128 @@ class _SaleCartStrip extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-              InkWell(
-                onTap: canExpand ? onToggleExpand : null,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Icon(
-                        canExpand
-                            ? (expanded
-                                  ? Icons.keyboard_arrow_down
-                                  : Icons.keyboard_arrow_up)
-                            : Icons.shopping_cart_outlined,
-                        size: 22,
+            // Summary header: tap to expand, plus the Clear-all button
+            // when the cart has items AND the drawer is open (so the
+            // shopkeeper sees the items before being offered the wipe).
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: canExpand ? onToggleExpand : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            canExpand
+                                ? (expanded
+                                      ? Icons.keyboard_arrow_down
+                                      : Icons.keyboard_arrow_up)
+                                : Icons.shopping_cart_outlined,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l.saleCartSummary(
+                                itemCount,
+                                _formatMoney(total),
+                              ),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l.saleCartSummary(itemCount, _formatMoney(total)),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
+                if (expanded && canExpand)
+                  TextButton(
+                    onPressed: saving ? null : onClearAll,
+                    child: Text(l.cartClearAllButton),
+                  ),
+              ],
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+              alignment: Alignment.topCenter,
+              child: expanded && canExpand
+                  ? ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: maxListHeight),
+                      child: _CartLineList(
+                        lines: lines,
+                        saving: saving,
+                        onRemoveLine: onRemoveLine,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<bool>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: false,
+                    label: Text(l.saleCash),
+                    icon: const Icon(Icons.payments),
+                  ),
+                  ButtonSegment(
+                    value: true,
+                    label: Text(l.saleDebt),
+                    icon: const Icon(Icons.person),
+                  ),
+                ],
+                selected: {debt},
+                onSelectionChanged: saving
+                    ? null
+                    : (set) => onModeChanged(set.first),
               ),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 150),
-                curve: Curves.easeOut,
-                alignment: Alignment.topCenter,
-                child: expanded && canExpand
-                    ? ConstrainedBox(
-                        constraints: BoxConstraints(maxHeight: maxListHeight),
-                        child: _CartLineList(
-                          lines: lines,
-                          saving: saving,
-                          onRemoveLine: onRemoveLine,
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-              ),
+            ),
+            if (debt) ...[
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
-                child: SegmentedButton<bool>(
-                  showSelectedIcon: false,
-                  segments: [
-                    ButtonSegment(
-                      value: false,
-                      label: Text(l.saleCash),
-                      icon: const Icon(Icons.payments),
-                    ),
-                    ButtonSegment(
-                      value: true,
-                      label: Text(l.saleDebt),
-                      icon: const Icon(Icons.person),
-                    ),
-                  ],
-                  selected: {debt},
-                  onSelectionChanged: saving
-                      ? null
-                      : (set) => onModeChanged(set.first),
-                ),
-              ),
-              if (debt) ...[
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: customer == null
-                      ? OutlinedButton.icon(
-                          onPressed: saving ? null : onPickCustomer,
-                          icon: const Icon(Icons.person_search),
-                          label: Text(l.salePickCustomerButton),
-                        )
-                      : InputChip(
-                          avatar: const Icon(Icons.person),
-                          label: Text(
-                            l.saleCustomerChip(
-                              customer!.name,
-                              _formatMoney(customer!.receivable),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                child: customer == null
+                    ? OutlinedButton.icon(
+                        onPressed: saving ? null : onPickCustomer,
+                        icon: const Icon(Icons.person_search),
+                        label: Text(l.salePickCustomerButton),
+                      )
+                    : InputChip(
+                        avatar: const Icon(Icons.person),
+                        label: Text(
+                          l.saleCustomerChip(
+                            customer!.name,
+                            _formatMoney(customer!.receivable),
                           ),
-                          onPressed: saving ? null : onPickCustomer,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                ),
-              ],
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: canSave ? onSave : null,
-                  child: saving
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
-                        )
-                      : Text(l.saleSaveButton),
-                ),
+                        onPressed: saving ? null : onPickCustomer,
+                      ),
               ),
             ],
-          ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: canSave ? onSave : null,
+                child: saving
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      )
+                    : Text(l.saleSaveButton),
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
 

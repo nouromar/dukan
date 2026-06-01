@@ -591,4 +591,27 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get cartCollapseHint => 'Qari walxaha';
+
+  @override
+  String get cartClearAllButton => 'Tirtir dhammaan';
+
+  @override
+  String cartClearConfirmTitle(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count walxood',
+      one: '1 walax',
+    );
+    return 'Ka tirtir $_temp0 gaariga?';
+  }
+
+  @override
+  String get cartClearConfirmBody => 'Tan ma noqonayso iib hore loo keydiyay.';
+
+  @override
+  String get cartClearConfirmYes => 'TIRTIR';
+
+  @override
+  String get cartClearConfirmNo => 'JOOJI';
 }

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/sale_screen.dart';
 
 import '../shared/fakes.dart';
@@ -11,12 +12,14 @@ import '../shared/wrap.dart';
 void main() {
   late FakeAuthController auth;
   late FakeShopApi api;
+  late CartController cart;
   late ShopSummary shop;
   late AppLocalizations en;
 
   setUp(() {
     auth = FakeAuthController();
     api = FakeShopApi();
+    cart = CartController();
     shop = fakeShop();
     en = lookupAppLocalizations(const Locale('en'));
   });
@@ -27,6 +30,7 @@ void main() {
         SaleScreen(shop: shop),
         authController: auth,
         shopApi: api,
+        cartController: cart,
       ),
     );
   }
@@ -267,5 +271,112 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(FilledButton, en.saleSaveButton), findsOneWidget);
+  });
+
+  // --- Persistence + Clear all + auto-expand ---------------------------------
+
+  testWidgets('cart auto-expands when entering Sale with a non-empty cart', (
+    tester,
+  ) async {
+    // Simulate a previously-built cart sitting in the controller.
+    cart.addItem(
+      fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
+    );
+    api.onSearchItems = (_, _, _, _, _) async => const [];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+
+    // Drawer should be expanded — the line subtotal is visible without
+    // any tap on the summary row.
+    expect(
+      find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Clear all button confirms and wipes the cart', (tester) async {
+    api.onSearchItems = (_, _, _, _, _) async => [
+      fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
+      fakeActivatedItem(itemId: 'i2', name: 'Sonkor', salePrice: 1.0),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bariis'));
+    await tester.tap(find.text('Sonkor'));
+    await tester.pumpAndSettle();
+
+    // Open the drawer so Clear all is rendered.
+    await tester.tap(find.text(en.saleCartSummary(2, '\$2.50')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(en.cartClearAllButton));
+    await tester.pumpAndSettle();
+
+    // Confirmation dialog appears with the right item count.
+    expect(find.text(en.cartClearConfirmTitle(2)), findsOneWidget);
+
+    // Cancel keeps the cart.
+    await tester.tap(find.text(en.cartClearConfirmNo));
+    await tester.pumpAndSettle();
+    expect(cart.itemCount, 2);
+
+    // Try again and confirm.
+    await tester.tap(find.text(en.cartClearAllButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.cartClearConfirmYes));
+    await tester.pumpAndSettle();
+
+    expect(cart.isEmpty, isTrue);
+    expect(find.text(en.saleCartSummary(0, '\$0')), findsOneWidget);
+  });
+
+  testWidgets('cart state survives Navigator push/pop', (tester) async {
+    api.onSearchItems = (_, _, _, _, _) async => [
+      fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
+    ];
+
+    // Stand-in host that pushes the Sale screen on tap.
+    await tester.pumpWidget(
+      wrapWithApp(
+        Builder(
+          builder: (ctx) => Scaffold(
+            body: Center(
+              child: FilledButton(
+                onPressed: () => Navigator.of(ctx).push(
+                  MaterialPageRoute(builder: (_) => SaleScreen(shop: shop)),
+                ),
+                child: const Text('open sale'),
+              ),
+            ),
+          ),
+        ),
+        authController: auth,
+        shopApi: api,
+        cartController: cart,
+      ),
+    );
+
+    // First entry: add an item.
+    await tester.tap(find.text('open sale'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bariis'));
+    await tester.pumpAndSettle();
+    expect(cart.itemCount, 1);
+
+    // Back to host.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('open sale'), findsOneWidget);
+
+    // Re-enter: cart still has the item, drawer auto-expanded.
+    await tester.tap(find.text('open sale'));
+    await tester.pumpAndSettle();
+    expect(cart.itemCount, 1);
+    expect(
+      find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
+      findsOneWidget,
+    );
   });
 }
