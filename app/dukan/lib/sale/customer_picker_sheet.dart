@@ -10,22 +10,17 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 
 /// Opens the customer picker as a bottom sheet. Returns the chosen party,
-/// or null if the user dismissed without picking. Wraps the sheet child
-/// with `Provider<ShopApi>.value` so the sheet sees the API from the
-/// calling context (otherwise pushing through the root Navigator would
-/// lose the provider).
+/// or null if the user dismissed without picking. Providers (ShopApi etc.)
+/// live above MaterialApp in AuthBootstrap, so the sheet inherits them
+/// automatically without an explicit re-export.
 Future<PartySearchResult?> showCustomerPicker(
   BuildContext context, {
   required ShopSummary shop,
 }) {
-  final api = context.read<ShopApi>();
   return showModalBottomSheet<PartySearchResult>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => Provider<ShopApi>.value(
-      value: api,
-      child: _CustomerPickerBody(shop: shop),
-    ),
+    builder: (_) => _CustomerPickerBody(shop: shop),
   );
 }
 

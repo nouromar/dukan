@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:dukan/app/auth_bootstrap.dart';
+import 'package:dukan/app/auth_bootstrap.dart' show AuthBootstrap, AuthRouter;
 import 'package:dukan/config/app_config.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/shared/fallback_localizations.dart';
@@ -34,33 +34,56 @@ class DukanApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // LocaleController is provided at the root so both the supabase-config
+    // path (no auth) and the AuthBootstrap path can read it. The
+    // session-scoped controllers (Auth, ShopApi, Cart, Receive) live inside
+    // AuthBootstrap, which is ABOVE MaterialApp — so pushed routes
+    // inherit them automatically and no per-push .value re-exports are
+    // needed.
     return ChangeNotifierProvider(
       create: (_) => LocaleController(),
-      child: Consumer<LocaleController>(
-        builder: (context, controller, _) => MaterialApp(
-          debugShowCheckedModeBanner: false,
-          onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-          locale: controller.locale,
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            // Somali isn't in the Global*Localizations supported set, so
-            // fall back to Flutter's built-in English defaults for framework
-            // chrome (tooltips, dialog buttons). App copy still comes from
-            // AppLocalizations.
-            FallbackMaterialLocalizationsDelegate(),
-            FallbackWidgetsLocalizationsDelegate(),
-            FallbackCupertinoLocalizationsDelegate(),
-          ],
-          theme: _buildTheme(),
-          home: supabaseClient == null
-              ? const SupabaseConfigScreen()
-              : AuthBootstrap(supabaseClient: supabaseClient!),
-        ),
-      ),
+      child: supabaseClient == null
+          ? _MaterialAppShell(home: const SupabaseConfigScreen())
+          : AuthBootstrap(
+              supabaseClient: supabaseClient!,
+              builder: (_) => const _MaterialAppShell(home: AuthRouter()),
+            ),
+    );
+  }
+
+}
+
+/// Pulls MaterialApp out into a tiny shell so it can be embedded under
+/// either the supabase-config path or AuthBootstrap without duplicating
+/// the locale + theme + delegates wiring.
+class _MaterialAppShell extends StatelessWidget {
+  const _MaterialAppShell({required this.home});
+
+  final Widget home;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = context.watch<LocaleController>().locale;
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        // Somali isn't in the Global*Localizations supported set, so
+        // fall back to Flutter's built-in English defaults for framework
+        // chrome (tooltips, dialog buttons). App copy still comes from
+        // AppLocalizations.
+        FallbackMaterialLocalizationsDelegate(),
+        FallbackWidgetsLocalizationsDelegate(),
+        FallbackCupertinoLocalizationsDelegate(),
+      ],
+      theme: _buildTheme(),
+      home: home,
     );
   }
 

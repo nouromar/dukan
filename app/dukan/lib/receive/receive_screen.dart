@@ -106,17 +106,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   }
 
   void _onChangeSupplier() {
-    final api = context.read<ShopApi>();
-    final receive = context.read<ReceiveController>();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => MultiProvider(
-          providers: [
-            Provider<ShopApi>.value(value: api),
-            ChangeNotifierProvider<ReceiveController>.value(value: receive),
-          ],
-          child: SupplierPickerScreen(shop: widget.shop),
-        ),
+        builder: (_) => SupplierPickerScreen(shop: widget.shop),
       ),
     );
   }

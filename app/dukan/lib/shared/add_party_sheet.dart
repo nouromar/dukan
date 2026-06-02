@@ -24,14 +24,10 @@ Future<PartySearchResult?> showAddPartySheet(
   required String shopId,
   required String typeCode,
 }) {
-  final api = context.read<ShopApi>();
   return showModalBottomSheet<PartySearchResult>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => Provider<ShopApi>.value(
-      value: api,
-      child: _AddPartyBody(shopId: shopId, typeCode: typeCode),
-    ),
+    builder: (_) => _AddPartyBody(shopId: shopId, typeCode: typeCode),
   );
 }
 

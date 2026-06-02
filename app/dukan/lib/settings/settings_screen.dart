@@ -164,23 +164,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      final auth = context.read<AuthController>();
-                      final api = context.read<ShopApi>();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => MultiProvider(
-                            providers: [
-                              ChangeNotifierProvider<AuthController>.value(
-                                value: auth,
-                              ),
-                              Provider<ShopApi>.value(value: api),
-                            ],
-                            child: ProductsScreen(shop: widget.shop),
-                          ),
-                        ),
-                      );
-                    },
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProductsScreen(shop: widget.shop),
+                      ),
+                    ),
                   ),
                 ),
               ],

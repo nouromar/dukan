@@ -16,10 +16,24 @@ import 'package:dukan/shared/friendly_error_screen.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/loading_screen.dart';
 
+/// Owns the lifecycle of the session-scoped controllers (Auth, ShopApi,
+/// Cart, Receive) and exposes them via Provider. Lives ABOVE MaterialApp
+/// so every route pushed through the root Navigator inherits the
+/// providers automatically — no per-push .value re-exports needed.
+///
+/// Takes a `builder` that receives the BuildContext under the providers
+/// and returns the MaterialApp. Keeps the MaterialApp wiring (locale,
+/// theme, delegates) in main.dart while letting the auth-scoped state
+/// live here.
 class AuthBootstrap extends StatefulWidget {
-  const AuthBootstrap({required this.supabaseClient, super.key});
+  const AuthBootstrap({
+    required this.supabaseClient,
+    required this.builder,
+    super.key,
+  });
 
   final SupabaseClient supabaseClient;
+  final WidgetBuilder builder;
 
   @override
   State<AuthBootstrap> createState() => _AuthBootstrapState();
@@ -76,7 +90,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
           value: _receiveController,
         ),
       ],
-      child: const AuthRouter(),
+      child: Builder(builder: widget.builder),
     );
   }
 }

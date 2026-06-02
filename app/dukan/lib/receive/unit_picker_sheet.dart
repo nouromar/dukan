@@ -21,18 +21,14 @@ Future<ReceiveUnitOption?> showUnitPicker(
   String? itemId,
   String? catalogItemId,
 }) {
-  final api = context.read<ShopApi>();
   return showModalBottomSheet<ReceiveUnitOption>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => Provider<ShopApi>.value(
-      value: api,
-      child: _UnitPickerBody(
-        shopId: shopId,
-        baseUnitLabel: baseUnitLabel,
-        itemId: itemId,
-        catalogItemId: catalogItemId,
-      ),
+    builder: (_) => _UnitPickerBody(
+      shopId: shopId,
+      baseUnitLabel: baseUnitLabel,
+      itemId: itemId,
+      catalogItemId: catalogItemId,
     ),
   );
 }

@@ -3,15 +3,12 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
-import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/prototype/expense_screen.dart';
 import 'package:dukan/prototype/payment_screen.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
-import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
@@ -35,23 +32,11 @@ class HomeScreen extends StatelessWidget {
           if (shop != null)
             IconButton(
               tooltip: l.openSettings,
-              onPressed: () {
-                final auth = context.read<AuthController>();
-                final api = context.read<ShopApi>();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => MultiProvider(
-                      providers: [
-                        ChangeNotifierProvider<AuthController>.value(
-                          value: auth,
-                        ),
-                        Provider<ShopApi>.value(value: api),
-                      ],
-                      child: SettingsScreen(shop: shop!),
-                    ),
-                  ),
-                );
-              },
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SettingsScreen(shop: shop!),
+                ),
+              ),
               icon: const Icon(Icons.settings),
             ),
           if (onSignOut != null)
@@ -100,27 +85,11 @@ class HomeScreen extends StatelessWidget {
                           label: l.sale,
                           onTap: shop == null
                               ? () {}
-                              : () {
-                                  final auth = context.read<AuthController>();
-                                  final api = context.read<ShopApi>();
-                                  final cart = context.read<CartController>();
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => MultiProvider(
-                                        providers: [
-                                          ChangeNotifierProvider<
-                                            AuthController
-                                          >.value(value: auth),
-                                          Provider<ShopApi>.value(value: api),
-                                          ChangeNotifierProvider<
-                                            CartController
-                                          >.value(value: cart),
-                                        ],
-                                        child: SaleScreen(shop: shop!),
-                                      ),
-                                    ),
-                                  );
-                                },
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => SaleScreen(shop: shop!),
+                                  ),
+                                ),
                         ),
                         HomeAction(
                           icon: Icons.inventory_2,
@@ -128,8 +97,6 @@ class HomeScreen extends StatelessWidget {
                           onTap: shop == null
                               ? () {}
                               : () {
-                                  final auth = context.read<AuthController>();
-                                  final api = context.read<ShopApi>();
                                   final receive =
                                       context.read<ReceiveController>();
                                   // Resume a partial bono if one is in
@@ -144,18 +111,7 @@ class HomeScreen extends StatelessWidget {
                                       : SupplierPickerScreen(shop: shop!);
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (_) => MultiProvider(
-                                        providers: [
-                                          ChangeNotifierProvider<
-                                            AuthController
-                                          >.value(value: auth),
-                                          Provider<ShopApi>.value(value: api),
-                                          ChangeNotifierProvider<
-                                            ReceiveController
-                                          >.value(value: receive),
-                                        ],
-                                        child: destination,
-                                      ),
+                                      builder: (_) => destination,
                                     ),
                                   );
                                 },
