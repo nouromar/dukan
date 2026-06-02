@@ -673,7 +673,9 @@ class _LineEntryFormState extends State<_LineEntryForm> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: 80,
+                  // Wide enough to fit "Tirada" (Somali, longest of the
+                  // qty labels we use) without truncation.
+                  width: 110,
                   child: TextField(
                     controller: _qtyController,
                     keyboardType: TextInputType.number,
@@ -708,6 +710,10 @@ class _LineEntryFormState extends State<_LineEntryForm> {
             const SizedBox(height: 8),
             Row(
               children: [
+                // Money field labels carry the "$" hint so it's obvious
+                // these are currency fields even before the cashier
+                // taps in. No additional prefixText — would be a second
+                // $ on screen once the field is focused.
                 Expanded(
                   child: TextField(
                     controller: _perUnitController,
@@ -719,7 +725,6 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                     ],
                     decoration: InputDecoration(
                       labelText: l.receiveLinePerUnitLabel(_unitLabel),
-                      prefixText: '\$ ',
                       isDense: true,
                     ),
                   ),
@@ -736,7 +741,6 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                     ],
                     decoration: InputDecoration(
                       labelText: l.receiveLineTotalLabel,
-                      prefixText: '\$ ',
                       isDense: true,
                     ),
                   ),

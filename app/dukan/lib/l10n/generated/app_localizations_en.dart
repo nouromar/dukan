@@ -671,15 +671,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap an item to start the bono. Search if it\'s not in the grid.';
 
   @override
-  String get receiveLineQuantityLabel => 'Quantity';
+  String get receiveLineQuantityLabel => 'Qty';
 
   @override
   String receiveLinePerUnitLabel(Object unit) {
-    return 'Per $unit';
+    return '\$ per $unit';
   }
 
   @override
-  String get receiveLineTotalLabel => 'Total';
+  String get receiveLineTotalLabel => '\$ total';
 
   @override
   String get receiveAddLineButton => 'ADD LINE';

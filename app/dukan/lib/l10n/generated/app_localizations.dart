@@ -1235,19 +1235,19 @@ abstract class AppLocalizations {
   /// No description provided for @receiveLineQuantityLabel.
   ///
   /// In en, this message translates to:
-  /// **'Quantity'**
+  /// **'Qty'**
   String get receiveLineQuantityLabel;
 
   /// No description provided for @receiveLinePerUnitLabel.
   ///
   /// In en, this message translates to:
-  /// **'Per {unit}'**
+  /// **'\$ per {unit}'**
   String receiveLinePerUnitLabel(Object unit);
 
   /// No description provided for @receiveLineTotalLabel.
   ///
   /// In en, this message translates to:
-  /// **'Total'**
+  /// **'\$ total'**
   String get receiveLineTotalLabel;
 
   /// No description provided for @receiveAddLineButton.

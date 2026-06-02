@@ -677,11 +677,11 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String receiveLinePerUnitLabel(Object unit) {
-    return 'Mid kasta $unit';
+    return '\$ mid kasta $unit';
   }
 
   @override
-  String get receiveLineTotalLabel => 'Wadarta';
+  String get receiveLineTotalLabel => '\$ wadarta';
 
   @override
   String get receiveAddLineButton => 'KU DAR XARIIQ';
