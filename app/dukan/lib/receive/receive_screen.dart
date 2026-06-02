@@ -870,10 +870,20 @@ class _ReceiveLineTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
+    final unit = _displayUnit(
+      line.receiveUnitCode,
+      line.receiveUnitLabel,
+      line.quantity,
+      isEnglish,
+    );
+    // l.receiveLineSubtotal signature is (quantity, total, unit) — the
+    // localization gen sorts placeholders alphabetically so the order
+    // here does NOT match the template's left-to-right reading.
     final subtitle = l.receiveLineSubtotal(
       '${line.quantity}',
-      line.receiveUnitLabel,
       _formatMoney(line.lineTotal),
+      unit,
     );
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -903,4 +913,27 @@ String _formatMoney(num value) {
     return '\$${v.toStringAsFixed(0)}';
   }
   return '\$${v.toStringAsFixed(2)}';
+}
+
+// English plural forms for the unit codes we use. Hardcoded because a
+// blanket "+s" rule breaks "box" (→ "boxes" not "boxs") and isn't
+// grammatical for "kg". Somali plural rules are different (often
+// context-dependent); we use the label as-is for non-English locales.
+const _enUnitPlurals = <String, String>{
+  'piece': 'pieces',
+  'kg': 'kg',
+  'gram': 'grams',
+  'litre': 'litres',
+  'ml': 'ml',
+  'bag': 'bags',
+  'bottle': 'bottles',
+  'packet': 'packets',
+  'box': 'boxes',
+  'carton': 'cartons',
+};
+
+String _displayUnit(String code, String label, int quantity, bool isEnglish) {
+  final lower = label.toLowerCase();
+  if (!isEnglish || quantity == 1) return lower;
+  return _enUnitPlurals[code] ?? '${lower}s';
 }

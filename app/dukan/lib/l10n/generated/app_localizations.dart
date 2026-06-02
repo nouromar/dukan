@@ -1259,7 +1259,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveLineSubtotal.
   ///
   /// In en, this message translates to:
-  /// **'{quantity} {unit} · {total}'**
+  /// **'{quantity} {unit} = {total}'**
   String receiveLineSubtotal(Object quantity, Object total, Object unit);
 
   /// No description provided for @receiveLineRemoveTooltip.

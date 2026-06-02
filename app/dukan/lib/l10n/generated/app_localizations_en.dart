@@ -686,7 +686,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String receiveLineSubtotal(Object quantity, Object total, Object unit) {
-    return '$quantity $unit · $total';
+    return '$quantity $unit = $total';
   }
 
   @override

@@ -193,7 +193,7 @@
   "receiveLinePerUnitLabel": "Per {unit}",
   "receiveLineTotalLabel": "Total",
   "receiveAddLineButton": "ADD LINE",
-  "receiveLineSubtotal": "{quantity} {unit} · {total}",
+  "receiveLineSubtotal": "{quantity} {unit} = {total}",
   "receiveLineRemoveTooltip": "Remove {name}",
   "receiveLinesSummary": "{count, plural, =0{No lines} =1{1 line} other{{count} lines}} · {total}",
   "receiveLinesClearAllButton": "Clear all",
