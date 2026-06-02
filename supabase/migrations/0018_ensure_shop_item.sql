@@ -128,13 +128,11 @@ begin
 
   insert into public.item_unit (
     shop_id, item_id, unit_id, source_catalog_item_unit_id, source,
-    conversion_to_base, is_base_unit, allow_sale, allow_receive,
-    sort_order, created_by
+    conversion_to_base, is_base_unit, sort_order, created_by
   )
   select
     p_shop_id, v_item_id, u.id, ciu.id, 'catalog',
-    ciu.conversion_to_base, ciu.is_base_unit, ciu.allow_sale, ciu.allow_receive,
-    ciu.sort_order, auth.uid()
+    ciu.conversion_to_base, ciu.is_base_unit, ciu.sort_order, auth.uid()
   from public.catalog_item_unit ciu
   join public.unit u on u.code = ciu.unit_code and u.is_active
   where ciu.catalog_item_id = p_catalog_item_id

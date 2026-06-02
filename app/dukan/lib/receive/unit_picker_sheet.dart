@@ -60,10 +60,11 @@ class _UnitPickerBodyState extends State<_UnitPickerBody> {
   @override
   void initState() {
     super.initState();
-    _future = context.read<ShopApi>().listReceiveUnits(
+    _future = context.read<ShopApi>().listItemUnits(
       shopId: widget.shopId,
       itemId: widget.itemId,
       catalogItemId: widget.catalogItemId,
+      screen: 'receive',
     );
   }
 

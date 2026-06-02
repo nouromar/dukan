@@ -247,11 +247,9 @@ begin
     revision_id,
     unit_code,
     conversion_to_base,
-    is_base_unit,
-    allow_sale,
-    allow_receive
+    is_base_unit
   )
-  values (v_catalog_item_id, v_revision_id, 'bag', 1, true, true, true);
+  values (v_catalog_item_id, v_revision_id, 'bag', 1, true);
 
   insert into public.catalog_item_alias (catalog_item_id, language_code, alias_text)
   values (v_catalog_item_id, 'en', 'white sugar');
@@ -586,13 +584,11 @@ begin
     item_id,
     unit_id,
     conversion_to_base,
-    is_base_unit,
-    allow_sale,
-    allow_receive
+    is_base_unit
   )
   values
-    (v_shop_id, v_item_id, v_unit_id, 1, true, true, true),
-    (v_shop_id, v_item_id, v_bag_unit_id, 100, false, false, true);
+    (v_shop_id, v_item_id, v_unit_id, 1, true),
+    (v_shop_id, v_item_id, v_bag_unit_id, 100, false);
 
   insert into public.item_alias (shop_id, item_id, alias_text, source)
   values (v_shop_id, v_item_id, 'nacnac', 'manual');
@@ -2150,9 +2146,11 @@ begin
 end;
 $$;
 
--- 0026 coverage: list_receive_units returns the allow_receive units
--- for an activated item (e.g., rice has kg + bag) or for a catalog
--- candidate (water uses bottle + carton), with the default flagged.
+-- 0026 coverage: list_item_units returns every unit configured for an
+-- activated item or catalog candidate. After the allow_* cleanup, all
+-- units are returned regardless of which screen called; the picker's
+-- "default" flag tracks default_sale_unit or default_receive_unit
+-- depending on p_screen.
 do $$
 declare
   v_shop_id uuid;
@@ -2166,46 +2164,78 @@ begin
   select id into v_rice_item_id from public.item
     where shop_id = v_shop_id and code = 'rice_basmati_25kg';
 
-  -- Activated rice: should return both kg (base) and bag (receive),
-  -- with bag flagged as the default.
+  -- Activated rice on the receive screen: should return both kg and
+  -- bag, with bag flagged as the receive default.
   select count(*), count(*) filter (where is_default)
   into v_total, v_default_count
-  from public.list_receive_units(v_shop_id, v_rice_item_id, null);
+  from public.list_item_units(v_shop_id, v_rice_item_id, null, 'receive');
 
   if v_total < 2 then
-    raise exception 'list_receive_units returned % units for rice (expected >= 2)', v_total;
+    raise exception 'list_item_units returned % units for rice (expected >= 2)', v_total;
   end if;
   if v_default_count <> 1 then
-    raise exception 'list_receive_units did not flag exactly one default (got %)', v_default_count;
+    raise exception 'list_item_units did not flag exactly one default (got %)', v_default_count;
   end if;
 
   select unit_code into v_default_code
-  from public.list_receive_units(v_shop_id, v_rice_item_id, null)
+  from public.list_item_units(v_shop_id, v_rice_item_id, null, 'receive')
   where is_default;
   if v_default_code <> 'bag' then
     raise exception 'rice default receive unit = % (expected bag)', v_default_code;
   end if;
 
+  -- Same item, sale screen — default flips to default_sale_unit (kg).
+  select unit_code into v_default_code
+  from public.list_item_units(v_shop_id, v_rice_item_id, null, 'sale')
+  where is_default;
+  if v_default_code <> 'kg' then
+    raise exception 'rice default sale unit = % (expected kg)', v_default_code;
+  end if;
+
   -- Catalog candidate: bread_loaf isn't activated. Should still return
-  -- its units (just 'piece' for bread) from catalog_item_unit.
+  -- its units from catalog_item_unit.
   select id into v_bread_catalog_id from public.catalog_item where code = 'bread_loaf';
   select count(*) into v_total
-  from public.list_receive_units(v_shop_id, null, v_bread_catalog_id);
+  from public.list_item_units(v_shop_id, null, v_bread_catalog_id, 'receive');
   if v_total = 0 then
-    raise exception 'list_receive_units returned no units for catalog candidate bread';
+    raise exception 'list_item_units returned no units for catalog candidate bread';
   end if;
 
   -- Either-or guard: passing both ids should error.
   declare v_failed boolean := false;
   begin
     begin
-      perform * from public.list_receive_units(
-        v_shop_id, v_rice_item_id, v_bread_catalog_id
+      perform * from public.list_item_units(
+        v_shop_id, v_rice_item_id, v_bread_catalog_id, 'receive'
       );
     exception when raise_exception then v_failed := true;
     end;
     if not v_failed then
-      raise exception 'list_receive_units accepted both ids';
+      raise exception 'list_item_units accepted both ids';
+    end if;
+  end;
+
+  -- Regression: post_sale must accept a non-default unit (rice in bag).
+  -- Pre-cleanup this failed because bag.allow_sale was false; today the
+  -- cashier can use the unit picker to switch to bag on a sale.
+  declare
+    v_bag_unit_id uuid;
+    v_sale_txn_id uuid;
+  begin
+    select id into v_bag_unit_id from public.unit where code = 'bag';
+    v_sale_txn_id := public.post_sale(
+      v_shop_id, null,
+      jsonb_build_array(jsonb_build_object(
+        'item_id', v_rice_item_id,
+        'quantity', 1,
+        'unit_id', v_bag_unit_id,
+        'unit_price', 50
+      )),
+      50, 'cash', null, 'rice-bag-sale', null,
+      'Sell rice by the bag — non-default unit'
+    );
+    if v_sale_txn_id is null then
+      raise exception 'post_sale failed on non-default unit (bag)';
     end if;
   end;
 end;

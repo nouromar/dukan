@@ -109,36 +109,38 @@ where cir.catalog_item_id = ci.id
 
 -- Per-item unit conversions. Each item gets its base unit (conversion 1)
 -- plus its receive package (conversion = how many base units per package).
--- bread is single-unit so it has only its base.
+-- bread is single-unit so it has only its base. Sale-vs-receive routing
+-- is driven by the item's default_sale_unit_code / default_receive_unit_code
+-- columns + the unit picker; allow_* gates were dropped pre-pilot.
 insert into public.catalog_item_unit (
   catalog_item_id, revision_id, unit_code, conversion_to_base,
-  is_base_unit, allow_sale, allow_receive, sort_order
+  is_base_unit, sort_order
 )
 select cir.catalog_item_id, cir.id, u.unit_code, u.conversion,
-       u.is_base, u.allow_sale, u.allow_receive, u.sort_order
+       u.is_base, u.sort_order
 from public.catalog_item_revision cir
 join public.catalog_item ci on ci.id = cir.catalog_item_id
 join (values
-  ('rice_basmati_25kg',     'kg',     1::numeric,   true,  true,  true,  1),
-  ('rice_basmati_25kg',     'bag',    25::numeric,  false, false, true,  2),
-  ('sugar_white_50kg',      'kg',     1::numeric,   true,  true,  true,  1),
-  ('sugar_white_50kg',      'bag',    50::numeric,  false, false, true,  2),
-  ('oil_cooking_1l',        'litre',  1::numeric,   true,  true,  true,  1),
-  ('oil_cooking_1l',        'bottle', 1::numeric,   false, true,  true,  2),
-  ('tea_black_500g',        'packet', 1::numeric,   true,  true,  true,  1),
-  ('tea_black_500g',        'box',    24::numeric,  false, false, true,  2),
-  ('milk_powder_400g',      'packet', 1::numeric,   true,  true,  true,  1),
-  ('milk_powder_400g',      'carton', 12::numeric,  false, false, true,  2),
-  ('water_bottled_500ml',   'bottle', 1::numeric,   true,  true,  true,  1),
-  ('water_bottled_500ml',   'carton', 12::numeric,  false, false, true,  2),
-  ('soap_bar_100g',         'piece',  1::numeric,   true,  true,  true,  1),
-  ('soap_bar_100g',         'box',    50::numeric,  false, false, true,  2),
-  ('biscuit_assorted_100g', 'packet', 1::numeric,   true,  true,  true,  1),
-  ('biscuit_assorted_100g', 'carton', 24::numeric,  false, false, true,  2),
-  ('pasta_dry_500g',        'packet', 1::numeric,   true,  true,  true,  1),
-  ('pasta_dry_500g',        'box',    20::numeric,  false, false, true,  2),
-  ('bread_loaf',            'piece',  1::numeric,   true,  true,  true,  1)
-) as u(item_code, unit_code, conversion, is_base, allow_sale, allow_receive, sort_order)
+  ('rice_basmati_25kg',     'kg',     1::numeric,   true,  1),
+  ('rice_basmati_25kg',     'bag',    25::numeric,  false, 2),
+  ('sugar_white_50kg',      'kg',     1::numeric,   true,  1),
+  ('sugar_white_50kg',      'bag',    50::numeric,  false, 2),
+  ('oil_cooking_1l',        'litre',  1::numeric,   true,  1),
+  ('oil_cooking_1l',        'bottle', 1::numeric,   false, 2),
+  ('tea_black_500g',        'packet', 1::numeric,   true,  1),
+  ('tea_black_500g',        'box',    24::numeric,  false, 2),
+  ('milk_powder_400g',      'packet', 1::numeric,   true,  1),
+  ('milk_powder_400g',      'carton', 12::numeric,  false, 2),
+  ('water_bottled_500ml',   'bottle', 1::numeric,   true,  1),
+  ('water_bottled_500ml',   'carton', 12::numeric,  false, 2),
+  ('soap_bar_100g',         'piece',  1::numeric,   true,  1),
+  ('soap_bar_100g',         'box',    50::numeric,  false, 2),
+  ('biscuit_assorted_100g', 'packet', 1::numeric,   true,  1),
+  ('biscuit_assorted_100g', 'carton', 24::numeric,  false, 2),
+  ('pasta_dry_500g',        'packet', 1::numeric,   true,  1),
+  ('pasta_dry_500g',        'box',    20::numeric,  false, 2),
+  ('bread_loaf',            'piece',  1::numeric,   true,  1)
+) as u(item_code, unit_code, conversion, is_base, sort_order)
   on u.item_code = ci.code
 where cir.revision_number = 1
 on conflict (catalog_item_id, revision_id, unit_code) do nothing;

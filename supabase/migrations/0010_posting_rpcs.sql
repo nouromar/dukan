@@ -285,8 +285,7 @@ begin
     join public.unit u on u.id = iu.unit_id
     where iu.shop_id = p_shop_id
       and iu.item_id = v_item_id
-      and iu.unit_id = v_unit_id
-      and iu.allow_receive;
+      and iu.unit_id = v_unit_id;
 
     if v_conversion is null then
       raise exception 'Receive line % unit is not valid for this item', v_line_no;
@@ -590,8 +589,7 @@ begin
     join public.unit u on u.id = iu.unit_id
     where iu.shop_id = p_shop_id
       and iu.item_id = v_item_id
-      and iu.unit_id = v_unit_id
-      and iu.allow_sale;
+      and iu.unit_id = v_unit_id;
 
     if v_conversion is null then
       raise exception 'Sale line % unit is not valid for this item', v_line_no;

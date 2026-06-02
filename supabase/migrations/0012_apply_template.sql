@@ -261,8 +261,6 @@ begin
           source,
           conversion_to_base,
           is_base_unit,
-          allow_sale,
-          allow_receive,
           sort_order,
           created_by
         )
@@ -273,8 +271,6 @@ begin
           'template',
           tiu.conversion_to_base,
           tiu.unit_code = v_item.base_unit_code_override,
-          tiu.allow_sale,
-          tiu.allow_receive,
           tiu.sort_order,
           auth.uid()
         from public.template_item_unit tiu
@@ -308,8 +304,6 @@ begin
       source,
       conversion_to_base,
       is_base_unit,
-      allow_sale,
-      allow_receive,
       sort_order,
       created_by
     )
@@ -320,8 +314,6 @@ begin
       'template',
       tiu.conversion_to_base,
       false,
-      tiu.allow_sale,
-      tiu.allow_receive,
       tiu.sort_order,
       auth.uid()
     from public.template_item_unit tiu

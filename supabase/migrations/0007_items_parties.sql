@@ -44,8 +44,6 @@ create table public.item_unit (
   source text not null default 'manual' check (source in ('catalog', 'template', 'manual', 'override')),
   conversion_to_base numeric(14, 6) not null check (conversion_to_base > 0),
   is_base_unit boolean not null default false,
-  allow_sale boolean not null default true,
-  allow_receive boolean not null default true,
   sort_order integer not null default 0,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),

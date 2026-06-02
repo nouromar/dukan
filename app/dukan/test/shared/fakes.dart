@@ -185,8 +185,9 @@ class FakeShopApi implements ShopApi {
     String shopId,
     String? itemId,
     String? catalogItemId,
+    String screen,
   )?
-  onListReceiveUnits;
+  onListItemUnits;
   Future<List<ItemSearchResult>> Function(
     String shopId,
     String query,
@@ -282,16 +283,17 @@ class FakeShopApi implements ShopApi {
   }
 
   @override
-  Future<List<ReceiveUnitOption>> listReceiveUnits({
+  Future<List<ReceiveUnitOption>> listItemUnits({
     required String shopId,
     String? itemId,
     String? catalogItemId,
+    String screen = 'receive',
   }) async {
-    if (onListReceiveUnits != null) {
-      return onListReceiveUnits!(shopId, itemId, catalogItemId);
+    if (onListItemUnits != null) {
+      return onListItemUnits!(shopId, itemId, catalogItemId, screen);
     }
     // Sensible default: two units (base + a receive unit) so tests not
-    // explicitly setting onListReceiveUnits still exercise the picker.
+    // explicitly setting onListItemUnits still exercise the picker.
     return const [
       ReceiveUnitOption(
         unitId: 'unit-kg',

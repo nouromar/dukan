@@ -51,10 +51,10 @@ void main() {
     return () => captured;
   }
 
-  testWidgets('lists units from listReceiveUnits with default flagged', (
+  testWidgets('lists units from listItemUnits with default flagged', (
     tester,
   ) async {
-    api.onListReceiveUnits = (_, _, _) async => const [
+    api.onListItemUnits = (_, _, _, _) async => const [
       ReceiveUnitOption(
         unitId: 'unit-kg',
         unitCode: 'kg',
@@ -83,7 +83,7 @@ void main() {
   });
 
   testWidgets('tapping a unit returns it and closes the sheet', (tester) async {
-    api.onListReceiveUnits = (_, _, _) async => const [
+    api.onListItemUnits = (_, _, _, _) async => const [
       ReceiveUnitOption(
         unitId: 'unit-bag',
         unitCode: 'bag',

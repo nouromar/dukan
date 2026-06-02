@@ -56,20 +56,24 @@ class ShopApi {
     return result as String;
   }
 
-  /// Lists all allow_receive units for an item (or catalog candidate
+  /// Lists every unit configured for an item (or catalog candidate
   /// if the shop has not yet activated it). Pass exactly one of itemId
-  /// or catalogItemId. Powers the Receive screen's unit picker.
-  Future<List<ReceiveUnitOption>> listReceiveUnits({
+  /// or catalogItemId. The `screen` arg decides which default flag the
+  /// picker highlights (`sale` → default_sale_unit, `receive` →
+  /// default_receive_unit).
+  Future<List<ReceiveUnitOption>> listItemUnits({
     required String shopId,
     String? itemId,
     String? catalogItemId,
+    String screen = 'receive',
   }) async {
     final rows = await _client.rpc(
-      'list_receive_units',
+      'list_item_units',
       params: {
         'p_shop_id': shopId,
         'p_item_id': itemId,
         'p_catalog_item_id': catalogItemId,
+        'p_screen': screen,
       },
     );
     if (rows is! List) return const [];

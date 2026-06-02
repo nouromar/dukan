@@ -124,8 +124,6 @@ begin
     source,
     conversion_to_base,
     is_base_unit,
-    allow_sale,
-    allow_receive,
     sort_order,
     created_by
   )
@@ -137,8 +135,6 @@ begin
     'catalog',
     ciu.conversion_to_base,
     ciu.is_base_unit,
-    ciu.allow_sale,
-    ciu.allow_receive,
     ciu.sort_order,
     auth.uid()
   from public.catalog_item_unit ciu
