@@ -595,6 +595,58 @@ class AppLocalizationsSo extends AppLocalizations {
       'Lama dari karin. Hubi internetka oo isku day mar kale.';
 
   @override
+  String get paymentTypeCustomer => 'Macmiil';
+
+  @override
+  String get paymentTypeSupplier => 'Keene';
+
+  @override
+  String get paymentPickCustomerButton => 'Dooro macmiil';
+
+  @override
+  String get paymentPickSupplierButton => 'Dooro keene';
+
+  @override
+  String paymentCustomerOwesLabel(Object amount) {
+    return 'Wuxuu kuu leeyahay $amount';
+  }
+
+  @override
+  String paymentSupplierOwedLabel(Object amount) {
+    return 'Waxaad ku leedahay $amount';
+  }
+
+  @override
+  String get paymentAmountLabel => 'Lacagta la bixiyay';
+
+  @override
+  String get paymentSaveButton => 'KEYDI';
+
+  @override
+  String get paymentSavedToast => 'Bixinta waa la keydiyay';
+
+  @override
+  String paymentNeedPartyMessage(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'supplier': 'keenaha',
+      'other': 'macmiilka',
+    });
+    return 'Marka hore dooro $_temp0.';
+  }
+
+  @override
+  String get paymentNeedAmountMessage => 'Geli lacag ka badan eber.';
+
+  @override
+  String paymentExceedsBalanceMessage(Object amount) {
+    return 'Lacagtu kama badnaan karto wadarta deynta ($amount).';
+  }
+
+  @override
+  String get paymentPostFailedMessage =>
+      'Bixinta lama keydin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
     return '$quantity × $unitPrice = $subtotal';
   }

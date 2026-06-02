@@ -9,6 +9,7 @@ import 'package:dukan/auth/owner_onboarding_screen.dart';
 import 'package:dukan/auth/phone_login_screen.dart';
 import 'package:dukan/auth/shop_picker_screen.dart';
 import 'package:dukan/home/home_screen.dart';
+import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/setup/shop_type_setup_screen.dart';
@@ -44,6 +45,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   late final AuthController _authController;
   late final CartController _cartController;
   late final ReceiveController _receiveController;
+  late final PaymentController _paymentController;
   bool _hadSession = false;
 
   @override
@@ -55,9 +57,10 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
           ..start();
     _cartController = CartController();
     _receiveController = ReceiveController();
-    // Clear in-progress carts/bonos whenever the session transitions to
-    // null (sign-out or session expiry). Stops a held cart or partial
-    // bono from leaking across users sharing the same device.
+    _paymentController = PaymentController();
+    // Clear in-progress carts/bonos/payments whenever the session
+    // transitions to null (sign-out or session expiry). Stops state
+    // from leaking across users sharing the same device.
     _authController.addListener(_onAuthChanged);
   }
 
@@ -66,6 +69,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     if (_hadSession && !hasSession) {
       _cartController.clearAll();
       _receiveController.clearAll();
+      _paymentController.clearAll();
     }
     _hadSession = hasSession;
   }
@@ -73,6 +77,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   @override
   void dispose() {
     _authController.removeListener(_onAuthChanged);
+    _paymentController.dispose();
     _receiveController.dispose();
     _cartController.dispose();
     _authController.dispose();
@@ -88,6 +93,9 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
         ChangeNotifierProvider<CartController>.value(value: _cartController),
         ChangeNotifierProvider<ReceiveController>.value(
           value: _receiveController,
+        ),
+        ChangeNotifierProvider<PaymentController>.value(
+          value: _paymentController,
         ),
       ],
       child: Builder(builder: widget.builder),

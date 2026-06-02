@@ -206,6 +206,35 @@ class ShopApi {
     return result as String;
   }
 
+  /// post_payment — settle a party's outstanding balance. Direction is
+  /// 'I' for an inbound payment (customer pays down their receivable)
+  /// or 'O' for an outbound payment (shop pays down its payable to a
+  /// supplier). The RPC validates the party matches the direction and
+  /// that the amount doesn't exceed the outstanding balance.
+  Future<String> postPayment({
+    required String shopId,
+    required String partyId,
+    required String direction,
+    required num amount,
+    required String paymentMethodCode,
+    required String clientOpId,
+    String? notes,
+  }) async {
+    final result = await _client.rpc(
+      'post_payment',
+      params: {
+        'p_shop_id': shopId,
+        'p_party_id': partyId,
+        'p_direction': direction,
+        'p_amount': amount,
+        'p_payment_method_code': paymentMethodCode,
+        'p_client_op_id': clientOpId,
+        'p_notes': notes,
+      },
+    );
+    return result as String;
+  }
+
   /// post_receive — supplier-attributed inventory + payable updates.
   /// Always requires a party (the supplier); v1 sends per-unit cost
   /// (`unit_cost`) and skips the alternative `line_total` shape.

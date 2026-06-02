@@ -5,39 +5,44 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/shared/add_party_sheet.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 
-/// Opens the customer picker as a bottom sheet. Returns the chosen party,
-/// or null if the user dismissed without picking. Providers (ShopApi etc.)
-/// live above MaterialApp in AuthBootstrap, so the sheet inherits them
-/// automatically without an explicit re-export.
-Future<PartySearchResult?> showCustomerPicker(
+/// Bottom-sheet party picker, used by both Sale (typeCode='customer'
+/// for debt sales) and Payment (either type). Returns the chosen party
+/// or null on dismiss. Providers come from AuthBootstrap above
+/// MaterialApp; no per-call re-export needed.
+Future<PartySearchResult?> showPartyPicker(
   BuildContext context, {
   required ShopSummary shop,
+  required String typeCode,
 }) {
   return showModalBottomSheet<PartySearchResult>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _CustomerPickerBody(shop: shop),
+    builder: (_) => _PartyPickerBody(shop: shop, typeCode: typeCode),
   );
 }
 
-class _CustomerPickerBody extends StatefulWidget {
-  const _CustomerPickerBody({required this.shop});
+class _PartyPickerBody extends StatefulWidget {
+  const _PartyPickerBody({required this.shop, required this.typeCode});
 
   final ShopSummary shop;
+  final String typeCode;
 
   @override
-  State<_CustomerPickerBody> createState() => _CustomerPickerBodyState();
+  State<_PartyPickerBody> createState() => _PartyPickerBodyState();
 }
 
-class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
+class _PartyPickerBodyState extends State<_PartyPickerBody> {
   final _searchController = TextEditingController();
   late Future<List<PartySearchResult>> _resultsFuture;
   String _activeQuery = '';
   Timer? _debounce;
+
+  bool get _isSupplier => widget.typeCode == 'supplier';
 
   @override
   void initState() {
@@ -56,7 +61,7 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
     return context.read<ShopApi>().searchParties(
       shopId: widget.shop.id,
       query: query,
-      type: 'customer',
+      type: widget.typeCode,
     );
   }
 
@@ -71,17 +76,26 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
     });
   }
 
-  Future<void> _onTapNewCustomer() async {
+  Future<void> _onTapAdd() async {
     final created = await showAddPartySheet(
       context,
       shopId: widget.shop.id,
-      typeCode: 'customer',
+      typeCode: widget.typeCode,
     );
     if (created != null && mounted) {
-      // Auto-select: pop this picker with the new party so the Sale
-      // flow continues with it as the debt customer immediately.
       Navigator.of(context).pop(created);
     }
+  }
+
+  String _balanceLabelFor(PartySearchResult party, AppLocalizations l) {
+    if (_isSupplier) {
+      return party.payable > 0
+          ? l.supplierPickerOwesLabel(formatMoney(party.payable, widget.shop))
+          : l.supplierPickerNoBonosLabel;
+    }
+    return party.receivable > 0
+        ? l.customerPickerOwesLabel(formatMoney(party.receivable, widget.shop))
+        : l.customerPickerNoDebtLabel;
   }
 
   @override
@@ -89,10 +103,22 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
     final l = tr(context);
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
     final mediaHeight = MediaQuery.of(context).size.height;
-    // Target a ~55% sheet so the picker feels like a real surface rather
-    // than a tight content-hugged strip; clamp up to 70% so the favorites
-    // grid stays glanceable above it.
     final sheetHeight = mediaHeight * 0.55;
+    final title = _isSupplier
+        ? l.supplierPickerTitle
+        : l.customerPickerTitle;
+    final searchHint = _isSupplier
+        ? l.supplierPickerSearchHint
+        : l.customerPickerSearchHint;
+    final emptyMessage = _isSupplier
+        ? l.supplierPickerEmptyMessage
+        : l.customerPickerEmptyMessage;
+    final loadFailedMessage = _isSupplier
+        ? l.supplierPickerLoadFailedMessage
+        : l.customerPickerLoadFailedMessage;
+    final newButtonLabel = _isSupplier
+        ? l.supplierNewButton
+        : l.customerNewButton;
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + viewInsets),
@@ -102,7 +128,7 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                l.customerPickerTitle,
+                title,
                 style: Theme.of(context).textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),
@@ -113,7 +139,7 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search),
-                  hintText: l.customerPickerSearchHint,
+                  hintText: searchHint,
                 ),
               ),
               const SizedBox(height: 8),
@@ -131,7 +157,7 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
                       return Padding(
                         padding: const EdgeInsets.all(20),
                         child: Text(
-                          l.customerPickerLoadFailedMessage,
+                          loadFailedMessage,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
@@ -144,10 +170,14 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
                         padding: const EdgeInsets.all(20),
                         child: Text(
                           _activeQuery.isEmpty
-                              ? l.customerPickerEmptyMessage
-                              : l.customerPickerSearchEmptyMessage(
-                                  _activeQuery,
-                                ),
+                              ? emptyMessage
+                              : (_isSupplier
+                                    ? l.supplierPickerSearchEmptyMessage(
+                                        _activeQuery,
+                                      )
+                                    : l.customerPickerSearchEmptyMessage(
+                                        _activeQuery,
+                                      )),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
@@ -167,13 +197,7 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
                               party.name,
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
-                            subtitle: Text(
-                              party.receivable > 0
-                                  ? l.customerPickerOwesLabel(
-                                      formatMoney(party.receivable, widget.shop),
-                                    )
-                                  : l.customerPickerNoDebtLabel,
-                            ),
+                            subtitle: Text(_balanceLabelFor(party, l)),
                             onTap: () => Navigator.of(context).pop(party),
                           ),
                         );
@@ -184,8 +208,8 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
               ),
               const SizedBox(height: 8),
               OutlinedButton(
-                onPressed: _onTapNewCustomer,
-                child: Text(l.customerNewButton),
+                onPressed: _onTapAdd,
+                child: Text(newButtonLabel),
               ),
             ],
           ),
@@ -194,4 +218,3 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
     );
   }
 }
-

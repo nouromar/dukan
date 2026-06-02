@@ -1,0 +1,267 @@
+// One screen, both directions: customer-pays-the-shop (inbound) and
+// shop-pays-the-supplier (outbound). Cashier picks a type, then a
+// party, types the amount, hits SAVE. Backend post_payment validates
+// direction × party type and refuses to overpay the balance.
+
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
+import 'package:dukan/payment/payment_controller.dart';
+import 'package:dukan/shared/dukan_app_bar.dart';
+import 'package:dukan/shared/feedback.dart';
+import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/party_picker_sheet.dart';
+
+class PaymentScreen extends StatefulWidget {
+  const PaymentScreen({required this.shop, super.key});
+
+  final ShopSummary shop;
+
+  @override
+  State<PaymentScreen> createState() => _PaymentScreenState();
+}
+
+class _PaymentScreenState extends State<PaymentScreen> {
+  final _amountController = TextEditingController();
+  final _random = math.Random();
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final amount = context.read<PaymentController>().amount;
+    if (amount > 0) {
+      _amountController.text = _formatField(amount);
+    }
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  String _formatField(num value) {
+    if (value == value.toDouble().roundToDouble()) {
+      return value.toInt().toString();
+    }
+    return value.toString();
+  }
+
+  void _onTypeChanged(PaymentType type) {
+    context.read<PaymentController>().setType(type);
+    _amountController.clear();
+  }
+
+  Future<void> _onPickParty() async {
+    final controller = context.read<PaymentController>();
+    final picked = await showPartyPicker(
+      context,
+      shop: widget.shop,
+      typeCode: controller.type.partyTypeCode,
+    );
+    if (picked != null && mounted) {
+      controller.setParty(picked);
+    }
+  }
+
+  void _onAmountChanged(String value) {
+    final parsed = num.tryParse(value.trim()) ?? 0;
+    context.read<PaymentController>().setAmount(parsed);
+  }
+
+  Future<void> _save() async {
+    final l = tr(context);
+    final controller = context.read<PaymentController>();
+    final party = controller.party;
+    if (party == null) {
+      showError(
+        context,
+        l.paymentNeedPartyMessage(controller.type.partyTypeCode),
+      );
+      return;
+    }
+    if (controller.amount <= 0) {
+      showError(context, l.paymentNeedAmountMessage);
+      return;
+    }
+    if (controller.amount > controller.outstandingBalance) {
+      showError(
+        context,
+        l.paymentExceedsBalanceMessage(
+          formatMoney(controller.outstandingBalance, widget.shop),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+    final api = context.read<ShopApi>();
+    try {
+      await api.postPayment(
+        shopId: widget.shop.id,
+        partyId: party.id,
+        direction: controller.type.direction,
+        amount: controller.amount,
+        paymentMethodCode: 'cash',
+        clientOpId: _generateClientOpId(),
+      );
+      if (!mounted) return;
+      controller.clearAll();
+      _amountController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.paymentSavedToast)),
+      );
+      Navigator.of(context).maybePop();
+    } on PostgrestException catch (error, stackTrace) {
+      _handleSaveFailure(error, stackTrace, l.paymentPostFailedMessage);
+    } catch (error, stackTrace) {
+      _handleSaveFailure(error, stackTrace, l.paymentPostFailedMessage);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  void _handleSaveFailure(
+    Object error,
+    StackTrace stackTrace,
+    String message,
+  ) {
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan payment',
+        context: ErrorDescription('post_payment'),
+      ),
+    );
+    if (!mounted) return;
+    showError(context, message);
+  }
+
+  String _generateClientOpId() {
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final r = _random.nextInt(1 << 32);
+    return 'payment-$ts-$r';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final controller = context.watch<PaymentController>();
+    final type = controller.type;
+    final party = controller.party;
+    final theme = Theme.of(context);
+    final isCustomer = type == PaymentType.customer;
+    final pickButtonLabel = isCustomer
+        ? l.paymentPickCustomerButton
+        : l.paymentPickSupplierButton;
+    final balanceLabel = party == null
+        ? null
+        : (isCustomer
+              ? l.paymentCustomerOwesLabel(
+                  formatMoney(controller.outstandingBalance, widget.shop),
+                )
+              : l.paymentSupplierOwedLabel(
+                  formatMoney(controller.outstandingBalance, widget.shop),
+                ));
+    final canSave =
+        party != null &&
+        controller.amount > 0 &&
+        controller.amount <= controller.outstandingBalance &&
+        !_saving;
+
+    return Scaffold(
+      appBar: dukanAppBar(context, l.paymentTitle),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SegmentedButton<PaymentType>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: PaymentType.customer,
+                    label: Text(l.paymentTypeCustomer),
+                    icon: const Icon(Icons.person),
+                  ),
+                  ButtonSegment(
+                    value: PaymentType.supplier,
+                    label: Text(l.paymentTypeSupplier),
+                    icon: const Icon(Icons.local_shipping),
+                  ),
+                ],
+                selected: {type},
+                onSelectionChanged: _saving
+                    ? null
+                    : (set) => _onTypeChanged(set.first),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: party == null
+                    ? OutlinedButton.icon(
+                        onPressed: _saving ? null : _onPickParty,
+                        icon: const Icon(Icons.person_search),
+                        label: Text(pickButtonLabel),
+                      )
+                    : InputChip(
+                        avatar: const Icon(Icons.person),
+                        label: Text(
+                          party.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onPressed: _saving ? null : _onPickParty,
+                      ),
+              ),
+              if (balanceLabel != null) ...[
+                const SizedBox(height: 10),
+                Text(balanceLabel, style: theme.textTheme.bodyLarge),
+              ],
+              const SizedBox(height: 20),
+              TextField(
+                controller: _amountController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
+                onChanged: _onAmountChanged,
+                style: theme.textTheme.headlineSmall,
+                decoration: InputDecoration(
+                  labelText:
+                      '${widget.shop.currencySymbol} ${l.paymentAmountLabel}',
+                ),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: canSave ? _save : null,
+                  child: _saving
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                        )
+                      : Text(l.paymentSaveButton),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

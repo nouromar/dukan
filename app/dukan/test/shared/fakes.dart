@@ -236,6 +236,16 @@ class FakeShopApi implements ShopApi {
     String? notes,
   )?
   onPostReceive;
+  Future<String> Function(
+    String shopId,
+    String partyId,
+    String direction,
+    num amount,
+    String paymentMethodCode,
+    String clientOpId,
+    String? notes,
+  )?
+  onPostPayment;
   Future<List<ReferenceOption>> Function()? onListLanguages;
   Future<List<ReferenceOption>> Function()? onListCurrencies;
   Future<void> Function(
@@ -401,6 +411,30 @@ class FakeShopApi implements ShopApi {
       );
     }
     return 'fake-txn-${clientOpId.hashCode}';
+  }
+
+  @override
+  Future<String> postPayment({
+    required String shopId,
+    required String partyId,
+    required String direction,
+    required num amount,
+    required String paymentMethodCode,
+    required String clientOpId,
+    String? notes,
+  }) async {
+    if (onPostPayment != null) {
+      return onPostPayment!(
+        shopId,
+        partyId,
+        direction,
+        amount,
+        paymentMethodCode,
+        clientOpId,
+        notes,
+      );
+    }
+    return 'fake-payment-${clientOpId.hashCode}';
   }
 
   @override

@@ -4,10 +4,10 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
-import 'package:dukan/sale/customer_picker_sheet.dart';
+import 'package:dukan/shared/party_picker_sheet.dart';
 
-import '../shared/fakes.dart';
-import '../shared/wrap.dart';
+import 'fakes.dart';
+import 'wrap.dart';
 
 void main() {
   late FakeAuthController auth;
@@ -21,7 +21,7 @@ void main() {
   });
 
   /// Pump a scaffold whose body has a button that opens the picker sheet.
-  /// Returns a function that lets the test read what showCustomerPicker
+  /// Returns a function that lets the test read what showPartyPicker
   /// resolved to after the sheet was dismissed.
   Future<PartySearchResult? Function()> pumpHostAndOpenSheet(
     WidgetTester tester,
@@ -36,7 +36,7 @@ void main() {
               child: FilledButton(
                 onPressed: () async {
                   final result =
-                      await showCustomerPicker(context, shop: fakeShop());
+                      await showPartyPicker(context, shop: fakeShop(), typeCode: 'customer');
                   captured = result;
                 },
                 child: const Text('open'),
@@ -160,7 +160,7 @@ void main() {
           builder: (context) => Scaffold(
             body: Center(
               child: FilledButton(
-                onPressed: () => showCustomerPicker(context, shop: fakeShop()),
+                onPressed: () => showPartyPicker(context, shop: fakeShop(), typeCode: 'customer'),
                 child: const Text('open'),
               ),
             ),

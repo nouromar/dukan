@@ -595,6 +595,58 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not add. Check your internet and try again.';
 
   @override
+  String get paymentTypeCustomer => 'Customer';
+
+  @override
+  String get paymentTypeSupplier => 'Supplier';
+
+  @override
+  String get paymentPickCustomerButton => 'Pick customer';
+
+  @override
+  String get paymentPickSupplierButton => 'Pick supplier';
+
+  @override
+  String paymentCustomerOwesLabel(Object amount) {
+    return 'Owes you $amount';
+  }
+
+  @override
+  String paymentSupplierOwedLabel(Object amount) {
+    return 'You owe $amount';
+  }
+
+  @override
+  String get paymentAmountLabel => 'Amount paid';
+
+  @override
+  String get paymentSaveButton => 'SAVE';
+
+  @override
+  String get paymentSavedToast => 'Payment saved';
+
+  @override
+  String paymentNeedPartyMessage(String type) {
+    String _temp0 = intl.Intl.selectLogic(type, {
+      'supplier': 'supplier',
+      'other': 'customer',
+    });
+    return 'Pick a $_temp0 first.';
+  }
+
+  @override
+  String get paymentNeedAmountMessage => 'Enter an amount greater than zero.';
+
+  @override
+  String paymentExceedsBalanceMessage(Object amount) {
+    return 'Amount cannot exceed the outstanding balance ($amount).';
+  }
+
+  @override
+  String get paymentPostFailedMessage =>
+      'Could not save the payment. Check your internet and try again.';
+
+  @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
     return '$quantity × $unitPrice = $subtotal';
   }

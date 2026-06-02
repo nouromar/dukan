@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/sale/cart_controller.dart';
-import 'package:dukan/sale/customer_picker_sheet.dart';
+import 'package:dukan/shared/party_picker_sheet.dart';
 import 'package:dukan/sale/line_editor_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -202,7 +202,11 @@ class _SaleScreenState extends State<SaleScreen> {
   }
 
   Future<void> _pickCustomer() async {
-    final picked = await showCustomerPicker(context, shop: widget.shop);
+    final picked = await showPartyPicker(
+      context,
+      shop: widget.shop,
+      typeCode: 'customer',
+    );
     if (picked != null && mounted) {
       context.read<CartController>().setCustomer(picked);
     }

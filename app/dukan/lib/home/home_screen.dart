@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/payment/payment_screen.dart';
 import 'package:dukan/prototype/expense_screen.dart';
-import 'package:dukan/prototype/payment_screen.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
@@ -119,7 +119,14 @@ class HomeScreen extends StatelessWidget {
                         HomeAction(
                           icon: Icons.payments,
                           label: l.payment,
-                          onTap: () => push(context, const PaymentScreen()),
+                          onTap: shop == null
+                              ? () {}
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        PaymentScreen(shop: shop!),
+                                  ),
+                                ),
                         ),
                         HomeAction(
                           icon: Icons.receipt_long,

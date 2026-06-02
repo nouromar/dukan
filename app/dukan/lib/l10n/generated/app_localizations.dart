@@ -1118,6 +1118,84 @@ abstract class AppLocalizations {
   /// **'Could not add. Check your internet and try again.'**
   String get partyNewSaveFailedMessage;
 
+  /// No description provided for @paymentTypeCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get paymentTypeCustomer;
+
+  /// No description provided for @paymentTypeSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier'**
+  String get paymentTypeSupplier;
+
+  /// No description provided for @paymentPickCustomerButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick customer'**
+  String get paymentPickCustomerButton;
+
+  /// No description provided for @paymentPickSupplierButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick supplier'**
+  String get paymentPickSupplierButton;
+
+  /// No description provided for @paymentCustomerOwesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes you {amount}'**
+  String paymentCustomerOwesLabel(Object amount);
+
+  /// No description provided for @paymentSupplierOwedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe {amount}'**
+  String paymentSupplierOwedLabel(Object amount);
+
+  /// No description provided for @paymentAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount paid'**
+  String get paymentAmountLabel;
+
+  /// No description provided for @paymentSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get paymentSaveButton;
+
+  /// No description provided for @paymentSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment saved'**
+  String get paymentSavedToast;
+
+  /// No description provided for @paymentNeedPartyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a {type, select, supplier{supplier} other{customer}} first.'**
+  String paymentNeedPartyMessage(String type);
+
+  /// No description provided for @paymentNeedAmountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount greater than zero.'**
+  String get paymentNeedAmountMessage;
+
+  /// No description provided for @paymentExceedsBalanceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount cannot exceed the outstanding balance ({amount}).'**
+  String paymentExceedsBalanceMessage(Object amount);
+
+  /// No description provided for @paymentPostFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the payment. Check your internet and try again.'**
+  String get paymentPostFailedMessage;
+
   /// No description provided for @cartLineSubtotal.
   ///
   /// In en, this message translates to:
