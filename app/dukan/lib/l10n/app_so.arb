@@ -190,9 +190,10 @@
   "receiveLoadFailedMessage": "Walxaha lama soo dejin karin. Hubi internetka oo isku day mar kale.",
   "receiveEmptyMessage": "Taabo walax si aad u bilowdo bono. Raadi haddii aysan ku jirin shabakada.",
   "receiveLineQuantityLabel": "Tirada",
-  "receiveLineCostLabel": "Qiimaha {unit}",
+  "receiveLinePerUnitLabel": "Mid kasta {unit}",
+  "receiveLineTotalLabel": "Wadarta",
   "receiveAddLineButton": "KU DAR XARIIQ",
-  "receiveLineSubtotal": "{quantity} × {unitCost} = {subtotal}",
+  "receiveLineSubtotal": "{quantity} {unit} · {total}",
   "receiveLineRemoveTooltip": "Ka saar {name}",
   "receiveLinesSummary": "{count, plural, =0{Wax xariiq ah ma jiraan} =1{1 xariiq} other{{count} xariiqyo}} · {total}",
   "receiveLinesClearAllButton": "Tirtir dhammaan",
@@ -200,12 +201,10 @@
   "receiveLinesClearConfirmBody": "Tan ma noqonayso bono hore loo keydiyay.",
   "receiveLinesClearConfirmYes": "TIRTIR",
   "receiveLinesClearConfirmNo": "JOOJI",
-  "receivePaidNowLabel": "Hadda la bixiyay",
-  "receiveCreditLabel": "Deyn",
   "receiveSaveButton": "KEYDI",
-  "receiveSavedToast": "Bono waa la keydiyay",
+  "receiveSavedToast": "Bono waa la keydiyay (deyn)",
   "receivePostFailedMessage": "Bonadu lama keydin karin. Hubi internetka oo isku day mar kale.",
   "receiveNeedSupplierMessage": "Dooro keene ka hor inta aadan keydin.",
   "receiveNeedLinesMessage": "Marka hore ku dar ugu yaraan hal xariiq.",
-  "receivePaidExceedsTotalMessage": "Lacagta la bixiyay kama badnaan karto wadarta bono."
+  "receiveInvalidNumberMessage": "Geli lambar wanaagsan"
 }

@@ -58,6 +58,8 @@ class ItemSearchResult {
     required this.name,
     required this.baseUnitCode,
     required this.baseUnitLabel,
+    required this.receiveUnitCode,
+    required this.receiveUnitLabel,
     required this.salePrice,
     required this.lastCost,
     required this.currentStock,
@@ -71,6 +73,8 @@ class ItemSearchResult {
       name: json['name'] as String,
       baseUnitCode: json['base_unit_code'] as String,
       baseUnitLabel: json['base_unit_label'] as String,
+      receiveUnitCode: json['receive_unit_code'] as String,
+      receiveUnitLabel: json['receive_unit_label'] as String,
       salePrice: (json['sale_price'] as num?)?.toDouble(),
       lastCost: (json['last_cost'] as num?)?.toDouble(),
       currentStock: (json['current_stock'] as num?)?.toDouble(),
@@ -83,9 +87,15 @@ class ItemSearchResult {
   final String name;
   final String baseUnitCode;
   final String baseUnitLabel;
+  /// The unit the supplier delivers in (e.g., "bag" for a 25kg bag of
+  /// rice whose base_unit is "kg"). Drives the Receive line form's unit
+  /// display and the unit_id passed to post_receive — passing the base
+  /// unit's id would cause stock to be recorded in base units.
+  final String receiveUnitCode;
+  final String receiveUnitLabel;
   final double? salePrice;
-  /// Supplier-specific last unit cost. Populated only when the search
-  /// was called with a party_id on the Receive screen; null otherwise.
+  /// Supplier-specific last unit cost (per receive unit). Populated only
+  /// when the search was called with a party_id on the Receive screen.
   final double? lastCost;
   final double? currentStock;
   final bool isActivated;
@@ -140,27 +150,29 @@ class SaleLine {
   };
 }
 
-/// post_receive line payload. v1 only sends per-unit cost; the line_total
-/// alternative the RPC also accepts is reserved for future bono-OCR
-/// flows that surface a line total without a unit cost.
+/// post_receive line payload. v1 sends `line_total` (not `unit_cost`)
+/// because the cashier types what's on the bono — usually a line total
+/// like "5 bags rice $120" — and we want the stored bono total to match
+/// the paper exactly. The RPC computes the per-unit cost from
+/// line_total/qty and stores it on transaction_line.unit_amount.
 class ReceiveLinePayload {
   const ReceiveLinePayload({
     required this.itemId,
     required this.quantity,
     required this.unitId,
-    required this.unitCost,
+    required this.lineTotal,
   });
 
   final String itemId;
   final num quantity;
   final String unitId;
-  final num unitCost;
+  final num lineTotal;
 
   Map<String, dynamic> toJson() => {
     'item_id': itemId,
     'quantity': quantity,
     'unit_id': unitId,
-    'unit_cost': unitCost,
+    'line_total': lineTotal,
   };
 }
 

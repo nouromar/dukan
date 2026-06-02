@@ -1,6 +1,5 @@
-// The bono-entry workhorse: pick an item, set qty + cost, ADD LINE,
-// repeat. The supplier is already in ReceiveController from the picker
-// (we pushReplacement here once a supplier is chosen).
+// The bono-entry workhorse: pick an item, set qty + total, ADD LINE,
+// repeat. The supplier is already in ReceiveController from the picker.
 //
 // Layout, top to bottom:
 //   * AppBar — "Receive from {supplier}" + a "change supplier" icon
@@ -8,15 +7,16 @@
 //   * Favorites grid — search_items(screen='receive', p_party_id) so
 //     items this supplier has provided in past bonos rank to the top
 //     and the inline form can pre-fill cost from each tile's last_cost
-//   * Selected-item form — qty stepper + cost field + ADD LINE
-//   * Lines strip — expandable summary, just like the Sale cart but
-//     with cost/subtotal instead of price/subtotal
-//   * Paid now / credit + SAVE
+//   * Selected-item form — two-way bound (Per <unit>, Total) money
+//     fields. Cashier types whichever matches the bono; the other
+//     auto-fills. Qty changes recompute whichever field was NOT the
+//     last one typed.
+//   * Lines strip — expandable summary, like the Sale cart
+//   * SAVE — always creates a fully-credit receive (cash payment is a
+//     separate Payment-screen step; see decisions.md TODO)
 //
-// Tap routing on a tile is simpler than Sale: there's no "fast-add"
-// path. Every tile tap loads the inline form so the cashier reviews
-// qty + cost before committing. Bonos vary line-by-line in a way sales
-// don't (mixed units, partial cases, variable per-unit cost).
+// Tap routing on a tile loads the inline form. Unlike Sale, there is no
+// fast-add path — bonos vary line-by-line in a way sales don't.
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -45,9 +45,6 @@ class ReceiveScreen extends StatefulWidget {
 
 class _ReceiveScreenState extends State<ReceiveScreen> {
   final _searchController = TextEditingController();
-  final _qtyController = TextEditingController(text: '1');
-  final _costController = TextEditingController();
-  final _paidController = TextEditingController(text: '0');
   late Future<List<ItemSearchResult>> _resultsFuture;
   String _activeQuery = '';
   Timer? _debounce;
@@ -60,12 +57,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   @override
   void initState() {
     super.initState();
-    // Resume case: auto-expand the lines strip so the cashier sees the
-    // existing bono at a glance.
     _linesExpanded = context.read<ReceiveController>().isNotEmpty;
-    _paidController.text = _formatNumForField(
-      context.read<ReceiveController>().paidAmount,
-    );
   }
 
   @override
@@ -81,9 +73,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   @override
   void dispose() {
     _searchController.dispose();
-    _qtyController.dispose();
-    _costController.dispose();
-    _paidController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -111,23 +100,12 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   }
 
   void _onTapTile(ItemSearchResult item) {
-    // Pre-fill qty=1 and cost from the supplier-specific last cost if we
-    // have one. Otherwise leave cost blank so the cashier types it.
-    setState(() {
-      _selectedItem = item;
-      _qtyController.text = '1';
-      _costController.text = item.lastCost == null
-          ? ''
-          : _formatNumForField(item.lastCost!);
-    });
+    setState(() => _selectedItem = item);
   }
 
   void _onChangeSupplier() {
     final api = context.read<ShopApi>();
     final receive = context.read<ReceiveController>();
-    // Same provider re-export pattern: providers live in AuthBootstrap
-    // (a child of MaterialApp), so routes pushed through the root
-    // Navigator have to carry them across.
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => MultiProvider(
@@ -141,29 +119,16 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     );
   }
 
-  Future<void> _onAddLine() async {
-    final l = tr(context);
+  void _onAddLine(int quantity, num lineTotal) {
     final item = _selectedItem;
     if (item == null) return;
-    final qty = int.tryParse(_qtyController.text.trim());
-    final cost = num.tryParse(_costController.text.trim());
-    if (qty == null || qty < 1) {
-      showError(context, l.chooseItemWarning);
-      return;
-    }
-    if (cost == null || cost < 0) {
-      showError(context, l.chooseItemWarning);
-      return;
-    }
     context.read<ReceiveController>().addOrReplaceLine(
       item,
-      quantity: qty,
-      unitCost: cost,
+      quantity: quantity,
+      lineTotal: lineTotal,
     );
     setState(() {
       _selectedItem = null;
-      _qtyController.text = '1';
-      _costController.clear();
       _linesExpanded = true;
     });
   }
@@ -199,7 +164,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     );
     if (ok == true && mounted) {
       controller.clearLines();
-      _paidController.text = '0';
       setState(() => _linesExpanded = false);
     }
   }
@@ -208,11 +172,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final controller = context.read<ReceiveController>();
     if (controller.isEmpty) return;
     setState(() => _linesExpanded = !_linesExpanded);
-  }
-
-  void _onPaidChanged(String value) {
-    final parsed = num.tryParse(value.trim()) ?? 0;
-    context.read<ReceiveController>().setPaidAmount(parsed);
   }
 
   Future<void> _save() async {
@@ -227,21 +186,15 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       showError(context, l.receiveNeedLinesMessage);
       return;
     }
-    if (controller.paidAmount > controller.bonoTotal) {
-      showError(context, l.receivePaidExceedsTotalMessage);
-      return;
-    }
 
     setState(() => _saving = true);
     final api = context.read<ShopApi>();
     final snapshot = controller.snapshot();
-    final paid = snapshot.paidAmount;
 
     // Optimistic clear so the screen returns to fresh state immediately.
-    // Lines + paid wipe; supplier stays so the cashier could resume a
-    // second bono from the same supplier without re-picking.
+    // Lines wipe; supplier stays so the cashier could resume a second
+    // bono from the same supplier without re-picking.
     controller.clearLines();
-    _paidController.text = '0';
     setState(() => _linesExpanded = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l.receiveSavedToast)),
@@ -256,16 +209,18 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           shopId: widget.shop.id,
           catalogItemId: line.catalogItemId!,
         );
-        final unitId = units[line.baseUnitCode];
+        // Crucially we pass the RECEIVE unit's id, not the base unit's.
+        // A 5-bag rice line otherwise gets recorded as 5 kg of stock.
+        final unitId = units[line.receiveUnitCode];
         if (unitId == null) {
-          throw StateError('Unknown unit ${line.baseUnitCode}');
+          throw StateError('Unknown unit ${line.receiveUnitCode}');
         }
         lines.add(
           ReceiveLinePayload(
             itemId: itemId,
             quantity: line.quantity,
             unitId: unitId,
-            unitCost: line.unitCost,
+            lineTotal: line.lineTotal,
           ),
         );
       }
@@ -274,13 +229,12 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         shopId: widget.shop.id,
         partyId: supplier.id,
         lines: lines,
-        paidAmount: paid,
-        paymentMethodCode: paid > 0 ? 'cash' : null,
+        // Always fully credit; cash payment is a separate Payment step.
+        paidAmount: 0,
+        paymentMethodCode: null,
         clientOpId: _generateClientOpId(),
       );
 
-      // Successful post — fully clear the controller (supplier too) so
-      // the next Receive launch starts from a clean Home → picker flow.
       if (mounted) {
         controller.clearAll();
         Navigator.of(context).maybePop();
@@ -310,7 +264,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     );
     if (!mounted) return;
     context.read<ReceiveController>().restore(snapshot);
-    _paidController.text = _formatNumForField(snapshot.paidAmount);
     showError(context, message);
   }
 
@@ -415,9 +368,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
             ),
             if (_selectedItem != null)
               _LineEntryForm(
+                key: ValueKey(
+                  _selectedItem!.itemId ?? _selectedItem!.catalogItemId,
+                ),
                 item: _selectedItem!,
-                qtyController: _qtyController,
-                costController: _costController,
                 saving: _saving,
                 onAddLine: _onAddLine,
                 onCancel: () => setState(() => _selectedItem = null),
@@ -426,14 +380,11 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
               lines: controller.lines,
               lineCount: controller.lineCount,
               bonoTotal: controller.bonoTotal,
-              credit: controller.credit,
               expanded: _linesExpanded,
               saving: _saving,
-              paidController: _paidController,
               onToggleExpand: _onToggleLinesExpand,
               onRemoveLine: _onRemoveLine,
               onClearAll: _onConfirmClearLines,
-              onPaidChanged: _onPaidChanged,
               onSave: _save,
             ),
           ],
@@ -482,7 +433,7 @@ class _ReceiveItemTile extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${item.baseUnitLabel} · $costText',
+                '${item.receiveUnitLabel} · $costText',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -498,31 +449,154 @@ class _ReceiveItemTile extends StatelessWidget {
   }
 }
 
-class _LineEntryForm extends StatelessWidget {
+// Two-way bound per-unit + total form. Cashier types into whichever
+// field matches their bono; the other recomputes. On qty change, the
+// last-typed money field stays authoritative and the other recomputes.
+class _LineEntryForm extends StatefulWidget {
   const _LineEntryForm({
     required this.item,
-    required this.qtyController,
-    required this.costController,
     required this.saving,
     required this.onAddLine,
     required this.onCancel,
+    super.key,
   });
 
   final ItemSearchResult item;
-  final TextEditingController qtyController;
-  final TextEditingController costController;
   final bool saving;
-  final VoidCallback onAddLine;
+  final void Function(int quantity, num lineTotal) onAddLine;
   final VoidCallback onCancel;
+
+  @override
+  State<_LineEntryForm> createState() => _LineEntryFormState();
+}
+
+enum _LastTypedMoney { perUnit, total }
+
+class _LineEntryFormState extends State<_LineEntryForm> {
+  late final TextEditingController _qtyController;
+  late final TextEditingController _perUnitController;
+  late final TextEditingController _totalController;
+  _LastTypedMoney _lastTyped = _LastTypedMoney.perUnit;
+  // Guard so programmatic controller updates don't trigger our listeners
+  // and cause feedback loops.
+  bool _suppressNotify = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final perUnit = widget.item.lastCost ?? 0;
+    _qtyController = TextEditingController(text: '1');
+    _perUnitController = TextEditingController(
+      text: perUnit > 0 ? _formatField(perUnit) : '',
+    );
+    _totalController = TextEditingController(
+      text: perUnit > 0 ? _formatField(perUnit) : '',
+    );
+    _qtyController.addListener(_onQtyChanged);
+    _perUnitController.addListener(_onPerUnitChanged);
+    _totalController.addListener(_onTotalChanged);
+  }
+
+  @override
+  void dispose() {
+    _qtyController.removeListener(_onQtyChanged);
+    _perUnitController.removeListener(_onPerUnitChanged);
+    _totalController.removeListener(_onTotalChanged);
+    _qtyController.dispose();
+    _perUnitController.dispose();
+    _totalController.dispose();
+    super.dispose();
+  }
+
+  num? _parse(String s) {
+    final t = s.trim();
+    if (t.isEmpty) return null;
+    final v = num.tryParse(t);
+    if (v == null || v < 0) return null;
+    return v;
+  }
+
+  String _formatField(num value) {
+    if (value == value.roundToDouble()) return value.toInt().toString();
+    return value.toStringAsFixed(2);
+  }
+
+  void _setProgrammatic(TextEditingController c, String text) {
+    if (c.text == text) return;
+    _suppressNotify = true;
+    c.text = text;
+    _suppressNotify = false;
+  }
+
+  void _onQtyChanged() {
+    if (_suppressNotify) return;
+    final qty = int.tryParse(_qtyController.text.trim());
+    if (qty == null || qty < 1) {
+      setState(() {});
+      return;
+    }
+    // Last-typed field stays authoritative; recompute the other.
+    if (_lastTyped == _LastTypedMoney.perUnit) {
+      final perUnit = _parse(_perUnitController.text);
+      if (perUnit != null) {
+        _setProgrammatic(_totalController, _formatField(perUnit * qty));
+      }
+    } else {
+      final total = _parse(_totalController.text);
+      if (total != null && qty > 0) {
+        _setProgrammatic(_perUnitController, _formatField(total / qty));
+      }
+    }
+    setState(() {});
+  }
+
+  void _onPerUnitChanged() {
+    if (_suppressNotify) return;
+    _lastTyped = _LastTypedMoney.perUnit;
+    final qty = int.tryParse(_qtyController.text.trim());
+    final perUnit = _parse(_perUnitController.text);
+    if (qty != null && qty > 0 && perUnit != null) {
+      _setProgrammatic(_totalController, _formatField(perUnit * qty));
+    } else if (perUnit == null) {
+      _setProgrammatic(_totalController, '');
+    }
+    setState(() {});
+  }
+
+  void _onTotalChanged() {
+    if (_suppressNotify) return;
+    _lastTyped = _LastTypedMoney.total;
+    final qty = int.tryParse(_qtyController.text.trim());
+    final total = _parse(_totalController.text);
+    if (qty != null && qty > 0 && total != null) {
+      _setProgrammatic(_perUnitController, _formatField(total / qty));
+    } else if (total == null) {
+      _setProgrammatic(_perUnitController, '');
+    }
+    setState(() {});
+  }
+
+  bool get _canAdd {
+    final qty = int.tryParse(_qtyController.text.trim());
+    final total = _parse(_totalController.text);
+    return qty != null && qty >= 1 && total != null && total > 0;
+  }
+
+  void _onAdd() {
+    final qty = int.tryParse(_qtyController.text.trim())!;
+    final total = _parse(_totalController.text)!;
+    widget.onAddLine(qty, total);
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
     final theme = Theme.of(context);
+    final unit = widget.item.receiveUnitLabel;
     return Material(
       color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -531,7 +605,7 @@ class _LineEntryForm extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    item.name,
+                    widget.item.name,
                     style: theme.textTheme.titleSmall,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -539,7 +613,7 @@ class _LineEntryForm extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close, size: 20),
-                  onPressed: saving ? null : onCancel,
+                  onPressed: widget.saving ? null : widget.onCancel,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
@@ -547,25 +621,30 @@ class _LineEntryForm extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 80,
                   child: TextField(
-                    controller: qtyController,
+                    controller: _qtyController,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
                       labelText: l.receiveLineQuantityLabel,
                       isDense: true,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
+                Text(unit, style: theme.textTheme.bodyLarge),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
                 Expanded(
-                  flex: 2,
                   child: TextField(
-                    controller: costController,
+                    controller: _perUnitController,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -573,7 +652,24 @@ class _LineEntryForm extends StatelessWidget {
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
                     decoration: InputDecoration(
-                      labelText: l.receiveLineCostLabel(item.baseUnitLabel),
+                      labelText: l.receiveLinePerUnitLabel(unit),
+                      prefixText: '\$ ',
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _totalController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: l.receiveLineTotalLabel,
                       prefixText: '\$ ',
                       isDense: true,
                     ),
@@ -581,11 +677,11 @@ class _LineEntryForm extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: saving ? null : onAddLine,
+                onPressed: widget.saving || !_canAdd ? null : _onAdd,
                 child: Text(l.receiveAddLineButton),
               ),
             ),
@@ -601,28 +697,22 @@ class _ReceiveLinesStrip extends StatelessWidget {
     required this.lines,
     required this.lineCount,
     required this.bonoTotal,
-    required this.credit,
     required this.expanded,
     required this.saving,
-    required this.paidController,
     required this.onToggleExpand,
     required this.onRemoveLine,
     required this.onClearAll,
-    required this.onPaidChanged,
     required this.onSave,
   });
 
   final Map<String, ReceiveLine> lines;
   final int lineCount;
   final double bonoTotal;
-  final double credit;
   final bool expanded;
   final bool saving;
-  final TextEditingController paidController;
   final VoidCallback onToggleExpand;
   final void Function(String key) onRemoveLine;
   final VoidCallback onClearAll;
-  final ValueChanged<String> onPaidChanged;
   final VoidCallback onSave;
 
   @override
@@ -696,33 +786,6 @@ class _ReceiveLinesStrip extends StatelessWidget {
                       ),
                     )
                   : const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: paidController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                    ],
-                    onChanged: onPaidChanged,
-                    decoration: InputDecoration(
-                      labelText: l.receivePaidNowLabel,
-                      prefixText: '\$ ',
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '${l.receiveCreditLabel}: ${_formatMoney(credit)}',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ],
             ),
             const SizedBox(height: 10),
             SizedBox(
@@ -809,8 +872,8 @@ class _ReceiveLineTile extends StatelessWidget {
     final l = tr(context);
     final subtitle = l.receiveLineSubtotal(
       '${line.quantity}',
-      _formatMoney(line.unitCost),
-      _formatMoney(line.subtotal),
+      line.receiveUnitLabel,
+      _formatMoney(line.lineTotal),
     );
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -840,12 +903,4 @@ String _formatMoney(num value) {
     return '\$${v.toStringAsFixed(0)}';
   }
   return '\$${v.toStringAsFixed(2)}';
-}
-
-String _formatNumForField(num value) {
-  final v = value.toDouble();
-  if (v == v.roundToDouble()) {
-    return v.toInt().toString();
-  }
-  return v.toString();
 }

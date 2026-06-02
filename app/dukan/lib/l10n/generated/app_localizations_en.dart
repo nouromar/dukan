@@ -674,20 +674,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveLineQuantityLabel => 'Quantity';
 
   @override
-  String receiveLineCostLabel(Object unit) {
-    return 'Cost per $unit';
+  String receiveLinePerUnitLabel(Object unit) {
+    return 'Per $unit';
   }
+
+  @override
+  String get receiveLineTotalLabel => 'Total';
 
   @override
   String get receiveAddLineButton => 'ADD LINE';
 
   @override
-  String receiveLineSubtotal(
-    Object quantity,
-    Object subtotal,
-    Object unitCost,
-  ) {
-    return '$quantity × $unitCost = $subtotal';
+  String receiveLineSubtotal(Object quantity, Object total, Object unit) {
+    return '$quantity $unit · $total';
   }
 
   @override
@@ -731,16 +730,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveLinesClearConfirmNo => 'CANCEL';
 
   @override
-  String get receivePaidNowLabel => 'Paid now';
-
-  @override
-  String get receiveCreditLabel => 'Credit';
-
-  @override
   String get receiveSaveButton => 'SAVE';
 
   @override
-  String get receiveSavedToast => 'Bono saved';
+  String get receiveSavedToast => 'Bono saved (on credit)';
 
   @override
   String get receivePostFailedMessage =>
@@ -753,6 +746,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveNeedLinesMessage => 'Add at least one line before saving.';
 
   @override
-  String get receivePaidExceedsTotalMessage =>
-      'Paid amount cannot exceed the bono total.';
+  String get receiveInvalidNumberMessage => 'Enter a positive number';
 }

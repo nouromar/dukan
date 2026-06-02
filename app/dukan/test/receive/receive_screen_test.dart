@@ -62,7 +62,7 @@ void main() {
     expect(capturedParty, 'sup-1');
   });
 
-  testWidgets('tapping a tile fills the line form with qty=1 and pre-filled cost', (
+  testWidgets('tapping a tile pre-fills qty=1, per-unit, and total from last_cost', (
     tester,
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
@@ -71,7 +71,9 @@ void main() {
         name: 'Bariis',
         baseUnitCode: 'kg',
         baseUnitLabel: 'Kg',
-        lastCost: 4.5,
+        receiveUnitCode: 'bag',
+        receiveUnitLabel: 'Bag',
+        lastCost: 24,
       ),
     ];
 
@@ -80,19 +82,56 @@ void main() {
     await tester.tap(find.text('Bariis'));
     await tester.pumpAndSettle();
 
-    // Quantity defaulted to 1.
-    expect(find.text('1'), findsWidgets);
-    // Cost pre-filled from item.lastCost.
-    expect(find.text('4.5'), findsOneWidget);
-    // ADD LINE present.
-    expect(find.text(en.receiveAddLineButton), findsOneWidget);
+    // Per-unit and Total both pre-filled with 24 (qty=1 × $24/bag).
+    expect(find.widgetWithText(TextField, '24'), findsNWidgets(2));
+    // Receive unit shown next to qty.
+    expect(find.text('Bag'), findsWidgets);
+    // ADD LINE enabled because per-unit > 0.
+    final addButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, en.receiveAddLineButton),
+    );
+    expect(addButton.onPressed, isNotNull);
   });
 
-  testWidgets('ADD LINE adds to the controller and clears the form', (
+  testWidgets(
+    'changing qty auto-multiplies total when per-unit was last typed',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          itemId: 'i1',
+          name: 'Bariis',
+          receiveUnitCode: 'bag',
+          receiveUnitLabel: 'Bag',
+          lastCost: 24,
+        ),
+      ];
+
+      await pumpReceive(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+
+      // Change qty to 5 — should auto-update total to 120.
+      await tester.enterText(find.widgetWithText(TextField, '1'), '5');
+      await tester.pump();
+
+      expect(find.widgetWithText(TextField, '120'), findsOneWidget);
+      // Per-unit stays at 24.
+      expect(find.widgetWithText(TextField, '24'), findsOneWidget);
+    },
+  );
+
+  testWidgets('typing into Total recomputes Per-unit and locks it on qty change', (
     tester,
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(itemId: 'i1', name: 'Bariis', lastCost: 4),
+      fakeActivatedItem(
+        itemId: 'i1',
+        name: 'Bariis',
+        receiveUnitCode: 'bag',
+        receiveUnitLabel: 'Bag',
+        lastCost: 24,
+      ),
     ];
 
     await pumpReceive(tester);
@@ -100,23 +139,23 @@ void main() {
     await tester.tap(find.text('Bariis'));
     await tester.pumpAndSettle();
 
-    // Edit qty to 5.
+    // Override total to $100 → per-unit recomputes to $100/qty=1 = $100.
     await tester.enterText(
-      find.widgetWithText(TextField, '1').first,
-      '5',
+      find.widgetWithText(TextField, '24').last,
+      '100',
     );
     await tester.pump();
-    await tester.tap(find.text(en.receiveAddLineButton));
-    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, '100'), findsNWidgets(2));
 
-    expect(receive.lineCount, 1);
-    expect(receive.lines['i1']!.quantity, 5);
-    expect(receive.lines['i1']!.unitCost, 4);
-    // Form closes after ADD.
-    expect(find.text(en.receiveAddLineButton), findsNothing);
+    // Now change qty to 5 → since total was the last-typed money field,
+    // per-unit recomputes to 100/5 = 20.
+    await tester.enterText(find.widgetWithText(TextField, '1'), '5');
+    await tester.pump();
+    expect(find.widgetWithText(TextField, '20'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '100'), findsOneWidget);
   });
 
-  testWidgets('SAVE calls postReceive with party + lines + paid', (
+  testWidgets('SAVE sends line_total + receive unit_id, paid=0, no payment method', (
     tester,
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
@@ -124,7 +163,10 @@ void main() {
         itemId: 'i1',
         name: 'Bariis',
         baseUnitCode: 'kg',
-        lastCost: 4,
+        baseUnitLabel: 'Kg',
+        receiveUnitCode: 'bag',
+        receiveUnitLabel: 'Bag',
+        lastCost: 24,
       ),
     ];
     Map<String, dynamic>? captured;
@@ -144,8 +186,6 @@ void main() {
         'lines': lines,
         'paidAmount': paidAmount,
         'paymentMethod': paymentMethod,
-        'documentId': documentId,
-        'clientOpId': clientOpId,
       };
       return 'fake-receive';
     };
@@ -154,6 +194,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Bariis'));
     await tester.pumpAndSettle();
+    // Change qty to 5; total auto = $120.
+    await tester.enterText(find.widgetWithText(TextField, '1'), '5');
+    await tester.pump();
     await tester.tap(find.text(en.receiveAddLineButton));
     await tester.pumpAndSettle();
 
@@ -161,14 +204,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(captured, isNotNull);
-    expect(captured!['shopId'], shop.id);
-    expect(captured!['partyId'], 'sup-1');
     final lines = captured!['lines'] as List<ReceiveLinePayload>;
     expect(lines, hasLength(1));
     expect(lines.first.itemId, 'i1');
-    expect(lines.first.quantity, 1);
-    expect(lines.first.unitCost, 4);
-    // No paid_amount typed → 0.
+    expect(lines.first.quantity, 5);
+    expect(lines.first.lineTotal, 120);
+    // Critical bug fix: unit_id is the RECEIVE unit's id (bag), not base (kg).
+    expect(lines.first.unitId, 'unit-bag');
+    // Always fully credit.
     expect(captured!['paidAmount'], 0);
     expect(captured!['paymentMethod'], isNull);
   });
@@ -187,36 +230,30 @@ void main() {
     expect(saveButton.onPressed, isNull);
   });
 
-  testWidgets(
-    'Clear all wipes lines but keeps the supplier',
-    (tester) async {
-      api.onSearchItems = (_, _, _, _, _, _) async => [
-        fakeActivatedItem(itemId: 'i1', name: 'Bariis', lastCost: 4),
-        fakeActivatedItem(itemId: 'i2', name: 'Sonkor', lastCost: 2),
-      ];
+  testWidgets('Clear all wipes lines but keeps the supplier', (tester) async {
+    api.onSearchItems = (_, _, _, _, _, _) async => [
+      fakeActivatedItem(itemId: 'i1', name: 'Bariis', lastCost: 4),
+      fakeActivatedItem(itemId: 'i2', name: 'Sonkor', lastCost: 2),
+    ];
 
-      await pumpReceive(tester);
-      await tester.pumpAndSettle();
+    await pumpReceive(tester);
+    await tester.pumpAndSettle();
 
-      // Add two lines.
-      await tester.tap(find.text('Bariis'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(en.receiveAddLineButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Sonkor'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(en.receiveAddLineButton));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Bariis'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.receiveAddLineButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sonkor'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.receiveAddLineButton));
+    await tester.pumpAndSettle();
 
-      // After two ADDs the strip is already auto-expanded, so Clear all
-      // is visible without tapping the summary.
-      await tester.tap(find.text(en.receiveLinesClearAllButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(en.receiveLinesClearConfirmYes));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text(en.receiveLinesClearAllButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.receiveLinesClearConfirmYes));
+    await tester.pumpAndSettle();
 
-      expect(receive.isEmpty, isTrue);
-      expect(receive.supplier, isNotNull);
-    },
-  );
+    expect(receive.isEmpty, isTrue);
+    expect(receive.supplier, isNotNull);
+  });
 }

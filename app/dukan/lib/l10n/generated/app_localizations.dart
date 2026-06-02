@@ -1238,11 +1238,17 @@ abstract class AppLocalizations {
   /// **'Quantity'**
   String get receiveLineQuantityLabel;
 
-  /// No description provided for @receiveLineCostLabel.
+  /// No description provided for @receiveLinePerUnitLabel.
   ///
   /// In en, this message translates to:
-  /// **'Cost per {unit}'**
-  String receiveLineCostLabel(Object unit);
+  /// **'Per {unit}'**
+  String receiveLinePerUnitLabel(Object unit);
+
+  /// No description provided for @receiveLineTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get receiveLineTotalLabel;
 
   /// No description provided for @receiveAddLineButton.
   ///
@@ -1253,8 +1259,8 @@ abstract class AppLocalizations {
   /// No description provided for @receiveLineSubtotal.
   ///
   /// In en, this message translates to:
-  /// **'{quantity} × {unitCost} = {subtotal}'**
-  String receiveLineSubtotal(Object quantity, Object subtotal, Object unitCost);
+  /// **'{quantity} {unit} · {total}'**
+  String receiveLineSubtotal(Object quantity, Object total, Object unit);
 
   /// No description provided for @receiveLineRemoveTooltip.
   ///
@@ -1298,18 +1304,6 @@ abstract class AppLocalizations {
   /// **'CANCEL'**
   String get receiveLinesClearConfirmNo;
 
-  /// No description provided for @receivePaidNowLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Paid now'**
-  String get receivePaidNowLabel;
-
-  /// No description provided for @receiveCreditLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Credit'**
-  String get receiveCreditLabel;
-
   /// No description provided for @receiveSaveButton.
   ///
   /// In en, this message translates to:
@@ -1319,7 +1313,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveSavedToast.
   ///
   /// In en, this message translates to:
-  /// **'Bono saved'**
+  /// **'Bono saved (on credit)'**
   String get receiveSavedToast;
 
   /// No description provided for @receivePostFailedMessage.
@@ -1340,11 +1334,11 @@ abstract class AppLocalizations {
   /// **'Add at least one line before saving.'**
   String get receiveNeedLinesMessage;
 
-  /// No description provided for @receivePaidExceedsTotalMessage.
+  /// No description provided for @receiveInvalidNumberMessage.
   ///
   /// In en, this message translates to:
-  /// **'Paid amount cannot exceed the bono total.'**
-  String get receivePaidExceedsTotalMessage;
+  /// **'Enter a positive number'**
+  String get receiveInvalidNumberMessage;
 }
 
 class _AppLocalizationsDelegate

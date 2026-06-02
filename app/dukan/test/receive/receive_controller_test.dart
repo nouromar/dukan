@@ -11,9 +11,7 @@ void main() {
       expect(c.isEmpty, isTrue);
       expect(c.lineCount, 0);
       expect(c.bonoTotal, 0);
-      expect(c.credit, 0);
       expect(c.supplier, isNull);
-      expect(c.paidAmount, 0);
     });
 
     test('setSupplier notifies once per change', () {
@@ -21,28 +19,46 @@ void main() {
       var notified = 0;
       c.addListener(() => notified++);
 
-      final s = fakeCustomer(); // type doesn't matter; PartySearchResult.
+      final s = fakeCustomer();
       c.setSupplier(s);
       expect(c.supplier, s);
       expect(notified, 1);
 
-      // Same supplier — no notify.
-      c.setSupplier(s);
+      c.setSupplier(s); // same — no notify
       expect(notified, 1);
     });
 
     test('addOrReplaceLine sets and replaces (no incrementing)', () {
       final c = ReceiveController();
-      final item = fakeActivatedItem(itemId: 'i1', salePrice: 0);
-      c.addOrReplaceLine(item, quantity: 3, unitCost: 4);
+      final item = fakeActivatedItem(itemId: 'i1');
+      c.addOrReplaceLine(item, quantity: 3, lineTotal: 12);
       expect(c.lineCount, 1);
       expect(c.lines['i1']!.quantity, 3);
-      expect(c.lines['i1']!.unitCost, 4);
+      expect(c.lines['i1']!.lineTotal, 12);
+      expect(c.lines['i1']!.unitCost, 4); // computed from total/qty
 
-      // Adding again replaces — does NOT increment, unlike Sale.
-      c.addOrReplaceLine(item, quantity: 5, unitCost: 4.5);
+      // Adding again REPLACES — does not increment.
+      c.addOrReplaceLine(item, quantity: 5, lineTotal: 22.5);
       expect(c.lines['i1']!.quantity, 5);
+      expect(c.lines['i1']!.lineTotal, 22.5);
       expect(c.lines['i1']!.unitCost, 4.5);
+    });
+
+    test('line carries the receive unit, not the base unit', () {
+      final c = ReceiveController();
+      c.addOrReplaceLine(
+        fakeActivatedItem(
+          itemId: 'i1',
+          baseUnitCode: 'kg',
+          baseUnitLabel: 'Kg',
+          receiveUnitCode: 'bag',
+          receiveUnitLabel: 'Bag',
+        ),
+        quantity: 5,
+        lineTotal: 120,
+      );
+      expect(c.lines['i1']!.receiveUnitCode, 'bag');
+      expect(c.lines['i1']!.receiveUnitLabel, 'Bag');
     });
 
     test('catalog candidates key by catalog_item_id when itemId is null', () {
@@ -50,7 +66,7 @@ void main() {
       c.addOrReplaceLine(
         fakeCatalogCandidate(catalogItemId: 'c1'),
         quantity: 1,
-        unitCost: 2,
+        lineTotal: 2,
       );
       expect(c.lines.keys.first, 'c1');
       expect(c.lines['c1']!.itemId, isNull);
@@ -62,12 +78,12 @@ void main() {
       c.addOrReplaceLine(
         fakeActivatedItem(itemId: 'i1'),
         quantity: 1,
-        unitCost: 1,
+        lineTotal: 1,
       );
       c.addOrReplaceLine(
         fakeActivatedItem(itemId: 'i2'),
         quantity: 1,
-        unitCost: 1,
+        lineTotal: 1,
       );
       var notified = 0;
       c.addListener(() => notified++);
@@ -75,33 +91,23 @@ void main() {
       c.removeLine('i1');
       expect(c.lines.keys, ['i2']);
       expect(notified, 1);
-      // No-op
       c.removeLine('nope');
       expect(notified, 1);
     });
 
-    test('bonoTotal and credit reflect lines + paid', () {
+    test('bonoTotal is the sum of line_totals', () {
       final c = ReceiveController();
       c.addOrReplaceLine(
         fakeActivatedItem(itemId: 'i1'),
-        quantity: 10,
-        unitCost: 5,
+        quantity: 5,
+        lineTotal: 120,
       );
       c.addOrReplaceLine(
         fakeActivatedItem(itemId: 'i2'),
         quantity: 2,
-        unitCost: 3,
+        lineTotal: 6,
       );
-      expect(c.bonoTotal, 56);
-      expect(c.credit, 56);
-
-      c.setPaidAmount(20);
-      expect(c.credit, 36);
-
-      // Negative paid is clamped.
-      c.setPaidAmount(-5);
-      expect(c.paidAmount, 0);
-      expect(c.credit, 56);
+      expect(c.bonoTotal, 126);
     });
 
     test('clearLines keeps supplier, clearAll wipes everything', () {
@@ -110,13 +116,11 @@ void main() {
       c.addOrReplaceLine(
         fakeActivatedItem(itemId: 'i1'),
         quantity: 1,
-        unitCost: 1,
+        lineTotal: 1,
       );
-      c.setPaidAmount(0.5);
 
       c.clearLines();
       expect(c.isEmpty, isTrue);
-      expect(c.paidAmount, 0);
       expect(c.supplier, isNotNull);
 
       c.clearAll();
@@ -129,9 +133,8 @@ void main() {
       c.addOrReplaceLine(
         fakeActivatedItem(itemId: 'i1'),
         quantity: 5,
-        unitCost: 4,
+        lineTotal: 100,
       );
-      c.setPaidAmount(10);
 
       final snap = c.snapshot();
       c.clearAll();
@@ -141,8 +144,8 @@ void main() {
       c.restore(snap);
       expect(c.lineCount, 1);
       expect(c.lines['i1']!.quantity, 5);
+      expect(c.lines['i1']!.lineTotal, 100);
       expect(c.supplier?.name, 'Hassan');
-      expect(c.paidAmount, 10);
     });
   });
 }

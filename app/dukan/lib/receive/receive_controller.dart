@@ -4,9 +4,11 @@
 // receive screen, and (eventually) a bono-photo capture flow.
 //
 // Single-supplier-at-a-time for v1 (matches the Sale single-cart). Held
-// supplier sessions are not modelled; if the cashier abandons a partial
-// bono and starts a new one, an explicit Clear-all on the Receive screen
-// wipes lines (no implicit reset on supplier-change).
+// supplier sessions are not modelled.
+//
+// SAVE always posts a fully-credit receive transaction (decisions.md
+// Q15 — TODO). Cash paid at delivery is recorded separately via the
+// Payment screen so receive stays narrowly about stock + cost capture.
 
 import 'package:flutter/foundation.dart';
 
@@ -17,56 +19,50 @@ class ReceiveLine {
     required this.itemId,
     required this.catalogItemId,
     required this.name,
-    required this.baseUnitCode,
-    required this.baseUnitLabel,
-    required this.unitCost,
-    this.quantity = 1,
+    required this.receiveUnitCode,
+    required this.receiveUnitLabel,
+    required this.quantity,
+    required this.lineTotal,
   });
 
-  /// Non-null for activated items. Null for catalog candidates that need
-  /// `ensure_shop_item` resolution before posting.
+  /// Non-null for activated items. Null for catalog candidates that
+  /// need ensure_shop_item resolution before posting.
   final String? itemId;
   /// Non-null for catalog candidates; null for already-activated items.
   final String? catalogItemId;
   final String name;
-  final String baseUnitCode;
-  final String baseUnitLabel;
-  /// Per-unit cost in base units. Always > 0 — receive lines without a
-  /// real cost are rejected at the inline form layer before they reach
-  /// the controller.
-  final num unitCost;
-  int quantity;
+  /// The receive unit (e.g., "bag") the supplier delivered in.
+  /// Lookups its unit_id at post time via the units cache.
+  final String receiveUnitCode;
+  final String receiveUnitLabel;
+  final int quantity;
+  /// What the cashier entered as the bono line total. Sent to
+  /// post_receive as line_total; per-unit cost (= lineTotal / quantity)
+  /// is computed server-side.
+  final num lineTotal;
 
-  num get subtotal => unitCost * quantity;
+  num get unitCost => quantity == 0 ? 0 : lineTotal / quantity;
 }
 
 class ReceiveSnapshot {
-  const ReceiveSnapshot({
-    required this.lines,
-    required this.supplier,
-    required this.paidAmount,
-  });
+  const ReceiveSnapshot({required this.lines, required this.supplier});
 
   final Map<String, ReceiveLine> lines;
   final PartySearchResult? supplier;
-  final num paidAmount;
 }
 
 class ReceiveController extends ChangeNotifier {
   final Map<String, ReceiveLine> _lines = {};
   PartySearchResult? _supplier;
-  num _paidAmount = 0;
 
   Map<String, ReceiveLine> get lines => Map.unmodifiable(_lines);
   PartySearchResult? get supplier => _supplier;
-  num get paidAmount => _paidAmount;
 
   int get lineCount => _lines.length;
   int get unitCount =>
       _lines.values.fold(0, (sum, line) => sum + line.quantity);
   double get bonoTotal =>
-      _lines.values.fold(0, (sum, line) => sum + line.subtotal.toDouble());
-  double get credit => (bonoTotal - _paidAmount).toDouble().clamp(0, double.infinity);
+      _lines.values.fold(0, (sum, line) => sum + line.lineTotal.toDouble());
   bool get isEmpty => _lines.isEmpty;
   bool get isNotEmpty => _lines.isNotEmpty;
 
@@ -78,14 +74,13 @@ class ReceiveController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Add a new line OR replace an existing line for the same item. Unlike
-  /// Sale's `addItem` which increments quantity on repeat, Receive treats
-  /// every confirmation of the inline form as authoritative — the cashier
-  /// may be correcting a previous line's qty/cost.
+  /// Add a new line OR replace an existing line for the same item.
+  /// Unlike Sale's `addItem`, every editor confirmation is authoritative:
+  /// the cashier might be correcting a previous qty/total.
   void addOrReplaceLine(
     ItemSearchResult item, {
     required int quantity,
-    required num unitCost,
+    required num lineTotal,
   }) {
     final key = item.itemId ?? item.catalogItemId;
     if (key == null) return;
@@ -93,10 +88,10 @@ class ReceiveController extends ChangeNotifier {
       itemId: item.itemId,
       catalogItemId: item.catalogItemId,
       name: item.name,
-      baseUnitCode: item.baseUnitCode,
-      baseUnitLabel: item.baseUnitLabel,
-      unitCost: unitCost,
+      receiveUnitCode: item.receiveUnitCode,
+      receiveUnitLabel: item.receiveUnitLabel,
       quantity: quantity,
+      lineTotal: lineTotal,
     );
     notifyListeners();
   }
@@ -106,29 +101,20 @@ class ReceiveController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setPaidAmount(num value) {
-    final clamped = value < 0 ? 0 : value;
-    if (_paidAmount == clamped) return;
-    _paidAmount = clamped;
+  /// Wipes lines; keeps the supplier so the cashier can re-enter without
+  /// re-picking from the supplier screen.
+  void clearLines() {
+    if (_lines.isEmpty) return;
+    _lines.clear();
     notifyListeners();
   }
 
-  /// Wipes lines + paid; keeps the supplier so the cashier can re-enter
-  /// without re-picking from the supplier screen.
-  void clearLines() {
-    final wasEmpty = _lines.isEmpty && _paidAmount == 0;
-    _lines.clear();
-    _paidAmount = 0;
-    if (!wasEmpty) notifyListeners();
-  }
-
-  /// Full reset: clears lines + paid + supplier. Used when the bono is
-  /// successfully posted or when the cashier explicitly leaves Receive.
+  /// Full reset: clears lines + supplier. Used after a successful save
+  /// or on session sign-out.
   void clearAll() {
-    final wasEmpty = _lines.isEmpty && _supplier == null && _paidAmount == 0;
+    final wasEmpty = _lines.isEmpty && _supplier == null;
     _lines.clear();
     _supplier = null;
-    _paidAmount = 0;
     if (!wasEmpty) notifyListeners();
   }
 
@@ -142,14 +128,13 @@ class ReceiveController extends ChangeNotifier {
             itemId: entry.value.itemId,
             catalogItemId: entry.value.catalogItemId,
             name: entry.value.name,
-            baseUnitCode: entry.value.baseUnitCode,
-            baseUnitLabel: entry.value.baseUnitLabel,
-            unitCost: entry.value.unitCost,
+            receiveUnitCode: entry.value.receiveUnitCode,
+            receiveUnitLabel: entry.value.receiveUnitLabel,
             quantity: entry.value.quantity,
+            lineTotal: entry.value.lineTotal,
           ),
       },
       supplier: _supplier,
-      paidAmount: _paidAmount,
     );
   }
 
@@ -158,7 +143,6 @@ class ReceiveController extends ChangeNotifier {
       ..clear()
       ..addAll(snapshot.lines);
     _supplier = snapshot.supplier;
-    _paidAmount = snapshot.paidAmount;
     notifyListeners();
   }
 }

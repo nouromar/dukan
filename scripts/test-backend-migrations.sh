@@ -2110,6 +2110,46 @@ begin
 end;
 $$;
 
+-- 0025 coverage: search_items surfaces receive_unit_code + label so the
+-- Receive screen displays the right unit ("bag" for rice, not "kg") and
+-- the post_receive payload can use the right unit_id. Activated AND
+-- catalog candidates both carry it.
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_receive_unit text;
+  v_rice_receive_label text;
+  v_milk_receive_unit text;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Activated favorite: rice should report receive_unit 'bag' (base is 'kg').
+  select receive_unit_code, receive_unit_label
+  into v_rice_receive_unit, v_rice_receive_label
+  from public.search_items(v_shop_id, 'rice', 10)
+  where is_activated
+  limit 1;
+  if v_rice_receive_unit <> 'bag' then
+    raise exception 'rice receive_unit_code = % (expected bag)', v_rice_receive_unit;
+  end if;
+  if v_rice_receive_label is null or v_rice_receive_label = '' then
+    raise exception 'rice receive_unit_label was null/empty';
+  end if;
+
+  -- Catalog candidate: bread_loaf is never activated in this harness,
+  -- so it stays a catalog candidate. receive_unit_code should still be
+  -- present (from catalog_item_revision.default_receive_unit_code).
+  select receive_unit_code
+  into v_milk_receive_unit
+  from public.search_items(v_shop_id, 'bread', 10)
+  where not is_activated
+  limit 1;
+  if v_milk_receive_unit is null then
+    raise exception 'catalog candidate did not carry receive_unit_code';
+  end if;
+end;
+$$;
+
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
 reset role;

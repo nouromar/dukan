@@ -676,20 +676,19 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveLineQuantityLabel => 'Tirada';
 
   @override
-  String receiveLineCostLabel(Object unit) {
-    return 'Qiimaha $unit';
+  String receiveLinePerUnitLabel(Object unit) {
+    return 'Mid kasta $unit';
   }
+
+  @override
+  String get receiveLineTotalLabel => 'Wadarta';
 
   @override
   String get receiveAddLineButton => 'KU DAR XARIIQ';
 
   @override
-  String receiveLineSubtotal(
-    Object quantity,
-    Object subtotal,
-    Object unitCost,
-  ) {
-    return '$quantity × $unitCost = $subtotal';
+  String receiveLineSubtotal(Object quantity, Object total, Object unit) {
+    return '$quantity $unit · $total';
   }
 
   @override
@@ -734,16 +733,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveLinesClearConfirmNo => 'JOOJI';
 
   @override
-  String get receivePaidNowLabel => 'Hadda la bixiyay';
-
-  @override
-  String get receiveCreditLabel => 'Deyn';
-
-  @override
   String get receiveSaveButton => 'KEYDI';
 
   @override
-  String get receiveSavedToast => 'Bono waa la keydiyay';
+  String get receiveSavedToast => 'Bono waa la keydiyay (deyn)';
 
   @override
   String get receivePostFailedMessage =>
@@ -758,6 +751,5 @@ class AppLocalizationsSo extends AppLocalizations {
       'Marka hore ku dar ugu yaraan hal xariiq.';
 
   @override
-  String get receivePaidExceedsTotalMessage =>
-      'Lacagta la bixiyay kama badnaan karto wadarta bono.';
+  String get receiveInvalidNumberMessage => 'Geli lambar wanaagsan';
 }
