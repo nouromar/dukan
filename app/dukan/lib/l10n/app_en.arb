@@ -206,5 +206,10 @@
   "receivePostFailedMessage": "Could not save the bono. Check your internet and try again.",
   "receiveNeedSupplierMessage": "Pick a supplier before saving.",
   "receiveNeedLinesMessage": "Add at least one line before saving.",
-  "receiveInvalidNumberMessage": "Enter a positive number"
+  "receiveInvalidNumberMessage": "Enter a positive number",
+  "unitPickerTitle": "Choose unit",
+  "unitPickerDefaultBadge": "default",
+  "unitPickerBaseUnit": "base unit",
+  "unitPickerConversion": "{multiplier} {base} per {unit}",
+  "unitPickerLoadFailedMessage": "Could not load units. Try again."
 }

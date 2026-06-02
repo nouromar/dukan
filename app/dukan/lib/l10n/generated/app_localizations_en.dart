@@ -747,4 +747,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get receiveInvalidNumberMessage => 'Enter a positive number';
+
+  @override
+  String get unitPickerTitle => 'Choose unit';
+
+  @override
+  String get unitPickerDefaultBadge => 'default';
+
+  @override
+  String get unitPickerBaseUnit => 'base unit';
+
+  @override
+  String unitPickerConversion(Object base, Object multiplier, Object unit) {
+    return '$multiplier $base per $unit';
+  }
+
+  @override
+  String get unitPickerLoadFailedMessage => 'Could not load units. Try again.';
 }

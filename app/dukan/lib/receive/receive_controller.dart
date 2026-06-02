@@ -77,10 +77,17 @@ class ReceiveController extends ChangeNotifier {
   /// Add a new line OR replace an existing line for the same item.
   /// Unlike Sale's `addItem`, every editor confirmation is authoritative:
   /// the cashier might be correcting a previous qty/total.
+  ///
+  /// `unitCode` + `unitLabel` override the item's default receive unit
+  /// — passed by the form when the cashier opens the unit picker and
+  /// chooses something other than the default. When null, falls back to
+  /// the item's default receive unit.
   void addOrReplaceLine(
     ItemSearchResult item, {
     required int quantity,
     required num lineTotal,
+    String? unitCode,
+    String? unitLabel,
   }) {
     final key = item.itemId ?? item.catalogItemId;
     if (key == null) return;
@@ -88,8 +95,8 @@ class ReceiveController extends ChangeNotifier {
       itemId: item.itemId,
       catalogItemId: item.catalogItemId,
       name: item.name,
-      receiveUnitCode: item.receiveUnitCode,
-      receiveUnitLabel: item.receiveUnitLabel,
+      receiveUnitCode: unitCode ?? item.receiveUnitCode,
+      receiveUnitLabel: unitLabel ?? item.receiveUnitLabel,
       quantity: quantity,
       lineTotal: lineTotal,
     );

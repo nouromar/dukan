@@ -2150,6 +2150,67 @@ begin
 end;
 $$;
 
+-- 0026 coverage: list_receive_units returns the allow_receive units
+-- for an activated item (e.g., rice has kg + bag) or for a catalog
+-- candidate (water uses bottle + carton), with the default flagged.
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_item_id uuid;
+  v_bread_catalog_id uuid;
+  v_total int;
+  v_default_count int;
+  v_default_code text;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_rice_item_id from public.item
+    where shop_id = v_shop_id and code = 'rice_basmati_25kg';
+
+  -- Activated rice: should return both kg (base) and bag (receive),
+  -- with bag flagged as the default.
+  select count(*), count(*) filter (where is_default)
+  into v_total, v_default_count
+  from public.list_receive_units(v_shop_id, v_rice_item_id, null);
+
+  if v_total < 2 then
+    raise exception 'list_receive_units returned % units for rice (expected >= 2)', v_total;
+  end if;
+  if v_default_count <> 1 then
+    raise exception 'list_receive_units did not flag exactly one default (got %)', v_default_count;
+  end if;
+
+  select unit_code into v_default_code
+  from public.list_receive_units(v_shop_id, v_rice_item_id, null)
+  where is_default;
+  if v_default_code <> 'bag' then
+    raise exception 'rice default receive unit = % (expected bag)', v_default_code;
+  end if;
+
+  -- Catalog candidate: bread_loaf isn't activated. Should still return
+  -- its units (just 'piece' for bread) from catalog_item_unit.
+  select id into v_bread_catalog_id from public.catalog_item where code = 'bread_loaf';
+  select count(*) into v_total
+  from public.list_receive_units(v_shop_id, null, v_bread_catalog_id);
+  if v_total = 0 then
+    raise exception 'list_receive_units returned no units for catalog candidate bread';
+  end if;
+
+  -- Either-or guard: passing both ids should error.
+  declare v_failed boolean := false;
+  begin
+    begin
+      perform * from public.list_receive_units(
+        v_shop_id, v_rice_item_id, v_bread_catalog_id
+      );
+    exception when raise_exception then v_failed := true;
+    end;
+    if not v_failed then
+      raise exception 'list_receive_units accepted both ids';
+    end if;
+  end;
+end;
+$$;
+
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
 reset role;

@@ -230,6 +230,92 @@ void main() {
     expect(saveButton.onPressed, isNull);
   });
 
+  testWidgets(
+    'unit picker: switching unit clears costs and sends the new unit_id on SAVE',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          itemId: 'i1',
+          name: 'Bariis',
+          baseUnitCode: 'kg',
+          baseUnitLabel: 'Kg',
+          receiveUnitCode: 'bag',
+          receiveUnitLabel: 'Bag',
+          lastCost: 24,
+        ),
+      ];
+      api.onListReceiveUnits = (_, _, _) async => const [
+        ReceiveUnitOption(
+          unitId: 'unit-kg',
+          unitCode: 'kg',
+          unitLabel: 'Kg',
+          conversionToBase: 1,
+          isDefault: false,
+        ),
+        ReceiveUnitOption(
+          unitId: 'unit-bag',
+          unitCode: 'bag',
+          unitLabel: 'Bag',
+          conversionToBase: 25,
+          isDefault: true,
+        ),
+      ];
+      Map<String, dynamic>? captured;
+      api.onPostReceive = (
+        shopId,
+        partyId,
+        lines,
+        paidAmount,
+        paymentMethod,
+        documentId,
+        clientOpId,
+        notes,
+      ) async {
+        captured = {'lines': lines};
+        return 'fake-receive';
+      };
+
+      await pumpReceive(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+
+      // Form pre-fills with $24/Bag (default unit).
+      expect(find.widgetWithText(TextField, '24'), findsNWidgets(2));
+
+      // Tap the unit label (shows the ▾ arrow) to open the picker.
+      await tester.tap(find.byIcon(Icons.arrow_drop_down));
+      await tester.pumpAndSettle();
+      // Pick Kg.
+      await tester.tap(find.text('Kg'));
+      await tester.pumpAndSettle();
+
+      // Cost fields cleared (per-bag pre-fill no longer applies).
+      expect(find.widgetWithText(TextField, '24'), findsNothing);
+
+      // Type new cost in kg: $1/kg, qty 5 = $5.
+      await tester.enterText(find.widgetWithText(TextField, '1'), '5');
+      await tester.pump();
+      final perUnitField = find.byWidgetPredicate(
+        (w) => w is TextField &&
+            w.decoration?.labelText == en.receiveLinePerUnitLabel('Kg'),
+      );
+      await tester.enterText(perUnitField, '1');
+      await tester.pump();
+
+      await tester.tap(find.text(en.receiveAddLineButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.receiveSaveButton));
+      await tester.pumpAndSettle();
+
+      // post_receive received the KG unit_id, not BAG.
+      final lines = captured!['lines'] as List<ReceiveLinePayload>;
+      expect(lines.first.unitId, 'unit-kg');
+      expect(lines.first.quantity, 5);
+      expect(lines.first.lineTotal, 5);
+    },
+  );
+
   testWidgets('Clear all wipes lines but keeps the supplier', (tester) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(itemId: 'i1', name: 'Bariis', lastCost: 4),

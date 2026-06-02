@@ -206,3 +206,31 @@ class UnitOption {
   final String code;
   final String label;
 }
+
+/// One row from list_receive_units. Surfaces both the unit identity and
+/// how to convert into base units (so the picker can show "25 kg per
+/// bag" alongside the unit name).
+class ReceiveUnitOption {
+  const ReceiveUnitOption({
+    required this.unitId,
+    required this.unitCode,
+    required this.unitLabel,
+    required this.conversionToBase,
+    required this.isDefault,
+  });
+
+  factory ReceiveUnitOption.fromJson(Map<String, dynamic> json) =>
+      ReceiveUnitOption(
+        unitId: json['unit_id'] as String,
+        unitCode: json['unit_code'] as String,
+        unitLabel: json['unit_label'] as String,
+        conversionToBase: (json['conversion_to_base'] as num).toDouble(),
+        isDefault: json['is_default'] as bool,
+      );
+
+  final String unitId;
+  final String unitCode;
+  final String unitLabel;
+  final double conversionToBase;
+  final bool isDefault;
+}

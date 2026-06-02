@@ -56,6 +56,30 @@ class ShopApi {
     return result as String;
   }
 
+  /// Lists all allow_receive units for an item (or catalog candidate
+  /// if the shop has not yet activated it). Pass exactly one of itemId
+  /// or catalogItemId. Powers the Receive screen's unit picker.
+  Future<List<ReceiveUnitOption>> listReceiveUnits({
+    required String shopId,
+    String? itemId,
+    String? catalogItemId,
+  }) async {
+    final rows = await _client.rpc(
+      'list_receive_units',
+      params: {
+        'p_shop_id': shopId,
+        'p_item_id': itemId,
+        'p_catalog_item_id': catalogItemId,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<ReceiveUnitOption>(
+          (row) => ReceiveUnitOption.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
   /// Persists `sale_price` on a shop's item. Called by the Sale SAVE
   /// flow after a successful post_sale for every line whose unit price
   /// came out of the line editor — future taps on that tile then

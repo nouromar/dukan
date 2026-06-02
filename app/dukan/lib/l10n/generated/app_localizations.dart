@@ -1339,6 +1339,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a positive number'**
   String get receiveInvalidNumberMessage;
+
+  /// No description provided for @unitPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose unit'**
+  String get unitPickerTitle;
+
+  /// No description provided for @unitPickerDefaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'default'**
+  String get unitPickerDefaultBadge;
+
+  /// No description provided for @unitPickerBaseUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'base unit'**
+  String get unitPickerBaseUnit;
+
+  /// No description provided for @unitPickerConversion.
+  ///
+  /// In en, this message translates to:
+  /// **'{multiplier} {base} per {unit}'**
+  String unitPickerConversion(Object base, Object multiplier, Object unit);
+
+  /// No description provided for @unitPickerLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load units. Try again.'**
+  String get unitPickerLoadFailedMessage;
 }
 
 class _AppLocalizationsDelegate

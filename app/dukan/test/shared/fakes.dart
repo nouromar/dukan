@@ -181,6 +181,12 @@ class FakeShopApi implements ShopApi {
   Future<void> Function(String shopId, String itemId, num salePrice)?
   onSetItemSalePrice;
   final List<({String itemId, num salePrice})> setItemSalePriceCalls = [];
+  Future<List<ReceiveUnitOption>> Function(
+    String shopId,
+    String? itemId,
+    String? catalogItemId,
+  )?
+  onListReceiveUnits;
   Future<List<ItemSearchResult>> Function(
     String shopId,
     String query,
@@ -273,6 +279,35 @@ class FakeShopApi implements ShopApi {
     if (onSetItemSalePrice != null) {
       return onSetItemSalePrice!(shopId, itemId, salePrice);
     }
+  }
+
+  @override
+  Future<List<ReceiveUnitOption>> listReceiveUnits({
+    required String shopId,
+    String? itemId,
+    String? catalogItemId,
+  }) async {
+    if (onListReceiveUnits != null) {
+      return onListReceiveUnits!(shopId, itemId, catalogItemId);
+    }
+    // Sensible default: two units (base + a receive unit) so tests not
+    // explicitly setting onListReceiveUnits still exercise the picker.
+    return const [
+      ReceiveUnitOption(
+        unitId: 'unit-kg',
+        unitCode: 'kg',
+        unitLabel: 'Kg',
+        conversionToBase: 1,
+        isDefault: false,
+      ),
+      ReceiveUnitOption(
+        unitId: 'unit-bag',
+        unitCode: 'bag',
+        unitLabel: 'Bag',
+        conversionToBase: 25,
+        isDefault: true,
+      ),
+    ];
   }
 
   @override

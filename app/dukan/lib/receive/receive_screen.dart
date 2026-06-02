@@ -30,6 +30,7 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
+import 'package:dukan/receive/unit_picker_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -119,13 +120,20 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     );
   }
 
-  void _onAddLine(int quantity, num lineTotal) {
+  void _onAddLine(
+    int quantity,
+    num lineTotal,
+    String unitCode,
+    String unitLabel,
+  ) {
     final item = _selectedItem;
     if (item == null) return;
     context.read<ReceiveController>().addOrReplaceLine(
       item,
       quantity: quantity,
       lineTotal: lineTotal,
+      unitCode: unitCode,
+      unitLabel: unitLabel,
     );
     setState(() {
       _selectedItem = null;
@@ -371,6 +379,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 key: ValueKey(
                   _selectedItem!.itemId ?? _selectedItem!.catalogItemId,
                 ),
+                shopId: widget.shop.id,
                 item: _selectedItem!,
                 saving: _saving,
                 onAddLine: _onAddLine,
@@ -452,8 +461,12 @@ class _ReceiveItemTile extends StatelessWidget {
 // Two-way bound per-unit + total form. Cashier types into whichever
 // field matches their bono; the other recomputes. On qty change, the
 // last-typed money field stays authoritative and the other recomputes.
+// The unit label is tappable: opens a bottom sheet listing every
+// allow_receive unit so the cashier can swap from the default (e.g.,
+// bag) to base (kg) or another unit for partial bonos.
 class _LineEntryForm extends StatefulWidget {
   const _LineEntryForm({
+    required this.shopId,
     required this.item,
     required this.saving,
     required this.onAddLine,
@@ -461,9 +474,16 @@ class _LineEntryForm extends StatefulWidget {
     super.key,
   });
 
+  final String shopId;
   final ItemSearchResult item;
   final bool saving;
-  final void Function(int quantity, num lineTotal) onAddLine;
+  final void Function(
+    int quantity,
+    num lineTotal,
+    String unitCode,
+    String unitLabel,
+  )
+  onAddLine;
   final VoidCallback onCancel;
 
   @override
@@ -477,6 +497,11 @@ class _LineEntryFormState extends State<_LineEntryForm> {
   late final TextEditingController _perUnitController;
   late final TextEditingController _totalController;
   _LastTypedMoney _lastTyped = _LastTypedMoney.perUnit;
+  // Currently selected receive unit. Starts as the item's default; the
+  // unit picker can swap it. Affects what's sent to post_receive and
+  // what shows in the cart line.
+  late String _unitCode;
+  late String _unitLabel;
   // Guard so programmatic controller updates don't trigger our listeners
   // and cause feedback loops.
   bool _suppressNotify = false;
@@ -485,6 +510,8 @@ class _LineEntryFormState extends State<_LineEntryForm> {
   void initState() {
     super.initState();
     final perUnit = widget.item.lastCost ?? 0;
+    _unitCode = widget.item.receiveUnitCode;
+    _unitLabel = widget.item.receiveUnitLabel;
     _qtyController = TextEditingController(text: '1');
     _perUnitController = TextEditingController(
       text: perUnit > 0 ? _formatField(perUnit) : '',
@@ -495,6 +522,29 @@ class _LineEntryFormState extends State<_LineEntryForm> {
     _qtyController.addListener(_onQtyChanged);
     _perUnitController.addListener(_onPerUnitChanged);
     _totalController.addListener(_onTotalChanged);
+  }
+
+  Future<void> _onTapUnit() async {
+    final picked = await showUnitPicker(
+      context,
+      shopId: widget.shopId,
+      baseUnitLabel: widget.item.baseUnitLabel,
+      itemId: widget.item.itemId,
+      catalogItemId: widget.item.itemId == null
+          ? widget.item.catalogItemId
+          : null,
+    );
+    if (picked == null || !mounted) return;
+    if (picked.unitCode == _unitCode) return;
+    setState(() {
+      _unitCode = picked.unitCode;
+      _unitLabel = picked.unitLabel;
+      // Clear cost fields — last_cost was scoped to the previous unit.
+      // The cashier types fresh values for the new unit.
+      _setProgrammatic(_perUnitController, '');
+      _setProgrammatic(_totalController, '');
+      _lastTyped = _LastTypedMoney.perUnit;
+    });
   }
 
   @override
@@ -585,14 +635,13 @@ class _LineEntryFormState extends State<_LineEntryForm> {
   void _onAdd() {
     final qty = int.tryParse(_qtyController.text.trim())!;
     final total = _parse(_totalController.text)!;
-    widget.onAddLine(qty, total);
+    widget.onAddLine(qty, total, _unitCode, _unitLabel);
   }
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
     final theme = Theme.of(context);
-    final unit = widget.item.receiveUnitLabel;
     return Material(
       color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
       child: Padding(
@@ -636,7 +685,24 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(unit, style: theme.textTheme.bodyLarge),
+                InkWell(
+                  onTap: widget.saving ? null : _onTapUnit,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_unitLabel, style: theme.textTheme.bodyLarge),
+                        const SizedBox(width: 2),
+                        const Icon(Icons.arrow_drop_down, size: 22),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -652,7 +718,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
                     decoration: InputDecoration(
-                      labelText: l.receiveLinePerUnitLabel(unit),
+                      labelText: l.receiveLinePerUnitLabel(_unitLabel),
                       prefixText: '\$ ',
                       isDense: true,
                     ),

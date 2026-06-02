@@ -752,4 +752,22 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get receiveInvalidNumberMessage => 'Geli lambar wanaagsan';
+
+  @override
+  String get unitPickerTitle => 'Dooro halbeeg';
+
+  @override
+  String get unitPickerDefaultBadge => 'caadi';
+
+  @override
+  String get unitPickerBaseUnit => 'halbeeg aasaasi';
+
+  @override
+  String unitPickerConversion(Object base, Object multiplier, Object unit) {
+    return '$multiplier $base $unit walba';
+  }
+
+  @override
+  String get unitPickerLoadFailedMessage =>
+      'Halbeegyada lama soo dejin karin. Isku day mar kale.';
 }

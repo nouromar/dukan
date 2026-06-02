@@ -206,5 +206,10 @@
   "receivePostFailedMessage": "Bonadu lama keydin karin. Hubi internetka oo isku day mar kale.",
   "receiveNeedSupplierMessage": "Dooro keene ka hor inta aadan keydin.",
   "receiveNeedLinesMessage": "Marka hore ku dar ugu yaraan hal xariiq.",
-  "receiveInvalidNumberMessage": "Geli lambar wanaagsan"
+  "receiveInvalidNumberMessage": "Geli lambar wanaagsan",
+  "unitPickerTitle": "Dooro halbeeg",
+  "unitPickerDefaultBadge": "caadi",
+  "unitPickerBaseUnit": "halbeeg aasaasi",
+  "unitPickerConversion": "{multiplier} {base} {unit} walba",
+  "unitPickerLoadFailedMessage": "Halbeegyada lama soo dejin karin. Isku day mar kale."
 }
