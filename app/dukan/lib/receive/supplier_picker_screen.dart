@@ -83,13 +83,23 @@ class _SupplierPickerScreenState extends State<SupplierPickerScreen> {
   }
 
   void _onPickSupplier(PartySearchResult supplier) {
-    context.read<ReceiveController>().setSupplier(supplier);
+    final api = context.read<ShopApi>();
+    final receive = context.read<ReceiveController>();
+    receive.setSupplier(supplier);
     // Replace, not push: "back" from Receive should return to Home, not
     // re-open the picker. The Receive screen has its own affordance to
-    // change supplier mid-bono.
+    // change supplier mid-bono. Re-export providers so ReceiveScreen
+    // sees them under the root Navigator (the providers are scoped to
+    // AuthBootstrap, which lives inside MaterialApp, not above it).
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => ReceiveScreen(shop: widget.shop),
+        builder: (_) => MultiProvider(
+          providers: [
+            Provider<ShopApi>.value(value: api),
+            ChangeNotifierProvider<ReceiveController>.value(value: receive),
+          ],
+          child: ReceiveScreen(shop: widget.shop),
+        ),
       ),
     );
   }
