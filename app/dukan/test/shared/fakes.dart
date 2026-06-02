@@ -204,6 +204,16 @@ class FakeShopApi implements ShopApi {
     int limit,
   )?
   onSearchParties;
+  Future<String> Function(
+    String shopId,
+    String name,
+    String? phone,
+    String typeCode,
+  )?
+  onCreateParty;
+  final List<
+    ({String name, String? phone, String typeCode})
+  > createPartyCalls = [];
   Future<List<UnitOption>> Function()? onListUnits;
   Future<String> Function(
     String shopId,
@@ -338,6 +348,20 @@ class FakeShopApi implements ShopApi {
       return onSearchParties!(shopId, query, type, limit);
     }
     return const [];
+  }
+
+  @override
+  Future<String> createParty({
+    required String shopId,
+    required String name,
+    required String typeCode,
+    String? phone,
+  }) async {
+    createPartyCalls.add((name: name, phone: phone, typeCode: typeCode));
+    if (onCreateParty != null) {
+      return onCreateParty!(shopId, name, phone, typeCode);
+    }
+    return 'fake-party-${name.hashCode}';
   }
 
   @override

@@ -132,6 +132,28 @@ class ShopApi {
 
   // ----- Parties ------------------------------------------------------------
 
+  /// Creates a new customer or supplier and returns the new party_id.
+  /// Cashier-accessible (operational data, not setup). Pickers call this
+  /// from their + NEW {CUSTOMER,SUPPLIER} affordances; the new party is
+  /// auto-selected on success.
+  Future<String> createParty({
+    required String shopId,
+    required String name,
+    required String typeCode,
+    String? phone,
+  }) async {
+    final result = await _client.rpc(
+      'create_party',
+      params: {
+        'p_shop_id': shopId,
+        'p_name': name,
+        'p_phone': phone,
+        'p_type_code': typeCode,
+      },
+    );
+    return result as String;
+  }
+
   Future<List<PartySearchResult>> searchParties({
     required String shopId,
     String query = '',

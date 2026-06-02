@@ -99,7 +99,41 @@ void main() {
     expect(find.text(en.customerPickerEmptyMessage), findsOneWidget);
   });
 
-  testWidgets('+ NEW CUSTOMER shows the not-yet-available dialog', (
+  testWidgets(
+    '+ NEW CUSTOMER opens the add-party sheet and auto-selects on save',
+    (tester) async {
+      api.onSearchParties = (_, _, _, _) async => const [];
+      String? capturedType;
+      api.onCreateParty = (shopId, name, phone, typeCode) async {
+        capturedType = typeCode;
+        return 'new-party-123';
+      };
+
+      final readResult = await pumpHostAndOpenSheet(tester);
+      await tester.tap(find.text(en.customerNewButton));
+      await tester.pumpAndSettle();
+
+      // Form shown — name field labelled and focused.
+      expect(find.text(en.partyNewCustomerTitle), findsOneWidget);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, en.partyNewNameLabel),
+        'Ahmed',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, en.partyNewSaveButton));
+      await tester.pumpAndSettle();
+
+      // Created as a customer; auto-selected (returned from the picker).
+      expect(capturedType, 'customer');
+      final picked = readResult();
+      expect(picked, isNotNull);
+      expect(picked!.id, 'new-party-123');
+      expect(picked.name, 'Ahmed');
+      expect(picked.typeCode, 'customer');
+    },
+  );
+
+  testWidgets('+ NEW CUSTOMER empty name shows a validation message', (
     tester,
   ) async {
     api.onSearchParties = (_, _, _, _) async => const [];
@@ -107,9 +141,11 @@ void main() {
     await pumpHostAndOpenSheet(tester);
     await tester.tap(find.text(en.customerNewButton));
     await tester.pumpAndSettle();
+    // Tap SAVE without entering a name.
+    await tester.tap(find.widgetWithText(FilledButton, en.partyNewSaveButton));
+    await tester.pumpAndSettle();
 
-    expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.text(en.customerNewUnavailable), findsOneWidget);
+    expect(find.text(en.partyNewNameRequiredMessage), findsOneWidget);
   });
 
   // The provider has to follow the sheet through the root Navigator. This

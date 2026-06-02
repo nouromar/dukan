@@ -2243,6 +2243,102 @@ $$;
 
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
+-- 0027 coverage: create_party — cashier and owner can create customers
+-- + suppliers; unrelated users denied; invalid input rejected.
+do $$
+declare
+  v_shop_id uuid;
+  v_party_id uuid;
+  v_owner_customer_id uuid;
+  v_failed boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+
+  -- Owner creates a customer.
+  v_owner_customer_id := public.create_party(
+    v_shop_id, 'Test Customer', '+252600000001', 'customer'
+  );
+  if v_owner_customer_id is null then
+    raise exception 'create_party returned null for owner customer';
+  end if;
+
+  if (select type_id from public.party where id = v_owner_customer_id) <>
+     (select id from public.party_type where code = 'customer') then
+    raise exception 'create_party stored wrong type_id';
+  end if;
+
+  if (select phone from public.party where id = v_owner_customer_id) <> '+252600000001' then
+    raise exception 'create_party did not store phone';
+  end if;
+
+  -- Owner creates a supplier; phone optional.
+  v_party_id := public.create_party(v_shop_id, 'Test Supplier', null, 'supplier');
+  if v_party_id is null then
+    raise exception 'create_party returned null for supplier without phone';
+  end if;
+
+  -- Empty name rejected.
+  v_failed := false;
+  begin
+    perform public.create_party(v_shop_id, '   ', null, 'customer');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'create_party accepted empty/whitespace name';
+  end if;
+
+  -- Invalid type rejected (only customer + supplier from the daily UI).
+  v_failed := false;
+  begin
+    perform public.create_party(v_shop_id, 'Test', null, 'both');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'create_party accepted type=both';
+  end if;
+end;
+$$;
+
+-- Cashier session: also allowed to create parties (operational data,
+-- not setup).
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_party_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_party_id := public.create_party(
+    v_shop_id, 'Cashier-Added Customer', null, 'customer'
+  );
+  if v_party_id is null then
+    raise exception 'cashier was denied create_party';
+  end if;
+end;
+$$;
+
+-- Unrelated user: denied via auth_can_post_shop.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_failed boolean := false;
+begin
+  select id into v_shop_id from public.shop where name = 'Hodan Shop';
+  begin
+    perform public.create_party(v_shop_id, 'Intruder', null, 'customer');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'unrelated user was allowed to create_party';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
 reset role;
 SQL
 

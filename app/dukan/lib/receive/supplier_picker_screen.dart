@@ -14,6 +14,7 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
+import 'package:dukan/shared/add_party_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
@@ -66,21 +67,15 @@ class _SupplierPickerScreenState extends State<SupplierPickerScreen> {
   }
 
   Future<void> _onTapNewSupplier() async {
-    // Mirror the customer-picker placeholder. Real supplier-add lands
-    // with the admin portal / Settings.
-    final l = tr(context);
-    await showDialog<void>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        content: Text(l.supplierNewUnavailable),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: Text(MaterialLocalizations.of(dialogCtx).okButtonLabel),
-          ),
-        ],
-      ),
+    final created = await showAddPartySheet(
+      context,
+      shopId: widget.shop.id,
+      typeCode: 'supplier',
     );
+    if (created != null && mounted) {
+      // Auto-select: same flow as picking an existing supplier.
+      _onPickSupplier(created);
+    }
   }
 
   void _onPickSupplier(PartySearchResult supplier) {

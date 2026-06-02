@@ -573,8 +573,26 @@ class AppLocalizationsSo extends AppLocalizations {
   String get customerNewButton => '+ MACMIIL CUSUB';
 
   @override
-  String get customerNewUnavailable =>
-      'Macaamiisha cusub waxaa la dari doonaa marka dambe.';
+  String get partyNewCustomerTitle => 'Macmiil cusub';
+
+  @override
+  String get partyNewSupplierTitle => 'Keene cusub';
+
+  @override
+  String get partyNewNameLabel => 'Magaca';
+
+  @override
+  String get partyNewPhoneLabel => 'Telefoonka (haddii la rabo)';
+
+  @override
+  String get partyNewSaveButton => 'KU DAR';
+
+  @override
+  String get partyNewNameRequiredMessage => 'Geli magac';
+
+  @override
+  String get partyNewSaveFailedMessage =>
+      'Lama dari karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
@@ -656,10 +674,6 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get supplierNewButton => '+ KEENE CUSUB';
-
-  @override
-  String get supplierNewUnavailable =>
-      'Keenayaasha cusub waxaa la dari doonaa marka dambe.';
 
   @override
   String get receiveSearchHint => 'Raadi Soomaali ama Ingiriis';

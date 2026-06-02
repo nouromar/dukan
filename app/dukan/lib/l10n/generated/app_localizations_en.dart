@@ -573,7 +573,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get customerNewButton => '+ NEW CUSTOMER';
 
   @override
-  String get customerNewUnavailable => 'Adding new customers comes later.';
+  String get partyNewCustomerTitle => 'New customer';
+
+  @override
+  String get partyNewSupplierTitle => 'New supplier';
+
+  @override
+  String get partyNewNameLabel => 'Name';
+
+  @override
+  String get partyNewPhoneLabel => 'Phone (optional)';
+
+  @override
+  String get partyNewSaveButton => 'ADD';
+
+  @override
+  String get partyNewNameRequiredMessage => 'Enter a name';
+
+  @override
+  String get partyNewSaveFailedMessage =>
+      'Could not add. Check your internet and try again.';
 
   @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
@@ -655,9 +674,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get supplierNewButton => '+ NEW SUPPLIER';
-
-  @override
-  String get supplierNewUnavailable => 'Adding new suppliers comes later.';
 
   @override
   String get receiveSearchHint => 'Search Somali or English';

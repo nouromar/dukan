@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/shared/add_party_sheet.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 
@@ -76,24 +77,16 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
   }
 
   Future<void> _onTapNewCustomer() async {
-    // AlertDialog rather than SnackBar — a sheet doesn't have its own
-    // ScaffoldMessenger, and wrapping the sheet body in a transparent
-    // Scaffold to get one breaks the sheet's height cap (it ends up
-    // covering the screen). The dialog also reads more honestly for a
-    // "this feature isn't available yet" placeholder than a fading toast.
-    final l = tr(context);
-    await showDialog<void>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        content: Text(l.customerNewUnavailable),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: Text(MaterialLocalizations.of(dialogCtx).okButtonLabel),
-          ),
-        ],
-      ),
+    final created = await showAddPartySheet(
+      context,
+      shopId: widget.shop.id,
+      typeCode: 'customer',
     );
+    if (created != null && mounted) {
+      // Auto-select: pop this picker with the new party so the Sale
+      // flow continues with it as the debt customer immediately.
+      Navigator.of(context).pop(created);
+    }
   }
 
   @override

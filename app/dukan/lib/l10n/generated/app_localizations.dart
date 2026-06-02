@@ -1076,11 +1076,47 @@ abstract class AppLocalizations {
   /// **'+ NEW CUSTOMER'**
   String get customerNewButton;
 
-  /// No description provided for @customerNewUnavailable.
+  /// No description provided for @partyNewCustomerTitle.
   ///
   /// In en, this message translates to:
-  /// **'Adding new customers comes later.'**
-  String get customerNewUnavailable;
+  /// **'New customer'**
+  String get partyNewCustomerTitle;
+
+  /// No description provided for @partyNewSupplierTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New supplier'**
+  String get partyNewSupplierTitle;
+
+  /// No description provided for @partyNewNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get partyNewNameLabel;
+
+  /// No description provided for @partyNewPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone (optional)'**
+  String get partyNewPhoneLabel;
+
+  /// No description provided for @partyNewSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD'**
+  String get partyNewSaveButton;
+
+  /// No description provided for @partyNewNameRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get partyNewNameRequiredMessage;
+
+  /// No description provided for @partyNewSaveFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add. Check your internet and try again.'**
+  String get partyNewSaveFailedMessage;
 
   /// No description provided for @cartLineSubtotal.
   ///
@@ -1207,12 +1243,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'+ NEW SUPPLIER'**
   String get supplierNewButton;
-
-  /// No description provided for @supplierNewUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Adding new suppliers comes later.'**
-  String get supplierNewUnavailable;
 
   /// No description provided for @receiveSearchHint.
   ///

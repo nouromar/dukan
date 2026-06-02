@@ -96,17 +96,35 @@ void main() {
     expect(find.text(en.supplierPickerEmptyMessage), findsOneWidget);
   });
 
-  testWidgets('+ NEW SUPPLIER shows the not-yet-available dialog', (
-    tester,
-  ) async {
-    api.onSearchParties = (_, _, _, _) async => const [];
+  testWidgets(
+    '+ NEW SUPPLIER opens the add-party sheet and pushes Receive on save',
+    (tester) async {
+      api.onSearchParties = (_, _, _, _) async => const [];
+      String? capturedType;
+      api.onCreateParty = (shopId, name, phone, typeCode) async {
+        capturedType = typeCode;
+        return 'new-supplier-456';
+      };
 
-    await pumpPicker(tester);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(en.supplierNewButton));
-    await tester.pumpAndSettle();
+      await pumpPicker(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.supplierNewButton));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.text(en.supplierNewUnavailable), findsOneWidget);
-  });
+      expect(find.text(en.partyNewSupplierTitle), findsOneWidget);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, en.partyNewNameLabel),
+        'Hassan',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, en.partyNewSaveButton));
+      await tester.pumpAndSettle();
+
+      expect(capturedType, 'supplier');
+      // Auto-selected: receive controller now has Hassan, Receive screen
+      // is the active route.
+      expect(receive.supplier?.id, 'new-supplier-456');
+      expect(receive.supplier?.name, 'Hassan');
+    },
+  );
 }
