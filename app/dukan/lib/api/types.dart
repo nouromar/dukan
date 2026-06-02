@@ -8,23 +8,39 @@ class ShopSummary {
     required this.name,
     required this.setupStatus,
     required this.currencyCode,
+    required this.currencySymbol,
     required this.defaultLanguageCode,
     required this.timezone,
   });
 
-  factory ShopSummary.fromJson(Map<String, dynamic> json) => ShopSummary(
-    id: json['id'] as String,
-    name: json['name'] as String,
-    setupStatus: json['setup_status'] as String,
-    currencyCode: json['currency_code'] as String,
-    defaultLanguageCode: json['default_language_code'] as String,
-    timezone: json['timezone'] as String,
-  );
+  /// Pass the currency symbols map (code → symbol) you loaded once from
+  /// ShopApi.currencySymbols(). Falls back to the code itself if the
+  /// shop's currency isn't in the map — keeps the constructor total
+  /// without forcing the caller to handle missing-symbol exceptions.
+  factory ShopSummary.fromJson(
+    Map<String, dynamic> json, {
+    Map<String, String> currencySymbols = const {},
+  }) {
+    final code = json['currency_code'] as String;
+    return ShopSummary(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      setupStatus: json['setup_status'] as String,
+      currencyCode: code,
+      currencySymbol: currencySymbols[code] ?? code,
+      defaultLanguageCode: json['default_language_code'] as String,
+      timezone: json['timezone'] as String,
+    );
+  }
 
   final String id;
   final String name;
   final String setupStatus;
   final String currencyCode;
+  /// Resolved display symbol for `currencyCode` from the currency ref
+  /// table (e.g., USD → $, SLSH → SLSH). Used everywhere the UI prints
+  /// a monetary value so we never hardcode "$" outside this projection.
+  final String currencySymbol;
   final String defaultLanguageCode;
   final String timezone;
 

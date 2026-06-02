@@ -13,6 +13,7 @@ import 'package:dukan/sale/line_editor_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/money.dart';
 
 class SaleScreen extends StatefulWidget {
   const SaleScreen({required this.shop, super.key});
@@ -112,6 +113,7 @@ class _SaleScreenState extends State<SaleScreen> {
       context,
       itemName: item.name,
       baseUnitLabel: item.baseUnitLabel,
+      currencySymbol: widget.shop.currencySymbol,
       initialQuantity: existing?.quantity ?? 1,
       initialUnitPrice: priceRequired
           ? existing?.unitPrice
@@ -133,6 +135,7 @@ class _SaleScreenState extends State<SaleScreen> {
       context,
       itemName: line.name,
       baseUnitLabel: line.baseUnitLabel,
+      currencySymbol: widget.shop.currencySymbol,
       initialQuantity: line.quantity,
       initialUnitPrice: line.unitPrice,
     );
@@ -199,7 +202,7 @@ class _SaleScreenState extends State<SaleScreen> {
   }
 
   Future<void> _pickCustomer() async {
-    final picked = await showCustomerPicker(context, shopId: widget.shop.id);
+    final picked = await showCustomerPicker(context, shop: widget.shop);
     if (picked != null && mounted) {
       context.read<CartController>().setCustomer(picked);
     }
@@ -399,6 +402,7 @@ class _SaleScreenState extends State<SaleScreen> {
                     itemBuilder: (context, i) {
                       final item = results[i];
                       return _SaleItemTile(
+                        shop: widget.shop,
                         item: item,
                         onTap: _saving ? null : () => _onTapTile(item),
                         onLongPress:
@@ -410,6 +414,7 @@ class _SaleScreenState extends State<SaleScreen> {
               ),
             ),
             _SaleCartStrip(
+              shop: widget.shop,
               lines: lines,
               total: cart.total,
               itemCount: cart.itemCount,
@@ -434,11 +439,13 @@ class _SaleScreenState extends State<SaleScreen> {
 
 class _SaleItemTile extends StatelessWidget {
   const _SaleItemTile({
+    required this.shop,
     required this.item,
     required this.onTap,
     required this.onLongPress,
   });
 
+  final ShopSummary shop;
   final ItemSearchResult item;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -449,7 +456,7 @@ class _SaleItemTile extends StatelessWidget {
     final noPrice = item.salePrice == null || item.salePrice == 0;
     final priceText = noPrice
         ? tr(context).lineEditorTilePriceMissing
-        : _formatMoney(item.salePrice!);
+        : formatMoney(item.salePrice!, shop);
     return Card(
       color: Colors.white,
       child: InkWell(
@@ -497,6 +504,7 @@ class _CartLineEntry {
 
 class _SaleCartStrip extends StatelessWidget {
   const _SaleCartStrip({
+    required this.shop,
     required this.lines,
     required this.total,
     required this.itemCount,
@@ -513,6 +521,7 @@ class _SaleCartStrip extends StatelessWidget {
     required this.onSave,
   });
 
+  final ShopSummary shop;
   final List<_CartLineEntry> lines;
   final double total;
   final int itemCount;
@@ -571,7 +580,7 @@ class _SaleCartStrip extends StatelessWidget {
                             child: Text(
                               l.saleCartSummary(
                                 itemCount,
-                                _formatMoney(total),
+                                formatMoney(total, shop),
                               ),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
@@ -596,6 +605,7 @@ class _SaleCartStrip extends StatelessWidget {
                   ? ConstrainedBox(
                       constraints: BoxConstraints(maxHeight: maxListHeight),
                       child: _CartLineList(
+                        shop: shop,
                         lines: lines,
                         saving: saving,
                         onRemoveLine: onRemoveLine,
@@ -642,7 +652,7 @@ class _SaleCartStrip extends StatelessWidget {
                         label: Text(
                           l.saleCustomerChip(
                             customer!.name,
-                            _formatMoney(customer!.receivable),
+                            formatMoney(customer!.receivable, shop),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -677,12 +687,14 @@ class _SaleCartStrip extends StatelessWidget {
 // (Scrollbar asserts on multiple ScrollPositions per controller).
 class _CartLineList extends StatefulWidget {
   const _CartLineList({
+    required this.shop,
     required this.lines,
     required this.saving,
     required this.onRemoveLine,
     required this.onLongPressLine,
   });
 
+  final ShopSummary shop;
   final List<_CartLineEntry> lines;
   final bool saving;
   final void Function(String key) onRemoveLine;
@@ -713,6 +725,7 @@ class _CartLineListState extends State<_CartLineList> {
         itemCount: widget.lines.length,
         separatorBuilder: (_, _) => const Divider(height: 1),
         itemBuilder: (context, i) => _CartLineTile(
+          shop: widget.shop,
           entry: widget.lines[i],
           enabled: !widget.saving,
           onRemove: () => widget.onRemoveLine(widget.lines[i].key),
@@ -725,12 +738,14 @@ class _CartLineListState extends State<_CartLineList> {
 
 class _CartLineTile extends StatelessWidget {
   const _CartLineTile({
+    required this.shop,
     required this.entry,
     required this.enabled,
     required this.onRemove,
     required this.onLongPress,
   });
 
+  final ShopSummary shop;
   final _CartLineEntry entry;
   final bool enabled;
   final VoidCallback onRemove;
@@ -742,8 +757,8 @@ class _CartLineTile extends StatelessWidget {
     final line = entry.line;
     final subtitle = l.cartLineSubtotal(
       '${line.quantity}',
-      _formatMoney(line.unitPrice),
-      _formatMoney(line.subtotal),
+      formatMoney(line.unitPrice, shop),
+      formatMoney(line.subtotal, shop),
     );
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -768,10 +783,3 @@ class _CartLineTile extends StatelessWidget {
   }
 }
 
-String _formatMoney(num value) {
-  final v = value.toDouble();
-  if (v == v.roundToDouble()) {
-    return '\$${v.toStringAsFixed(0)}';
-  }
-  return '\$${v.toStringAsFixed(2)}';
-}

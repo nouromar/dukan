@@ -676,12 +676,14 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveLineQuantityLabel => 'Tirada';
 
   @override
-  String receiveLinePerUnitLabel(Object unit) {
-    return '\$ mid kasta $unit';
+  String receiveLinePerUnitLabel(Object currency, Object unit) {
+    return '$currency mid kasta $unit';
   }
 
   @override
-  String get receiveLineTotalLabel => '\$ wadarta';
+  String receiveLineTotalLabel(Object currency) {
+    return '$currency wadarta';
+  }
 
   @override
   String get receiveAddLineButton => 'KU DAR XARIIQ';

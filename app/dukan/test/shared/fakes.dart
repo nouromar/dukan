@@ -422,6 +422,12 @@ class FakeShopApi implements ShopApi {
   }
 
   @override
+  Future<Map<String, String>> currencySymbols() async {
+    final currencies = await listCurrencies();
+    return {for (final c in currencies) c.code: c.label};
+  }
+
+  @override
   Future<void> updateShopDefaults({
     required String shopId,
     String? name,
@@ -454,6 +460,7 @@ ShopSummary fakeShop({
   String name = 'Hodan Shop',
   String setupStatus = 'ready',
   String currencyCode = 'USD',
+  String currencySymbol = '\$',
   String defaultLanguageCode = 'so',
   String timezone = 'Africa/Mogadishu',
 }) => ShopSummary(
@@ -461,6 +468,7 @@ ShopSummary fakeShop({
   name: name,
   setupStatus: setupStatus,
   currencyCode: currencyCode,
+  currencySymbol: currencySymbol,
   defaultLanguageCode: defaultLanguageCode,
   timezone: timezone,
 );

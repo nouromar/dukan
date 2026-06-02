@@ -36,7 +36,7 @@ void main() {
               child: FilledButton(
                 onPressed: () async {
                   final result =
-                      await showCustomerPicker(context, shopId: 'shop-1');
+                      await showCustomerPicker(context, shop: fakeShop());
                   captured = result;
                 },
                 child: const Text('open'),
@@ -124,7 +124,7 @@ void main() {
           builder: (context) => Scaffold(
             body: Center(
               child: FilledButton(
-                onPressed: () => showCustomerPicker(context, shopId: 'shop-1'),
+                onPressed: () => showCustomerPicker(context, shop: fakeShop()),
                 child: const Text('open'),
               ),
             ),

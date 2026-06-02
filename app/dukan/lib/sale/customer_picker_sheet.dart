@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/money.dart';
 
 /// Opens the customer picker as a bottom sheet. Returns the chosen party,
 /// or null if the user dismissed without picking. Wraps the sheet child
@@ -14,7 +15,7 @@ import 'package:dukan/shared/l10n.dart';
 /// lose the provider).
 Future<PartySearchResult?> showCustomerPicker(
   BuildContext context, {
-  required String shopId,
+  required ShopSummary shop,
 }) {
   final api = context.read<ShopApi>();
   return showModalBottomSheet<PartySearchResult>(
@@ -22,15 +23,15 @@ Future<PartySearchResult?> showCustomerPicker(
     isScrollControlled: true,
     builder: (_) => Provider<ShopApi>.value(
       value: api,
-      child: _CustomerPickerBody(shopId: shopId),
+      child: _CustomerPickerBody(shop: shop),
     ),
   );
 }
 
 class _CustomerPickerBody extends StatefulWidget {
-  const _CustomerPickerBody({required this.shopId});
+  const _CustomerPickerBody({required this.shop});
 
-  final String shopId;
+  final ShopSummary shop;
 
   @override
   State<_CustomerPickerBody> createState() => _CustomerPickerBodyState();
@@ -57,7 +58,7 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
 
   Future<List<PartySearchResult>> _fetch(String query) {
     return context.read<ShopApi>().searchParties(
-      shopId: widget.shopId,
+      shopId: widget.shop.id,
       query: query,
       type: 'customer',
     );
@@ -181,7 +182,7 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
                             subtitle: Text(
                               party.receivable > 0
                                   ? l.customerPickerOwesLabel(
-                                      _formatMoney(party.receivable),
+                                      formatMoney(party.receivable, widget.shop),
                                     )
                                   : l.customerPickerNoDebtLabel,
                             ),
@@ -206,9 +207,3 @@ class _CustomerPickerBodyState extends State<_CustomerPickerBody> {
   }
 }
 
-String _formatMoney(double value) {
-  if (value == value.roundToDouble()) {
-    return '\$${value.toStringAsFixed(0)}';
-  }
-  return '\$${value.toStringAsFixed(2)}';
-}

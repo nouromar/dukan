@@ -36,6 +36,7 @@ void main() {
                     context,
                     itemName: itemName,
                     baseUnitLabel: baseUnitLabel,
+                    currencySymbol: '\$',
                     initialQuantity: initialQuantity,
                     initialUnitPrice: initialUnitPrice,
                     priceRequired: priceRequired,

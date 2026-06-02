@@ -224,6 +224,27 @@ class ShopApi {
     return _unitsFuture ??= _fetchUnits();
   }
 
+  Map<String, String>? _currencySymbolsCache;
+  Future<Map<String, String>>? _currencySymbolsFuture;
+
+  /// Caches the (currency_code → symbol) map per session. Loaded once
+  /// after sign-in so ShopSummary can carry the resolved symbol and the
+  /// UI never has to hardcode "$".
+  Future<Map<String, String>> currencySymbols() {
+    if (_currencySymbolsCache != null) {
+      return Future.value(_currencySymbolsCache);
+    }
+    return _currencySymbolsFuture ??= _fetchCurrencySymbols();
+  }
+
+  Future<Map<String, String>> _fetchCurrencySymbols() async {
+    final currencies = await listCurrencies();
+    final map = {for (final c in currencies) c.code: c.label};
+    _currencySymbolsCache = map;
+    _currencySymbolsFuture = null;
+    return map;
+  }
+
   Future<List<UnitOption>> _fetchUnits() async {
     final rows = await _client
         .from('unit')
@@ -298,6 +319,10 @@ class ShopApi {
         .eq('id', shopId)
         .maybeSingle();
     if (row == null) return null;
-    return ShopSummary.fromJson(Map<String, dynamic>.from(row));
+    final symbols = await currencySymbols();
+    return ShopSummary.fromJson(
+      Map<String, dynamic>.from(row),
+      currencySymbols: symbols,
+    );
   }
 }

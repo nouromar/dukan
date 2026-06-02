@@ -1241,14 +1241,14 @@ abstract class AppLocalizations {
   /// No description provided for @receiveLinePerUnitLabel.
   ///
   /// In en, this message translates to:
-  /// **'\$ per {unit}'**
-  String receiveLinePerUnitLabel(Object unit);
+  /// **'{currency} per {unit}'**
+  String receiveLinePerUnitLabel(Object currency, Object unit);
 
   /// No description provided for @receiveLineTotalLabel.
   ///
   /// In en, this message translates to:
-  /// **'\$ total'**
-  String get receiveLineTotalLabel;
+  /// **'{currency} total'**
+  String receiveLineTotalLabel(Object currency);
 
   /// No description provided for @receiveAddLineButton.
   ///

@@ -16,6 +16,7 @@ import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/money.dart';
 
 class SupplierPickerScreen extends StatefulWidget {
   const SupplierPickerScreen({required this.shop, super.key});
@@ -152,6 +153,7 @@ class _SupplierPickerScreenState extends State<SupplierPickerScreen> {
                       itemCount: results.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, i) => _SupplierTile(
+                        shop: widget.shop,
                         party: results[i],
                         onTap: () => _onPickSupplier(results[i]),
                       ),
@@ -176,8 +178,13 @@ class _SupplierPickerScreenState extends State<SupplierPickerScreen> {
 }
 
 class _SupplierTile extends StatelessWidget {
-  const _SupplierTile({required this.party, required this.onTap});
+  const _SupplierTile({
+    required this.shop,
+    required this.party,
+    required this.onTap,
+  });
 
+  final ShopSummary shop;
   final PartySearchResult party;
   final VoidCallback onTap;
 
@@ -185,7 +192,7 @@ class _SupplierTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     final subtitle = party.payable > 0
-        ? l.supplierPickerOwesLabel(_formatMoney(party.payable))
+        ? l.supplierPickerOwesLabel(formatMoney(party.payable, shop))
         : l.supplierPickerNoBonosLabel;
     return Card(
       margin: EdgeInsets.zero,
@@ -240,10 +247,3 @@ class _EmptyBlock extends StatelessWidget {
   }
 }
 
-String _formatMoney(num value) {
-  final v = value.toDouble();
-  if (v == v.roundToDouble()) {
-    return '\$${v.toStringAsFixed(0)}';
-  }
-  return '\$${v.toStringAsFixed(2)}';
-}

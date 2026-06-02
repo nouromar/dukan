@@ -298,7 +298,8 @@ void main() {
       await tester.pump();
       final perUnitField = find.byWidgetPredicate(
         (w) => w is TextField &&
-            w.decoration?.labelText == en.receiveLinePerUnitLabel('Kg'),
+            w.decoration?.labelText ==
+                en.receiveLinePerUnitLabel('\$', 'Kg'),
       );
       await tester.enterText(perUnitField, '1');
       await tester.pump();

@@ -28,6 +28,7 @@ Future<LineEditorResult?> showLineEditor(
   BuildContext context, {
   required String itemName,
   required String baseUnitLabel,
+  required String currencySymbol,
   int initialQuantity = 1,
   num? initialUnitPrice,
   bool priceRequired = false,
@@ -38,6 +39,7 @@ Future<LineEditorResult?> showLineEditor(
     builder: (_) => _LineEditorBody(
       itemName: itemName,
       baseUnitLabel: baseUnitLabel,
+      currencySymbol: currencySymbol,
       initialQuantity: initialQuantity,
       initialUnitPrice: initialUnitPrice,
       priceRequired: priceRequired,
@@ -49,6 +51,7 @@ class _LineEditorBody extends StatefulWidget {
   const _LineEditorBody({
     required this.itemName,
     required this.baseUnitLabel,
+    required this.currencySymbol,
     required this.initialQuantity,
     required this.initialUnitPrice,
     required this.priceRequired,
@@ -56,6 +59,7 @@ class _LineEditorBody extends StatefulWidget {
 
   final String itemName;
   final String baseUnitLabel;
+  final String currencySymbol;
   final int initialQuantity;
   final num? initialUnitPrice;
   final bool priceRequired;
@@ -197,7 +201,7 @@ class _LineEditorBodyState extends State<_LineEditorBody> {
               autofocus: widget.priceRequired,
               style: theme.textTheme.headlineSmall,
               decoration: InputDecoration(
-                prefixText: '\$ ',
+                prefixText: '${widget.currencySymbol} ',
                 errorText: _priceInvalid
                     ? l.lineEditorInvalidPriceMessage
                     : null,

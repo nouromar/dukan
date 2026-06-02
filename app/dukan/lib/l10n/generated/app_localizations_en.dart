@@ -674,12 +674,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveLineQuantityLabel => 'Qty';
 
   @override
-  String receiveLinePerUnitLabel(Object unit) {
-    return '\$ per $unit';
+  String receiveLinePerUnitLabel(Object currency, Object unit) {
+    return '$currency per $unit';
   }
 
   @override
-  String get receiveLineTotalLabel => '\$ total';
+  String receiveLineTotalLabel(Object currency) {
+    return '$currency total';
+  }
 
   @override
   String get receiveAddLineButton => 'ADD LINE';

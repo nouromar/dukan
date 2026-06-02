@@ -34,6 +34,7 @@ import 'package:dukan/receive/unit_picker_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/money.dart';
 
 class ReceiveScreen extends StatefulWidget {
   const ReceiveScreen({required this.shop, super.key});
@@ -365,6 +366,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                                   (_selectedItem!.itemId ??
                                       _selectedItem!.catalogItemId);
                       return _ReceiveItemTile(
+                        shop: widget.shop,
                         item: item,
                         selected: isSelected,
                         onTap: _saving ? null : () => _onTapTile(item),
@@ -379,13 +381,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 key: ValueKey(
                   _selectedItem!.itemId ?? _selectedItem!.catalogItemId,
                 ),
-                shopId: widget.shop.id,
+                shop: widget.shop,
                 item: _selectedItem!,
                 saving: _saving,
                 onAddLine: _onAddLine,
                 onCancel: () => setState(() => _selectedItem = null),
               ),
             _ReceiveLinesStrip(
+              shop: widget.shop,
               lines: controller.lines,
               lineCount: controller.lineCount,
               bonoTotal: controller.bonoTotal,
@@ -405,11 +408,13 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
 
 class _ReceiveItemTile extends StatelessWidget {
   const _ReceiveItemTile({
+    required this.shop,
     required this.item,
     required this.selected,
     required this.onTap,
   });
 
+  final ShopSummary shop;
   final ItemSearchResult item;
   final bool selected;
   final VoidCallback? onTap;
@@ -419,7 +424,7 @@ class _ReceiveItemTile extends StatelessWidget {
     final theme = Theme.of(context);
     final costText = item.lastCost == null
         ? tr(context).lineEditorTilePriceMissing
-        : _formatMoney(item.lastCost!);
+        : formatMoney(item.lastCost!, shop);
     return Card(
       color: selected ? theme.colorScheme.primaryContainer : Colors.white,
       child: InkWell(
@@ -466,7 +471,7 @@ class _ReceiveItemTile extends StatelessWidget {
 // bag) to base (kg) or another unit for partial bonos.
 class _LineEntryForm extends StatefulWidget {
   const _LineEntryForm({
-    required this.shopId,
+    required this.shop,
     required this.item,
     required this.saving,
     required this.onAddLine,
@@ -474,7 +479,7 @@ class _LineEntryForm extends StatefulWidget {
     super.key,
   });
 
-  final String shopId;
+  final ShopSummary shop;
   final ItemSearchResult item;
   final bool saving;
   final void Function(
@@ -527,7 +532,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
   Future<void> _onTapUnit() async {
     final picked = await showUnitPicker(
       context,
-      shopId: widget.shopId,
+      shopId: widget.shop.id,
       baseUnitLabel: widget.item.baseUnitLabel,
       itemId: widget.item.itemId,
       catalogItemId: widget.item.itemId == null
@@ -724,7 +729,10 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
                     decoration: InputDecoration(
-                      labelText: l.receiveLinePerUnitLabel(_unitLabel),
+                      labelText: l.receiveLinePerUnitLabel(
+                        widget.shop.currencySymbol,
+                        _unitLabel,
+                      ),
                       isDense: true,
                     ),
                   ),
@@ -740,7 +748,9 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
                     decoration: InputDecoration(
-                      labelText: l.receiveLineTotalLabel,
+                      labelText: l.receiveLineTotalLabel(
+                        widget.shop.currencySymbol,
+                      ),
                       isDense: true,
                     ),
                   ),
@@ -764,6 +774,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
 
 class _ReceiveLinesStrip extends StatelessWidget {
   const _ReceiveLinesStrip({
+    required this.shop,
     required this.lines,
     required this.lineCount,
     required this.bonoTotal,
@@ -775,6 +786,7 @@ class _ReceiveLinesStrip extends StatelessWidget {
     required this.onSave,
   });
 
+  final ShopSummary shop;
   final Map<String, ReceiveLine> lines;
   final int lineCount;
   final double bonoTotal;
@@ -825,7 +837,7 @@ class _ReceiveLinesStrip extends StatelessWidget {
                             child: Text(
                               l.receiveLinesSummary(
                                 lineCount,
-                                _formatMoney(bonoTotal),
+                                formatMoney(bonoTotal, shop),
                               ),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
@@ -850,6 +862,7 @@ class _ReceiveLinesStrip extends StatelessWidget {
                   ? ConstrainedBox(
                       constraints: BoxConstraints(maxHeight: maxListHeight),
                       child: _ReceiveLineList(
+                        shop: shop,
                         entries: entries,
                         saving: saving,
                         onRemoveLine: onRemoveLine,
@@ -880,11 +893,13 @@ class _ReceiveLinesStrip extends StatelessWidget {
 
 class _ReceiveLineList extends StatefulWidget {
   const _ReceiveLineList({
+    required this.shop,
     required this.entries,
     required this.saving,
     required this.onRemoveLine,
   });
 
+  final ShopSummary shop;
   final List<MapEntry<String, ReceiveLine>> entries;
   final bool saving;
   final void Function(String key) onRemoveLine;
@@ -916,6 +931,7 @@ class _ReceiveLineListState extends State<_ReceiveLineList> {
         itemBuilder: (context, i) {
           final entry = widget.entries[i];
           return _ReceiveLineTile(
+            shop: widget.shop,
             line: entry.value,
             enabled: !widget.saving,
             onRemove: () => widget.onRemoveLine(entry.key),
@@ -928,11 +944,13 @@ class _ReceiveLineListState extends State<_ReceiveLineList> {
 
 class _ReceiveLineTile extends StatelessWidget {
   const _ReceiveLineTile({
+    required this.shop,
     required this.line,
     required this.enabled,
     required this.onRemove,
   });
 
+  final ShopSummary shop;
   final ReceiveLine line;
   final bool enabled;
   final VoidCallback onRemove;
@@ -952,7 +970,7 @@ class _ReceiveLineTile extends StatelessWidget {
     // here does NOT match the template's left-to-right reading.
     final subtitle = l.receiveLineSubtotal(
       '${line.quantity}',
-      _formatMoney(line.lineTotal),
+      formatMoney(line.lineTotal, shop),
       unit,
     );
     return ListTile(
@@ -977,13 +995,6 @@ class _ReceiveLineTile extends StatelessWidget {
   }
 }
 
-String _formatMoney(num value) {
-  final v = value.toDouble();
-  if (v == v.roundToDouble()) {
-    return '\$${v.toStringAsFixed(0)}';
-  }
-  return '\$${v.toStringAsFixed(2)}';
-}
 
 // English plural forms for the unit codes we use. Hardcoded because a
 // blanket "+s" rule breaks "box" (→ "boxes" not "boxs") and isn't
