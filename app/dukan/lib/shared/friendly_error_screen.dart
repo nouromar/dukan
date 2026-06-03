@@ -24,6 +24,7 @@ class FriendlyErrorScreen extends StatelessWidget {
       appBar: dukanAppBar(
         context,
         title,
+        showLanguageToggle: true,
         actions: [
           IconButton(
             tooltip: l.signOut,

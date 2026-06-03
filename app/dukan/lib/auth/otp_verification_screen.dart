@@ -49,7 +49,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     final l = tr(context);
     final pendingPhone = context.watch<AuthController>().pendingPhone;
     return Scaffold(
-      appBar: dukanAppBar(context, l.verifyOtpTitle),
+      appBar: dukanAppBar(context, l.verifyOtpTitle, showLanguageToggle: true),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),

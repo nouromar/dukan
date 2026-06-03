@@ -16,6 +16,7 @@ class ShopPickerScreen extends StatelessWidget {
       appBar: dukanAppBar(
         context,
         l.chooseShopTitle,
+        showLanguageToggle: true,
         actions: [
           IconButton(
             tooltip: l.signOut,

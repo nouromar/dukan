@@ -17,6 +17,7 @@ import 'package:dukan/setup/shop_type_setup_screen.dart';
 import 'package:dukan/shared/friendly_error_screen.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/loading_screen.dart';
+import 'package:dukan/shared/locale_controller.dart';
 
 /// Owns the lifecycle of the session-scoped controllers (Auth, ShopApi,
 /// Cart, Receive) and exposes them via Provider. Lives ABOVE MaterialApp
@@ -117,6 +118,23 @@ class AuthRouter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
+    // Settings is now the single source of truth for language once a
+    // shop is selected. Push the shop's default_language_code into the
+    // root LocaleController on every auth notification so changing
+    // shops or saving Settings flips the UI without a separate
+    // listener wiring. setLocale is a no-op when the value matches, so
+    // the pre-auth toggle's choice is only overridden once a shop
+    // actually loads.
+    final shop = auth.selectedShop;
+    if (shop != null) {
+      final locale = context.read<LocaleController>();
+      final target = Locale(shop.defaultLanguageCode);
+      if (locale.locale != target) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          locale.setLocale(target);
+        });
+      }
+    }
 
     if (!auth.initialized) {
       return const LoadingScreen();

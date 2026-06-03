@@ -12,7 +12,7 @@ class SupabaseConfigScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     return Scaffold(
-      appBar: dukanAppBar(context, l.appTitle),
+      appBar: dukanAppBar(context, l.appTitle, showLanguageToggle: true),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),

@@ -10,7 +10,7 @@ class LoadingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     return Scaffold(
-      appBar: dukanAppBar(context, l.appTitle),
+      appBar: dukanAppBar(context, l.appTitle, showLanguageToggle: true),
       body: const Center(child: CircularProgressIndicator()),
     );
   }

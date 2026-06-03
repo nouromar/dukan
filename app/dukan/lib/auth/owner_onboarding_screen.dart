@@ -55,6 +55,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       appBar: dukanAppBar(
         context,
         l.ownerOnboardingTitle,
+        showLanguageToggle: true,
         actions: [
           IconButton(
             tooltip: l.signOut,
