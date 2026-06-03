@@ -746,6 +746,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleVoidConfirmNo => 'CANCEL';
 
   @override
+  String get saleVoidRefundCheckboxLabel => 'Refund cash to the customer';
+
+  @override
+  String get saleVoidRefundAmountLabel => 'Refund amount';
+
+  @override
+  String saleVoidRefundPaidHint(Object amount) {
+    return 'paid: $amount';
+  }
+
+  @override
+  String saleVoidRefundExceedsPaidMessage(Object paid) {
+    return 'Refund cannot exceed the cash paid ($paid).';
+  }
+
+  @override
   String get saleVoidedToast => 'Sale voided';
 
   @override

@@ -1369,6 +1369,30 @@ abstract class AppLocalizations {
   /// **'CANCEL'**
   String get saleVoidConfirmNo;
 
+  /// No description provided for @saleVoidRefundCheckboxLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund cash to the customer'**
+  String get saleVoidRefundCheckboxLabel;
+
+  /// No description provided for @saleVoidRefundAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund amount'**
+  String get saleVoidRefundAmountLabel;
+
+  /// No description provided for @saleVoidRefundPaidHint.
+  ///
+  /// In en, this message translates to:
+  /// **'paid: {amount}'**
+  String saleVoidRefundPaidHint(Object amount);
+
+  /// No description provided for @saleVoidRefundExceedsPaidMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund cannot exceed the cash paid ({paid}).'**
+  String saleVoidRefundExceedsPaidMessage(Object paid);
+
   /// No description provided for @saleVoidedToast.
   ///
   /// In en, this message translates to:

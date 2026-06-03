@@ -310,10 +310,15 @@ class ShopApi {
   /// Reverse a posted sale. Owner-only, ≤7 days, refuses if the
   /// customer has paid down the receivable. Returns the new reversal
   /// txn's id.
+  ///
+  /// `refundAmount` (optional) atomically records an outbound payment
+  /// to the customer for cash already paid at the till. Must be > 0
+  /// and ≤ the sale's `paid_amount`. Null = no refund.
   Future<String> voidSale({
     required String shopId,
     required String txnId,
     required String clientOpId,
+    num? refundAmount,
   }) async {
     final result = await _client.rpc(
       'void_sale',
@@ -321,6 +326,7 @@ class ShopApi {
         'p_shop_id': shopId,
         'p_txn_id': txnId,
         'p_client_op_id': clientOpId,
+        'p_refund_amount': refundAmount,
       },
     );
     return result as String;

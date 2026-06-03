@@ -746,6 +746,22 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleVoidConfirmNo => 'JOOJI';
 
   @override
+  String get saleVoidRefundCheckboxLabel => 'Lacagta ku celi macmiilka';
+
+  @override
+  String get saleVoidRefundAmountLabel => 'Lacagta la celiyay';
+
+  @override
+  String saleVoidRefundPaidHint(Object amount) {
+    return 'la bixiyay: $amount';
+  }
+
+  @override
+  String saleVoidRefundExceedsPaidMessage(Object paid) {
+    return 'Lacagta la celiyay kama badnaan karto lacagta la bixiyay ($paid).';
+  }
+
+  @override
   String get saleVoidedToast => 'Iibka waa la tirtiray';
 
   @override

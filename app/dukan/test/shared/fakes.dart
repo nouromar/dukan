@@ -257,8 +257,14 @@ class FakeShopApi implements ShopApi {
   Future<SaleSummary?> Function(String shopId, String txnId)? onGetSale;
   Future<List<SaleLineDetail>> Function(String shopId, String txnId)?
   onGetSaleLines;
-  Future<String> Function(String shopId, String txnId, String clientOpId)?
+  Future<String> Function(
+    String shopId,
+    String txnId,
+    String clientOpId,
+    num? refundAmount,
+  )?
   onVoidSale;
+  final List<({String txnId, num? refundAmount})> voidSaleCalls = [];
   Future<String> Function(
     String shopId,
     String categoryId,
@@ -509,8 +515,12 @@ class FakeShopApi implements ShopApi {
     required String shopId,
     required String txnId,
     required String clientOpId,
+    num? refundAmount,
   }) async {
-    if (onVoidSale != null) return onVoidSale!(shopId, txnId, clientOpId);
+    voidSaleCalls.add((txnId: txnId, refundAmount: refundAmount));
+    if (onVoidSale != null) {
+      return onVoidSale!(shopId, txnId, clientOpId, refundAmount);
+    }
     return 'fake-reversal-${clientOpId.hashCode}';
   }
 

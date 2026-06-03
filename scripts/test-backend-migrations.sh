@@ -2542,6 +2542,91 @@ begin
 end;
 $$;
 
+-- 0029 coverage: customer refund on void.
+do $$
+declare
+  v_shop_id uuid;
+  v_candy_item_id uuid;
+  v_customer_id uuid;
+  v_unit_id uuid;
+  v_sale_txn_id uuid;
+  v_failed boolean := false;
+  v_payment_count int;
+  v_payment_amount numeric;
+  v_payment_method_id uuid;
+  v_original_method_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_candy_item_id from public.item
+    where shop_id = v_shop_id and code = 'candy';
+  select id into v_unit_id from public.unit where code = 'piece';
+
+  v_customer_id := public.create_party(
+    v_shop_id, 'Refund Test Customer', null, 'customer'
+  );
+
+  -- Sale: 2 × $0.50 = $1.00 total, $0.80 paid cash, $0.20 on debt.
+  v_sale_txn_id := public.post_sale(
+    v_shop_id, v_customer_id,
+    jsonb_build_array(jsonb_build_object(
+      'item_id', v_candy_item_id, 'quantity', 2,
+      'unit_id', v_unit_id, 'unit_price', 0.50
+    )),
+    0.80, 'cash', null, 'refund-sale-1', null,
+    'Mixed cash + debt sale we will void with refund'
+  );
+
+  -- Reject refund > paid_amount.
+  begin
+    perform public.void_sale(
+      v_shop_id, v_sale_txn_id, 'refund-too-big', 1.50
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'void_sale accepted refund > paid_amount';
+  end if;
+
+  -- Reject zero/negative refund.
+  v_failed := false;
+  begin
+    perform public.void_sale(
+      v_shop_id, v_sale_txn_id, 'refund-zero', 0
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'void_sale accepted refund = 0';
+  end if;
+
+  -- Happy path: partial refund ($0.50 out of $0.80 paid).
+  perform public.void_sale(
+    v_shop_id, v_sale_txn_id, 'refund-happy', 0.50
+  );
+
+  select count(*), max(amount) into v_payment_count, v_payment_amount
+  from public.payment
+  where shop_id = v_shop_id
+    and refund_of_transaction_id = v_sale_txn_id;
+  if v_payment_count <> 1 then
+    raise exception 'expected exactly 1 refund payment (got %)', v_payment_count;
+  end if;
+  if v_payment_amount <> 0.50 then
+    raise exception 'refund payment amount = % (expected 0.50)', v_payment_amount;
+  end if;
+
+  -- Refund inherits the sale's payment_method (cash here).
+  select payment_method_id into v_original_method_id
+  from public.txn where id = v_sale_txn_id;
+  select method_id into v_payment_method_id
+  from public.payment
+  where refund_of_transaction_id = v_sale_txn_id;
+  if v_payment_method_id <> v_original_method_id then
+    raise exception 'refund payment method mismatch';
+  end if;
+end;
+$$;
+
 reset role;
 SQL
 

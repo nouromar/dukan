@@ -6,6 +6,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,6 +16,12 @@ import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+
+/// Outcome of the void confirmation dialog. `null` = cashier
+/// cancelled. A returned record means "go ahead and void"; the
+/// `refundAmount` is null when the cashier didn't opt into refunding,
+/// or a positive number to record an outbound payment for that amount.
+typedef VoidDialogOutcome = ({num? refundAmount});
 
 class SaleDetailScreen extends StatefulWidget {
   const SaleDetailScreen({required this.shop, required this.txnId, super.key});
@@ -52,24 +59,12 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
 
   Future<void> _confirmAndVoid(SaleSummary header) async {
     final l = tr(context);
-    final confirmed = await showDialog<bool>(
+    final outcome = await showDialog<VoidDialogOutcome>(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: Text(l.saleVoidConfirmTitle),
-        content: Text(l.saleVoidConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: Text(l.saleVoidConfirmNo),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(true),
-            child: Text(l.saleVoidConfirmYes),
-          ),
-        ],
-      ),
+      builder: (dialogCtx) =>
+          _VoidConfirmDialog(shop: widget.shop, header: header),
     );
-    if (confirmed != true || !mounted) return;
+    if (outcome == null || !mounted) return;
 
     setState(() => _voiding = true);
     final api = context.read<ShopApi>();
@@ -78,6 +73,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
         shopId: widget.shop.id,
         txnId: header.txnId,
         clientOpId: _generateClientOpId(),
+        refundAmount: outcome.refundAmount,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -302,6 +298,156 @@ class _SaleDetailBody extends StatelessWidget {
           Text(value, style: style),
         ],
       ),
+    );
+  }
+}
+
+class _VoidConfirmDialog extends StatefulWidget {
+  const _VoidConfirmDialog({required this.shop, required this.header});
+
+  final ShopSummary shop;
+  final SaleSummary header;
+
+  @override
+  State<_VoidConfirmDialog> createState() => _VoidConfirmDialogState();
+}
+
+class _VoidConfirmDialogState extends State<_VoidConfirmDialog> {
+  late TextEditingController _refundController;
+  late bool _refundEnabled;
+  String? _refundError;
+
+  bool get _hasCashPaid => widget.header.paidAmount > 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _refundEnabled = _hasCashPaid;
+    _refundController = TextEditingController(
+      text: _hasCashPaid ? _formatField(widget.header.paidAmount) : '',
+    );
+    _refundController.addListener(_onRefundChanged);
+  }
+
+  @override
+  void dispose() {
+    _refundController.removeListener(_onRefundChanged);
+    _refundController.dispose();
+    super.dispose();
+  }
+
+  String _formatField(num value) {
+    if (value == value.toDouble().roundToDouble()) {
+      return value.toInt().toString();
+    }
+    return value.toStringAsFixed(2);
+  }
+
+  num? _parsedRefund() {
+    final raw = _refundController.text.trim();
+    if (raw.isEmpty) return null;
+    return num.tryParse(raw);
+  }
+
+  void _onRefundChanged() {
+    final l = tr(context);
+    final parsed = _parsedRefund();
+    final paid = widget.header.paidAmount;
+    setState(() {
+      if (!_refundEnabled || parsed == null) {
+        _refundError = null;
+      } else if (parsed > paid) {
+        _refundError = l.saleVoidRefundExceedsPaidMessage(
+          formatMoney(paid, widget.shop),
+        );
+      } else {
+        _refundError = null;
+      }
+    });
+  }
+
+  void _onToggleRefund(bool? value) {
+    setState(() {
+      _refundEnabled = value ?? false;
+      _refundError = null;
+      if (_refundEnabled && _refundController.text.trim().isEmpty) {
+        _refundController.text = _formatField(widget.header.paidAmount);
+      }
+    });
+  }
+
+  bool get _canConfirm {
+    if (!_refundEnabled) return true;
+    final parsed = _parsedRefund();
+    if (parsed == null || parsed <= 0) return false;
+    if (parsed > widget.header.paidAmount) return false;
+    return true;
+  }
+
+  void _onConfirm() {
+    if (!_canConfirm) return;
+    final refund = _refundEnabled ? _parsedRefund() : null;
+    Navigator.of(context).pop<VoidDialogOutcome>((refundAmount: refund));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    return AlertDialog(
+      title: Text(l.saleVoidConfirmTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l.saleVoidConfirmBody),
+          if (_hasCashPaid) ...[
+            const SizedBox(height: 12),
+            CheckboxListTile(
+              value: _refundEnabled,
+              onChanged: _onToggleRefund,
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(l.saleVoidRefundCheckboxLabel),
+              subtitle: Text(
+                l.saleVoidRefundPaidHint(
+                  formatMoney(widget.header.paidAmount, widget.shop),
+                ),
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+            if (_refundEnabled) ...[
+              const SizedBox(height: 4),
+              TextField(
+                controller: _refundController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
+                decoration: InputDecoration(
+                  labelText:
+                      '${widget.shop.currencySymbol} ${l.saleVoidRefundAmountLabel}',
+                  errorText: _refundError,
+                  isDense: true,
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l.saleVoidConfirmNo),
+        ),
+        FilledButton(
+          onPressed: _canConfirm ? _onConfirm : null,
+          child: Text(l.saleVoidConfirmYes),
+        ),
+      ],
     );
   }
 }

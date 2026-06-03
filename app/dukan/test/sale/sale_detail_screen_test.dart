@@ -131,6 +131,84 @@ void main() {
     );
   });
 
+  testWidgets(
+    'refund checkbox + adjustable amount → voidSale called with refundAmount',
+    (tester) async {
+      // Mixed sale: $10 total, $6 paid in cash. Default refund = $6,
+      // cashier adjusts to $4.
+      api.onGetSale = (_, _) async => _header(
+        partyName: 'Ahmed',
+        total: 10,
+        paid: 6,
+      );
+      api.onGetSaleLines = (_, _) async => const [
+        SaleLineDetail(
+          lineNo: 1,
+          itemId: 'i1',
+          itemName: 'Bariis',
+          quantity: 1,
+          unitLabel: 'kg',
+          unitAmount: 10,
+          lineTotal: 10,
+        ),
+      ];
+      num? capturedRefund;
+      api.onVoidSale = (_, _, _, refundAmount) async {
+        capturedRefund = refundAmount;
+        return 'rev-id';
+      };
+
+      await pumpDetail(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.saleDetailVoidButton),
+      );
+      await tester.pumpAndSettle();
+
+      // Refund checkbox is on by default because paid > 0, default
+      // refund = paid amount (\$6).
+      expect(find.byType(Checkbox), findsOneWidget);
+      // Cashier overrides to \$4.
+      await tester.enterText(find.byType(TextField), '4');
+      await tester.pump();
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.saleVoidConfirmYes),
+      );
+      await tester.pumpAndSettle();
+
+      expect(capturedRefund, 4);
+    },
+  );
+
+  testWidgets(
+    'refund > paid blocks the confirm button',
+    (tester) async {
+      api.onGetSale = (_, _) async => _header(
+        partyName: 'Ahmed',
+        total: 10,
+        paid: 6,
+      );
+      api.onGetSaleLines = (_, _) async => const [];
+
+      await pumpDetail(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.saleDetailVoidButton),
+      );
+      await tester.pumpAndSettle();
+
+      // Type a refund > paid.
+      await tester.enterText(find.byType(TextField), '10');
+      await tester.pump();
+
+      final confirm = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, en.saleVoidConfirmYes),
+      );
+      expect(confirm.onPressed, isNull);
+    },
+  );
+
   testWidgets('VOID flow: tap → confirm → voidSale called, pops with true',
       (tester) async {
     api.onGetSale = (_, _) async => _header(partyName: 'Ahmed');
@@ -146,7 +224,7 @@ void main() {
       ),
     ];
     String? capturedTxnId;
-    api.onVoidSale = (_, txnId, _) async {
+    api.onVoidSale = (_, txnId, _, _) async {
       capturedTxnId = txnId;
       return 'rev-id';
     };
