@@ -10,6 +10,7 @@ import 'package:provider/single_child_widget.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/receive/receive_controller.dart';
@@ -32,6 +33,7 @@ Widget wrapWithApp(
   CartController? cartController,
   ReceiveController? receiveController,
   PaymentController? paymentController,
+  ExpenseController? expenseController,
   LocaleController? localeController,
   Locale locale = const Locale('en'),
 }) {
@@ -51,6 +53,10 @@ Widget wrapWithApp(
     if (paymentController != null)
       ChangeNotifierProvider<PaymentController>.value(
         value: paymentController,
+      ),
+    if (expenseController != null)
+      ChangeNotifierProvider<ExpenseController>.value(
+        value: expenseController,
       ),
   ];
 

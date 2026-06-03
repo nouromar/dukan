@@ -206,6 +206,53 @@ class ShopApi {
     return result as String;
   }
 
+  /// Lists the active expense categories for a shop (Rent, Salary,
+  /// etc.) with the name resolved to the requested locale via the
+  /// stored `name_translations` jsonb.
+  Future<List<ExpenseCategoryOption>> listExpenseCategories({
+    required String shopId,
+    String? locale,
+  }) async {
+    final rows = await _client
+        .from('expense_category')
+        .select('id, code, name, name_translations')
+        .eq('shop_id', shopId)
+        .eq('is_active', true)
+        .order('name');
+    return rows
+        .map<ExpenseCategoryOption>(
+          (row) => ExpenseCategoryOption.fromJson(
+            Map<String, dynamic>.from(row),
+            locale: locale,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  /// post_expense — records a one-line expense transaction. v1 uses
+  /// 'cash' as the default payment method.
+  Future<String> postExpense({
+    required String shopId,
+    required String expenseCategoryId,
+    required num amount,
+    required String paymentMethodCode,
+    required String clientOpId,
+    String? notes,
+  }) async {
+    final result = await _client.rpc(
+      'post_expense',
+      params: {
+        'p_shop_id': shopId,
+        'p_expense_category_id': expenseCategoryId,
+        'p_amount': amount,
+        'p_payment_method_code': paymentMethodCode,
+        'p_client_op_id': clientOpId,
+        'p_notes': notes,
+      },
+    );
+    return result as String;
+  }
+
   /// post_payment — settle a party's outstanding balance. Direction is
   /// 'I' for an inbound payment (customer pays down their receivable)
   /// or 'O' for an outbound payment (shop pays down its payable to a

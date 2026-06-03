@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/expense/expense_screen.dart';
 import 'package:dukan/payment/payment_screen.dart';
-import 'package:dukan/prototype/expense_screen.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
@@ -13,7 +13,6 @@ import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/l10n.dart';
-import 'package:dukan/shared/navigation.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.shop, this.onSignOut});
@@ -131,7 +130,14 @@ class HomeScreen extends StatelessWidget {
                         HomeAction(
                           icon: Icons.receipt_long,
                           label: l.expense,
-                          onTap: () => push(context, const ExpenseScreen()),
+                          onTap: shop == null
+                              ? () {}
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ExpenseScreen(shop: shop!),
+                                  ),
+                                ),
                         ),
                       ],
                     ),

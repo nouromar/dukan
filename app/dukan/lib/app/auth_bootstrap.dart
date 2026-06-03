@@ -8,6 +8,7 @@ import 'package:dukan/auth/otp_verification_screen.dart';
 import 'package:dukan/auth/owner_onboarding_screen.dart';
 import 'package:dukan/auth/phone_login_screen.dart';
 import 'package:dukan/auth/shop_picker_screen.dart';
+import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/home/home_screen.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/receive/receive_controller.dart';
@@ -46,6 +47,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   late final CartController _cartController;
   late final ReceiveController _receiveController;
   late final PaymentController _paymentController;
+  late final ExpenseController _expenseController;
   bool _hadSession = false;
 
   @override
@@ -58,9 +60,10 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     _cartController = CartController();
     _receiveController = ReceiveController();
     _paymentController = PaymentController();
-    // Clear in-progress carts/bonos/payments whenever the session
-    // transitions to null (sign-out or session expiry). Stops state
-    // from leaking across users sharing the same device.
+    _expenseController = ExpenseController();
+    // Clear in-progress carts/bonos/payments/expenses whenever the
+    // session transitions to null (sign-out or session expiry). Stops
+    // state from leaking across users sharing the same device.
     _authController.addListener(_onAuthChanged);
   }
 
@@ -70,6 +73,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
       _cartController.clearAll();
       _receiveController.clearAll();
       _paymentController.clearAll();
+      _expenseController.clearAll();
     }
     _hadSession = hasSession;
   }
@@ -77,6 +81,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   @override
   void dispose() {
     _authController.removeListener(_onAuthChanged);
+    _expenseController.dispose();
     _paymentController.dispose();
     _receiveController.dispose();
     _cartController.dispose();
@@ -96,6 +101,9 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
         ),
         ChangeNotifierProvider<PaymentController>.value(
           value: _paymentController,
+        ),
+        ChangeNotifierProvider<ExpenseController>.value(
+          value: _expenseController,
         ),
       ],
       child: Builder(builder: widget.builder),

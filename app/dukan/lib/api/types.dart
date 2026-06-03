@@ -192,6 +192,40 @@ class ReceiveLinePayload {
   };
 }
 
+class ExpenseCategoryOption {
+  const ExpenseCategoryOption({
+    required this.id,
+    required this.code,
+    required this.name,
+  });
+
+  /// Build an option with the locale-appropriate name resolved from
+  /// the `name_translations` jsonb (`{"en": ..., "so": ...}`), falling
+  /// back to the canonical `name` column.
+  factory ExpenseCategoryOption.fromJson(
+    Map<String, dynamic> json, {
+    String? locale,
+  }) {
+    final translations = json['name_translations'];
+    String? translated;
+    if (translations is Map && locale != null) {
+      final value = translations[locale];
+      if (value is String && value.trim().isNotEmpty) {
+        translated = value;
+      }
+    }
+    return ExpenseCategoryOption(
+      id: json['id'] as String,
+      code: json['code'] as String,
+      name: translated ?? json['name'] as String,
+    );
+  }
+
+  final String id;
+  final String code;
+  final String name;
+}
+
 class ReferenceOption {
   const ReferenceOption({required this.code, required this.label});
 

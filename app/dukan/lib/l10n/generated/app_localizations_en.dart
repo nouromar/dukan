@@ -647,6 +647,36 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not save the payment. Check your internet and try again.';
 
   @override
+  String get expenseCategoryLabel => 'Category';
+
+  @override
+  String get expenseAmountLabel => 'Amount';
+
+  @override
+  String get expenseSaveButton => 'SAVE';
+
+  @override
+  String get expenseSavedToast => 'Expense saved';
+
+  @override
+  String get expenseNeedCategoryMessage => 'Pick a category first.';
+
+  @override
+  String get expenseNeedAmountMessage => 'Enter an amount greater than zero.';
+
+  @override
+  String get expenseLoadFailedMessage =>
+      'Could not load categories. Check your internet and try again.';
+
+  @override
+  String get expensePostFailedMessage =>
+      'Could not save the expense. Check your internet and try again.';
+
+  @override
+  String get expenseEmptyMessage =>
+      'No expense categories yet. Pick a shop type in Settings.';
+
+  @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
     return '$quantity × $unitPrice = $subtotal';
   }

@@ -647,6 +647,36 @@ class AppLocalizationsSo extends AppLocalizations {
       'Bixinta lama keydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
+  String get expenseCategoryLabel => 'Nooca';
+
+  @override
+  String get expenseAmountLabel => 'Lacagta';
+
+  @override
+  String get expenseSaveButton => 'KEYDI';
+
+  @override
+  String get expenseSavedToast => 'Kharashka waa la keydiyay';
+
+  @override
+  String get expenseNeedCategoryMessage => 'Marka hore dooro nooc.';
+
+  @override
+  String get expenseNeedAmountMessage => 'Geli lacag ka badan eber.';
+
+  @override
+  String get expenseLoadFailedMessage =>
+      'Noocyada lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get expensePostFailedMessage =>
+      'Kharashka lama keydin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get expenseEmptyMessage =>
+      'Wali noocyo kharash ma jiraan. Dooro nooca dukaanka Diyaarinta.';
+
+  @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
     return '$quantity × $unitPrice = $subtotal';
   }

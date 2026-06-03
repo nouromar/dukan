@@ -246,6 +246,17 @@ class FakeShopApi implements ShopApi {
     String? notes,
   )?
   onPostPayment;
+  Future<List<ExpenseCategoryOption>> Function(String shopId, String? locale)?
+  onListExpenseCategories;
+  Future<String> Function(
+    String shopId,
+    String categoryId,
+    num amount,
+    String paymentMethodCode,
+    String clientOpId,
+    String? notes,
+  )?
+  onPostExpense;
   Future<List<ReferenceOption>> Function()? onListLanguages;
   Future<List<ReferenceOption>> Function()? onListCurrencies;
   Future<void> Function(
@@ -411,6 +422,47 @@ class FakeShopApi implements ShopApi {
       );
     }
     return 'fake-txn-${clientOpId.hashCode}';
+  }
+
+  @override
+  Future<List<ExpenseCategoryOption>> listExpenseCategories({
+    required String shopId,
+    String? locale,
+  }) async {
+    if (onListExpenseCategories != null) {
+      return onListExpenseCategories!(shopId, locale);
+    }
+    return const [
+      ExpenseCategoryOption(id: 'cat-rent', code: 'rent', name: 'Rent'),
+      ExpenseCategoryOption(
+        id: 'cat-electricity',
+        code: 'electricity',
+        name: 'Electricity',
+      ),
+      ExpenseCategoryOption(id: 'cat-other', code: 'other', name: 'Other'),
+    ];
+  }
+
+  @override
+  Future<String> postExpense({
+    required String shopId,
+    required String expenseCategoryId,
+    required num amount,
+    required String paymentMethodCode,
+    required String clientOpId,
+    String? notes,
+  }) async {
+    if (onPostExpense != null) {
+      return onPostExpense!(
+        shopId,
+        expenseCategoryId,
+        amount,
+        paymentMethodCode,
+        clientOpId,
+        notes,
+      );
+    }
+    return 'fake-expense-${clientOpId.hashCode}';
   }
 
   @override

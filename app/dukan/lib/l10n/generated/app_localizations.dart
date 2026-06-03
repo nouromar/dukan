@@ -1196,6 +1196,60 @@ abstract class AppLocalizations {
   /// **'Could not save the payment. Check your internet and try again.'**
   String get paymentPostFailedMessage;
 
+  /// No description provided for @expenseCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get expenseCategoryLabel;
+
+  /// No description provided for @expenseAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get expenseAmountLabel;
+
+  /// No description provided for @expenseSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get expenseSaveButton;
+
+  /// No description provided for @expenseSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense saved'**
+  String get expenseSavedToast;
+
+  /// No description provided for @expenseNeedCategoryMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a category first.'**
+  String get expenseNeedCategoryMessage;
+
+  /// No description provided for @expenseNeedAmountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount greater than zero.'**
+  String get expenseNeedAmountMessage;
+
+  /// No description provided for @expenseLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load categories. Check your internet and try again.'**
+  String get expenseLoadFailedMessage;
+
+  /// No description provided for @expensePostFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the expense. Check your internet and try again.'**
+  String get expensePostFailedMessage;
+
+  /// No description provided for @expenseEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No expense categories yet. Pick a shop type in Settings.'**
+  String get expenseEmptyMessage;
+
   /// No description provided for @cartLineSubtotal.
   ///
   /// In en, this message translates to:
