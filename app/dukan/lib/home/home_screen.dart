@@ -9,6 +9,7 @@ import 'package:dukan/payment/payment_screen.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
+import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
@@ -30,14 +31,32 @@ class HomeScreen extends StatelessWidget {
         l.appTitle,
         actions: [
           if (shop != null)
-            IconButton(
-              tooltip: l.saleHistoryTooltip,
+            PopupMenuButton<_HistoryDestination>(
+              tooltip: l.historyMenuTooltip,
               icon: const Icon(Icons.history),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => SaleHistoryScreen(shop: shop!),
+              onSelected: (choice) {
+                final route = switch (choice) {
+                  _HistoryDestination.sales =>
+                    MaterialPageRoute<void>(
+                      builder: (_) => SaleHistoryScreen(shop: shop!),
+                    ),
+                  _HistoryDestination.receives =>
+                    MaterialPageRoute<void>(
+                      builder: (_) => ReceiveHistoryScreen(shop: shop!),
+                    ),
+                };
+                Navigator.of(context).push(route);
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: _HistoryDestination.sales,
+                  child: Text(l.historyMenuSales),
                 ),
-              ),
+                PopupMenuItem(
+                  value: _HistoryDestination.receives,
+                  child: Text(l.historyMenuReceives),
+                ),
+              ],
             ),
           if (shop != null)
             IconButton(
@@ -162,6 +181,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+enum _HistoryDestination { sales, receives }
 
 class HomeAction extends StatelessWidget {
   const HomeAction({

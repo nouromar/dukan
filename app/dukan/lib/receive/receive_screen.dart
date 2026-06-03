@@ -29,6 +29,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/receive/receive_controller.dart';
+import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
@@ -284,6 +285,17 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         context,
         supplier == null ? l.receiveTitle : l.receiveFrom(supplier.name),
         actions: [
+          IconButton(
+            tooltip: l.receiveHistoryTooltip,
+            icon: const Icon(Icons.history),
+            onPressed: _saving
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ReceiveHistoryScreen(shop: widget.shop),
+                    ),
+                  ),
+          ),
           IconButton(
             tooltip: l.supplierPickerTitle,
             icon: const Icon(Icons.swap_horiz),

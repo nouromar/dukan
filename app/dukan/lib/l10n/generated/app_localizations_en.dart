@@ -769,6 +769,90 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not void this sale. Check your internet and try again.';
 
   @override
+  String get historyMenuSales => 'Sales history';
+
+  @override
+  String get historyMenuReceives => 'Bono history';
+
+  @override
+  String get historyMenuTooltip => 'History';
+
+  @override
+  String get receiveHistoryTitle => 'Bonos today';
+
+  @override
+  String get receiveHistoryTooltip => 'Bono history';
+
+  @override
+  String get receiveHistoryEmptyMessage =>
+      'No bonos yet. The first SAVE on the Receive screen will land here.';
+
+  @override
+  String get receiveHistoryLoadFailedMessage =>
+      'Could not load bonos. Check your internet and try again.';
+
+  @override
+  String receiveHistorySupplierLabel(Object name) {
+    return 'Supplier · $name';
+  }
+
+  @override
+  String get receiveHistoryVoidedBadge => 'Voided';
+
+  @override
+  String get receiveDetailTitle => 'Bono';
+
+  @override
+  String get receiveDetailVoidedHeader => 'Voided';
+
+  @override
+  String get receiveDetailVoidButton => 'VOID THIS BONO';
+
+  @override
+  String receiveDetailLineSubtotal(
+    Object quantity,
+    Object subtotal,
+    Object unit,
+    Object unitCost,
+  ) {
+    return '$quantity $unit × $unitCost = $subtotal';
+  }
+
+  @override
+  String get receiveDetailTotalLabel => 'Total';
+
+  @override
+  String get receiveDetailLoadFailedMessage => 'Could not load this bono.';
+
+  @override
+  String get receiveVoidConfirmTitle => 'Void this bono?';
+
+  @override
+  String get receiveVoidConfirmBody =>
+      'Use this only when you typed the bono wrong. It reverses the bono, removes the stock, and clears what you owe the supplier for it.';
+
+  @override
+  String get receiveVoidMistakesOnlyHint =>
+      'Mistakes only. For real returns to the supplier, record a Payment instead.';
+
+  @override
+  String get receiveVoidConfirmYes => 'VOID';
+
+  @override
+  String get receiveVoidConfirmNo => 'CANCEL';
+
+  @override
+  String get receiveVoidedToast => 'Bono voided';
+
+  @override
+  String get receiveVoidFailedMessage =>
+      'Could not void this bono. Check your internet and try again.';
+
+  @override
+  String get receiveVoidBlockedStockMessage =>
+      'Some items from this bono have already moved. Void blocked.';
+
+  @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
     return '$quantity × $unitPrice = $subtotal';
   }

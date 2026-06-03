@@ -265,6 +265,18 @@ class FakeShopApi implements ShopApi {
   )?
   onVoidSale;
   final List<({String txnId, num? refundAmount})> voidSaleCalls = [];
+  Future<List<ReceiveSummary>> Function(
+    String shopId,
+    DateTime? before,
+    int limit,
+  )?
+  onListReceives;
+  Future<ReceiveSummary?> Function(String shopId, String txnId)? onGetReceive;
+  Future<List<ReceiveLineDetail>> Function(String shopId, String txnId)?
+  onGetReceiveLines;
+  Future<String> Function(String shopId, String txnId, String clientOpId)?
+  onVoidReceive;
+  final List<String> voidReceiveCalls = [];
   Future<String> Function(
     String shopId,
     String categoryId,
@@ -520,6 +532,47 @@ class FakeShopApi implements ShopApi {
     voidSaleCalls.add((txnId: txnId, refundAmount: refundAmount));
     if (onVoidSale != null) {
       return onVoidSale!(shopId, txnId, clientOpId, refundAmount);
+    }
+    return 'fake-reversal-${clientOpId.hashCode}';
+  }
+
+  @override
+  Future<List<ReceiveSummary>> listReceives({
+    required String shopId,
+    DateTime? before,
+    int limit = 50,
+  }) async {
+    if (onListReceives != null) return onListReceives!(shopId, before, limit);
+    return const [];
+  }
+
+  @override
+  Future<ReceiveSummary?> getReceive({
+    required String shopId,
+    required String txnId,
+  }) async {
+    if (onGetReceive != null) return onGetReceive!(shopId, txnId);
+    return null;
+  }
+
+  @override
+  Future<List<ReceiveLineDetail>> getReceiveLines({
+    required String shopId,
+    required String txnId,
+  }) async {
+    if (onGetReceiveLines != null) return onGetReceiveLines!(shopId, txnId);
+    return const [];
+  }
+
+  @override
+  Future<String> voidReceive({
+    required String shopId,
+    required String txnId,
+    required String clientOpId,
+  }) async {
+    voidReceiveCalls.add(txnId);
+    if (onVoidReceive != null) {
+      return onVoidReceive!(shopId, txnId, clientOpId);
     }
     return 'fake-reversal-${clientOpId.hashCode}';
   }

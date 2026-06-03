@@ -332,6 +332,76 @@ class ShopApi {
     return result as String;
   }
 
+  /// Receive-side mirror of listSales. Same row shape.
+  Future<List<ReceiveSummary>> listReceives({
+    required String shopId,
+    DateTime? before,
+    int limit = 50,
+  }) async {
+    final rows = await _client.rpc(
+      'list_receives',
+      params: {
+        'p_shop_id': shopId,
+        'p_before': before?.toIso8601String(),
+        'p_limit': limit,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<ReceiveSummary>(
+          (row) => ReceiveSummary.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  Future<ReceiveSummary?> getReceive({
+    required String shopId,
+    required String txnId,
+  }) async {
+    final rows = await _client.rpc(
+      'get_receive',
+      params: {'p_shop_id': shopId, 'p_txn_id': txnId},
+    );
+    if (rows is! List || rows.isEmpty) return null;
+    return ReceiveSummary.fromJson(Map<String, dynamic>.from(rows.first));
+  }
+
+  Future<List<ReceiveLineDetail>> getReceiveLines({
+    required String shopId,
+    required String txnId,
+  }) async {
+    final rows = await _client.rpc(
+      'get_receive_lines',
+      params: {'p_shop_id': shopId, 'p_txn_id': txnId},
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<ReceiveLineDetail>(
+          (row) => ReceiveLineDetail.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Reverse a posted receive (same-shift, owner-only, refuses when
+  /// later stock activity exists for any item on the bono). Tighter
+  /// scope than voidSale: no refund parameter (v1 receives are all
+  /// credit) and a 24-hour window.
+  Future<String> voidReceive({
+    required String shopId,
+    required String txnId,
+    required String clientOpId,
+  }) async {
+    final result = await _client.rpc(
+      'void_receive',
+      params: {
+        'p_shop_id': shopId,
+        'p_txn_id': txnId,
+        'p_client_op_id': clientOpId,
+      },
+    );
+    return result as String;
+  }
+
   /// post_payment — settle a party's outstanding balance. Direction is
   /// 'I' for an inbound payment (customer pays down their receivable)
   /// or 'O' for an outbound payment (shop pays down its payable to a

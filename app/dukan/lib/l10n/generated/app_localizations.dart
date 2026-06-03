@@ -1405,6 +1405,149 @@ abstract class AppLocalizations {
   /// **'Could not void this sale. Check your internet and try again.'**
   String get saleVoidFailedMessage;
 
+  /// No description provided for @historyMenuSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales history'**
+  String get historyMenuSales;
+
+  /// No description provided for @historyMenuReceives.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono history'**
+  String get historyMenuReceives;
+
+  /// No description provided for @historyMenuTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get historyMenuTooltip;
+
+  /// No description provided for @receiveHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonos today'**
+  String get receiveHistoryTitle;
+
+  /// No description provided for @receiveHistoryTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono history'**
+  String get receiveHistoryTooltip;
+
+  /// No description provided for @receiveHistoryEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No bonos yet. The first SAVE on the Receive screen will land here.'**
+  String get receiveHistoryEmptyMessage;
+
+  /// No description provided for @receiveHistoryLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load bonos. Check your internet and try again.'**
+  String get receiveHistoryLoadFailedMessage;
+
+  /// No description provided for @receiveHistorySupplierLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier · {name}'**
+  String receiveHistorySupplierLabel(Object name);
+
+  /// No description provided for @receiveHistoryVoidedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided'**
+  String get receiveHistoryVoidedBadge;
+
+  /// No description provided for @receiveDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono'**
+  String get receiveDetailTitle;
+
+  /// No description provided for @receiveDetailVoidedHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided'**
+  String get receiveDetailVoidedHeader;
+
+  /// No description provided for @receiveDetailVoidButton.
+  ///
+  /// In en, this message translates to:
+  /// **'VOID THIS BONO'**
+  String get receiveDetailVoidButton;
+
+  /// No description provided for @receiveDetailLineSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{quantity} {unit} × {unitCost} = {subtotal}'**
+  String receiveDetailLineSubtotal(
+    Object quantity,
+    Object subtotal,
+    Object unit,
+    Object unitCost,
+  );
+
+  /// No description provided for @receiveDetailTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get receiveDetailTotalLabel;
+
+  /// No description provided for @receiveDetailLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this bono.'**
+  String get receiveDetailLoadFailedMessage;
+
+  /// No description provided for @receiveVoidConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Void this bono?'**
+  String get receiveVoidConfirmTitle;
+
+  /// No description provided for @receiveVoidConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this only when you typed the bono wrong. It reverses the bono, removes the stock, and clears what you owe the supplier for it.'**
+  String get receiveVoidConfirmBody;
+
+  /// No description provided for @receiveVoidMistakesOnlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mistakes only. For real returns to the supplier, record a Payment instead.'**
+  String get receiveVoidMistakesOnlyHint;
+
+  /// No description provided for @receiveVoidConfirmYes.
+  ///
+  /// In en, this message translates to:
+  /// **'VOID'**
+  String get receiveVoidConfirmYes;
+
+  /// No description provided for @receiveVoidConfirmNo.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get receiveVoidConfirmNo;
+
+  /// No description provided for @receiveVoidedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono voided'**
+  String get receiveVoidedToast;
+
+  /// No description provided for @receiveVoidFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not void this bono. Check your internet and try again.'**
+  String get receiveVoidFailedMessage;
+
+  /// No description provided for @receiveVoidBlockedStockMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Some items from this bono have already moved. Void blocked.'**
+  String get receiveVoidBlockedStockMessage;
+
   /// No description provided for @cartLineSubtotal.
   ///
   /// In en, this message translates to:

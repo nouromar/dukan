@@ -325,6 +325,13 @@ class SaleLineDetail {
   final double lineTotal;
 }
 
+/// Receive history rows have the same shape as sale history (header
+/// + voided flag). Reusing SaleSummary directly is tempting but the
+/// "Sale" name leaks into receive UI code; a typedef gives us better
+/// labels without duplicating the model.
+typedef ReceiveSummary = SaleSummary;
+typedef ReceiveLineDetail = SaleLineDetail;
+
 class UnitOption {
   const UnitOption({
     required this.id,

@@ -2627,6 +2627,178 @@ begin
 end;
 $$;
 
+-- 0030 coverage: receive history + same-shift void_receive.
+do $$
+declare
+  v_shop_id uuid;
+  v_supplier_id uuid;
+  v_candy_item_id uuid;
+  v_bag_unit_id uuid;
+  v_piece_unit_id uuid;
+  v_receive_txn_id uuid;
+  v_blocked_receive_id uuid;
+  v_reversal_id uuid;
+  v_stock_before numeric;
+  v_stock_after_receive numeric;
+  v_stock_after_void numeric;
+  v_payable_before numeric;
+  v_payable_after_receive numeric;
+  v_payable_after_void numeric;
+  v_failed boolean;
+  v_list_count int;
+  v_is_voided boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_supplier_id from public.party
+    where shop_id = v_shop_id and name = 'Hodan Beverages';
+  select id into v_candy_item_id from public.item
+    where shop_id = v_shop_id and code = 'candy';
+  select id into v_bag_unit_id from public.unit where code = 'bag';
+  select id into v_piece_unit_id from public.unit where code = 'piece';
+
+  -- Snapshot pre-receive state.
+  select current_stock into v_stock_before from public.item where id = v_candy_item_id;
+  select payable into v_payable_before from public.party where id = v_supplier_id;
+
+  -- Post a fresh credit receive (1 bag = 100 pieces, $20 total).
+  v_receive_txn_id := public.post_receive(
+    v_shop_id, v_supplier_id,
+    jsonb_build_array(jsonb_build_object(
+      'item_id', v_candy_item_id, 'quantity', 1,
+      'unit_id', v_bag_unit_id, 'line_total', 20
+    )),
+    0, null, null, 'void-recv-test-1', null,
+    'Receive we will void'
+  );
+
+  select current_stock into v_stock_after_receive
+    from public.item where id = v_candy_item_id;
+  select payable into v_payable_after_receive
+    from public.party where id = v_supplier_id;
+  if v_stock_after_receive <= v_stock_before then
+    raise exception 'fixture broken: stock did not increase after receive';
+  end if;
+  if v_payable_after_receive <= v_payable_before then
+    raise exception 'fixture broken: payable did not increase after receive';
+  end if;
+
+  -- list_receives surfaces the new receive (not voided yet).
+  select count(*) into v_list_count
+  from public.list_receives(v_shop_id, null, 100)
+  where txn_id = v_receive_txn_id;
+  if v_list_count <> 1 then
+    raise exception 'list_receives did not return the new receive';
+  end if;
+
+  -- get_receive_lines returns the line.
+  if (
+    select count(*) from public.get_receive_lines(v_shop_id, v_receive_txn_id)
+  ) <> 1 then
+    raise exception 'get_receive_lines did not return the receive line';
+  end if;
+
+  -- Happy void.
+  v_reversal_id := public.void_receive(v_shop_id, v_receive_txn_id, 'void-recv-1');
+  if v_reversal_id is null then
+    raise exception 'void_receive returned null';
+  end if;
+
+  -- Stock + payable restored.
+  select current_stock into v_stock_after_void from public.item where id = v_candy_item_id;
+  select payable into v_payable_after_void from public.party where id = v_supplier_id;
+  if v_stock_after_void <> v_stock_before then
+    raise exception 'stock not restored after receive void: before=% after=%',
+      v_stock_before, v_stock_after_void;
+  end if;
+  if v_payable_after_void <> v_payable_before then
+    raise exception 'payable not restored after receive void: before=% after=%',
+      v_payable_before, v_payable_after_void;
+  end if;
+
+  -- list_receives now flags as voided.
+  select is_voided into v_is_voided
+  from public.list_receives(v_shop_id, null, 100)
+  where txn_id = v_receive_txn_id;
+  if not v_is_voided then
+    raise exception 'list_receives did not flag the voided receive';
+  end if;
+
+  -- Idempotency.
+  if public.void_receive(v_shop_id, v_receive_txn_id, 'void-recv-1')
+     <> v_reversal_id then
+    raise exception 'void_receive not idempotent on client_op_id';
+  end if;
+
+  -- Already-voided rejection.
+  v_failed := false;
+  begin
+    perform public.void_receive(v_shop_id, v_receive_txn_id, 'void-recv-2');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'void_receive accepted a second void';
+  end if;
+
+  -- Stock-activity guard: a new receive whose items are then sold
+  -- should refuse void.
+  v_blocked_receive_id := public.post_receive(
+    v_shop_id, v_supplier_id,
+    jsonb_build_array(jsonb_build_object(
+      'item_id', v_candy_item_id, 'quantity', 1,
+      'unit_id', v_bag_unit_id, 'line_total', 20
+    )),
+    0, null, null, 'void-recv-test-2', null,
+    'Receive that becomes un-voidable after a sale'
+  );
+
+  perform public.post_sale(
+    v_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'item_id', v_candy_item_id, 'quantity', 1,
+      'unit_id', v_piece_unit_id, 'unit_price', 0.50
+    )),
+    0.50, 'cash', null, 'sale-after-recv', null,
+    'Sale that touches the just-received stock'
+  );
+
+  v_failed := false;
+  begin
+    perform public.void_receive(v_shop_id, v_blocked_receive_id, 'void-recv-blocked');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'void_receive ignored the stock-activity guard';
+  end if;
+end;
+$$;
+
+-- Cashier denied.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_recv_id uuid;
+  v_failed boolean := false;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_recv_id from public.txn
+  where shop_id = v_shop_id
+    and reverses_transaction_id is null
+    and type_id = (select id from public.transaction_type where code = 'receive')
+  limit 1;
+  begin
+    perform public.void_receive(v_shop_id, v_recv_id, 'cashier-recv-attempt');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'non-owner was allowed to void_receive';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
 reset role;
 SQL
 

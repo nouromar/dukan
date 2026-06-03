@@ -769,6 +769,90 @@ class AppLocalizationsSo extends AppLocalizations {
       'Iibka lama tirtiri karin. Hubi internetka oo isku day mar kale.';
 
   @override
+  String get historyMenuSales => 'Taariikhda iibka';
+
+  @override
+  String get historyMenuReceives => 'Taariikhda bonada';
+
+  @override
+  String get historyMenuTooltip => 'Taariikh';
+
+  @override
+  String get receiveHistoryTitle => 'Bonadii maanta';
+
+  @override
+  String get receiveHistoryTooltip => 'Taariikhda bonada';
+
+  @override
+  String get receiveHistoryEmptyMessage =>
+      'Wali bono ma jiro. KEYDI hore ee shaashada Bonada ayaa halkan ku soo galaya.';
+
+  @override
+  String get receiveHistoryLoadFailedMessage =>
+      'Bonada lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String receiveHistorySupplierLabel(Object name) {
+    return 'Keene · $name';
+  }
+
+  @override
+  String get receiveHistoryVoidedBadge => 'Tirtiran';
+
+  @override
+  String get receiveDetailTitle => 'Bono';
+
+  @override
+  String get receiveDetailVoidedHeader => 'Tirtiran';
+
+  @override
+  String get receiveDetailVoidButton => 'TIRTIR BONADAN';
+
+  @override
+  String receiveDetailLineSubtotal(
+    Object quantity,
+    Object subtotal,
+    Object unit,
+    Object unitCost,
+  ) {
+    return '$quantity $unit × $unitCost = $subtotal';
+  }
+
+  @override
+  String get receiveDetailTotalLabel => 'Wadar';
+
+  @override
+  String get receiveDetailLoadFailedMessage => 'Bonadan lama soo dejin karin.';
+
+  @override
+  String get receiveVoidConfirmTitle => 'Bonadan ma tirtir?';
+
+  @override
+  String get receiveVoidConfirmBody =>
+      'Tan u isticmaal kaliya marka aad qaladka u dhigtay bonada. Bonada waa la rogi doonaa, kayd-ka waa la dhimi doonaa, oo lacagta aad keenaha ku leedahay ee bonadan waa la tirtir doonaa.';
+
+  @override
+  String get receiveVoidMistakesOnlyHint =>
+      'Kaliya qaladaad. Haddii aad keenaha wax u celineyso, taas u qor lacag-bixinta.';
+
+  @override
+  String get receiveVoidConfirmYes => 'TIRTIR';
+
+  @override
+  String get receiveVoidConfirmNo => 'JOOJI';
+
+  @override
+  String get receiveVoidedToast => 'Bonadu waa la tirtiray';
+
+  @override
+  String get receiveVoidFailedMessage =>
+      'Bonada lama tirtiri karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get receiveVoidBlockedStockMessage =>
+      'Walxaha bonadan qaarkood mar hore wuu dhaqaaqay. Tirtiridda way joojin tahay.';
+
+  @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
     return '$quantity × $unitPrice = $subtotal';
   }
