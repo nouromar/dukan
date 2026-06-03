@@ -253,6 +253,79 @@ class ShopApi {
     return result as String;
   }
 
+  /// Lists past sales (originals only) reverse-chronological. `before`
+  /// is the pagination cursor: pass the oldest `occurredAt` from the
+  /// previous page to fetch older rows.
+  Future<List<SaleSummary>> listSales({
+    required String shopId,
+    DateTime? before,
+    int limit = 50,
+  }) async {
+    final rows = await _client.rpc(
+      'list_sales',
+      params: {
+        'p_shop_id': shopId,
+        'p_before': before?.toIso8601String(),
+        'p_limit': limit,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<SaleSummary>(
+          (row) => SaleSummary.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Single sale header for the detail screen. Returns null if the
+  /// txn id isn't a sale (or is a reversal) in this shop.
+  Future<SaleSummary?> getSale({
+    required String shopId,
+    required String txnId,
+  }) async {
+    final rows = await _client.rpc(
+      'get_sale',
+      params: {'p_shop_id': shopId, 'p_txn_id': txnId},
+    );
+    if (rows is! List || rows.isEmpty) return null;
+    return SaleSummary.fromJson(Map<String, dynamic>.from(rows.first));
+  }
+
+  Future<List<SaleLineDetail>> getSaleLines({
+    required String shopId,
+    required String txnId,
+  }) async {
+    final rows = await _client.rpc(
+      'get_sale_lines',
+      params: {'p_shop_id': shopId, 'p_txn_id': txnId},
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<SaleLineDetail>(
+          (row) => SaleLineDetail.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Reverse a posted sale. Owner-only, ≤7 days, refuses if the
+  /// customer has paid down the receivable. Returns the new reversal
+  /// txn's id.
+  Future<String> voidSale({
+    required String shopId,
+    required String txnId,
+    required String clientOpId,
+  }) async {
+    final result = await _client.rpc(
+      'void_sale',
+      params: {
+        'p_shop_id': shopId,
+        'p_txn_id': txnId,
+        'p_client_op_id': clientOpId,
+      },
+    );
+    return result as String;
+  }
+
   /// post_payment — settle a party's outstanding balance. Direction is
   /// 'I' for an inbound payment (customer pays down their receivable)
   /// or 'O' for an outbound payment (shop pays down its payable to a

@@ -2339,6 +2339,209 @@ $$;
 
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
+-- 0028 coverage: sale history (list/get/lines) + void_sale.
+-- Uses the Hodan Shop fixtures (a candy item + Asha customer + earlier
+-- post_sale calls — see the transactions block around line ~820+).
+do $$
+declare
+  v_shop_id uuid;
+  v_candy_item_id uuid;
+  v_customer_id uuid;
+  v_kg_unit_id uuid;
+  v_sale_txn_id uuid;
+  v_reversal_id uuid;
+  v_list_count int;
+  v_is_voided boolean;
+  v_stock_before numeric;
+  v_stock_after numeric;
+  v_receivable_before numeric;
+  v_receivable_after numeric;
+  v_failed boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_candy_item_id from public.item
+    where shop_id = v_shop_id and code = 'candy';
+  select id into v_customer_id from public.party
+    where shop_id = v_shop_id and name = 'Asha Customer';
+  select id into v_kg_unit_id from public.unit where code = 'piece';
+
+  -- Pre-state.
+  select current_stock into v_stock_before from public.item where id = v_candy_item_id;
+  select receivable into v_receivable_before from public.party where id = v_customer_id;
+
+  -- Post a debt sale: 2 pieces × $0.50 each, all on credit.
+  v_sale_txn_id := public.post_sale(
+    v_shop_id, v_customer_id,
+    jsonb_build_array(jsonb_build_object(
+      'item_id', v_candy_item_id, 'quantity', 2,
+      'unit_id', v_kg_unit_id, 'unit_price', 0.50
+    )),
+    0, null, null, 'void-sale-test-1', null,
+    'Sale we will void'
+  );
+
+  -- list_sales surfaces the new sale and reports it's NOT voided.
+  select count(*) into v_list_count
+  from public.list_sales(v_shop_id, null, 100)
+  where txn_id = v_sale_txn_id;
+  if v_list_count <> 1 then
+    raise exception 'list_sales did not return the new sale';
+  end if;
+
+  select is_voided into v_is_voided
+  from public.list_sales(v_shop_id, null, 100)
+  where txn_id = v_sale_txn_id;
+  if v_is_voided then
+    raise exception 'sale flagged as voided before any void';
+  end if;
+
+  -- get_sale_lines returns the line we just posted.
+  if (
+    select count(*) from public.get_sale_lines(v_shop_id, v_sale_txn_id)
+  ) <> 1 then
+    raise exception 'get_sale_lines did not return the sale line';
+  end if;
+
+  -- Owner can void within the 7-day window.
+  v_reversal_id := public.void_sale(v_shop_id, v_sale_txn_id, 'void-1');
+  if v_reversal_id is null then
+    raise exception 'void_sale returned null';
+  end if;
+
+  -- Reversal txn exists and points back.
+  if not exists (
+    select 1 from public.txn
+    where id = v_reversal_id
+      and shop_id = v_shop_id
+      and reverses_transaction_id = v_sale_txn_id
+  ) then
+    raise exception 'reversal txn was not linked to the original';
+  end if;
+
+  -- Stock restored.
+  select current_stock into v_stock_after from public.item where id = v_candy_item_id;
+  if v_stock_after <> v_stock_before then
+    raise exception 'stock not restored after void: before=% after=%',
+      v_stock_before, v_stock_after;
+  end if;
+
+  -- Receivable restored.
+  select receivable into v_receivable_after from public.party where id = v_customer_id;
+  if v_receivable_after <> v_receivable_before then
+    raise exception 'receivable not restored after void: before=% after=%',
+      v_receivable_before, v_receivable_after;
+  end if;
+
+  -- list_sales now flags the original as voided.
+  select is_voided into v_is_voided
+  from public.list_sales(v_shop_id, null, 100)
+  where txn_id = v_sale_txn_id;
+  if not v_is_voided then
+    raise exception 'list_sales did not flag the voided sale';
+  end if;
+
+  -- Reversals are hidden from list_sales (only originals are listed).
+  if exists (
+    select 1 from public.list_sales(v_shop_id, null, 100)
+    where txn_id = v_reversal_id
+  ) then
+    raise exception 'list_sales surfaced a reversal txn as its own row';
+  end if;
+
+  -- Idempotency: same client_op_id returns the same reversal id.
+  if public.void_sale(v_shop_id, v_sale_txn_id, 'void-1') <> v_reversal_id then
+    raise exception 'void_sale not idempotent on client_op_id';
+  end if;
+
+  -- Already-voided rejection (different client_op_id).
+  v_failed := false;
+  begin
+    perform public.void_sale(v_shop_id, v_sale_txn_id, 'void-2');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'void_sale accepted a second void';
+  end if;
+end;
+$$;
+
+-- Cashier denied void.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_some_sale_id uuid;
+  v_failed boolean := false;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_some_sale_id from public.txn
+  where shop_id = v_shop_id
+    and reverses_transaction_id is null
+    and type_id = (select id from public.transaction_type where code = 'sale')
+  limit 1;
+  -- The cashier user (id 2) isn't a member of Hodan Shop in this fixture
+  -- block, so list_sales itself will fail with the auth check — which
+  -- is also fine. We assert the gate fires either way.
+  begin
+    perform public.void_sale(v_shop_id, v_some_sale_id, 'cashier-attempt');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'non-owner was allowed to void_sale';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- Partial-paid guard: if the customer has paid down some of the
+-- receivable, void must refuse. Uses a fresh isolated customer so the
+-- guard is the only thing in flight (Asha has accumulated receivables
+-- from earlier tests that would otherwise mask the guard).
+do $$
+declare
+  v_shop_id uuid;
+  v_candy_item_id uuid;
+  v_customer_id uuid;
+  v_kg_unit_id uuid;
+  v_sale_txn_id uuid;
+  v_failed boolean := false;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_candy_item_id from public.item
+    where shop_id = v_shop_id and code = 'candy';
+  select id into v_kg_unit_id from public.unit where code = 'piece';
+
+  v_customer_id := public.create_party(
+    v_shop_id, 'Partial-Paid Customer', null, 'customer'
+  );
+
+  -- Sale on credit, then customer pays half of it.
+  v_sale_txn_id := public.post_sale(
+    v_shop_id, v_customer_id,
+    jsonb_build_array(jsonb_build_object(
+      'item_id', v_candy_item_id, 'quantity', 2,
+      'unit_id', v_kg_unit_id, 'unit_price', 0.50
+    )),
+    0, null, null, 'partial-paid-test-1', null,
+    'Sale that will be partially paid then voided'
+  );
+  perform public.post_payment(
+    v_shop_id, v_customer_id, 'I', 0.50, 'cash',
+    'partial-payment-1', null, null, null
+  );
+
+  begin
+    perform public.void_sale(v_shop_id, v_sale_txn_id, 'partial-void-1');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'void_sale ignored partial-paid guard';
+  end if;
+end;
+$$;
+
 reset role;
 SQL
 

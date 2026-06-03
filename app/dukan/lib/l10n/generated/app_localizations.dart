@@ -1250,6 +1250,137 @@ abstract class AppLocalizations {
   /// **'No expense categories yet. Pick a shop type in Settings.'**
   String get expenseEmptyMessage;
 
+  /// No description provided for @saleHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales today'**
+  String get saleHistoryTitle;
+
+  /// No description provided for @saleHistoryTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales history'**
+  String get saleHistoryTooltip;
+
+  /// No description provided for @saleHistoryEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales yet. The first SAVE on the Sale screen will land here.'**
+  String get saleHistoryEmptyMessage;
+
+  /// No description provided for @saleHistoryLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load sales. Check your internet and try again.'**
+  String get saleHistoryLoadFailedMessage;
+
+  /// No description provided for @saleHistoryCashLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get saleHistoryCashLabel;
+
+  /// No description provided for @saleHistoryDebtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt · {name}'**
+  String saleHistoryDebtLabel(Object name);
+
+  /// No description provided for @saleHistoryVoidedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided'**
+  String get saleHistoryVoidedBadge;
+
+  /// No description provided for @saleDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale'**
+  String get saleDetailTitle;
+
+  /// No description provided for @saleDetailVoidedHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided'**
+  String get saleDetailVoidedHeader;
+
+  /// No description provided for @saleDetailVoidButton.
+  ///
+  /// In en, this message translates to:
+  /// **'VOID THIS SALE'**
+  String get saleDetailVoidButton;
+
+  /// No description provided for @saleDetailLineSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{quantity} {unit} × {unitPrice} = {subtotal}'**
+  String saleDetailLineSubtotal(
+    Object quantity,
+    Object subtotal,
+    Object unit,
+    Object unitPrice,
+  );
+
+  /// No description provided for @saleDetailTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get saleDetailTotalLabel;
+
+  /// No description provided for @saleDetailPaidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get saleDetailPaidLabel;
+
+  /// No description provided for @saleDetailOwingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Still owing'**
+  String get saleDetailOwingLabel;
+
+  /// No description provided for @saleDetailLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this sale.'**
+  String get saleDetailLoadFailedMessage;
+
+  /// No description provided for @saleVoidConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Void this sale?'**
+  String get saleVoidConfirmTitle;
+
+  /// No description provided for @saleVoidConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This will reverse the sale, restore the stock, and clear the customer\'s debt for it.'**
+  String get saleVoidConfirmBody;
+
+  /// No description provided for @saleVoidConfirmYes.
+  ///
+  /// In en, this message translates to:
+  /// **'VOID'**
+  String get saleVoidConfirmYes;
+
+  /// No description provided for @saleVoidConfirmNo.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get saleVoidConfirmNo;
+
+  /// No description provided for @saleVoidedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale voided'**
+  String get saleVoidedToast;
+
+  /// No description provided for @saleVoidFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not void this sale. Check your internet and try again.'**
+  String get saleVoidFailedMessage;
+
   /// No description provided for @cartLineSubtotal.
   ///
   /// In en, this message translates to:

@@ -239,6 +239,92 @@ class ReferenceOption {
   final String label;
 }
 
+/// One row from list_sales / get_sale. Customer name is null for cash
+/// sales (no party). is_voided is true when a reversing transaction
+/// exists for this sale (architecture rule: originals stay immutable,
+/// reversals are separate txn rows linked via reverses_transaction_id).
+class SaleSummary {
+  const SaleSummary({
+    required this.txnId,
+    required this.occurredAt,
+    required this.postedAt,
+    required this.partyId,
+    required this.partyName,
+    required this.totalAmount,
+    required this.paidAmount,
+    required this.paymentMethodCode,
+    required this.isVoided,
+    required this.reversalTxnId,
+    required this.voidedAt,
+  });
+
+  factory SaleSummary.fromJson(Map<String, dynamic> json) => SaleSummary(
+    txnId: json['txn_id'] as String,
+    occurredAt: DateTime.parse(json['occurred_at'] as String),
+    postedAt: json['posted_at'] == null
+        ? null
+        : DateTime.parse(json['posted_at'] as String),
+    partyId: json['party_id'] as String?,
+    partyName: json['party_name'] as String?,
+    totalAmount: (json['total_amount'] as num).toDouble(),
+    paidAmount: (json['paid_amount'] as num).toDouble(),
+    paymentMethodCode: json['payment_method_code'] as String?,
+    isVoided: json['is_voided'] as bool,
+    reversalTxnId: json['reversal_txn_id'] as String?,
+    voidedAt: json['voided_at'] == null
+        ? null
+        : DateTime.parse(json['voided_at'] as String),
+  );
+
+  final String txnId;
+  final DateTime occurredAt;
+  final DateTime? postedAt;
+  final String? partyId;
+  final String? partyName;
+  final double totalAmount;
+  final double paidAmount;
+  final String? paymentMethodCode;
+  final bool isVoided;
+  final String? reversalTxnId;
+  final DateTime? voidedAt;
+
+  bool get isDebt =>
+      (partyId != null) && (paidAmount < totalAmount);
+}
+
+/// One line on a sale's receipt. Names + unit labels use the
+/// transaction-time snapshots so the receipt stays consistent if the
+/// item was renamed afterwards.
+class SaleLineDetail {
+  const SaleLineDetail({
+    required this.lineNo,
+    required this.itemId,
+    required this.itemName,
+    required this.quantity,
+    required this.unitLabel,
+    required this.unitAmount,
+    required this.lineTotal,
+  });
+
+  factory SaleLineDetail.fromJson(Map<String, dynamic> json) => SaleLineDetail(
+    lineNo: json['line_no'] as int,
+    itemId: json['item_id'] as String?,
+    itemName: json['item_name'] as String,
+    quantity: (json['quantity'] as num).toDouble(),
+    unitLabel: json['unit_label'] as String? ?? '',
+    unitAmount: (json['unit_amount'] as num?)?.toDouble(),
+    lineTotal: (json['line_total'] as num).toDouble(),
+  );
+
+  final int lineNo;
+  final String? itemId;
+  final String itemName;
+  final double quantity;
+  final String unitLabel;
+  final double? unitAmount;
+  final double lineTotal;
+}
+
 class UnitOption {
   const UnitOption({
     required this.id,

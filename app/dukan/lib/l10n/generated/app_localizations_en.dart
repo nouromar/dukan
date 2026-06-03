@@ -677,6 +677,82 @@ class AppLocalizationsEn extends AppLocalizations {
       'No expense categories yet. Pick a shop type in Settings.';
 
   @override
+  String get saleHistoryTitle => 'Sales today';
+
+  @override
+  String get saleHistoryTooltip => 'Sales history';
+
+  @override
+  String get saleHistoryEmptyMessage =>
+      'No sales yet. The first SAVE on the Sale screen will land here.';
+
+  @override
+  String get saleHistoryLoadFailedMessage =>
+      'Could not load sales. Check your internet and try again.';
+
+  @override
+  String get saleHistoryCashLabel => 'Cash';
+
+  @override
+  String saleHistoryDebtLabel(Object name) {
+    return 'Debt · $name';
+  }
+
+  @override
+  String get saleHistoryVoidedBadge => 'Voided';
+
+  @override
+  String get saleDetailTitle => 'Sale';
+
+  @override
+  String get saleDetailVoidedHeader => 'Voided';
+
+  @override
+  String get saleDetailVoidButton => 'VOID THIS SALE';
+
+  @override
+  String saleDetailLineSubtotal(
+    Object quantity,
+    Object subtotal,
+    Object unit,
+    Object unitPrice,
+  ) {
+    return '$quantity $unit × $unitPrice = $subtotal';
+  }
+
+  @override
+  String get saleDetailTotalLabel => 'Total';
+
+  @override
+  String get saleDetailPaidLabel => 'Paid';
+
+  @override
+  String get saleDetailOwingLabel => 'Still owing';
+
+  @override
+  String get saleDetailLoadFailedMessage => 'Could not load this sale.';
+
+  @override
+  String get saleVoidConfirmTitle => 'Void this sale?';
+
+  @override
+  String get saleVoidConfirmBody =>
+      'This will reverse the sale, restore the stock, and clear the customer\'s debt for it.';
+
+  @override
+  String get saleVoidConfirmYes => 'VOID';
+
+  @override
+  String get saleVoidConfirmNo => 'CANCEL';
+
+  @override
+  String get saleVoidedToast => 'Sale voided';
+
+  @override
+  String get saleVoidFailedMessage =>
+      'Could not void this sale. Check your internet and try again.';
+
+  @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
     return '$quantity × $unitPrice = $subtotal';
   }

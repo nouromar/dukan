@@ -248,6 +248,17 @@ class FakeShopApi implements ShopApi {
   onPostPayment;
   Future<List<ExpenseCategoryOption>> Function(String shopId, String? locale)?
   onListExpenseCategories;
+  Future<List<SaleSummary>> Function(
+    String shopId,
+    DateTime? before,
+    int limit,
+  )?
+  onListSales;
+  Future<SaleSummary?> Function(String shopId, String txnId)? onGetSale;
+  Future<List<SaleLineDetail>> Function(String shopId, String txnId)?
+  onGetSaleLines;
+  Future<String> Function(String shopId, String txnId, String clientOpId)?
+  onVoidSale;
   Future<String> Function(
     String shopId,
     String categoryId,
@@ -463,6 +474,44 @@ class FakeShopApi implements ShopApi {
       );
     }
     return 'fake-expense-${clientOpId.hashCode}';
+  }
+
+  @override
+  Future<List<SaleSummary>> listSales({
+    required String shopId,
+    DateTime? before,
+    int limit = 50,
+  }) async {
+    if (onListSales != null) return onListSales!(shopId, before, limit);
+    return const [];
+  }
+
+  @override
+  Future<SaleSummary?> getSale({
+    required String shopId,
+    required String txnId,
+  }) async {
+    if (onGetSale != null) return onGetSale!(shopId, txnId);
+    return null;
+  }
+
+  @override
+  Future<List<SaleLineDetail>> getSaleLines({
+    required String shopId,
+    required String txnId,
+  }) async {
+    if (onGetSaleLines != null) return onGetSaleLines!(shopId, txnId);
+    return const [];
+  }
+
+  @override
+  Future<String> voidSale({
+    required String shopId,
+    required String txnId,
+    required String clientOpId,
+  }) async {
+    if (onVoidSale != null) return onVoidSale!(shopId, txnId, clientOpId);
+    return 'fake-reversal-${clientOpId.hashCode}';
   }
 
   @override

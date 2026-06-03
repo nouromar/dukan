@@ -677,6 +677,82 @@ class AppLocalizationsSo extends AppLocalizations {
       'Wali noocyo kharash ma jiraan. Dooro nooca dukaanka Diyaarinta.';
 
   @override
+  String get saleHistoryTitle => 'Iibyada maanta';
+
+  @override
+  String get saleHistoryTooltip => 'Taariikhda iibka';
+
+  @override
+  String get saleHistoryEmptyMessage =>
+      'Wali iib ma jiro. KEYDI hore ee shaashada Iibka ayaa halkan ku soo galaya.';
+
+  @override
+  String get saleHistoryLoadFailedMessage =>
+      'Iibyada lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+
+  @override
+  String get saleHistoryCashLabel => 'Kaash';
+
+  @override
+  String saleHistoryDebtLabel(Object name) {
+    return 'Deyn · $name';
+  }
+
+  @override
+  String get saleHistoryVoidedBadge => 'Tirtiran';
+
+  @override
+  String get saleDetailTitle => 'Iib';
+
+  @override
+  String get saleDetailVoidedHeader => 'Tirtiran';
+
+  @override
+  String get saleDetailVoidButton => 'TIRTIR IIBKA';
+
+  @override
+  String saleDetailLineSubtotal(
+    Object quantity,
+    Object subtotal,
+    Object unit,
+    Object unitPrice,
+  ) {
+    return '$quantity $unit × $unitPrice = $subtotal';
+  }
+
+  @override
+  String get saleDetailTotalLabel => 'Wadar';
+
+  @override
+  String get saleDetailPaidLabel => 'La bixiyay';
+
+  @override
+  String get saleDetailOwingLabel => 'Weli lagu leeyahay';
+
+  @override
+  String get saleDetailLoadFailedMessage => 'Iibkaan lama soo dejin karin.';
+
+  @override
+  String get saleVoidConfirmTitle => 'Iibkan ma tirtir?';
+
+  @override
+  String get saleVoidConfirmBody =>
+      'Iibka waa la rogi doonaa, kayd-ka waa la celin doonaa, oo deynta macmiilka waxa la nadiifin doonaa.';
+
+  @override
+  String get saleVoidConfirmYes => 'TIRTIR';
+
+  @override
+  String get saleVoidConfirmNo => 'JOOJI';
+
+  @override
+  String get saleVoidedToast => 'Iibka waa la tirtiray';
+
+  @override
+  String get saleVoidFailedMessage =>
+      'Iibka lama tirtiri karin. Hubi internetka oo isku day mar kale.';
+
+  @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
     return '$quantity × $unitPrice = $subtotal';
   }

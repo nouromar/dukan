@@ -8,8 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/sale/cart_controller.dart';
-import 'package:dukan/shared/party_picker_sheet.dart';
 import 'package:dukan/sale/line_editor_sheet.dart';
+import 'package:dukan/sale/sale_history_screen.dart';
+import 'package:dukan/shared/party_picker_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -343,7 +344,23 @@ class _SaleScreenState extends State<SaleScreen> {
         .map((e) => _CartLineEntry(key: e.key, line: e.value))
         .toList(growable: false);
     return Scaffold(
-      appBar: dukanAppBar(context, l.saleTitle),
+      appBar: dukanAppBar(
+        context,
+        l.saleTitle,
+        actions: [
+          IconButton(
+            tooltip: l.saleHistoryTooltip,
+            icon: const Icon(Icons.history),
+            onPressed: _saving
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SaleHistoryScreen(shop: widget.shop),
+                    ),
+                  ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
