@@ -180,7 +180,6 @@ class _SaleDetailBody extends StatelessWidget {
     final l = tr(context);
     final theme = Theme.of(context);
     final header = bundle.header;
-    final owing = header.totalAmount - header.paidAmount;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -255,13 +254,13 @@ class _SaleDetailBody extends StatelessWidget {
             ),
           ),
           const Divider(),
+          // Just the total. The Cash/Debt label up top conveys the
+          // sale mode; an "owing" amount here would be misleading
+          // because we don't track per-sale payment allocation in v1
+          // (subsequent customer payments reduce the rolling
+          // receivable, not this specific sale).
           _amountRow(theme, l.saleDetailTotalLabel,
               formatMoney(header.totalAmount, shop), bold: true),
-          _amountRow(theme, l.saleDetailPaidLabel,
-              formatMoney(header.paidAmount, shop)),
-          if (owing > 0)
-            _amountRow(theme, l.saleDetailOwingLabel,
-                formatMoney(owing, shop)),
           const SizedBox(height: 8),
           if (_canVoid)
             // Destructive secondary action: red text, right-aligned,

@@ -88,8 +88,6 @@ void main() {
     expect(find.text('Bariis'), findsOneWidget);
     expect(find.text('Sonkor'), findsOneWidget);
     expect(find.text(en.saleDetailTotalLabel), findsOneWidget);
-    // Owing row visible because paid = 0 < total = 6.5.
-    expect(find.text(en.saleDetailOwingLabel), findsOneWidget);
     // VOID action available (posted within 7 days, not voided).
     expect(
       find.widgetWithText(TextButton, en.saleDetailVoidButton),
