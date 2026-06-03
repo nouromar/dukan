@@ -262,20 +262,22 @@ class _SaleDetailBody extends StatelessWidget {
           if (owing > 0)
             _amountRow(theme, l.saleDetailOwingLabel,
                 formatMoney(owing, shop)),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           if (_canVoid)
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
+            // Destructive secondary action: red text, right-aligned,
+            // no fill. Findable but not the screen's primary CTA.
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
                 onPressed: voiding ? null : onVoid,
-                style: FilledButton.styleFrom(
-                  backgroundColor: theme.colorScheme.error,
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.error,
                 ),
                 child: voiding
                     ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text(l.saleDetailVoidButton),
               ),

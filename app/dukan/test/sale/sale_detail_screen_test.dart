@@ -92,7 +92,7 @@ void main() {
     expect(find.text(en.saleDetailOwingLabel), findsOneWidget);
     // VOID action available (posted within 7 days, not voided).
     expect(
-      find.widgetWithText(FilledButton, en.saleDetailVoidButton),
+      find.widgetWithText(TextButton, en.saleDetailVoidButton),
       findsOneWidget,
     );
   });
@@ -110,7 +110,7 @@ void main() {
 
     expect(find.text(en.saleDetailVoidedHeader), findsOneWidget);
     expect(
-      find.widgetWithText(FilledButton, en.saleDetailVoidButton),
+      find.widgetWithText(TextButton, en.saleDetailVoidButton),
       findsNothing,
     );
   });
@@ -126,7 +126,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.widgetWithText(FilledButton, en.saleDetailVoidButton),
+      find.widgetWithText(TextButton, en.saleDetailVoidButton),
       findsNothing,
     );
   });
@@ -162,7 +162,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(
-        find.widgetWithText(FilledButton, en.saleDetailVoidButton),
+        find.widgetWithText(TextButton, en.saleDetailVoidButton),
       );
       await tester.pumpAndSettle();
 
@@ -194,7 +194,7 @@ void main() {
       await pumpDetail(tester);
       await tester.pumpAndSettle();
       await tester.tap(
-        find.widgetWithText(FilledButton, en.saleDetailVoidButton),
+        find.widgetWithText(TextButton, en.saleDetailVoidButton),
       );
       await tester.pumpAndSettle();
 
@@ -259,7 +259,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(
-      find.widgetWithText(FilledButton, en.saleDetailVoidButton),
+      find.widgetWithText(TextButton, en.saleDetailVoidButton),
     );
     await tester.pumpAndSettle();
     // Confirm dialog.
