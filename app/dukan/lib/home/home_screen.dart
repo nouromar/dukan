@@ -9,6 +9,7 @@ import 'package:dukan/payment/payment_screen.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
+import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
@@ -28,6 +29,16 @@ class HomeScreen extends StatelessWidget {
         context,
         l.appTitle,
         actions: [
+          if (shop != null)
+            IconButton(
+              tooltip: l.saleHistoryTooltip,
+              icon: const Icon(Icons.history),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SaleHistoryScreen(shop: shop!),
+                ),
+              ),
+            ),
           if (shop != null)
             IconButton(
               tooltip: l.openSettings,
