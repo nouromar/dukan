@@ -95,6 +95,26 @@ void main() {
     );
   });
 
+  testWidgets(
+      'mixed sale shows time-of-sale cash + debt rows below total',
+      (tester) async {
+    api.onGetSale = (_, _) async => _header(
+      partyName: 'Ahmed',
+      total: 10,
+      paid: 4,
+    );
+    api.onGetSaleLines = (_, _) async => const [];
+
+    await pumpDetail(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text(en.saleDetailCashLabel), findsOneWidget);
+    expect(find.text(en.saleDetailDebtLabel), findsOneWidget);
+    // Cash $4 + Debt $6 against a $10 total.
+    expect(find.text('\$4'), findsOneWidget);
+    expect(find.text('\$6'), findsOneWidget);
+  });
+
   testWidgets('voided sale shows banner + hides VOID button', (tester) async {
     api.onGetSale = (_, _) async => _header(
       partyName: 'Ahmed',

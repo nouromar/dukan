@@ -724,10 +724,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleDetailTotalLabel => 'Wadar';
 
   @override
-  String get saleDetailPaidLabel => 'La bixiyay';
+  String get saleDetailCashLabel => 'Kaash';
 
   @override
-  String get saleDetailOwingLabel => 'Weli lagu leeyahay';
+  String get saleDetailDebtLabel => 'Deyn';
 
   @override
   String get saleDetailLoadFailedMessage => 'Iibkaan lama soo dejin karin.';

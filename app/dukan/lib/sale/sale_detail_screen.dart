@@ -254,13 +254,17 @@ class _SaleDetailBody extends StatelessWidget {
             ),
           ),
           const Divider(),
-          // Just the total. The Cash/Debt label up top conveys the
-          // sale mode; an "owing" amount here would be misleading
-          // because we don't track per-sale payment allocation in v1
-          // (subsequent customer payments reduce the rolling
-          // receivable, not this specific sale).
           _amountRow(theme, l.saleDetailTotalLabel,
               formatMoney(header.totalAmount, shop), bold: true),
+          // Time-of-sale snapshot. `paid_amount` on the txn row is
+          // fixed at posting and never moves, so these stay accurate
+          // even after subsequent customer payments reduce the rolling
+          // receivable. Showing both regardless of value keeps the
+          // layout predictable across cash / debt / mixed sales.
+          _amountRow(theme, l.saleDetailCashLabel,
+              formatMoney(header.paidAmount, shop)),
+          _amountRow(theme, l.saleDetailDebtLabel,
+              formatMoney(header.totalAmount - header.paidAmount, shop)),
           const SizedBox(height: 8),
           if (_canVoid)
             // Destructive secondary action: red text, right-aligned,

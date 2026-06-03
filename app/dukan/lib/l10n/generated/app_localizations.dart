@@ -1327,17 +1327,17 @@ abstract class AppLocalizations {
   /// **'Total'**
   String get saleDetailTotalLabel;
 
-  /// No description provided for @saleDetailPaidLabel.
+  /// No description provided for @saleDetailCashLabel.
   ///
   /// In en, this message translates to:
-  /// **'Paid'**
-  String get saleDetailPaidLabel;
+  /// **'Cash'**
+  String get saleDetailCashLabel;
 
-  /// No description provided for @saleDetailOwingLabel.
+  /// No description provided for @saleDetailDebtLabel.
   ///
   /// In en, this message translates to:
-  /// **'Still owing'**
-  String get saleDetailOwingLabel;
+  /// **'Debt'**
+  String get saleDetailDebtLabel;
 
   /// No description provided for @saleDetailLoadFailedMessage.
   ///

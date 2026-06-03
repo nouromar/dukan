@@ -724,10 +724,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleDetailTotalLabel => 'Total';
 
   @override
-  String get saleDetailPaidLabel => 'Paid';
+  String get saleDetailCashLabel => 'Cash';
 
   @override
-  String get saleDetailOwingLabel => 'Still owing';
+  String get saleDetailDebtLabel => 'Debt';
 
   @override
   String get saleDetailLoadFailedMessage => 'Could not load this sale.';
