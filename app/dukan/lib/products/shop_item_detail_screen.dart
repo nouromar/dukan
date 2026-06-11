@@ -21,6 +21,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/products/stock_adjust_sheet.dart';
 import 'package:dukan/receive/add_packaging_sheet.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
@@ -691,6 +692,14 @@ class _DetailBody extends StatelessWidget {
       conversion:
           defaultSale.isBaseUnit ? null : defaultSale.conversionToBase,
     );
+    // Capability gates. Cashier role lacks all three — the screen
+    // renders as informational: prices and stock visible, every
+    // edit affordance is either tap-disabled or hidden.
+    final caps = context.watch<AuthController>().capabilities;
+    final canEdit = caps.canEditProducts;
+    final canAdjustStock = caps.canAdjustStock;
+    final canBindBarcode = caps.canBindBarcode;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 32),
       children: [
@@ -698,15 +707,17 @@ class _DetailBody extends StatelessWidget {
         _SettingsTile(
           label: l.shopItemEditorNameLabel,
           value: displayName(header.displayName),
-          onTap: () => onRename(header.displayName),
+          onTap: canEdit ? () => onRename(header.displayName) : null,
         ),
         _SettingsTile(
           label: l.shopItemEditorCategoryLabel,
           value: header.categoryName?.trim().isNotEmpty == true
               ? header.categoryName!
               : l.other,
-          onTap: () =>
-              onChangeCategory(bootstrap.categories, _categoryIdFor(detail)),
+          onTap: canEdit
+              ? () => onChangeCategory(
+                  bootstrap.categories, _categoryIdFor(detail))
+              : null,
         ),
         _SettingsTile(
           label: l.shopItemEditorReorderThresholdLabel,
@@ -716,17 +727,17 @@ class _DetailBody extends StatelessWidget {
                   _trimNumber(header.reorderThreshold!),
                   header.baseUnitLabel,
                 ),
-          onTap: () => onSetThreshold(header.reorderThreshold),
+          onTap: canEdit ? () => onSetThreshold(header.reorderThreshold) : null,
         ),
         _SettingsTile(
           label: l.shopItemEditorBaseUnitLabel,
           value: header.baseUnitLabel,
           onTap: null,
         ),
-        // Big stock readout — tappable. Opens the adjust sheet for
-        // opening balance / correction / spoilage / set-exact.
+        // Big stock readout — tappable opens the adjust sheet; cashier
+        // sees the readout without the tap affordance.
         InkWell(
-          onTap: onAdjustStock,
+          onTap: canAdjustStock ? onAdjustStock : null,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
             child: Row(
@@ -740,11 +751,12 @@ class _DetailBody extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(
-                  Icons.tune,
-                  size: 20,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                if (canAdjustStock)
+                  Icon(
+                    Icons.tune,
+                    size: 20,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
               ],
             ),
           ),
@@ -760,35 +772,41 @@ class _DetailBody extends StatelessWidget {
               barcodes: detail.barcodes
                   .where((b) => b.shopItemUnitId == u.shopItemUnitId)
                   .toList(growable: false),
-              onEditPrice: () => onEditPrice(u),
-              onToggleDefault: ({
-                required bool isDefaultSale,
-                required bool isDefaultReceive,
-              }) =>
-                  onToggleDefault(
-                u,
-                isDefaultSale: isDefaultSale,
-                isDefaultReceive: isDefaultReceive,
-              ),
-              onDelete: u.isBaseUnit ? null : () => onDeletePackaging(u),
-              onAddBarcode: () => onAddBarcode(u),
-              onScanBindBarcode: () => onScanBindBarcode(u),
-              onBarcodeChipTap: onBarcodeChipTap,
+              onEditPrice: canEdit ? () => onEditPrice(u) : null,
+              onToggleDefault: canEdit
+                  ? ({
+                      required bool isDefaultSale,
+                      required bool isDefaultReceive,
+                    }) =>
+                      onToggleDefault(
+                        u,
+                        isDefaultSale: isDefaultSale,
+                        isDefaultReceive: isDefaultReceive,
+                      )
+                  : null,
+              onDelete: (canEdit && !u.isBaseUnit)
+                  ? () => onDeletePackaging(u)
+                  : null,
+              onAddBarcode: canBindBarcode ? () => onAddBarcode(u) : null,
+              onScanBindBarcode:
+                  canBindBarcode ? () => onScanBindBarcode(u) : null,
+              onBarcodeChipTap: canBindBarcode ? onBarcodeChipTap : null,
             ),
           ),
           const SizedBox(height: 8),
         ],
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: OutlinedButton.icon(
-            onPressed: onAddPackaging,
-            icon: const Icon(Icons.add),
-            label: Text(l.shopItemEditorAddPackagingButton),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
+        if (canEdit)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: OutlinedButton.icon(
+              onPressed: onAddPackaging,
+              icon: const Icon(Icons.add),
+              label: Text(l.shopItemEditorAddPackagingButton),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+              ),
             ),
           ),
-        ),
         // Aliases — product-level (not per packaging). Chips with X to
         // remove; star marks the display name (not removable here —
         // change via the Name tile above).
@@ -828,13 +846,17 @@ class _DetailBody extends StatelessWidget {
                   ),
                   // Display alias can't be removed inline (the server
                   // refuses; rename via the Name tile updates it).
-                  onDeleted: a.isDisplay ? null : () => onRemoveAlias(a),
+                  // Cashier loses the × on all chips.
+                  onDeleted: (canEdit && !a.isDisplay)
+                      ? () => onRemoveAlias(a)
+                      : null,
                 ),
-              ActionChip(
-                avatar: const Icon(Icons.add, size: 16),
-                label: Text(l.aliasAddTooltip),
-                onPressed: onAddAlias,
-              ),
+              if (canEdit)
+                ActionChip(
+                  avatar: const Icon(Icons.add, size: 16),
+                  label: Text(l.aliasAddTooltip),
+                  onPressed: onAddAlias,
+                ),
             ],
           ),
         ),
@@ -871,19 +893,29 @@ class _PackagingTile extends StatelessWidget {
   final ShopItemUnitDetail unit;
   final ShopSummary shop;
   final List<ShopItemBarcodeRow> barcodes;
-  final VoidCallback onEditPrice;
+  /// Null when the caller lacks edit capability — price renders as
+  /// a static value with no tap affordance.
+  final VoidCallback? onEditPrice;
+  /// Null when the caller lacks edit capability — FilterChips render
+  /// as static (`onSelected: null` puts them in a disabled state).
   final void Function({
     required bool isDefaultSale,
     required bool isDefaultReceive,
-  }) onToggleDefault;
+  })? onToggleDefault;
 
-  /// Null for the base packaging (delete refused server-side anyway —
-  /// the UI guards against rendering the trash icon there too).
+  /// Null for the base packaging OR when the caller lacks edit
+  /// capability — the trash icon doesn't render either way.
   final VoidCallback? onDelete;
 
-  final VoidCallback onAddBarcode;
-  final VoidCallback onScanBindBarcode;
-  final Future<void> Function(ShopItemBarcodeRow row) onBarcodeChipTap;
+  /// Both barcode-adding affordances are null when the caller lacks
+  /// `inventory.barcode.bind` — the + Add code and Scan code chips
+  /// are hidden.
+  final VoidCallback? onAddBarcode;
+  final VoidCallback? onScanBindBarcode;
+  /// Null when bind capability is missing — existing barcode chips
+  /// render as static (the action sheet for promote/remove won't
+  /// open).
+  final Future<void> Function(ShopItemBarcodeRow row)? onBarcodeChipTap;
 
   @override
   Widget build(BuildContext context) {
@@ -929,12 +961,14 @@ class _PackagingTile extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.edit_outlined,
-                          size: 16,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                        if (onEditPrice != null) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 16,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -956,19 +990,23 @@ class _PackagingTile extends StatelessWidget {
                   label: Text(l.shopItemDetailDefaultSaleBadge),
                   selected: unit.isDefaultSale,
                   visualDensity: VisualDensity.compact,
-                  onSelected: (v) => onToggleDefault(
-                    isDefaultSale: v,
-                    isDefaultReceive: unit.isDefaultReceive,
-                  ),
+                  onSelected: onToggleDefault == null
+                      ? null
+                      : (v) => onToggleDefault!(
+                            isDefaultSale: v,
+                            isDefaultReceive: unit.isDefaultReceive,
+                          ),
                 ),
                 FilterChip(
                   label: Text(l.shopItemDetailDefaultReceiveBadge),
                   selected: unit.isDefaultReceive,
                   visualDensity: VisualDensity.compact,
-                  onSelected: (v) => onToggleDefault(
-                    isDefaultSale: unit.isDefaultSale,
-                    isDefaultReceive: v,
-                  ),
+                  onSelected: onToggleDefault == null
+                      ? null
+                      : (v) => onToggleDefault!(
+                            isDefaultSale: unit.isDefaultSale,
+                            isDefaultReceive: v,
+                          ),
                 ),
               ],
             ),
@@ -1008,18 +1046,24 @@ class _PackagingTile extends StatelessWidget {
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),
                       ),
-                      onPressed: () => onBarcodeChipTap(b),
+                      // Null pressed = disabled chip; cashier sees the
+                      // code but can't open the promote/remove menu.
+                      onPressed: onBarcodeChipTap == null
+                          ? null
+                          : () => onBarcodeChipTap!(b),
                     ),
-                  ActionChip(
-                    avatar: const Icon(Icons.add, size: 14),
-                    label: Text(l.barcodeAddTooltip),
-                    onPressed: onAddBarcode,
-                  ),
-                  ActionChip(
-                    avatar: const Icon(Icons.qr_code_scanner, size: 14),
-                    label: Text(l.barcodeScanAndBindAction),
-                    onPressed: onScanBindBarcode,
-                  ),
+                  if (onAddBarcode != null)
+                    ActionChip(
+                      avatar: const Icon(Icons.add, size: 14),
+                      label: Text(l.barcodeAddTooltip),
+                      onPressed: onAddBarcode,
+                    ),
+                  if (onScanBindBarcode != null)
+                    ActionChip(
+                      avatar: const Icon(Icons.qr_code_scanner, size: 14),
+                      label: Text(l.barcodeScanAndBindAction),
+                      onPressed: onScanBindBarcode,
+                    ),
                 ],
               ),
           ],

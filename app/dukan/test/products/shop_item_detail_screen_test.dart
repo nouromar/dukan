@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/auth/capabilities.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/products/shop_item_detail_screen.dart';
 import 'package:dukan/scanner/scan_event.dart';
@@ -65,11 +66,22 @@ ShopItemDetail _detail({
     );
 
 void main() {
+  late FakeAuthController auth;
   late FakeShopApi api;
   late ShopSummary shop;
   late AppLocalizations en;
 
   setUp(() {
+    // Default to an owner capability set so the existing tests (which
+    // assert edit affordances render) still pass. The cashier-mode
+    // test below overrides explicitly.
+    auth = FakeAuthController(
+      capabilities: Capabilities.forTesting(const [
+        'inventory.product.edit',
+        'inventory.adjustment.post',
+        'inventory.barcode.bind',
+      ]),
+    );
     api = FakeShopApi();
     shop = fakeShop();
     en = lookupAppLocalizations(const Locale('en'));
@@ -83,6 +95,7 @@ void main() {
           shopItemId: 'si-1',
           displayName: 'Bariis Basmati',
         ),
+        authController: auth,
         shopApi: api,
       ),
     );
@@ -352,4 +365,33 @@ void main() {
     expect(api.addShopItemAliasCalls.first.aliasText, 'Riis');
     expect(api.addShopItemAliasCalls.first.isDisplay, false);
   });
+
+  testWidgets(
+    'cashier role hides every edit affordance on Product detail',
+    (tester) async {
+      auth.setCapabilities(Capabilities.empty());
+      api.onGetShopItem = (_, _, _) async => _detail();
+      await pumpDetail(tester);
+
+      // Add packaging button hidden.
+      expect(
+        find.text(en.shopItemEditorAddPackagingButton),
+        findsNothing,
+      );
+      // + Add code / Scan code / + Add other name chips hidden.
+      expect(find.text(en.barcodeAddTooltip), findsNothing);
+      expect(find.text(en.barcodeScanAndBindAction), findsNothing);
+      expect(find.text(en.aliasAddTooltip), findsNothing);
+      // No trash icon on the non-base packaging.
+      expect(find.byIcon(Icons.delete_outline), findsNothing);
+      // The screen still renders — name, packaging, stock are visible.
+      expect(find.text('Bariis Basmati'), findsAtLeastNWidgets(1));
+      // Tapping the stock readout shouldn't open the adjust sheet —
+      // the InkWell has onTap=null, so no _StockAdjustSheet shows up.
+      await tester.tap(find.byType(InkWell).first, warnIfMissed: false);
+      await tester.pumpAndSettle();
+      // No postInventoryAdjustment call should have fired.
+      expect(api.postInventoryAdjustmentCalls, isEmpty);
+    },
+  );
 }
