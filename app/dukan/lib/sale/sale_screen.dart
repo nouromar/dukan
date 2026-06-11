@@ -31,6 +31,7 @@ import 'package:dukan/receive/unit_picker_sheet.dart';
 import 'package:dukan/sale/line_editor_sheet.dart';
 import 'package:dukan/sale/sale_detail_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
+import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/party_picker_sheet.dart';
@@ -63,6 +64,7 @@ class _SaleScreenState extends State<SaleScreen> {
   final _random = math.Random();
   String? _locale;
   String? _unknownScan;
+  late final HidScanListener _hidListener;
 
   @override
   void initState() {
@@ -71,6 +73,27 @@ class _SaleScreenState extends State<SaleScreen> {
     // non-empty cart: the cashier needs to see at a glance whether the
     // existing items are theirs to continue or a stale cart to clear.
     _cartExpanded = context.read<CartController>().isNotEmpty;
+    // Detect Bluetooth-HID scanners typing burst-style. isActive gates
+    // dispatch to the route currently visible — handles the case where
+    // Sale is pushed under another screen.
+    _hidListener = HidScanListener(
+      onScan: _onHidScan,
+      isActive: () =>
+          mounted && (ModalRoute.of(context)?.isCurrent ?? false),
+    )..attach();
+  }
+
+  void _onHidScan(ScanEvent event) {
+    // HID bursts populate the focused text field as they type, so the
+    // search bar now holds the code. Clear it before dispatching so the
+    // search-result strip doesn't briefly render against the burst.
+    _searchController.clear();
+    _debounce?.cancel();
+    setState(() {
+      _activeQuery = '';
+      _resultsFuture = _fetch('');
+    });
+    _handleScan(event);
   }
 
   @override
@@ -85,6 +108,7 @@ class _SaleScreenState extends State<SaleScreen> {
 
   @override
   void dispose() {
+    _hidListener.detach();
     _searchController.dispose();
     _debounce?.cancel();
     super.dispose();

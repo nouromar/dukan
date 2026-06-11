@@ -38,6 +38,9 @@ import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
+import 'package:dukan/scanner/hid_listener.dart';
+import 'package:dukan/scanner/scan_event.dart';
+import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
@@ -89,11 +92,66 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   String? _activatingItemId;
   final _random = math.Random();
   String? _locale;
+  String? _unknownScan;
+  late final HidScanListener _hidListener;
 
   @override
   void initState() {
     super.initState();
     _linesExpanded = context.read<ReceiveController>().isNotEmpty;
+    _hidListener = HidScanListener(
+      onScan: _onHidScan,
+      isActive: () =>
+          mounted && (ModalRoute.of(context)?.isCurrent ?? false),
+    )..attach();
+  }
+
+  void _onHidScan(ScanEvent event) {
+    _searchController.clear();
+    _debounce?.cancel();
+    setState(() {
+      _activeQuery = '';
+      _resultsFuture = _fetch('');
+    });
+    _handleScan(event);
+  }
+
+  Future<void> _onScanTap() async {
+    final event = await Scanner.open(context);
+    if (event == null || !mounted) return;
+    await _handleScan(event);
+  }
+
+  Future<void> _handleScan(ScanEvent event) async {
+    try {
+      final results = await context.read<ShopApi>().searchItems(
+        shopId: widget.shop.id,
+        query: event.code,
+        screen: 'receive',
+        locale: Localizations.localeOf(context).languageCode,
+        partyId: context.read<ReceiveController>().supplier?.id,
+      );
+      if (!mounted) return;
+      if (results.isEmpty) {
+        setState(() => _unknownScan = event.code);
+        return;
+      }
+      setState(() => _unknownScan = null);
+      // Reuse the normal tile-tap path so the form pre-fills from the
+      // matched packaging's defaults, exactly like a manual tap would.
+      await _onTapTile(results.first);
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan scanner',
+          context: ErrorDescription('receive scan lookup for ${event.code}'),
+        ),
+      );
+      showError(context, tr(context).scanLookupFailed);
+    }
   }
 
   @override
@@ -108,6 +166,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
 
   @override
   void dispose() {
+    _hidListener.detach();
     _searchController.dispose();
     _debounce?.cancel();
     super.dispose();
@@ -567,9 +626,19 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search),
                   hintText: l.receiveSearchHint,
+                  suffixIcon: IconButton(
+                    tooltip: l.scanCameraTooltip,
+                    icon: const Icon(Icons.qr_code_scanner),
+                    onPressed: _onScanTap,
+                  ),
                 ),
               ),
             ),
+            if (_unknownScan != null)
+              _ReceiveUnknownScanPill(
+                code: _unknownScan!,
+                onDismiss: () => setState(() => _unknownScan = null),
+              ),
             Expanded(
               child: FutureBuilder<List<ItemSearchResult>>(
                 future: _resultsFuture,
@@ -1383,6 +1452,54 @@ class _ReceiveLineTile extends StatelessWidget {
         onPressed: enabled ? onRemove : null,
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      ),
+    );
+  }
+}
+
+/// Top-of-screen pill shown after a Receive-side scan that matches no
+/// shop_item. Receive intentionally doesn't surface "Create new" today
+/// — Receive flow assumes the product already exists in the catalog; if
+/// the supplier brought something brand-new, the cashier creates it from
+/// the search bar ("+ Add new") then scans again. The "Bind to existing"
+/// flow ships with Product-detail scan in a later phase.
+class _ReceiveUnknownScanPill extends StatelessWidget {
+  const _ReceiveUnknownScanPill({
+    required this.code,
+    required this.onDismiss,
+  });
+
+  final String code;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.help_outline, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              l.scanUnknownPillLabel(code),
+              style: theme.textTheme.bodyMedium,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            tooltip: l.scanUnknownDismissAction,
+            icon: const Icon(Icons.close, size: 18),
+            onPressed: onDismiss,
+          ),
+        ],
       ),
     );
   }
