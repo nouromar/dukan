@@ -3,12 +3,12 @@
 // party, types the amount, hits SAVE. Backend post_payment validates
 // direction × party type and refuses to overpay the balance.
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
@@ -31,7 +31,6 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   final _amountController = TextEditingController();
   final _random = math.Random();
-  bool _saving = false;
 
   @override
   void initState() {
@@ -102,48 +101,64 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-    setState(() => _saving = true);
+    // Optimistic SAVE per CLAUDE.md's speed contract. Capture state +
+    // messenger reference before clearing so we can surface failures
+    // after the route pops.
     final api = context.read<ShopApi>();
+    final messenger = ScaffoldMessenger.of(context);
+    final amount = controller.amount;
+    final partyId = party.id;
+    final direction = controller.type.direction;
+    final clientOpId = _generateClientOpId();
+    final failureMessage = l.paymentPostFailedMessage;
+
+    controller.clearAll();
+    _amountController.clear();
+    messenger.showSnackBar(SnackBar(content: Text(l.paymentSavedToast)));
+    Navigator.of(context).maybePop();
+
+    unawaited(
+      _postPaymentInBackground(
+        api: api,
+        partyId: partyId,
+        direction: direction,
+        amount: amount,
+        clientOpId: clientOpId,
+        messenger: messenger,
+        failureMessage: failureMessage,
+      ),
+    );
+  }
+
+  Future<void> _postPaymentInBackground({
+    required ShopApi api,
+    required String partyId,
+    required String direction,
+    required num amount,
+    required String clientOpId,
+    required ScaffoldMessengerState messenger,
+    required String failureMessage,
+  }) async {
     try {
       await api.postPayment(
         shopId: widget.shop.id,
-        partyId: party.id,
-        direction: controller.type.direction,
-        amount: controller.amount,
+        partyId: partyId,
+        direction: direction,
+        amount: amount,
         paymentMethodCode: 'cash',
-        clientOpId: _generateClientOpId(),
+        clientOpId: clientOpId,
       );
-      if (!mounted) return;
-      controller.clearAll();
-      _amountController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.paymentSavedToast)),
-      );
-      Navigator.of(context).maybePop();
-    } on PostgrestException catch (error, stackTrace) {
-      _handleSaveFailure(error, stackTrace, l.paymentPostFailedMessage);
     } catch (error, stackTrace) {
-      _handleSaveFailure(error, stackTrace, l.paymentPostFailedMessage);
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan payment',
+          context: ErrorDescription('post_payment'),
+        ),
+      );
+      messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
     }
-  }
-
-  void _handleSaveFailure(
-    Object error,
-    StackTrace stackTrace,
-    String message,
-  ) {
-    FlutterError.reportError(
-      FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan payment',
-        context: ErrorDescription('post_payment'),
-      ),
-    );
-    if (!mounted) return;
-    showError(context, message);
   }
 
   String _generateClientOpId() {
@@ -172,11 +187,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               : l.paymentSupplierOwedLabel(
                   formatMoney(controller.outstandingBalance, widget.shop),
                 ));
-    final canSave =
-        party != null &&
+    final canSave = party != null &&
         controller.amount > 0 &&
-        controller.amount <= controller.outstandingBalance &&
-        !_saving;
+        controller.amount <= controller.outstandingBalance;
 
     return Scaffold(
       appBar: dukanAppBar(context, l.paymentTitle),
@@ -201,9 +214,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                 ],
                 selected: {type},
-                onSelectionChanged: _saving
-                    ? null
-                    : (set) => _onTypeChanged(set.first),
+                onSelectionChanged: (set) => _onTypeChanged(set.first),
               ),
               const SizedBox(height: 8),
               // Short direction hint — non-tech shopkeepers don't always
@@ -222,7 +233,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 width: double.infinity,
                 child: party == null
                     ? OutlinedButton.icon(
-                        onPressed: _saving ? null : _onPickParty,
+                        onPressed: _onPickParty,
                         icon: const Icon(Icons.person_search),
                         label: Text(pickButtonLabel),
                       )
@@ -233,7 +244,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        onPressed: _saving ? null : _onPickParty,
+                        onPressed: _onPickParty,
                       ),
               ),
               if (balanceLabel != null) ...[
@@ -261,13 +272,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: canSave ? _save : null,
-                  child: _saving
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
-                        )
-                      : Text(l.paymentSaveButton),
+                  child: Text(l.paymentSaveButton),
                 ),
               ),
             ],

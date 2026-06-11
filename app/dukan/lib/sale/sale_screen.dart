@@ -548,7 +548,12 @@ class _SaleScreenState extends State<SaleScreen> {
       return;
     }
 
-    setState(() => _saving = true);
+    // Optimistic SAVE — per CLAUDE.md's speed contract. Snapshot the
+    // cart, clear it synchronously so the cashier sees a fresh screen
+    // within the 100ms tap-response budget, then fire the post in the
+    // background. On rare failure restore the snapshot and toast the
+    // error. The CartController is already designed for this dance
+    // (snapshot/restore on cart_controller.dart line 67).
     final api = context.read<ShopApi>();
     final snapshot = cart.snapshot();
     final cashSale = !snapshot.debt;
@@ -575,37 +580,64 @@ class _SaleScreenState extends State<SaleScreen> {
         );
       }
     }
+    final clientOpId = _generateClientOpId();
 
+    cart.clearAll();
+    setState(() {
+      _cartExpanded = false;
+      _saving = false;
+    });
+
+    await _postSaleAndAfter(
+      api: api,
+      l: l,
+      snapshot: snapshot,
+      cashSale: cashSale,
+      total: total,
+      partyId: partyId,
+      lines: lines,
+      priceWriteBacks: priceWriteBacks,
+      clientOpId: clientOpId,
+    );
+  }
+
+  /// Fires the post in the background, then on success runs the
+  /// receipt-sheet / low-stock / price-writeback follow-ups. On
+  /// failure restores the snapshot and surfaces an error toast. The
+  /// cashier's UI cleared before this method ran — they're not
+  /// blocked on the network.
+  Future<void> _postSaleAndAfter({
+    required ShopApi api,
+    required L10n l,
+    required CartSnapshot snapshot,
+    required bool cashSale,
+    required double total,
+    required String? partyId,
+    required List<SaleLine> lines,
+    required List<({String shopItemUnitId, num salePrice})> priceWriteBacks,
+    required String clientOpId,
+  }) async {
     String txnId;
     try {
-      // Confirmed flow: await the post, then surface the receipt. A
-      // failed post leaves the cart intact so the cashier can retry.
       txnId = await api.postSale(
         shopId: widget.shop.id,
         lines: lines,
         paidAmount: cashSale ? total : 0,
         partyId: partyId,
         paymentMethodCode: cashSale ? 'cash' : null,
-        clientOpId: _generateClientOpId(),
+        clientOpId: clientOpId,
       );
     } on PostgrestException catch (error, stackTrace) {
-      _handleSaveFailure(error, stackTrace, l.salePostFailedMessage);
-      if (mounted) setState(() => _saving = false);
+      _handleOptimisticSaveFailure(
+        snapshot, error, stackTrace, l.salePostFailedMessage);
       return;
     } catch (error, stackTrace) {
-      _handleSaveFailure(error, stackTrace, l.salePostFailedMessage);
-      if (mounted) setState(() => _saving = false);
+      _handleOptimisticSaveFailure(
+        snapshot, error, stackTrace, l.salePostFailedMessage);
       return;
     }
 
-    // Post succeeded — clear the cart, drop the spinner, and surface
-    // the receipt sheet over the now-fresh Sale screen.
     if (!mounted) return;
-    cart.clearAll();
-    setState(() {
-      _cartExpanded = false;
-      _saving = false;
-    });
 
     // Low-stock probe (gated by the shop toggle) and per-packaging
     // price write-backs run in the background — neither is allowed to
@@ -636,7 +668,7 @@ class _SaleScreenState extends State<SaleScreen> {
 
     // Open the receipt sheet on the next frame so the cart-clear
     // rebuild lands first. Fire-and-forget — the cashier dismisses the
-    // sheet at their pace; `_save()` returns immediately so callers
+    // sheet at their pace; this method returns immediately so callers
     // (and tests) aren't blocked on manual dismissal.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -646,6 +678,30 @@ class _SaleScreenState extends State<SaleScreen> {
         txnId: txnId,
       ));
     });
+  }
+
+  void _handleOptimisticSaveFailure(
+    CartSnapshot snapshot,
+    Object error,
+    StackTrace stackTrace,
+    String message,
+  ) {
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan sale',
+        context: ErrorDescription('post_sale'),
+      ),
+    );
+    if (!mounted) return;
+    // Restore the snapshot so the cashier can retry. If they've already
+    // started a new sale, restore replaces — this is a deliberate v1
+    // trade-off; a v1.x merge-on-restore lands with the offline write
+    // queue (#232) where conflict UX gets proper attention.
+    context.read<CartController>().restore(snapshot);
+    setState(() => _cartExpanded = true);
+    showError(context, message);
   }
 
   /// Sample post-decrement stock for every unique shop_item in the
@@ -758,25 +814,6 @@ class _SaleScreenState extends State<SaleScreen> {
         .toStringAsFixed(3)
         .replaceFirst(RegExp(r'0+$'), '')
         .replaceFirst(RegExp(r'\.$'), '');
-  }
-
-  void _handleSaveFailure(
-    Object error,
-    StackTrace stackTrace,
-    String message,
-  ) {
-    FlutterError.reportError(
-      FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan sale',
-        context: ErrorDescription('post_sale'),
-      ),
-    );
-    if (!mounted) return;
-    // Cart wasn't cleared (confirmed flow) — the cashier sees the
-    // unchanged cart and can retry SAVE.
-    showError(context, message);
   }
 
   String _generateClientOpId() {

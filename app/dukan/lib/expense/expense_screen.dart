@@ -7,12 +7,12 @@
 // The system numeric keypad replaces the previous custom on-screen
 // keypad from the prototype (which overflowed on smaller phones).
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
@@ -35,7 +35,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   final _random = math.Random();
   late Future<List<ExpenseCategoryOption>> _categoriesFuture;
   String? _locale;
-  bool _saving = false;
 
   @override
   void initState() {
@@ -98,47 +97,60 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       return;
     }
 
-    setState(() => _saving = true);
+    // Optimistic SAVE per CLAUDE.md's speed contract. Snapshot the
+    // typed state + messenger reference before clearing so a rare
+    // post-pop failure can surface a top-level error toast.
     final api = context.read<ShopApi>();
+    final messenger = ScaffoldMessenger.of(context);
+    final categoryId = category.id;
+    final amount = controller.amount;
+    final clientOpId = _generateClientOpId();
+    final failureMessage = l.expensePostFailedMessage;
+
+    controller.clearAll();
+    _amountController.clear();
+    messenger.showSnackBar(SnackBar(content: Text(l.expenseSavedToast)));
+    Navigator.of(context).maybePop();
+
+    unawaited(
+      _postExpenseInBackground(
+        api: api,
+        categoryId: categoryId,
+        amount: amount,
+        clientOpId: clientOpId,
+        messenger: messenger,
+        failureMessage: failureMessage,
+      ),
+    );
+  }
+
+  Future<void> _postExpenseInBackground({
+    required ShopApi api,
+    required String categoryId,
+    required num amount,
+    required String clientOpId,
+    required ScaffoldMessengerState messenger,
+    required String failureMessage,
+  }) async {
     try {
       await api.postExpense(
         shopId: widget.shop.id,
-        expenseCategoryId: category.id,
-        amount: controller.amount,
+        expenseCategoryId: categoryId,
+        amount: amount,
         paymentMethodCode: 'cash',
-        clientOpId: _generateClientOpId(),
+        clientOpId: clientOpId,
       );
-      if (!mounted) return;
-      controller.clearAll();
-      _amountController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.expenseSavedToast)),
-      );
-      Navigator.of(context).maybePop();
-    } on PostgrestException catch (error, stackTrace) {
-      _handleSaveFailure(error, stackTrace, l.expensePostFailedMessage);
     } catch (error, stackTrace) {
-      _handleSaveFailure(error, stackTrace, l.expensePostFailedMessage);
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan expense',
+          context: ErrorDescription('post_expense'),
+        ),
+      );
+      messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
     }
-  }
-
-  void _handleSaveFailure(
-    Object error,
-    StackTrace stackTrace,
-    String message,
-  ) {
-    FlutterError.reportError(
-      FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan expense',
-        context: ErrorDescription('post_expense'),
-      ),
-    );
-    if (!mounted) return;
-    showError(context, message);
   }
 
   String _generateClientOpId() {
@@ -152,8 +164,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     final l = tr(context);
     final controller = context.watch<ExpenseController>();
     final theme = Theme.of(context);
-    final canSave =
-        controller.category != null && controller.amount > 0 && !_saving;
+    final canSave = controller.category != null && controller.amount > 0;
     return Scaffold(
       appBar: dukanAppBar(context, l.expenseTitle),
       body: SafeArea(
@@ -199,9 +210,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                             (cat) => ChoiceChip(
                               label: Text(cat.name),
                               selected: controller.category?.id == cat.id,
-                              onSelected: _saving
-                                  ? null
-                                  : (_) => _onPickCategory(cat),
+                              onSelected: (_) => _onPickCategory(cat),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 10,
@@ -235,13 +244,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: canSave ? _save : null,
-                  child: _saving
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
-                        )
-                      : Text(l.expenseSaveButton),
+                  child: Text(l.expenseSaveButton),
                 ),
               ),
             ],

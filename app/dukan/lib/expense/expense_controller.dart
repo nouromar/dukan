@@ -32,4 +32,21 @@ class ExpenseController extends ChangeNotifier {
     _amount = 0;
     if (!wasEmpty) notifyListeners();
   }
+
+  /// Snapshot for the optimistic-SAVE dance.
+  ExpenseSnapshot snapshot() =>
+      ExpenseSnapshot(category: _category, amount: _amount);
+
+  void restore(ExpenseSnapshot snapshot) {
+    _category = snapshot.category;
+    _amount = snapshot.amount;
+    notifyListeners();
+  }
+}
+
+class ExpenseSnapshot {
+  const ExpenseSnapshot({required this.category, required this.amount});
+
+  final ExpenseCategoryOption? category;
+  final num amount;
 }

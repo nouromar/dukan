@@ -65,4 +65,29 @@ class PaymentController extends ChangeNotifier {
     _amount = 0;
     if (!wasEmpty) notifyListeners();
   }
+
+  /// Snapshot for the optimistic-SAVE dance: the screen snapshots
+  /// before clearing, then restores on failure so the cashier sees
+  /// their typed values come back instead of having to re-enter.
+  PaymentSnapshot snapshot() =>
+      PaymentSnapshot(type: _type, party: _party, amount: _amount);
+
+  void restore(PaymentSnapshot snapshot) {
+    _type = snapshot.type;
+    _party = snapshot.party;
+    _amount = snapshot.amount;
+    notifyListeners();
+  }
+}
+
+class PaymentSnapshot {
+  const PaymentSnapshot({
+    required this.type,
+    required this.party,
+    required this.amount,
+  });
+
+  final PaymentType type;
+  final PartySearchResult? party;
+  final num amount;
 }
