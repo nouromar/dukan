@@ -3708,6 +3708,53 @@ $$;
 
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
+-- §GG scanner settings (0049). Verify:
+--   1. New shops get the column default.
+--   2. Inserting a scanner_* row into shop_setting fires the
+--      projection trigger and updates shop.scanner_settings.
+--   3. apply_template path -> shop_setting -> column projection works.
+--      (template_setting already seeded scanner_* keys for grocery
+--      via migration 0049; the apply path on the test shop runs
+--      during create_organization, so we verify the projection
+--      lands those values without an explicit re-apply.)
+
+do $$
+declare
+  v_shop_id uuid;
+  v_settings jsonb;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_settings := (select scanner_settings from public.shop where id = v_shop_id);
+  if v_settings is null then
+    raise exception 'GG: shop.scanner_settings is null';
+  end if;
+  if (v_settings ->> 'rearm_ms')::int is null then
+    raise exception 'GG: scanner_settings missing rearm_ms: %', v_settings;
+  end if;
+  -- An owner edit via shop_setting should re-project. Bump rearm_ms
+  -- from default 800 to 1200 and confirm shop.scanner_settings catches up.
+  insert into public.shop_setting (shop_id, key, value, source, created_by)
+  values (v_shop_id, 'scanner_rearm_ms', to_jsonb(1200), 'manual',
+          '00000000-0000-0000-0000-000000000001')
+  on conflict (shop_id, key) do update set value = excluded.value;
+  v_settings := (select scanner_settings from public.shop where id = v_shop_id);
+  if (v_settings ->> 'rearm_ms')::int <> 1200 then
+    raise exception 'GG: projection trigger did not update rearm_ms; got %', v_settings;
+  end if;
+  -- Other knobs keep their defaults.
+  if (v_settings ->> 'hid_min_burst_length')::int <> 4 then
+    raise exception 'GG: hid_min_burst_length default not preserved: %', v_settings;
+  end if;
+  -- Delete restores defaults.
+  delete from public.shop_setting
+   where shop_id = v_shop_id and key = 'scanner_rearm_ms';
+  v_settings := (select scanner_settings from public.shop where id = v_shop_id);
+  if (v_settings ->> 'rearm_ms')::int <> 800 then
+    raise exception 'GG: removing scanner_rearm_ms must reset to default; got %', v_settings;
+  end if;
+end;
+$$;
+
 -- §EE realtime publication (0047) — shop_item / shop_item_unit /
 -- shop_item_alias / shop_item_barcode / party must all be in the
 -- supabase_realtime publication so cross-portal edits propagate to

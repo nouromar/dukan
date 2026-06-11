@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/capabilities.dart';
+import 'package:dukan/scanner/scanner_settings.dart';
 
 class DukanOtpDelivery {
   const DukanOtpDelivery._();
@@ -119,7 +120,7 @@ class AuthController extends ChangeNotifier {
       final rows = await _client
           .from('shop')
           .select(
-            'id, name, setup_status, currency_code, default_language_code, timezone, onboarding_dismissed_at, low_stock_warning_enabled',
+            'id, name, setup_status, currency_code, default_language_code, timezone, onboarding_dismissed_at, low_stock_warning_enabled, scanner_settings',
           )
           .order('name');
 
@@ -217,10 +218,13 @@ class AuthController extends ChangeNotifier {
   /// (the resolved `selectedShop`) when it differs from what's
   /// already cached. Diffs on shop id so this is cheap to call any
   /// time the shop state might have changed; the RPC fires at most
-  /// once per shop selection.
+  /// once per shop selection. Also pushes the shop's scanner
+  /// settings into ScannerSettings.current so the viewfinder sheets
+  /// and HID listener read the right tuning for this shop.
   Future<void> _syncCapabilities() async {
     final shop = selectedShop;
     if (shop == null) {
+      ScannerSettings.install(ScannerSettings.defaults);
       if (_capabilities.codes.isNotEmpty || _capabilitiesShopId != null) {
         _capabilities = Capabilities.empty();
         _capabilitiesShopId = null;
@@ -228,6 +232,8 @@ class AuthController extends ChangeNotifier {
       }
       return;
     }
+    // Scanner settings ride along with the ShopSummary — no extra RPC.
+    ScannerSettings.install(shop.scannerSettings);
     if (_capabilitiesShopId == shop.id && _capabilities.codes.isNotEmpty) {
       return;
     }

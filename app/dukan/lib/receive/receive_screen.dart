@@ -42,6 +42,7 @@ import 'package:dukan/observability/timing.dart';
 import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/multi_scan_sheet.dart';
 import 'package:dukan/scanner/scan_event.dart';
+import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
 import 'package:dukan/shared/display_name.dart';
@@ -102,10 +103,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   void initState() {
     super.initState();
     _linesExpanded = context.read<ReceiveController>().isNotEmpty;
+    final scanner = ScannerSettings.current;
     _hidListener = HidScanListener(
       onScan: _onHidScan,
       isActive: () =>
           mounted && (ModalRoute.of(context)?.isCurrent ?? false),
+      maxInterKeyGap: scanner.hidMaxInterKeyGap,
+      maxBurstWindow: scanner.hidMaxBurstWindow,
+      minBurstLength: scanner.hidMinBurstLength,
     )..attach();
   }
 

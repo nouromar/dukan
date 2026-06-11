@@ -2,6 +2,8 @@
 // (data). Kept in one place so neither layer "owns" them and consumers
 // (screens, tests, fixtures) import from a single canonical path.
 
+import 'package:dukan/scanner/scanner_settings.dart';
+
 class ShopSummary {
   const ShopSummary({
     required this.id,
@@ -13,6 +15,7 @@ class ShopSummary {
     required this.timezone,
     required this.onboardingDismissedAt,
     this.lowStockWarningEnabled = false,
+    this.scannerSettings = ScannerSettings.defaults,
   });
 
   /// Pass the currency symbols map (code → symbol) you loaded once from
@@ -25,6 +28,10 @@ class ShopSummary {
   }) {
     final code = json['currency_code'] as String;
     final dismissedRaw = json['onboarding_dismissed_at'] as String?;
+    final rawScanner = json['scanner_settings'];
+    final scanner = rawScanner is Map
+        ? ScannerSettings.fromJson(Map<String, dynamic>.from(rawScanner))
+        : ScannerSettings.defaults;
     return ShopSummary(
       id: json['id'] as String,
       name: json['name'] as String,
@@ -37,6 +44,7 @@ class ShopSummary {
           dismissedRaw == null ? null : DateTime.parse(dismissedRaw),
       lowStockWarningEnabled:
           json['low_stock_warning_enabled'] as bool? ?? false,
+      scannerSettings: scanner,
     );
   }
 
@@ -60,6 +68,12 @@ class ShopSummary {
   /// below their per-item `reorder_threshold` (or below 1 if no
   /// threshold set). Toggle lives in Settings.
   final bool lowStockWarningEnabled;
+
+  /// Per-shop scanner tuning. Defaults match the column DEFAULT in
+  /// migration 0049 — multi-scan re-arm 800ms, HID burst 50/200ms,
+  /// min burst length 4. Pushed into ScannerSettings.current by
+  /// AuthController on shop selection.
+  final ScannerSettings scannerSettings;
 
   bool get isReady => setupStatus == 'ready';
   bool get isTemplateApplied =>

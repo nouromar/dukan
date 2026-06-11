@@ -3,7 +3,7 @@
   "code": "grocery",
   "name_en": "Grocery (Somali neighbourhood shop)",
   "name_so": "Dukaan raashin",
-  "version": 1,
+  "version": 2,
   "locale_default": "so",
   "currency_default": "USD",
   "description": "Composable grocery operating profile for Somali neighbourhood shops. Packs are applied together during setup but managed independently.",

@@ -23,6 +23,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scanner_feedback.dart';
+import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart' show kDefaultScannerFormats;
 import 'package:dukan/shared/l10n.dart';
 
@@ -148,7 +149,7 @@ class _MultiScanSheetState extends State<MultiScanSheet> {
 
     final now = DateTime.now();
     final isSameCodeReFire = code == _lastCode &&
-        now.difference(_lastCodeAt).inMilliseconds < 800;
+        now.difference(_lastCodeAt) < ScannerSettings.current.rearm;
     if (isSameCodeReFire) return; // dedupe mobile_scanner re-fires
     _lastCode = code;
     _lastCodeAt = now;

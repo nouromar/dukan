@@ -34,6 +34,7 @@ import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/observability/timing.dart';
 import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/scan_event.dart';
+import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/party_picker_sheet.dart';
 import 'package:dukan/shared/display_name.dart';
@@ -78,10 +79,14 @@ class _SaleScreenState extends State<SaleScreen> {
     // Detect Bluetooth-HID scanners typing burst-style. isActive gates
     // dispatch to the route currently visible — handles the case where
     // Sale is pushed under another screen.
+    final scanner = ScannerSettings.current;
     _hidListener = HidScanListener(
       onScan: _onHidScan,
       isActive: () =>
           mounted && (ModalRoute.of(context)?.isCurrent ?? false),
+      maxInterKeyGap: scanner.hidMaxInterKeyGap,
+      maxBurstWindow: scanner.hidMaxBurstWindow,
+      minBurstLength: scanner.hidMinBurstLength,
     )..attach();
   }
 

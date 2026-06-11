@@ -2,7 +2,7 @@
   "kind": "configuration_pack",
   "pack": "settings",
   "template_code": "grocery",
-  "version": 1,
+  "version": 2,
   "settings": {
     "locale_default": "so",
     "currency_default": "USD",
@@ -17,6 +17,10 @@
       "currency_decimals": 2,
       "quantity_decimals": 3
     },
-    "support_permissions": "setup_only"
+    "support_permissions": "setup_only",
+    "scanner_rearm_ms": 800,
+    "scanner_hid_max_inter_key_gap_ms": 50,
+    "scanner_hid_max_burst_window_ms": 200,
+    "scanner_hid_min_burst_length": 4
   }
 }
