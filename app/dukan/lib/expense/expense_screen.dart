@@ -17,6 +17,7 @@ import 'package:provider/provider.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/expense/expense_controller.dart';
+import 'package:dukan/observability/timing.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -97,6 +98,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       return;
     }
 
+    Timing.mark('save.tapped');
     // Optimistic SAVE per CLAUDE.md's speed contract. Snapshot the
     // typed state + messenger reference before clearing so a rare
     // post-pop failure can surface a top-level error toast.
@@ -109,6 +111,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
     controller.clearAll();
     _amountController.clear();
+    Timing.mark('cleared');
+    Timing.endFlow(context);
     messenger.showSnackBar(SnackBar(content: Text(l.expenseSavedToast)));
     Navigator.of(context).maybePop();
 

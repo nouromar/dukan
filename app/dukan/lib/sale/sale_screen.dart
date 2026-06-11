@@ -31,6 +31,7 @@ import 'package:dukan/receive/unit_picker_sheet.dart';
 import 'package:dukan/sale/line_editor_sheet.dart';
 import 'package:dukan/sale/sale_detail_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
+import 'package:dukan/observability/timing.dart';
 import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
@@ -585,6 +586,7 @@ class _SaleScreenState extends State<SaleScreen> {
       _pickCustomer();
       return;
     }
+    Timing.mark('save.tapped');
 
     // Optimistic SAVE — per CLAUDE.md's speed contract. Snapshot the
     // cart, clear it synchronously so the cashier sees a fresh screen
@@ -625,6 +627,8 @@ class _SaleScreenState extends State<SaleScreen> {
       _cartExpanded = false;
       _saving = false;
     });
+    Timing.mark('cart.cleared');
+    Timing.endFlow(context);
 
     await _postSaleAndAfter(
       api: api,

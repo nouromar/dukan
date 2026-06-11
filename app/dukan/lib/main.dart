@@ -8,11 +8,15 @@ import 'package:dukan/app/auth_bootstrap.dart' show AuthBootstrap, AuthRouter;
 import 'package:dukan/config/app_config.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/observability/crash_reporter.dart';
+import 'package:dukan/observability/timing.dart';
 import 'package:dukan/shared/fallback_localizations.dart';
 import 'package:dukan/shared/locale_controller.dart';
 import 'package:dukan/shared/supabase_config_screen.dart';
 
 Future<void> main() async {
+  // Cold-start clock. No-op in release; _TodayCard mount calls
+  // endFlow when the cashier first sees the Home content.
+  Timing.startFlow('cold.start');
   final appConfig = AppConfig.fromEnvironment();
   if (appConfig.hasSentry) {
     await SentryFlutter.init((options) {

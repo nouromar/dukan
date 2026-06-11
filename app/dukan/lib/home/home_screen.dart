@@ -22,6 +22,7 @@ import 'package:dukan/shared/favorites_cache.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/today_summary_cache.dart';
+import 'package:dukan/observability/timing.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.shop, this.onSignOut});
@@ -106,11 +107,14 @@ class HomeScreen extends StatelessWidget {
                           label: l.sale,
                           onTap: shop == null
                               ? () {}
-                              : () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => SaleScreen(shop: shop!),
-                                  ),
-                                ),
+                              : () {
+                                  Timing.startFlow('sale');
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => SaleScreen(shop: shop!),
+                                    ),
+                                  );
+                                },
                         ),
                         HomeAction(
                           icon: Icons.inventory_2,
@@ -130,6 +134,7 @@ class HomeScreen extends StatelessWidget {
                                   final destination = receive.isNotEmpty
                                       ? ReceiveScreen(shop: shop!)
                                       : SupplierPickerScreen(shop: shop!);
+                                  Timing.startFlow('receive');
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (_) => destination,
@@ -142,24 +147,30 @@ class HomeScreen extends StatelessWidget {
                           label: l.payment,
                           onTap: shop == null
                               ? () {}
-                              : () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        PaymentScreen(shop: shop!),
-                                  ),
-                                ),
+                              : () {
+                                  Timing.startFlow('payment');
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          PaymentScreen(shop: shop!),
+                                    ),
+                                  );
+                                },
                         ),
                         HomeAction(
                           icon: Icons.receipt_long,
                           label: l.expense,
                           onTap: shop == null
                               ? () {}
-                              : () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        ExpenseScreen(shop: shop!),
-                                  ),
-                                ),
+                              : () {
+                                  Timing.startFlow('expense');
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ExpenseScreen(shop: shop!),
+                                    ),
+                                  );
+                                },
                         ),
                       ],
                     ),
@@ -220,12 +231,12 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
   @override
   void initState() {
     super.initState();
-    // While the cashier is looking at Home, warm the favorites cache
-    // in the background so Sale/Receive entry feels instant. Fire and
-    // forget — the cache is best-effort; any failure leaves the
-    // entry empty and the screen falls back to its own fetch.
+    // First-frame on Home == end of cold start (auth bootstrap + shop
+    // selection are done by the time _TodayCard mounts). No-op in
+    // release builds — the entire Timing class is tree-shaken.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      Timing.endFlow(context);
       _prefetchFavorites();
     });
   }

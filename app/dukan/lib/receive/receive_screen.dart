@@ -38,6 +38,7 @@ import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
+import 'package:dukan/observability/timing.dart';
 import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/multi_scan_sheet.dart';
 import 'package:dukan/scanner/scan_event.dart';
@@ -579,6 +580,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       return;
     }
 
+    Timing.mark('save.tapped');
     setState(() => _saving = true);
     final api = context.read<ShopApi>();
     final snapshot = controller.snapshot();
@@ -588,6 +590,8 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     // bono from the same supplier without re-picking.
     controller.clearLines();
     setState(() => _linesExpanded = false);
+    Timing.mark('lines.cleared');
+    Timing.endFlow(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l.receiveSavedToast)),
     );

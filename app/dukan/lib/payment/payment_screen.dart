@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/observability/timing.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -101,6 +102,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
+    Timing.mark('save.tapped');
     // Optimistic SAVE per CLAUDE.md's speed contract. Capture state +
     // messenger reference before clearing so we can surface failures
     // after the route pops.
@@ -114,6 +116,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     controller.clearAll();
     _amountController.clear();
+    Timing.mark('cleared');
+    Timing.endFlow(context);
     messenger.showSnackBar(SnackBar(content: Text(l.paymentSavedToast)));
     Navigator.of(context).maybePop();
 
