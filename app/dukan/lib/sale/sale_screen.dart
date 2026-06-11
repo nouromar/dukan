@@ -37,6 +37,7 @@ import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/party_picker_sheet.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
+import 'package:dukan/shared/favorites_cache.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/low_stock.dart';
@@ -91,7 +92,7 @@ class _SaleScreenState extends State<SaleScreen> {
     _debounce?.cancel();
     setState(() {
       _activeQuery = '';
-      _resultsFuture = _fetch('');
+      _resultsFuture = _fetchWithCache('');
     });
     _handleScan(event);
   }
@@ -102,7 +103,7 @@ class _SaleScreenState extends State<SaleScreen> {
     final current = Localizations.localeOf(context).languageCode;
     if (_locale != current) {
       _locale = current;
-      _resultsFuture = _fetch(_activeQuery);
+      _resultsFuture = _fetchWithCache(_activeQuery);
     }
   }
 
@@ -112,6 +113,43 @@ class _SaleScreenState extends State<SaleScreen> {
     _searchController.dispose();
     _debounce?.cancel();
     super.dispose();
+  }
+
+  /// For the blank query (favorites strip), consult FavoritesCache —
+  /// the Today card on Home prefetches into it, so Sale entry feels
+  /// instant. Stale entries still serve immediately; a background
+  /// refresh updates the cache for the next visit. Any non-blank
+  /// query bypasses the cache and fetches normally.
+  Future<List<ItemSearchResult>> _fetchWithCache(String query) {
+    if (query.isNotEmpty) return _fetch(query);
+    final cached = FavoritesCache.get(widget.shop.id, 'sale');
+    if (cached != null) {
+      if (FavoritesCache.isStale(widget.shop.id, 'sale')) {
+        unawaited(_refreshFavoritesInBackground());
+      }
+      return Future.value(cached);
+    }
+    return _fetch('').then((rows) {
+      FavoritesCache.put(widget.shop.id, 'sale', rows);
+      return rows;
+    });
+  }
+
+  Future<void> _refreshFavoritesInBackground() async {
+    try {
+      final fresh = await _fetch('');
+      if (!mounted) return;
+      FavoritesCache.put(widget.shop.id, 'sale', fresh);
+      // Update the visible list if the cashier is still on the blank
+      // query — they'll see a quiet swap from cached to fresh.
+      if (_activeQuery.isEmpty) {
+        setState(() {
+          _resultsFuture = Future.value(fresh);
+        });
+      }
+    } catch (_) {
+      // Refresh is best-effort.
+    }
   }
 
   Future<List<ItemSearchResult>> _fetch(String query) {
@@ -129,7 +167,7 @@ class _SaleScreenState extends State<SaleScreen> {
       if (!mounted) return;
       setState(() {
         _activeQuery = value.trim();
-        _resultsFuture = _fetch(_activeQuery);
+        _resultsFuture = _fetchWithCache(_activeQuery);
       });
     });
   }
@@ -465,7 +503,7 @@ class _SaleScreenState extends State<SaleScreen> {
     _searchController.clear();
     setState(() {
       _activeQuery = '';
-      _resultsFuture = _fetch('');
+      _resultsFuture = _fetchWithCache('');
       _cartExpanded = true;
     });
   }

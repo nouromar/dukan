@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ import 'package:dukan/reports/low_stock_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
+import 'package:dukan/shared/favorites_cache.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 
@@ -213,6 +215,41 @@ class _TodayCard extends StatefulWidget {
 class _TodayCardState extends State<_TodayCard> with RouteAware {
   Future<TodaySummary>? _future;
   String? _locale;
+
+  @override
+  void initState() {
+    super.initState();
+    // While the cashier is looking at Home, warm the favorites cache
+    // in the background so Sale/Receive entry feels instant. Fire and
+    // forget — the cache is best-effort; any failure leaves the
+    // entry empty and the screen falls back to its own fetch.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _prefetchFavorites();
+    });
+  }
+
+  void _prefetchFavorites() {
+    final api = context.read<ShopApi>();
+    final locale = Localizations.localeOf(context).languageCode;
+    for (final screen in const ['sale', 'receive']) {
+      if (!FavoritesCache.isStale(widget.shop.id, screen)) continue;
+      unawaited(
+        api
+            .searchItems(
+              shopId: widget.shop.id,
+              query: '',
+              screen: screen,
+              locale: locale,
+            )
+            .then((results) {
+          FavoritesCache.put(widget.shop.id, screen, results);
+        }).catchError((Object _, StackTrace _) {
+          // Swallow: prefetch is best-effort.
+        }),
+      );
+    }
+  }
 
   @override
   void didChangeDependencies() {

@@ -45,6 +45,7 @@ import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
+import 'package:dukan/shared/favorites_cache.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/low_stock.dart';
@@ -112,7 +113,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     _debounce?.cancel();
     setState(() {
       _activeQuery = '';
-      _resultsFuture = _fetch('');
+      _resultsFuture = _fetchWithCache('');
     });
     _handleScan(event);
   }
@@ -216,7 +217,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final current = Localizations.localeOf(context).languageCode;
     if (_locale != current) {
       _locale = current;
-      _resultsFuture = _fetch(_activeQuery);
+      _resultsFuture = _fetchWithCache(_activeQuery);
     }
   }
 
@@ -226,6 +227,45 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     _searchController.dispose();
     _debounce?.cancel();
     super.dispose();
+  }
+
+  /// Mirrors Sale: the blank-query (favorites) path is cache-backed
+  /// so Receive entry feels instant. Bypassed when a supplier has
+  /// been picked — supplier-scoped recents shouldn't blend with the
+  /// global-favorites cache. The cache key uses 'receive' only when
+  /// no supplier is selected; with a supplier we go direct to the
+  /// network for the per-supplier ranking.
+  Future<List<ItemSearchResult>> _fetchWithCache(String query) {
+    if (query.isNotEmpty) return _fetch(query);
+    final supplier = context.read<ReceiveController>().supplier;
+    if (supplier != null) return _fetch(query); // no cache when scoped
+    final cached = FavoritesCache.get(widget.shop.id, 'receive');
+    if (cached != null) {
+      if (FavoritesCache.isStale(widget.shop.id, 'receive')) {
+        unawaited(_refreshFavoritesInBackground());
+      }
+      return Future.value(cached);
+    }
+    return _fetch('').then((rows) {
+      FavoritesCache.put(widget.shop.id, 'receive', rows);
+      return rows;
+    });
+  }
+
+  Future<void> _refreshFavoritesInBackground() async {
+    try {
+      final fresh = await _fetch('');
+      if (!mounted) return;
+      FavoritesCache.put(widget.shop.id, 'receive', fresh);
+      if (_activeQuery.isEmpty &&
+          context.read<ReceiveController>().supplier == null) {
+        setState(() {
+          _resultsFuture = Future.value(fresh);
+        });
+      }
+    } catch (_) {
+      // Best-effort.
+    }
   }
 
   Future<List<ItemSearchResult>> _fetch(String query) {
@@ -245,7 +285,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       if (!mounted) return;
       setState(() {
         _activeQuery = value.trim();
-        _resultsFuture = _fetch(_activeQuery);
+        _resultsFuture = _fetchWithCache(_activeQuery);
       });
     });
   }
@@ -356,7 +396,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     _searchController.clear();
     setState(() {
       _activeQuery = '';
-      _resultsFuture = _fetch('');
+      _resultsFuture = _fetchWithCache('');
       _selectedItem = _SelectedItem(
         shopItemUnitId: result.shopItemUnitId,
         shopItemId: result.shopItemId,
