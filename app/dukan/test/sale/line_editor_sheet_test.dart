@@ -18,7 +18,9 @@ void main() {
   /// dismissed.
   Future<LineEditorResult? Function()> pumpAndOpen(
     WidgetTester tester, {
-    required String itemName,
+    required String displayName,
+    String shopItemUnitId = 'siu-1',
+    String packagingLabel = 'Kg',
     String baseUnitLabel = 'Kg',
     int initialQuantity = 1,
     num? initialUnitPrice,
@@ -34,7 +36,9 @@ void main() {
                 onPressed: () async {
                   captured = await showLineEditor(
                     context,
-                    itemName: itemName,
+                    shopItemUnitId: shopItemUnitId,
+                    displayName: displayName,
+                    packagingLabel: packagingLabel,
                     baseUnitLabel: baseUnitLabel,
                     currencySymbol: '\$',
                     initialQuantity: initialQuantity,
@@ -59,11 +63,11 @@ void main() {
   ) async {
     await pumpAndOpen(
       tester,
-      itemName: 'Caano qalaylan',
+      displayName: 'Caano qalalan',
       priceRequired: true,
     );
 
-    expect(find.text('Caano qalaylan'), findsOneWidget);
+    expect(find.text('Caano qalalan'), findsOneWidget);
     expect(find.text(en.lineEditorPriceRequiredHelper), findsOneWidget);
 
     final doneButton = tester.widget<FilledButton>(
@@ -72,7 +76,7 @@ void main() {
     expect(doneButton.onPressed, isNull);
 
     // Typing a price enables DONE.
-    await tester.enterText(find.byType(TextField), '4.5');
+    await tester.enterText(find.byType(TextField).last, '4.5');
     await tester.pump();
     final doneEnabled = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, en.lineEditorDoneButton),
@@ -85,11 +89,11 @@ void main() {
   ) async {
     final readResult = await pumpAndOpen(
       tester,
-      itemName: 'Sample',
+      displayName: 'Sample',
       priceRequired: true,
     );
 
-    await tester.enterText(find.byType(TextField), '0');
+    await tester.enterText(find.byType(TextField).last, '0');
     await tester.pump();
     await tester.tap(
       find.widgetWithText(FilledButton, en.lineEditorDoneButton),
@@ -100,6 +104,7 @@ void main() {
     expect(result, isNotNull);
     expect(result!.quantity, 1);
     expect(result.unitPrice, 0);
+    expect(result.shopItemUnitId, 'siu-1');
   });
 
   testWidgets('normal mode: price pre-filled, DONE enabled immediately', (
@@ -107,7 +112,7 @@ void main() {
   ) async {
     final readResult = await pumpAndOpen(
       tester,
-      itemName: 'Bariis',
+      displayName: 'Bariis',
       initialUnitPrice: 1.5,
     );
 
@@ -126,12 +131,31 @@ void main() {
     expect(result, isNotNull);
     expect(result!.quantity, 1);
     expect(result.unitPrice, 1.5);
+    expect(result.packagingLabel, 'Kg');
+  });
+
+  testWidgets('qty accepts fractional input (0.5 kg)', (tester) async {
+    final readResult = await pumpAndOpen(
+      tester,
+      displayName: 'Bariis',
+      initialUnitPrice: 2,
+    );
+
+    // Type 0.5 into the qty field.
+    await tester.enterText(find.byType(TextField).first, '0.5');
+    await tester.pump();
+    await tester.tap(
+      find.widgetWithText(FilledButton, en.lineEditorDoneButton),
+    );
+    await tester.pumpAndSettle();
+
+    expect(readResult()!.quantity, 0.5);
   });
 
   testWidgets('qty stepper: + and - bounded at 1', (tester) async {
     final readResult = await pumpAndOpen(
       tester,
-      itemName: 'Bariis',
+      displayName: 'Bariis',
       initialUnitPrice: 1.5,
     );
 
@@ -158,7 +182,7 @@ void main() {
   testWidgets('Cancel dismisses the sheet and returns null', (tester) async {
     final readResult = await pumpAndOpen(
       tester,
-      itemName: 'Bariis',
+      displayName: 'Bariis',
       initialUnitPrice: 1.5,
     );
 
@@ -173,14 +197,14 @@ void main() {
   testWidgets('editing an existing line: seeds qty and price', (tester) async {
     final readResult = await pumpAndOpen(
       tester,
-      itemName: 'Sonkor',
+      displayName: 'Sonkor',
       initialQuantity: 3,
       initialUnitPrice: 2,
     );
 
     expect(find.text('3'), findsOneWidget);
     // Override the price.
-    await tester.enterText(find.byType(TextField), '5');
+    await tester.enterText(find.byType(TextField).last, '5');
     await tester.pump();
     await tester.tap(
       find.widgetWithText(FilledButton, en.lineEditorDoneButton),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/shared/digit_input.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -74,6 +75,10 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.done,
+              // Phone numbers must stay ASCII for E.164 normalization;
+              // accept "+" plus ASCII / Arabic / Persian digits.
+              textDirection: TextDirection.ltr,
+              inputFormatters: const [PhoneDigitsInputFormatter()],
               decoration: InputDecoration(labelText: l.phoneNumberLabel),
               onSubmitted: (_) => _sending ? null : _sendOtp(),
             ),

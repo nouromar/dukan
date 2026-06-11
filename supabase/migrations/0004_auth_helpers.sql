@@ -309,8 +309,7 @@ grant select on
   public.organization_role,
   public.shop_role,
   public.adjustment_reason,
-  public.location_kind,
-  public.ref_translation
+  public.location_kind
 to anon, authenticated;
 
 alter table public.language enable row level security;
@@ -326,7 +325,6 @@ alter table public.organization_role enable row level security;
 alter table public.shop_role enable row level security;
 alter table public.adjustment_reason enable row level security;
 alter table public.location_kind enable row level security;
-alter table public.ref_translation enable row level security;
 
 create policy language_select on public.language for select using (true);
 create policy currency_select on public.currency for select using (true);
@@ -341,7 +339,6 @@ create policy organization_role_select on public.organization_role for select us
 create policy shop_role_select on public.shop_role for select using (true);
 create policy adjustment_reason_select on public.adjustment_reason for select using (true);
 create policy location_kind_select on public.location_kind for select using (true);
-create policy ref_translation_select on public.ref_translation for select using (true);
 
 grant select, update on public.organization to authenticated;
 grant select, insert, update on public.organization_membership to authenticated;

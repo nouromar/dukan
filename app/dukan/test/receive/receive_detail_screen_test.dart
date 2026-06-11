@@ -60,20 +60,24 @@ void main() {
       ReceiveLineDetail(
         lineNo: 1,
         itemId: 'i1',
+        shopItemUnitId: 'siu-1',
         itemName: 'Caano',
         quantity: 2,
         unitLabel: 'Carton',
         unitAmount: 40,
         lineTotal: 80,
+        packagingLabel: 'Carton',
       ),
       ReceiveLineDetail(
         lineNo: 2,
         itemId: 'i2',
+        shopItemUnitId: 'siu-2',
         itemName: 'Shaah',
         quantity: 1,
         unitLabel: 'Box',
         unitAmount: 20,
         lineTotal: 20,
+        packagingLabel: 'Box',
       ),
     ];
 
@@ -132,11 +136,13 @@ void main() {
         ReceiveLineDetail(
           lineNo: 1,
           itemId: 'i1',
+          shopItemUnitId: 'siu-1',
           itemName: 'Caano',
           quantity: 1,
           unitLabel: 'Carton',
           unitAmount: 100,
           lineTotal: 100,
+          packagingLabel: 'Carton',
         ),
       ];
       String? capturedTxnId;

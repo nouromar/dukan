@@ -107,13 +107,13 @@ abstract class AppLocalizations {
   /// No description provided for @languageEnglish.
   ///
   /// In en, this message translates to:
-  /// **'EN'**
+  /// **'English'**
   String get languageEnglish;
 
   /// No description provided for @languageSomali.
   ///
   /// In en, this message translates to:
-  /// **'SO'**
+  /// **'Somali'**
   String get languageSomali;
 
   /// No description provided for @homeHint.
@@ -293,7 +293,7 @@ abstract class AppLocalizations {
   /// No description provided for @repeatLastBono.
   ///
   /// In en, this message translates to:
-  /// **'Repeat last bono'**
+  /// **'Repeat last receive'**
   String get repeatLastBono;
 
   /// No description provided for @bonoAttached.
@@ -301,6 +301,960 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bono attached'**
   String get bonoAttached;
+
+  /// No description provided for @bonoAttachTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach bono photo'**
+  String get bonoAttachTooltip;
+
+  /// No description provided for @bonoAttachedTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono attached — tap to replace'**
+  String get bonoAttachedTooltip;
+
+  /// No description provided for @bonoAttachCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get bonoAttachCamera;
+
+  /// No description provided for @bonoAttachGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get bonoAttachGallery;
+
+  /// No description provided for @bonoAttachedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono photo attached'**
+  String get bonoAttachedToast;
+
+  /// No description provided for @bonoAttachFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not attach the bono. Try again.'**
+  String get bonoAttachFailedMessage;
+
+  /// No description provided for @partyDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Party'**
+  String get partyDetailTitle;
+
+  /// No description provided for @partyDetailLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this party.'**
+  String get partyDetailLoadFailedMessage;
+
+  /// No description provided for @partyDetailReceivableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'They owe you'**
+  String get partyDetailReceivableLabel;
+
+  /// No description provided for @partyDetailPayableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe them'**
+  String get partyDetailPayableLabel;
+
+  /// No description provided for @partyDetailPayButton.
+  ///
+  /// In en, this message translates to:
+  /// **'PAY'**
+  String get partyDetailPayButton;
+
+  /// No description provided for @partyDetailSalesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales'**
+  String get partyDetailSalesHeader;
+
+  /// No description provided for @partyDetailReceivesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Receives'**
+  String get partyDetailReceivesHeader;
+
+  /// No description provided for @partyDetailPaymentsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get partyDetailPaymentsHeader;
+
+  /// No description provided for @homeTodayHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get homeTodayHeader;
+
+  /// No description provided for @homeSalesTodayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales today'**
+  String get homeSalesTodayLabel;
+
+  /// No description provided for @homeReceivablesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers owe you'**
+  String get homeReceivablesLabel;
+
+  /// No description provided for @homePayablesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe suppliers'**
+  String get homePayablesLabel;
+
+  /// No description provided for @homeLowStockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get homeLowStockLabel;
+
+  /// No description provided for @homeLowStockCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{none} =1{1 item} other{{count} items}}'**
+  String homeLowStockCount(int count);
+
+  /// No description provided for @receivablesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers owe you'**
+  String get receivablesTitle;
+
+  /// No description provided for @receivablesEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No one owes you right now.'**
+  String get receivablesEmptyMessage;
+
+  /// No description provided for @payablesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe suppliers'**
+  String get payablesTitle;
+
+  /// No description provided for @payablesEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t owe anyone right now.'**
+  String get payablesEmptyMessage;
+
+  /// No description provided for @lowStockReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get lowStockReportTitle;
+
+  /// No description provided for @lowStockReportEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is running low.'**
+  String get lowStockReportEmptyMessage;
+
+  /// No description provided for @reportLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load. Pull down to try again.'**
+  String get reportLoadFailedMessage;
+
+  /// No description provided for @filterTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filterTooltip;
+
+  /// No description provided for @filterSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filterSheetTitle;
+
+  /// No description provided for @filterApplyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'APPLY'**
+  String get filterApplyButton;
+
+  /// No description provided for @filterResetButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get filterResetButton;
+
+  /// No description provided for @dateRangeToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get dateRangeToday;
+
+  /// No description provided for @dateRangeWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get dateRangeWeek;
+
+  /// No description provided for @dateRangeMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get dateRangeMonth;
+
+  /// No description provided for @dateRangeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get dateRangeAll;
+
+  /// No description provided for @dateRangeCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom…'**
+  String get dateRangeCustom;
+
+  /// No description provided for @filterPartyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Party'**
+  String get filterPartyLabel;
+
+  /// No description provided for @filterPartyAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone'**
+  String get filterPartyAny;
+
+  /// No description provided for @filterIncludeVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'Include voided'**
+  String get filterIncludeVoided;
+
+  /// No description provided for @filterHideVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide voided'**
+  String get filterHideVoided;
+
+  /// No description provided for @filterCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get filterCategoryLabel;
+
+  /// No description provided for @filterCategoryAny.
+  ///
+  /// In en, this message translates to:
+  /// **'All categories'**
+  String get filterCategoryAny;
+
+  /// No description provided for @filterLowStockOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock only'**
+  String get filterLowStockOnly;
+
+  /// No description provided for @filterNoPriceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'No price yet'**
+  String get filterNoPriceOnly;
+
+  /// No description provided for @saleHistorySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search sales'**
+  String get saleHistorySearchHint;
+
+  /// No description provided for @receiveHistorySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search receives'**
+  String get receiveHistorySearchHint;
+
+  /// No description provided for @receivablesSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search customer'**
+  String get receivablesSearchHint;
+
+  /// No description provided for @payablesSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search supplier'**
+  String get payablesSearchHint;
+
+  /// No description provided for @lowStockSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search product'**
+  String get lowStockSearchHint;
+
+  /// No description provided for @filterChipDateAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get filterChipDateAll;
+
+  /// No description provided for @filterChipParty.
+  ///
+  /// In en, this message translates to:
+  /// **'Party: {name}'**
+  String filterChipParty(String name);
+
+  /// No description provided for @filterChipVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'Including voided'**
+  String get filterChipVoided;
+
+  /// No description provided for @filterChipHideVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'Hiding voided'**
+  String get filterChipHideVoided;
+
+  /// No description provided for @filterChipCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}'**
+  String filterChipCategory(String name);
+
+  /// No description provided for @filterChipLowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get filterChipLowStock;
+
+  /// No description provided for @filterChipNoPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'No price'**
+  String get filterChipNoPrice;
+
+  /// No description provided for @drawerHistoryHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'HISTORY'**
+  String get drawerHistoryHeader;
+
+  /// No description provided for @drawerSalesHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales history'**
+  String get drawerSalesHistory;
+
+  /// No description provided for @drawerReceiveHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive history'**
+  String get drawerReceiveHistory;
+
+  /// No description provided for @drawerExpenseHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense history'**
+  String get drawerExpenseHistory;
+
+  /// No description provided for @expenseHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get expenseHistoryTitle;
+
+  /// No description provided for @expenseHistoryLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load expenses. Pull down to try again.'**
+  String get expenseHistoryLoadFailedMessage;
+
+  /// No description provided for @expenseHistoryEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses yet.'**
+  String get expenseHistoryEmptyMessage;
+
+  /// No description provided for @drawerPaymentHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment history'**
+  String get drawerPaymentHistory;
+
+  /// No description provided for @paymentHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get paymentHistoryTitle;
+
+  /// No description provided for @paymentHistoryLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load payments. Pull down to try again.'**
+  String get paymentHistoryLoadFailedMessage;
+
+  /// No description provided for @paymentHistoryEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments yet.'**
+  String get paymentHistoryEmptyMessage;
+
+  /// No description provided for @paymentHistoryNoParty.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get paymentHistoryNoParty;
+
+  /// No description provided for @paymentHistoryRefundBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'refund'**
+  String get paymentHistoryRefundBadge;
+
+  /// No description provided for @paymentDirectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Direction'**
+  String get paymentDirectionLabel;
+
+  /// No description provided for @paymentDirectionAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Any direction'**
+  String get paymentDirectionAny;
+
+  /// No description provided for @paymentDirectionInbound.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer paid you'**
+  String get paymentDirectionInbound;
+
+  /// No description provided for @paymentDirectionOutbound.
+  ///
+  /// In en, this message translates to:
+  /// **'You paid supplier'**
+  String get paymentDirectionOutbound;
+
+  /// No description provided for @drawerParties.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers & suppliers'**
+  String get drawerParties;
+
+  /// No description provided for @partiesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers & suppliers'**
+  String get partiesTitle;
+
+  /// No description provided for @partiesSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or phone'**
+  String get partiesSearchHint;
+
+  /// No description provided for @partiesLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load. Pull down to try again.'**
+  String get partiesLoadFailedMessage;
+
+  /// No description provided for @partiesEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No customers or suppliers yet.'**
+  String get partiesEmptyMessage;
+
+  /// No description provided for @partiesEmptyForQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'No matches for \"{query}\".'**
+  String partiesEmptyForQuery(String query);
+
+  /// No description provided for @partiesHasBalanceChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Has balance only'**
+  String get partiesHasBalanceChip;
+
+  /// No description provided for @partyTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get partyTypeLabel;
+
+  /// No description provided for @partyTypeAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone'**
+  String get partyTypeAny;
+
+  /// No description provided for @partyTypeCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get partyTypeCustomer;
+
+  /// No description provided for @partyTypeSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier'**
+  String get partyTypeSupplier;
+
+  /// No description provided for @partyTypeBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer + supplier'**
+  String get partyTypeBoth;
+
+  /// No description provided for @partiesAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get partiesAddButton;
+
+  /// No description provided for @partyNewOpeningReceivableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance (they owe you)'**
+  String get partyNewOpeningReceivableLabel;
+
+  /// No description provided for @partyNewOpeningPayableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance (you owe them)'**
+  String get partyNewOpeningPayableLabel;
+
+  /// No description provided for @partyNewOpeningBalanceHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — for old debts from before this app.'**
+  String get partyNewOpeningBalanceHelper;
+
+  /// No description provided for @partyDetailEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit name & phone'**
+  String get partyDetailEditTooltip;
+
+  /// No description provided for @drawerPeopleHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'PEOPLE'**
+  String get drawerPeopleHeader;
+
+  /// No description provided for @drawerCustomers.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers'**
+  String get drawerCustomers;
+
+  /// No description provided for @drawerSuppliers.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppliers'**
+  String get drawerSuppliers;
+
+  /// No description provided for @customersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers'**
+  String get customersTitle;
+
+  /// No description provided for @suppliersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppliers'**
+  String get suppliersTitle;
+
+  /// No description provided for @customersSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search customer'**
+  String get customersSearchHint;
+
+  /// No description provided for @suppliersSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search supplier'**
+  String get suppliersSearchHint;
+
+  /// No description provided for @customersAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get customersAddButton;
+
+  /// No description provided for @suppliersAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get suppliersAddButton;
+
+  /// No description provided for @customersHasBalanceChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Has receivable only'**
+  String get customersHasBalanceChip;
+
+  /// No description provided for @suppliersHasBalanceChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Has payable only'**
+  String get suppliersHasBalanceChip;
+
+  /// No description provided for @customersHeadlineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers owe you'**
+  String get customersHeadlineLabel;
+
+  /// No description provided for @suppliersHeadlineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe suppliers'**
+  String get suppliersHeadlineLabel;
+
+  /// No description provided for @customersHeadlineCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No customers with balance} =1{1 customer with balance} other{{count} customers with balance}}'**
+  String customersHeadlineCount(int count);
+
+  /// No description provided for @suppliersHeadlineCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No suppliers with balance} =1{1 supplier with balance} other{{count} suppliers with balance}}'**
+  String suppliersHeadlineCount(int count);
+
+  /// No description provided for @peopleSortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get peopleSortLabel;
+
+  /// No description provided for @peopleSortByReceivable.
+  ///
+  /// In en, this message translates to:
+  /// **'By debt (most first)'**
+  String get peopleSortByReceivable;
+
+  /// No description provided for @peopleSortByPayable.
+  ///
+  /// In en, this message translates to:
+  /// **'By debt (most first)'**
+  String get peopleSortByPayable;
+
+  /// No description provided for @peopleSortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Alphabetical'**
+  String get peopleSortByName;
+
+  /// No description provided for @stockAdjustTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust {name} stock'**
+  String stockAdjustTitle(String name);
+
+  /// No description provided for @stockAdjustCurrentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current: {amount} {unit}'**
+  String stockAdjustCurrentLabel(String amount, String unit);
+
+  /// No description provided for @stockAdjustModeOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening'**
+  String get stockAdjustModeOpening;
+
+  /// No description provided for @stockAdjustModeAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get stockAdjustModeAdd;
+
+  /// No description provided for @stockAdjustModeSubtract.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtract'**
+  String get stockAdjustModeSubtract;
+
+  /// No description provided for @stockAdjustModeSetExact.
+  ///
+  /// In en, this message translates to:
+  /// **'Set exact'**
+  String get stockAdjustModeSetExact;
+
+  /// No description provided for @stockAdjustModeOpeningHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock you had on day one — before this app.'**
+  String get stockAdjustModeOpeningHelper;
+
+  /// No description provided for @stockAdjustModeAddHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock received outside a bono (e.g. found behind the shelf).'**
+  String get stockAdjustModeAddHelper;
+
+  /// No description provided for @stockAdjustModeSubtractHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Spoilage, waste, or any loss you can\'t refund.'**
+  String get stockAdjustModeSubtractHelper;
+
+  /// No description provided for @stockAdjustModeSetExactHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the new total after a physical count.'**
+  String get stockAdjustModeSetExactHelper;
+
+  /// No description provided for @stockAdjustAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount ({unit})'**
+  String stockAdjustAmountLabel(String unit);
+
+  /// No description provided for @stockAdjustNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get stockAdjustNotesLabel;
+
+  /// No description provided for @stockAdjustPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'New stock: {amount} {unit}'**
+  String stockAdjustPreview(String amount, String unit);
+
+  /// No description provided for @stockAdjustSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get stockAdjustSaveButton;
+
+  /// No description provided for @stockAdjustFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the adjustment. Try again.'**
+  String get stockAdjustFailedMessage;
+
+  /// No description provided for @stockAdjustInvalidAmountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid amount.'**
+  String get stockAdjustInvalidAmountMessage;
+
+  /// No description provided for @barcodeAddDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add barcode'**
+  String get barcodeAddDialogTitle;
+
+  /// No description provided for @barcodeAddDialogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 6291100123456'**
+  String get barcodeAddDialogHint;
+
+  /// No description provided for @barcodeAddDialogSetPrimary.
+  ///
+  /// In en, this message translates to:
+  /// **'Make primary'**
+  String get barcodeAddDialogSetPrimary;
+
+  /// No description provided for @barcodeChipMakePrimary.
+  ///
+  /// In en, this message translates to:
+  /// **'Make primary'**
+  String get barcodeChipMakePrimary;
+
+  /// No description provided for @barcodeChipRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get barcodeChipRemove;
+
+  /// No description provided for @barcodeAddTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add barcode'**
+  String get barcodeAddTooltip;
+
+  /// No description provided for @barcodeNoneForBase.
+  ///
+  /// In en, this message translates to:
+  /// **'— loose / by weight'**
+  String get barcodeNoneForBase;
+
+  /// No description provided for @aliasAddDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another name'**
+  String get aliasAddDialogTitle;
+
+  /// No description provided for @aliasAddDialogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Riis (Somali)'**
+  String get aliasAddDialogHint;
+
+  /// No description provided for @aliasAddDialogLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get aliasAddDialogLanguage;
+
+  /// No description provided for @aliasChipRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get aliasChipRemove;
+
+  /// No description provided for @aliasAddTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add other name'**
+  String get aliasAddTooltip;
+
+  /// No description provided for @languageNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Any'**
+  String get languageNone;
+
+  /// No description provided for @productsHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'{total, plural, =0{No products yet} =1{1 product} other{{total} products}} · {low} low · {noPrice} without price'**
+  String productsHeadline(int total, int low, int noPrice);
+
+  /// No description provided for @productsSortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get productsSortLabel;
+
+  /// No description provided for @productsSortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (A–Z)'**
+  String get productsSortByName;
+
+  /// No description provided for @productsSortByStockLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock (low first)'**
+  String get productsSortByStockLow;
+
+  /// No description provided for @drawerProductsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'PRODUCTS'**
+  String get drawerProductsHeader;
+
+  /// No description provided for @drawerTopMovers.
+  ///
+  /// In en, this message translates to:
+  /// **'Top movers'**
+  String get drawerTopMovers;
+
+  /// No description provided for @topMoversTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Top movers'**
+  String get topMoversTitle;
+
+  /// No description provided for @topMoversPeriodSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {days} days'**
+  String topMoversPeriodSubtitle(int days);
+
+  /// No description provided for @topMoversPeriodTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get topMoversPeriodTooltip;
+
+  /// No description provided for @topMoversPeriodOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {days} days'**
+  String topMoversPeriodOption(int days);
+
+  /// No description provided for @topMoversTopSegment.
+  ///
+  /// In en, this message translates to:
+  /// **'Top sellers'**
+  String get topMoversTopSegment;
+
+  /// No description provided for @topMoversDeadSegment.
+  ///
+  /// In en, this message translates to:
+  /// **'Dead stock (no sales)'**
+  String get topMoversDeadSegment;
+
+  /// No description provided for @topMoversEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales in this period.'**
+  String get topMoversEmptyMessage;
+
+  /// No description provided for @drawerReportsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'REPORTS'**
+  String get drawerReportsHeader;
+
+  /// No description provided for @drawerReceivables.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers owe you'**
+  String get drawerReceivables;
+
+  /// No description provided for @drawerPayables.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe suppliers'**
+  String get drawerPayables;
+
+  /// No description provided for @drawerLowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get drawerLowStock;
+
+  /// No description provided for @drawerSetupHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'SETUP'**
+  String get drawerSetupHeader;
+
+  /// No description provided for @drawerProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get drawerProducts;
+
+  /// No description provided for @drawerSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get drawerSettings;
+
+  /// No description provided for @drawerOpenTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get drawerOpenTooltip;
 
   /// No description provided for @attachBono.
   ///
@@ -818,6 +1772,18 @@ abstract class AppLocalizations {
   /// **'Timezone'**
   String get settingsTimezoneLabel;
 
+  /// No description provided for @settingsLowStockWarningLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Low-stock warning'**
+  String get settingsLowStockWarningLabel;
+
+  /// No description provided for @settingsLowStockWarningHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a red dot on low items and a toast after a sale that runs them low.'**
+  String get settingsLowStockWarningHint;
+
   /// No description provided for @settingsSaveButton.
   ///
   /// In en, this message translates to:
@@ -1130,6 +2096,18 @@ abstract class AppLocalizations {
   /// **'Supplier'**
   String get paymentTypeSupplier;
 
+  /// No description provided for @paymentTypeCustomerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer is paying you back'**
+  String get paymentTypeCustomerHint;
+
+  /// No description provided for @paymentTypeSupplierHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You are paying the supplier'**
+  String get paymentTypeSupplierHint;
+
   /// No description provided for @paymentPickCustomerButton.
   ///
   /// In en, this message translates to:
@@ -1253,8 +2231,14 @@ abstract class AppLocalizations {
   /// No description provided for @saleHistoryTitle.
   ///
   /// In en, this message translates to:
-  /// **'Sales today'**
+  /// **'Sales'**
   String get saleHistoryTitle;
+
+  /// No description provided for @historyYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get historyYesterday;
 
   /// No description provided for @saleHistoryTooltip.
   ///
@@ -1345,6 +2329,48 @@ abstract class AppLocalizations {
   /// **'Could not load this sale.'**
   String get saleDetailLoadFailedMessage;
 
+  /// No description provided for @saleReceiptShareButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SHARE RECEIPT'**
+  String get saleReceiptShareButton;
+
+  /// No description provided for @saleReceiptDoneButton.
+  ///
+  /// In en, this message translates to:
+  /// **'DONE'**
+  String get saleReceiptDoneButton;
+
+  /// No description provided for @saleReceiptShareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share receipt'**
+  String get saleReceiptShareTitle;
+
+  /// No description provided for @saleReceiptSharePrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get saleReceiptSharePrint;
+
+  /// No description provided for @saleReceiptShareWhatsApp.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp'**
+  String get saleReceiptShareWhatsApp;
+
+  /// No description provided for @saleReceiptShareComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon — receipt will print/share here.'**
+  String get saleReceiptShareComingSoon;
+
+  /// No description provided for @saleHistoryReceiptTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Open receipt'**
+  String get saleHistoryReceiptTooltip;
+
   /// No description provided for @saleVoidConfirmTitle.
   ///
   /// In en, this message translates to:
@@ -1414,7 +2440,7 @@ abstract class AppLocalizations {
   /// No description provided for @historyMenuReceives.
   ///
   /// In en, this message translates to:
-  /// **'Bono history'**
+  /// **'Receive history'**
   String get historyMenuReceives;
 
   /// No description provided for @historyMenuTooltip.
@@ -1426,25 +2452,25 @@ abstract class AppLocalizations {
   /// No description provided for @receiveHistoryTitle.
   ///
   /// In en, this message translates to:
-  /// **'Bonos today'**
+  /// **'Receives'**
   String get receiveHistoryTitle;
 
   /// No description provided for @receiveHistoryTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Bono history'**
+  /// **'Receive history'**
   String get receiveHistoryTooltip;
 
   /// No description provided for @receiveHistoryEmptyMessage.
   ///
   /// In en, this message translates to:
-  /// **'No bonos yet. The first SAVE on the Receive screen will land here.'**
+  /// **'No receives yet. The first SAVE on the Receive screen will land here.'**
   String get receiveHistoryEmptyMessage;
 
   /// No description provided for @receiveHistoryLoadFailedMessage.
   ///
   /// In en, this message translates to:
-  /// **'Could not load bonos. Check your internet and try again.'**
+  /// **'Could not load receives. Check your internet and try again.'**
   String get receiveHistoryLoadFailedMessage;
 
   /// No description provided for @receiveHistorySupplierLabel.
@@ -1462,7 +2488,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveDetailTitle.
   ///
   /// In en, this message translates to:
-  /// **'Bono'**
+  /// **'Receive'**
   String get receiveDetailTitle;
 
   /// No description provided for @receiveDetailVoidedHeader.
@@ -1474,7 +2500,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveDetailVoidButton.
   ///
   /// In en, this message translates to:
-  /// **'VOID THIS BONO'**
+  /// **'VOID THIS RECEIVE'**
   String get receiveDetailVoidButton;
 
   /// No description provided for @receiveDetailLineSubtotal.
@@ -1497,19 +2523,19 @@ abstract class AppLocalizations {
   /// No description provided for @receiveDetailLoadFailedMessage.
   ///
   /// In en, this message translates to:
-  /// **'Could not load this bono.'**
+  /// **'Could not load this receive.'**
   String get receiveDetailLoadFailedMessage;
 
   /// No description provided for @receiveVoidConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'Void this bono?'**
+  /// **'Void this receive?'**
   String get receiveVoidConfirmTitle;
 
   /// No description provided for @receiveVoidConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Use this only when you typed the bono wrong. It reverses the bono, removes the stock, and clears what you owe the supplier for it.'**
+  /// **'Use this only when you typed the receive wrong. It reverses the receive, removes the stock, and clears what you owe the supplier for it.'**
   String get receiveVoidConfirmBody;
 
   /// No description provided for @receiveVoidMistakesOnlyHint.
@@ -1533,19 +2559,19 @@ abstract class AppLocalizations {
   /// No description provided for @receiveVoidedToast.
   ///
   /// In en, this message translates to:
-  /// **'Bono voided'**
+  /// **'Receive voided'**
   String get receiveVoidedToast;
 
   /// No description provided for @receiveVoidFailedMessage.
   ///
   /// In en, this message translates to:
-  /// **'Could not void this bono. Check your internet and try again.'**
+  /// **'Could not void this receive. Check your internet and try again.'**
   String get receiveVoidFailedMessage;
 
   /// No description provided for @receiveVoidBlockedStockMessage.
   ///
   /// In en, this message translates to:
-  /// **'Some items from this bono have already moved. Void blocked.'**
+  /// **'Some items from this receive have already moved. Void blocked.'**
   String get receiveVoidBlockedStockMessage;
 
   /// No description provided for @cartLineSubtotal.
@@ -1647,13 +2673,13 @@ abstract class AppLocalizations {
   /// No description provided for @supplierPickerNoBonosLabel.
   ///
   /// In en, this message translates to:
-  /// **'no bonos yet'**
+  /// **'no receives yet'**
   String get supplierPickerNoBonosLabel;
 
   /// No description provided for @supplierPickerEmptyMessage.
   ///
   /// In en, this message translates to:
-  /// **'No suppliers yet. Add one when you record a bono.'**
+  /// **'No suppliers yet. Add one when you record a receive.'**
   String get supplierPickerEmptyMessage;
 
   /// No description provided for @supplierPickerSearchEmptyMessage.
@@ -1689,7 +2715,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveEmptyMessage.
   ///
   /// In en, this message translates to:
-  /// **'Tap an item to start the bono. Search if it\'s not in the grid.'**
+  /// **'Tap an item to start the receive. Search if it\'s not in the grid.'**
   String get receiveEmptyMessage;
 
   /// No description provided for @receiveLineQuantityLabel.
@@ -1709,6 +2735,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{currency} total'**
   String receiveLineTotalLabel(Object currency);
+
+  /// No description provided for @receiveLineDerivedPerUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'= {money} per {packaging}'**
+  String receiveLineDerivedPerUnit(String money, String packaging);
 
   /// No description provided for @receiveAddLineButton.
   ///
@@ -1749,7 +2781,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveLinesClearConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This won\'t undo any saved bono.'**
+  /// **'This won\'t undo any saved receive.'**
   String get receiveLinesClearConfirmBody;
 
   /// No description provided for @receiveLinesClearConfirmYes.
@@ -1773,13 +2805,13 @@ abstract class AppLocalizations {
   /// No description provided for @receiveSavedToast.
   ///
   /// In en, this message translates to:
-  /// **'Bono saved (on credit)'**
+  /// **'Receive saved (on credit)'**
   String get receiveSavedToast;
 
   /// No description provided for @receivePostFailedMessage.
   ///
   /// In en, this message translates to:
-  /// **'Could not save the bono. Check your internet and try again.'**
+  /// **'Could not save the receive. Check your internet and try again.'**
   String get receivePostFailedMessage;
 
   /// No description provided for @receiveNeedSupplierMessage.
@@ -1829,6 +2861,600 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load units. Try again.'**
   String get unitPickerLoadFailedMessage;
+
+  /// No description provided for @unitPickerAddPackagingButton.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add packaging'**
+  String get unitPickerAddPackagingButton;
+
+  /// No description provided for @addNewItemSearchResult.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add new item: “{query}”'**
+  String addNewItemSearchResult(Object query);
+
+  /// No description provided for @addNewItemSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new item'**
+  String get addNewItemSheetTitle;
+
+  /// No description provided for @addNewItemNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get addNewItemNameLabel;
+
+  /// No description provided for @addNewItemUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get addNewItemUnitLabel;
+
+  /// No description provided for @addNewItemUnitChooseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get addNewItemUnitChooseHint;
+
+  /// No description provided for @addNewItemPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale price per {unit}'**
+  String addNewItemPriceLabel(Object unit);
+
+  /// No description provided for @addNewItemCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category (optional)'**
+  String get addNewItemCategoryLabel;
+
+  /// No description provided for @addNewItemCategoryChooseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get addNewItemCategoryChooseHint;
+
+  /// No description provided for @addNewItemCancelButton.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get addNewItemCancelButton;
+
+  /// No description provided for @addNewItemAddToSaleButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD TO SALE'**
+  String get addNewItemAddToSaleButton;
+
+  /// No description provided for @addNewItemAddToReceiveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD TO RECEIVE'**
+  String get addNewItemAddToReceiveButton;
+
+  /// No description provided for @addNewItemMissingNameMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get addNewItemMissingNameMessage;
+
+  /// No description provided for @addNewItemMissingUnitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a unit'**
+  String get addNewItemMissingUnitMessage;
+
+  /// No description provided for @addNewItemInvalidPriceMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a price (0 or more)'**
+  String get addNewItemInvalidPriceMessage;
+
+  /// No description provided for @addNewItemFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the item. Try again.'**
+  String get addNewItemFailedMessage;
+
+  /// No description provided for @addNewItemHowSoldHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'How is it sold?'**
+  String get addNewItemHowSoldHeader;
+
+  /// No description provided for @addNewItemHowDeliveredHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'How did the supplier deliver?'**
+  String get addNewItemHowDeliveredHeader;
+
+  /// No description provided for @addNewItemBaseOnlyTile.
+  ///
+  /// In en, this message translates to:
+  /// **'By {base}'**
+  String addNewItemBaseOnlyTile(String base);
+
+  /// No description provided for @addNewItemPickedPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale price per {packaging}'**
+  String addNewItemPickedPriceLabel(String packaging);
+
+  /// No description provided for @addNewItemCustomPackagingEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Custom packaging'**
+  String get addNewItemCustomPackagingEntry;
+
+  /// No description provided for @addNewItemCustomBaseUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Base unit'**
+  String get addNewItemCustomBaseUnitLabel;
+
+  /// No description provided for @addNewItemCustomSoldUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold as'**
+  String get addNewItemCustomSoldUnitLabel;
+
+  /// No description provided for @addNewItemCustomConversionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How many {base} in 1 {sold}?'**
+  String addNewItemCustomConversionLabel(String base, String sold);
+
+  /// No description provided for @addNewItemMissingPackagingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick how it is sold'**
+  String get addNewItemMissingPackagingMessage;
+
+  /// No description provided for @addNewItemLoadOptionsFailedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load suggestions. Pick custom packaging.'**
+  String get addNewItemLoadOptionsFailedHint;
+
+  /// No description provided for @addNewItemUseCustomButton.
+  ///
+  /// In en, this message translates to:
+  /// **'USE THIS PACKAGING'**
+  String get addNewItemUseCustomButton;
+
+  /// No description provided for @addNewItemLooseType.
+  ///
+  /// In en, this message translates to:
+  /// **'Loose'**
+  String get addNewItemLooseType;
+
+  /// No description provided for @addNewItemBackToTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'← Back'**
+  String get addNewItemBackToTypes;
+
+  /// No description provided for @addPackagingSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add packaging'**
+  String get addPackagingSheetTitle;
+
+  /// No description provided for @addPackagingUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get addPackagingUnitLabel;
+
+  /// No description provided for @addPackagingConversionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How many {base} in 1 {unit}?'**
+  String addPackagingConversionLabel(Object base, Object unit);
+
+  /// No description provided for @addPackagingPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale price per {unit} (optional)'**
+  String addPackagingPriceLabel(Object unit);
+
+  /// No description provided for @addPackagingSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD PACKAGING'**
+  String get addPackagingSaveButton;
+
+  /// No description provided for @addPackagingFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add the packaging. Try again.'**
+  String get addPackagingFailedMessage;
+
+  /// No description provided for @addPackagingHeaderBaseUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Base unit · {unit}'**
+  String addPackagingHeaderBaseUnit(Object unit);
+
+  /// No description provided for @addPackagingSuggestionsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Common packagings'**
+  String get addPackagingSuggestionsHeader;
+
+  /// No description provided for @addPackagingCustomEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Custom packaging'**
+  String get addPackagingCustomEntry;
+
+  /// No description provided for @addPackagingLessCommonHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Less common'**
+  String get addPackagingLessCommonHeader;
+
+  /// No description provided for @packagingConversionPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'1 {unit} holds {qty} {base}'**
+  String packagingConversionPreview(String unit, String qty, String base);
+
+  /// No description provided for @addPackagingBackToSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'← Back to suggestions'**
+  String get addPackagingBackToSuggestions;
+
+  /// No description provided for @addPackagingPickedPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale price per {packaging} (optional)'**
+  String addPackagingPickedPriceLabel(Object packaging);
+
+  /// No description provided for @addPackagingNoSuggestionsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No common packagings yet for this base unit — define your own below.'**
+  String get addPackagingNoSuggestionsHint;
+
+  /// No description provided for @addPackagingLoadFailedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load suggestions. Define your own below.'**
+  String get addPackagingLoadFailedHint;
+
+  /// No description provided for @lineEditorCostHintLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your last cost: {cost}. Add your usual markup.'**
+  String lineEditorCostHintLabel(String cost);
+
+  /// No description provided for @lineEditorSiblingHintLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{packaging} sells at {price}. Use that as a guide.'**
+  String lineEditorSiblingHintLabel(String packaging, String price);
+
+  /// No description provided for @negativeStockToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} stock is now {amount} {unit}. Receive soon.'**
+  String negativeStockToast(Object amount, Object item, Object unit);
+
+  /// No description provided for @negativeStockMoreItems.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {count, plural, =1{1 more item} other{{count} more items}} low'**
+  String negativeStockMoreItems(num count);
+
+  /// No description provided for @lowStockToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} stock is low — only {amount} {unit} left. Receive soon.'**
+  String lowStockToast(String amount, String item, String unit);
+
+  /// No description provided for @lowStockMoreItems.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {count, plural, =1{1 more item} other{{count} more items}} low'**
+  String lowStockMoreItems(int count);
+
+  /// No description provided for @shopItemEditorTitleCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Add product'**
+  String get shopItemEditorTitleCreate;
+
+  /// No description provided for @shopItemEditorTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit product'**
+  String get shopItemEditorTitleEdit;
+
+  /// No description provided for @productEditorLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this product. Try again.'**
+  String get productEditorLoadFailedMessage;
+
+  /// No description provided for @shopItemDetailAliasesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Other names'**
+  String get shopItemDetailAliasesHeader;
+
+  /// No description provided for @shopItemDetailBarcodesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcodes'**
+  String get shopItemDetailBarcodesHeader;
+
+  /// No description provided for @shopItemEditorNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get shopItemEditorNameLabel;
+
+  /// No description provided for @shopItemEditorBaseUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Base unit'**
+  String get shopItemEditorBaseUnitLabel;
+
+  /// No description provided for @shopItemEditorCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get shopItemEditorCategoryLabel;
+
+  /// No description provided for @shopItemEditorReorderThresholdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Warn when stock drops below'**
+  String get shopItemEditorReorderThresholdLabel;
+
+  /// No description provided for @shopItemEditorReorderThresholdHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'In {unit}. Leave blank for no warning.'**
+  String shopItemEditorReorderThresholdHelper(String unit);
+
+  /// No description provided for @shopItemEditorPackagingsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Packagings'**
+  String get shopItemEditorPackagingsHeader;
+
+  /// No description provided for @shopItemEditorAddPackagingButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add packaging'**
+  String get shopItemEditorAddPackagingButton;
+
+  /// No description provided for @shopItemEditorBaseBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'BASE'**
+  String get shopItemEditorBaseBadge;
+
+  /// No description provided for @removePackagingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove packaging'**
+  String get removePackagingTooltip;
+
+  /// No description provided for @shopItemEditorItemSectionHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get shopItemEditorItemSectionHeader;
+
+  /// No description provided for @shopItemEditorEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit prices and defaults from the product detail screen.'**
+  String get shopItemEditorEditHint;
+
+  /// No description provided for @removePackagingConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this packaging? You can add it back later.'**
+  String get removePackagingConfirmBody;
+
+  /// No description provided for @removePackagingConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'REMOVE'**
+  String get removePackagingConfirmAction;
+
+  /// No description provided for @shopItemEditorSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get shopItemEditorSaveButton;
+
+  /// No description provided for @shopItemEditorSaveAndAddAnotherButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE & ADD ANOTHER'**
+  String get shopItemEditorSaveAndAddAnotherButton;
+
+  /// No description provided for @shopItemEditorSavedAndContinueToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} saved — add another'**
+  String shopItemEditorSavedAndContinueToast(String name);
+
+  /// No description provided for @shopItemDetailEditPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit price'**
+  String get shopItemDetailEditPrice;
+
+  /// No description provided for @shopItemDetailDefaultSaleBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'default sale'**
+  String get shopItemDetailDefaultSaleBadge;
+
+  /// No description provided for @shopItemDetailDefaultReceiveBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'default receive'**
+  String get shopItemDetailDefaultReceiveBadge;
+
+  /// No description provided for @shopItemDetailNoPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'no price yet'**
+  String get shopItemDetailNoPriceLabel;
+
+  /// No description provided for @shopItemDetailCurrentStockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} {unit} in stock'**
+  String shopItemDetailCurrentStockLabel(Object amount, Object unit);
+
+  /// No description provided for @shopItemDetailReorderBelowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder below {amount} {unit}'**
+  String shopItemDetailReorderBelowLabel(Object amount, Object unit);
+
+  /// No description provided for @catalogPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse catalog'**
+  String get catalogPickerTitle;
+
+  /// No description provided for @catalogPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search global catalog'**
+  String get catalogPickerSearchHint;
+
+  /// No description provided for @catalogPickerActivatedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'already added'**
+  String get catalogPickerActivatedBadge;
+
+  /// No description provided for @catalogPickerAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD {count, plural, =1{1 item} other{{count} items}}'**
+  String catalogPickerAddButton(num count);
+
+  /// No description provided for @catalogPickerAddedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}} added'**
+  String catalogPickerAddedToast(num count);
+
+  /// No description provided for @setupOnboardingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your products'**
+  String get setupOnboardingTitle;
+
+  /// No description provided for @setupOnboardingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We added {count} items from the {template} template. You can start selling now — prices fill in as you sell.\n\nOr take a minute to:'**
+  String setupOnboardingBody(Object count, Object template);
+
+  /// No description provided for @setupOnboardingAddItemsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add my own items'**
+  String get setupOnboardingAddItemsTitle;
+
+  /// No description provided for @setupOnboardingAddItemsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Items the template didn\'t include'**
+  String get setupOnboardingAddItemsBody;
+
+  /// No description provided for @setupOnboardingSetPricesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set prices on top items'**
+  String get setupOnboardingSetPricesTitle;
+
+  /// No description provided for @setupOnboardingSetPricesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'So sales don\'t pause for a price prompt'**
+  String get setupOnboardingSetPricesBody;
+
+  /// No description provided for @setupOnboardingBrowseCatalogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse the catalog'**
+  String get setupOnboardingBrowseCatalogTitle;
+
+  /// No description provided for @setupOnboardingBrowseCatalogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate more items from our list'**
+  String get setupOnboardingBrowseCatalogBody;
+
+  /// No description provided for @setupOnboardingSkipButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SKIP — START SELLING'**
+  String get setupOnboardingSkipButton;
+
+  /// No description provided for @scanCameraTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan barcode'**
+  String get scanCameraTooltip;
+
+  /// No description provided for @scannerSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a barcode'**
+  String get scannerSheetTitle;
+
+  /// No description provided for @scannerTorchTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Torch'**
+  String get scannerTorchTooltip;
+
+  /// No description provided for @scannerHoldSteady.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold steady — 15 to 25 cm from the code'**
+  String get scannerHoldSteady;
+
+  /// No description provided for @scanUnknownPillLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown barcode: {code}'**
+  String scanUnknownPillLabel(String code);
+
+  /// No description provided for @scanUnknownCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new'**
+  String get scanUnknownCreateAction;
+
+  /// No description provided for @scanUnknownDismissAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get scanUnknownDismissAction;
+
+  /// No description provided for @scanLookupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t look up that barcode'**
+  String get scanLookupFailed;
 }
 
 class _AppLocalizationsDelegate

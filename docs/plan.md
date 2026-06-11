@@ -150,6 +150,7 @@ See **`docs/ux.md`** — the binding reference for UX principles, speed contract
 - **Entry acceleration:** template-seeded settings, quick actions, aliases, supplier-item mappings, quantity chips, and shop-scoped learning profiles that precompute Sale/Receive suggestions without auto-posting.
 - **Split-package handling:** base stock unit is the smallest unit the shop sells; received packages convert to that base unit (e.g., 10 candy bags × 100 pieces = +1000 pieces) while Sale/Receive screens stay simple.
 - **Reports:** today's summary, receivables, payables, sales list, receive list, low-stock, profit (daily/monthly/custom).
+- **Receipt view + SHARE hook:** every sale ends in a receipt sheet over the Sale screen and the same view is reachable from history rows. SHARE button is wired in v1 (Print / WhatsApp choices) but dispatches via stub toast until v1.x adds `share_plus` + a printer adapter.
 - **Foundations:** en + so from day one; RLS + composite `shop_id` FKs from day one.
 
 ### Design for, don't build (v2+)
@@ -165,7 +166,7 @@ Add these as inert hooks now so they cost nothing in v1:
 | Per-item variants | model as separate items in v1; add `variant` table later | none |
 | Barcodes | nullable `barcode` column on `item`, no scanner UI | one column |
 | Per-customer pricing / discounts | flat per-line price edit only | none |
-| Receipt printing, WhatsApp send | design transaction render so a "share" hook can attach later | none |
+| Bluetooth printer + WhatsApp dispatch | receipt view + SHARE button built in v1; v1.x wires `share_plus` and a brand-specific printer adapter | one shared widget |
 | Double-entry GL / accountant export | CSV export covers v1 | none |
 | Offline-first sync | `client_op_id` column on `txn`, `payment`, and `inventory_adjustment` for idempotency | one column |
 

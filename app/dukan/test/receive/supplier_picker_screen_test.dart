@@ -64,7 +64,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Hassan Wholesaler'), findsOneWidget);
-    expect(find.text(en.supplierPickerOwesLabel('\$40')), findsOneWidget);
+    expect(find.text(en.supplierPickerOwesLabel('\$40.00')), findsOneWidget);
     expect(find.text('Mahad Grains'), findsOneWidget);
     expect(find.text(en.supplierPickerNoBonosLabel), findsOneWidget);
   });

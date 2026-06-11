@@ -3,18 +3,22 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/expense/expense_screen.dart';
+import 'package:dukan/home/dukan_drawer.dart';
 import 'package:dukan/payment/payment_screen.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
-import 'package:dukan/receive/receive_history_screen.dart';
+import 'package:dukan/parties/customers_screen.dart';
+import 'package:dukan/parties/suppliers_screen.dart';
+import 'package:dukan/reports/low_stock_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/sale/sale_screen.dart';
-import 'package:dukan/settings/settings_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/money.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.shop, this.onSignOut});
@@ -26,48 +30,11 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     return Scaffold(
+      drawer: shop != null ? DukanDrawer(shop: shop!) : null,
       appBar: dukanAppBar(
         context,
         l.appTitle,
         actions: [
-          if (shop != null)
-            PopupMenuButton<_HistoryDestination>(
-              tooltip: l.historyMenuTooltip,
-              icon: const Icon(Icons.history),
-              onSelected: (choice) {
-                final route = switch (choice) {
-                  _HistoryDestination.sales =>
-                    MaterialPageRoute<void>(
-                      builder: (_) => SaleHistoryScreen(shop: shop!),
-                    ),
-                  _HistoryDestination.receives =>
-                    MaterialPageRoute<void>(
-                      builder: (_) => ReceiveHistoryScreen(shop: shop!),
-                    ),
-                };
-                Navigator.of(context).push(route);
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: _HistoryDestination.sales,
-                  child: Text(l.historyMenuSales),
-                ),
-                PopupMenuItem(
-                  value: _HistoryDestination.receives,
-                  child: Text(l.historyMenuReceives),
-                ),
-              ],
-            ),
-          if (shop != null)
-            IconButton(
-              tooltip: l.openSettings,
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => SettingsScreen(shop: shop!),
-                ),
-              ),
-              icon: const Icon(Icons.settings),
-            ),
           if (onSignOut != null)
             IconButton(
               tooltip: l.signOut,
@@ -81,33 +48,55 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: LayoutBuilder(
             builder: (context, constraints) {
+              // Action grid stays anchored at the bottom (primary tap
+              // surface). Tighter than before so the Today summary card
+              // above can render without clipping its last row.
               final buttonAreaHeight = math.min(
-                360.0,
-                constraints.maxHeight * 0.58,
+                280.0,
+                constraints.maxHeight * 0.45,
               );
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    l.homeHint,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  if (shop != null) ...[
-                    const SizedBox(height: 12),
-                    Chip(
-                      avatar: const Icon(Icons.storefront),
-                      label: Text(l.activeShopLabel(shop!.name)),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            l.homeHint,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          if (shop != null) ...[
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Chip(
+                                avatar: const Icon(Icons.storefront),
+                                label: Text(l.activeShopLabel(shop!.name)),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _TodayCard(shop: shop!),
+                          ],
+                        ],
+                      ),
                     ),
-                  ],
-                  const Spacer(),
+                  ),
+                  const SizedBox(height: 12),
                   SizedBox(
                     height: buttonAreaHeight,
-                    child: GridView.count(
+                    child: GridView(
                       physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: 1.55,
+                      gridDelegate:
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 14,
+                        // Compute cell height from the budget so 2 rows
+                        // always fit regardless of viewport width.
+                        mainAxisExtent: (buttonAreaHeight - 14) / 2,
+                      ),
                       children: [
                         HomeAction(
                           icon: Icons.point_of_sale,
@@ -182,8 +171,6 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-enum _HistoryDestination { sales, receives }
-
 class HomeAction extends StatelessWidget {
   const HomeAction({
     required this.icon,
@@ -207,6 +194,210 @@ class HomeAction extends StatelessWidget {
           const SizedBox(height: 8),
           Text(label, textAlign: TextAlign.center),
         ],
+      ),
+    );
+  }
+}
+
+/// Today summary card on Home — sales total + counters for receivables,
+/// payables, and low-stock. Each counter row is tappable into the
+/// corresponding report. Refreshes on revisit.
+class _TodayCard extends StatefulWidget {
+  const _TodayCard({required this.shop});
+  final ShopSummary shop;
+
+  @override
+  State<_TodayCard> createState() => _TodayCardState();
+}
+
+class _TodayCardState extends State<_TodayCard> with RouteAware {
+  Future<TodaySummary>? _future;
+  String? _locale;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final current = Localizations.localeOf(context).languageCode;
+    if (_locale != current || _future == null) {
+      _locale = current;
+      _future = context.read<ShopApi>().getTodaySummary(
+            shopId: widget.shop.id,
+            locale: current,
+          );
+    }
+  }
+
+  void _reload() {
+    setState(() {
+      _future = context.read<ShopApi>().getTodaySummary(
+            shopId: widget.shop.id,
+            locale: _locale ?? 'en',
+          );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    return Card(
+      margin: EdgeInsets.zero,
+      child: FutureBuilder<TodaySummary>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          final s = snapshot.data;
+          if (s == null) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(l.reportLoadFailedMessage),
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.homeTodayHeader,
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 2),
+                InkWell(
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => SaleHistoryScreen(shop: widget.shop),
+                      ),
+                    );
+                    if (mounted) _reload();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l.homeSalesTodayLabel,
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                        ),
+                        Text(
+                          formatMoney(s.salesToday, widget.shop),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 20,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(height: 12),
+                _CounterRow(
+                  label: l.homeReceivablesLabel,
+                  amount: formatMoney(s.receivablesTotal, widget.shop),
+                  highlight: s.receivablesTotal > 0,
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => CustomersScreen(
+                          shop: widget.shop,
+                          // Land already scoped to who-owes-you so
+                          // the user sees exactly what they tapped.
+                          initialHasBalanceOnly: true,
+                        ),
+                      ),
+                    );
+                    if (mounted) _reload();
+                  },
+                ),
+                _CounterRow(
+                  label: l.homePayablesLabel,
+                  amount: formatMoney(s.payablesTotal, widget.shop),
+                  highlight: s.payablesTotal > 0,
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => SuppliersScreen(
+                          shop: widget.shop,
+                          initialHasBalanceOnly: true,
+                        ),
+                      ),
+                    );
+                    if (mounted) _reload();
+                  },
+                ),
+                _CounterRow(
+                  label: l.homeLowStockLabel,
+                  amount: l.homeLowStockCount(s.lowStockCount),
+                  highlight: s.lowStockCount > 0,
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => LowStockScreen(shop: widget.shop),
+                      ),
+                    );
+                    if (mounted) _reload();
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CounterRow extends StatelessWidget {
+  const _CounterRow({
+    required this.label,
+    required this.amount,
+    required this.highlight,
+    required this.onTap,
+  });
+
+  final String label;
+  final String amount;
+  final bool highlight;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Expanded(child: Text(label, style: theme.textTheme.bodyLarge)),
+            Text(
+              amount,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: highlight ? theme.colorScheme.error : null,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -5,9 +5,256 @@
 // applyTemplate, completeSetup, updateShopDefaults), the screen calls
 // auth.refreshSelectedShop() to pull the new row.
 
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/shared/uuid.dart';
+
+/// Bundle returned by `getShopItem` — header + every packaging + every
+/// alias + every barcode in a single round trip. The RPC returns one
+/// One row from `suggest_item_packagings` — drives the picker list in
+/// the Add packaging sheet.
+class PackagingSuggestion {
+  const PackagingSuggestion({
+    required this.unitCode,
+    required this.unitLabel,
+    required this.conversionToBase,
+    required this.uses,
+    required this.source,
+  });
+
+  factory PackagingSuggestion.fromJson(Map<String, dynamic> json) =>
+      PackagingSuggestion(
+        unitCode: json['unit_code'] as String,
+        unitLabel: json['unit_label'] as String,
+        conversionToBase: (json['conversion_to_base'] as num).toDouble(),
+        uses: json['uses'] as int,
+        source: json['source'] as String,
+      );
+
+  final String unitCode;
+  final String unitLabel;
+  final double conversionToBase;
+  final int uses;
+
+  /// `'category'` when same-category items already use this packaging;
+  /// `'cross_category'` when it's a fallback from a different category.
+  final String source;
+}
+
+/// One row from `suggest_category_units` — drives the "How is it sold?"
+/// list in the Add new item sheet.
+class CategoryUnitSuggestion {
+  const CategoryUnitSuggestion({
+    required this.unitCode,
+    required this.unitLabel,
+    required this.uses,
+  });
+
+  factory CategoryUnitSuggestion.fromJson(Map<String, dynamic> json) =>
+      CategoryUnitSuggestion(
+        unitCode: json['unit_code'] as String,
+        unitLabel: json['unit_label'] as String,
+        uses: json['uses'] as int,
+      );
+
+  final String unitCode;
+  final String unitLabel;
+  final int uses;
+}
+
+/// One row in `NewItemOptions.baseUnits` — "sold loose" choice in the
+/// grouped picker on the new item sheet (e.g., Kg / Litre / Piece).
+class BaseUnitOption {
+  const BaseUnitOption({
+    required this.unitCode,
+    required this.unitLabel,
+    required this.uses,
+  });
+
+  factory BaseUnitOption.fromJson(Map<String, dynamic> json) => BaseUnitOption(
+    unitCode: json['unit_code'] as String,
+    unitLabel: json['unit_label'] as String,
+    uses: (json['uses'] as num?)?.toInt() ?? 0,
+  );
+
+  final String unitCode;
+  final String unitLabel;
+  final int uses;
+}
+
+/// One row in `NewItemOptions.packagedUnits` — "sold in a packaging"
+/// choice in the grouped picker (e.g., 25-Kg bag, 12-Bottle carton).
+///
+/// Carries the implied base unit so the sheet can render labels like
+/// "25-kg bag" without making the shopkeeper pick a base unit first.
+class PackagedUnitSuggestion {
+  const PackagedUnitSuggestion({
+    required this.unitCode,
+    required this.unitLabel,
+    required this.conversionToBase,
+    required this.baseUnitCode,
+    required this.baseUnitLabel,
+    required this.uses,
+    required this.source,
+  });
+
+  factory PackagedUnitSuggestion.fromJson(Map<String, dynamic> json) =>
+      PackagedUnitSuggestion(
+        unitCode: json['unit_code'] as String,
+        unitLabel: json['unit_label'] as String,
+        conversionToBase: (json['conversion_to_base'] as num).toDouble(),
+        baseUnitCode: json['base_unit_code'] as String,
+        baseUnitLabel: json['base_unit_label'] as String,
+        uses: (json['uses'] as num?)?.toInt() ?? 0,
+        source: json['source'] as String,
+      );
+
+  final String unitCode;
+  final String unitLabel;
+  final double conversionToBase;
+  final String baseUnitCode;
+  final String baseUnitLabel;
+  final int uses;
+
+  /// 'category' | 'cross_category'.
+  final String source;
+}
+
+/// Aggregate returned by `suggest_new_item_options` — populates the
+/// "How is it sold?" grouped picker on the Add new item sheet.
+class NewItemOptions {
+  const NewItemOptions({
+    required this.baseUnits,
+    required this.packagedUnits,
+  });
+
+  factory NewItemOptions.fromJson(Map<String, dynamic> json) => NewItemOptions(
+    baseUnits: (json['base_units'] as List? ?? const [])
+        .map((row) => BaseUnitOption.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false),
+    packagedUnits: (json['packaged_units'] as List? ?? const [])
+        .map(
+          (row) => PackagedUnitSuggestion.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false),
+  );
+
+  final List<BaseUnitOption> baseUnits;
+  final List<PackagedUnitSuggestion> packagedUnits;
+}
+
+/// Result of the extended `create_shop_item` RPC — the row id plus the
+/// default packaging id the caller should use for the next cart line.
+typedef CreateShopItemResult = ({
+  String shopItemId,
+  String defaultShopItemUnitId,
+});
+
+/// One row from `get_shop_item_stocks` — the lightweight batched
+/// lookup used after `post_sale` to detect items that went negative.
+class ShopItemStock {
+  const ShopItemStock({
+    required this.shopItemId,
+    required this.displayName,
+    required this.baseUnitCode,
+    required this.baseUnitLabel,
+    required this.currentStock,
+    this.reorderThreshold,
+  });
+
+  factory ShopItemStock.fromJson(Map<String, dynamic> json) => ShopItemStock(
+        shopItemId: json['shop_item_id'] as String,
+        displayName: json['display_name'] as String,
+        baseUnitCode: json['base_unit_code'] as String,
+        baseUnitLabel: json['base_unit_label'] as String,
+        currentStock: (json['current_stock'] as num).toDouble(),
+        reorderThreshold: (json['reorder_threshold'] as num?)?.toDouble(),
+      );
+
+  final String shopItemId;
+  final String displayName;
+  final String baseUnitCode;
+  final String baseUnitLabel;
+  final double currentStock;
+  /// Per-item warning threshold in base units. Null when no per-item
+  /// threshold is configured.
+  final double? reorderThreshold;
+}
+
+/// jsonb object with four sections; we parse it here so callers get
+/// typed lists.
+class ShopItemDetail {
+  const ShopItemDetail({
+    required this.header,
+    required this.units,
+    required this.aliases,
+    required this.barcodes,
+  });
+
+  final ShopItemSummary header;
+  final List<ShopItemUnitDetail> units;
+  final List<ShopItemAliasRow> aliases;
+  final List<ShopItemBarcodeRow> barcodes;
+}
+
+/// Row in `ShopItemDetail.aliases`. Mirrors `shop_item_alias` — both
+/// display-name rows and search-only rows are returned (the editor
+/// renders them in two sections).
+class ShopItemAliasRow {
+  const ShopItemAliasRow({
+    required this.aliasId,
+    required this.aliasText,
+    required this.languageCode,
+    required this.isDisplay,
+  });
+
+  factory ShopItemAliasRow.fromJson(Map<String, dynamic> json) =>
+      ShopItemAliasRow(
+        // `alias_id` is the 0044 addition; older DTO callers passed
+        // nothing and we tolerate it as empty string to keep tests
+        // that build the row in code working without churn.
+        aliasId: (json['alias_id'] as String?) ?? '',
+        aliasText: json['alias_text'] as String,
+        languageCode: json['language_code'] as String?,
+        isDisplay: json['is_display'] as bool,
+      );
+
+  final String aliasId;
+  final String aliasText;
+  final String? languageCode;
+  final bool isDisplay;
+}
+
+/// Row in `ShopItemDetail.barcodes`. Packaging-scoped on the server,
+/// but the editor groups by barcode so we surface barcode + is_primary.
+class ShopItemBarcodeRow {
+  const ShopItemBarcodeRow({
+    required this.barcodeId,
+    required this.shopItemUnitId,
+    required this.barcode,
+    required this.isPrimary,
+  });
+
+  factory ShopItemBarcodeRow.fromJson(Map<String, dynamic> json) =>
+      ShopItemBarcodeRow(
+        // 0044 fields; default to empty for older callers.
+        barcodeId: (json['barcode_id'] as String?) ?? '',
+        shopItemUnitId: (json['shop_item_unit_id'] as String?) ?? '',
+        barcode: json['barcode'] as String,
+        isPrimary: json['is_primary'] as bool,
+      );
+
+  final String barcodeId;
+
+  /// Which packaging this barcode belongs to. Drives chip placement
+  /// (the chip renders inside the matching packaging row).
+  final String shopItemUnitId;
+  final String barcode;
+  final bool isPrimary;
+}
 
 class ShopApi {
   ShopApi(this._client);
@@ -43,66 +290,359 @@ class ShopApi {
     await _client.rpc('complete_shop_setup', params: {'p_shop_id': shopId});
   }
 
+  /// One-shot dismissal of the optional item-onboarding step (the
+  /// post-setup "set up your products" screen). Idempotent on the
+  /// server — calling twice leaves the original timestamp.
+  Future<void> dismissOnboarding({required String shopId}) async {
+    await _client
+        .rpc('dismiss_shop_onboarding', params: {'p_shop_id': shopId});
+  }
+
   // ----- Catalog / items ----------------------------------------------------
 
+  /// Idempotent activation of a global catalog item for this shop.
+  /// Returns the (existing or newly created) `shop_item_id`. Required
+  /// before search-result tiles whose `isActivated` is false can be
+  /// added to a cart.
   Future<String> ensureShopItem({
     required String shopId,
-    required String catalogItemId,
+    required String itemId,
   }) async {
     final result = await _client.rpc(
       'ensure_shop_item',
-      params: {'p_shop_id': shopId, 'p_catalog_item_id': catalogItemId},
+      params: {'p_shop_id': shopId, 'p_item_id': itemId},
     );
     return result as String;
   }
 
-  /// Lists every unit configured for an item (or catalog candidate
-  /// if the shop has not yet activated it). Pass exactly one of itemId
-  /// or catalogItemId. The `screen` arg decides which default flag the
-  /// picker highlights (`sale` → default_sale_unit, `receive` →
-  /// default_receive_unit).
-  Future<List<ReceiveUnitOption>> listItemUnits({
+  /// Shop-local item creation ("+ Add new item" sheet). Atomic 1-or-2
+  /// packaging insert — pass `soldUnitCode` + `soldConversion` when the
+  /// shopkeeper picked a packaging (e.g., "25-Kg bag"), leave them null
+  /// for sold-in-base ("loose by kg"). `defaultSide` controls how the
+  /// initial default flags land: `'sale'` makes the sold row the sale
+  /// default (base row stays receive-default); `'receive'` mirrors it.
+  /// Returns the new shop_item id plus the packaging id the caller
+  /// should attach to the cart line.
+  Future<CreateShopItemResult> createShopItem({
     required String shopId,
-    String? itemId,
-    String? catalogItemId,
-    String screen = 'receive',
+    required String name,
+    required String languageCode,
+    required String baseUnitCode,
+    num? salePrice,
+    String? categoryId,
+    String? soldUnitCode,
+    num? soldConversion,
+    String defaultSide = 'sale',
   }) async {
-    final rows = await _client.rpc(
-      'list_item_units',
+    final result = await _client.rpc(
+      'create_shop_item',
       params: {
         'p_shop_id': shopId,
-        'p_item_id': itemId,
-        'p_catalog_item_id': catalogItemId,
+        'p_name': name,
+        'p_language_code': languageCode,
+        'p_base_unit_code': baseUnitCode,
+        'p_sale_price': salePrice,
+        'p_category_id': categoryId,
+        'p_sold_unit_code': soldUnitCode,
+        'p_sold_conversion': soldConversion,
+        'p_default_side': defaultSide,
+      },
+    );
+    final row = (result is List && result.isNotEmpty)
+        ? Map<String, dynamic>.from(result.first as Map)
+        : Map<String, dynamic>.from(result as Map);
+    return (
+      shopItemId: row['shop_item_id'] as String,
+      defaultShopItemUnitId: row['default_shop_item_unit_id'] as String,
+    );
+  }
+
+  /// Adds a non-base packaging to an existing shop_item ("+ Add
+  /// packaging" entry in the unit picker). Returns the new
+  /// `shop_item_unit_id`.
+  Future<String> createShopItemUnit({
+    required String shopId,
+    required String shopItemId,
+    required String unitCode,
+    required num conversionToBase,
+    num? salePrice,
+  }) async {
+    final result = await _client.rpc(
+      'create_shop_item_unit',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_id': shopItemId,
+        'p_unit_code': unitCode,
+        'p_conversion_to_base': conversionToBase,
+        'p_sale_price': salePrice,
+      },
+    );
+    return result as String;
+  }
+
+  /// Inserts (or upserts on alias_text_norm) a display or search alias
+  /// for a shop_item. Used by OCR feedback + cashier rename. When
+  /// `isDisplay` is true the server flips any prior display alias in
+  /// the same language off first.
+  Future<String> addShopItemAlias({
+    required String shopId,
+    required String shopItemId,
+    required String aliasText,
+    String? languageCode,
+    bool isDisplay = false,
+    String source = 'manual',
+  }) async {
+    final result = await _client.rpc(
+      'add_shop_item_alias',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_id': shopItemId,
+        'p_alias_text': aliasText,
+        'p_language_code': languageCode,
+        'p_is_display': isDisplay,
+        'p_source': source,
+      },
+    );
+    return result as String;
+  }
+
+  /// Lists every packaging on a shop_item. Returns `ReceiveUnitOption`
+  /// rows; the screen arg ('sale' vs 'receive') resolves which default
+  /// flag the DTO surfaces as `isDefault`. Both Sale and Receive unit
+  /// pickers consume the same data.
+  Future<List<ReceiveUnitOption>> listShopItemUnits({
+    required String shopId,
+    required String shopItemId,
+    String screen = 'sale',
+  }) async {
+    final rows = await _client.rpc(
+      'list_shop_item_units',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_id': shopItemId,
         'p_screen': screen,
       },
     );
     if (rows is! List) return const [];
     return rows
         .map<ReceiveUnitOption>(
-          (row) => ReceiveUnitOption.fromJson(Map<String, dynamic>.from(row)),
+          (row) => ReceiveUnitOption.fromJson(
+            Map<String, dynamic>.from(row),
+            screen: screen,
+          ),
         )
         .toList(growable: false);
   }
 
-  /// Persists `sale_price` on a shop's item. Called by the Sale SAVE
+  /// Persists `sale_price` on a packaging. Called by the Sale SAVE
   /// flow after a successful post_sale for every line whose unit price
-  /// came out of the line editor — future taps on that tile then
-  /// fast-add at the entered price instead of re-prompting.
-  Future<void> setItemSalePrice({
+  /// came out of the line editor — future taps on that tile fast-add
+  /// at the entered price instead of re-prompting. Pass null to
+  /// "un-price" (forces the priceRequired editor on next use).
+  Future<void> setShopItemUnitSalePrice({
     required String shopId,
-    required String itemId,
-    required num salePrice,
+    required String shopItemUnitId,
+    required num? salePrice,
   }) async {
     await _client.rpc(
-      'set_item_sale_price',
+      'set_shop_item_unit_sale_price',
       params: {
         'p_shop_id': shopId,
-        'p_item_id': itemId,
+        'p_shop_item_unit_id': shopItemUnitId,
         'p_sale_price': salePrice,
       },
     );
   }
 
+  /// Picker source for the Add packaging sheet. Returns common
+  /// packagings other items in the catalog already use, ranked by
+  /// frequency, with same-category matches first. Packagings already on
+  /// the current shop_item are excluded server-side so the picker never
+  /// shows a duplicate of what the cashier just added.
+  Future<List<PackagingSuggestion>> suggestItemPackagings({
+    required String shopId,
+    required String shopItemId,
+    required String baseUnitCode,
+    String? categoryId,
+    String? locale,
+    int limit = 8,
+  }) async {
+    final rows = await _client.rpc(
+      'suggest_item_packagings',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_id': shopItemId,
+        'p_base_unit_code': baseUnitCode,
+        'p_category_id': categoryId,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        'p_limit': limit,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<PackagingSuggestion>(
+          (row) => PackagingSuggestion.fromJson(
+            Map<String, dynamic>.from(row),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  /// Picker source for "How is it sold?" in the Add new item sheet.
+  /// Returns base-unit candidates ranked by how many items in the
+  /// given category use each as their base.
+  Future<List<CategoryUnitSuggestion>> suggestCategoryUnits({
+    required String categoryId,
+    String? locale,
+    int limit = 5,
+  }) async {
+    final rows = await _client.rpc(
+      'suggest_category_units',
+      params: {
+        'p_category_id': categoryId,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        'p_limit': limit,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<CategoryUnitSuggestion>(
+          (row) => CategoryUnitSuggestion.fromJson(
+            Map<String, dynamic>.from(row),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  /// Single-round-trip source for the Add new item grouped picker.
+  /// Returns base-unit candidates ("sold loose by X") and packaged-unit
+  /// candidates ("sold as 25-kg bag") together — each packaged row
+  /// carries the implied base unit so the sheet doesn't need a separate
+  /// base-unit step before showing packaged suggestions.
+  Future<NewItemOptions> fetchNewItemOptions({
+    String? categoryId,
+    String? locale,
+  }) async {
+    final result = await _client.rpc(
+      'suggest_new_item_options',
+      params: {
+        'p_category_id': categoryId,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    if (result == null) {
+      return const NewItemOptions(baseUnits: [], packagedUnits: []);
+    }
+    return NewItemOptions.fromJson(Map<String, dynamic>.from(result as Map));
+  }
+
+  /// Lightweight batched stock lookup. One round trip returning
+  /// `{currentStock, baseUnitLabel, displayName}` per shop_item id.
+  /// Used by the Sale screen's negative-stock probe after a post — much
+  /// faster than calling `getShopItem` per item (which aggregates units
+  /// + aliases + barcodes).
+  Future<List<ShopItemStock>> fetchShopItemStocks({
+    required String shopId,
+    required List<String> shopItemIds,
+    String? locale,
+  }) async {
+    if (shopItemIds.isEmpty) return const [];
+    final rows = await _client.rpc(
+      'get_shop_item_stocks',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_ids': shopItemIds,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<ShopItemStock>(
+          (row) => ShopItemStock.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Lists shop_items for the Products screen. Optional filters:
+  /// `categoryId` (exact match) and `query` (prefix on any active
+  /// alias). Ordered by display_name. Not cached — items change when
+  /// the cashier adds a new one mid-sale.
+  Future<List<ShopItemSummary>> listShopItems({
+    required String shopId,
+    String? categoryId,
+    String? query,
+    String? locale,
+  }) async {
+    final rows = await _client.rpc(
+      'list_shop_items',
+      params: {
+        'p_shop_id': shopId,
+        'p_category_id': categoryId,
+        'p_query': query,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<ShopItemSummary>(
+          (row) => ShopItemSummary.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Single-round-trip detail fetch for the Products editor: header +
+  /// every packaging (with both default flags raw) + every alias + every
+  /// barcode. Server aggregates into one jsonb object; we split it
+  /// client-side into typed lists.
+  Future<ShopItemDetail> getShopItem({
+    required String shopId,
+    required String shopItemId,
+    String? locale,
+  }) async {
+    final result = await _client.rpc(
+      'get_shop_item',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_id': shopItemId,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    final json = Map<String, dynamic>.from(result as Map);
+    final unitsRaw = (json['units'] as List?) ?? const [];
+    final aliasesRaw = (json['aliases'] as List?) ?? const [];
+    final barcodesRaw = (json['barcodes'] as List?) ?? const [];
+    return ShopItemDetail(
+      header: ShopItemSummary.fromJson(
+        Map<String, dynamic>.from(json['header'] as Map),
+      ),
+      units: unitsRaw
+          .map<ShopItemUnitDetail>(
+            (row) => ShopItemUnitDetail.fromJson(
+              Map<String, dynamic>.from(row as Map),
+            ),
+          )
+          .toList(growable: false),
+      aliases: aliasesRaw
+          .map<ShopItemAliasRow>(
+            (row) => ShopItemAliasRow.fromJson(
+              Map<String, dynamic>.from(row as Map),
+            ),
+          )
+          .toList(growable: false),
+      barcodes: barcodesRaw
+          .map<ShopItemBarcodeRow>(
+            (row) => ShopItemBarcodeRow.fromJson(
+              Map<String, dynamic>.from(row as Map),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  /// Consolidated item picker. Single canonical entry point for Sale,
+  /// Receive, and Products search. `screen` controls which default
+  /// packaging flag the row carries; `partyId` (Receive only) prefers
+  /// supplier-scoped last cost. Rows map to `ItemSearchResult` shape.
   Future<List<ItemSearchResult>> searchItems({
     required String shopId,
     String query = '',
@@ -154,6 +694,51 @@ class ShopApi {
     return result as String;
   }
 
+  /// Owner-only rename / phone-update of an existing party. Type is
+  /// not mutable in v1.
+  Future<void> updateParty({
+    required String shopId,
+    required String partyId,
+    required String name,
+    String? phone,
+  }) async {
+    await _client.rpc(
+      'update_party',
+      params: {
+        'p_shop_id': shopId,
+        'p_party_id': partyId,
+        'p_name': name,
+        'p_phone': phone,
+      },
+    );
+  }
+
+  /// Records an opening balance for a party — direction 'I' (customer
+  /// owes us, bumps receivable) or 'O' (we owe supplier, bumps
+  /// payable). Inserts a no-line sale/receive txn so reports stay
+  /// coherent; idempotent on `clientOpId`.
+  Future<String> postOpeningPartyBalance({
+    required String shopId,
+    required String partyId,
+    required num amount,
+    required String direction,
+    String? clientOpId,
+    String? notes,
+  }) async {
+    final result = await _client.rpc(
+      'post_opening_party_balance',
+      params: {
+        'p_shop_id': shopId,
+        'p_party_id': partyId,
+        'p_amount': amount,
+        'p_direction': direction,
+        'p_client_op_id': clientOpId,
+        'p_notes': notes,
+      },
+    );
+    return result as String;
+  }
+
   Future<List<PartySearchResult>> searchParties({
     required String shopId,
     String query = '',
@@ -179,6 +764,9 @@ class ShopApi {
 
   // ----- Posting RPCs -------------------------------------------------------
 
+  /// Posts a sale. Each line identifies its packaging via
+  /// `shop_item_unit_id`; the server derives shop_item, base unit, and
+  /// COGS snapshot from there. `clientOpId` deduplicates retries.
   Future<String> postSale({
     required String shopId,
     required List<SaleLine> lines,
@@ -209,6 +797,126 @@ class ShopApi {
   /// Lists the active expense categories for a shop (Rent, Salary,
   /// etc.) with the name resolved to the requested locale via the
   /// stored `name_translations` jsonb.
+  /// Single-round-trip dashboard tile: sales-today, total receivables
+  /// + payables, low-stock count.
+  Future<TodaySummary> getTodaySummary({
+    required String shopId,
+    String? locale,
+  }) async {
+    final result = await _client.rpc(
+      'get_today_summary',
+      params: {
+        'p_shop_id': shopId,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    return TodaySummary.fromJson(Map<String, dynamic>.from(result as Map));
+  }
+
+  /// Receivables list — parties who owe the shop (`receivable > 0`).
+  /// Caller maps each row's `amount` into the right meaning (receivable
+  /// vs payable) before rendering.
+  Future<List<PartyBalanceRow>> listReceivables({
+    required String shopId,
+    String? locale,
+  }) async {
+    final rows = await _client.rpc(
+      'list_receivables',
+      params: {
+        'p_shop_id': shopId,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<PartyBalanceRow>((row) {
+          final map = Map<String, dynamic>.from(row as Map);
+          return PartyBalanceRow.fromJson({
+            ...map,
+            'amount': map['receivable'],
+          });
+        })
+        .toList(growable: false);
+  }
+
+  Future<List<PartyBalanceRow>> listPayables({
+    required String shopId,
+    String? locale,
+  }) async {
+    final rows = await _client.rpc(
+      'list_payables',
+      params: {
+        'p_shop_id': shopId,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<PartyBalanceRow>((row) {
+          final map = Map<String, dynamic>.from(row as Map);
+          return PartyBalanceRow.fromJson({
+            ...map,
+            'amount': map['payable'],
+          });
+        })
+        .toList(growable: false);
+  }
+
+  Future<List<LowStockRow>> listLowStock({
+    required String shopId,
+    String? locale,
+  }) async {
+    final rows = await _client.rpc(
+      'list_low_stock',
+      params: {
+        'p_shop_id': shopId,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<LowStockRow>(
+          (row) => LowStockRow.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Loads the Party detail bundle (header + last-N sales/receives/
+  /// payments) for the Party detail screen.
+  Future<PartyDetail> getPartyDetail({
+    required String shopId,
+    required String partyId,
+    int limit = 20,
+  }) async {
+    final result = await _client.rpc(
+      'get_party_detail',
+      params: {
+        'p_shop_id': shopId,
+        'p_party_id': partyId,
+        'p_limit': limit,
+      },
+    );
+    return PartyDetail.fromJson(Map<String, dynamic>.from(result as Map));
+  }
+
+  /// Catalog top-level categories for the Add new item + editor
+  /// dropdowns. Locale-resolved server-side; the UI just renders
+  /// `name`.
+  Future<List<CategoryOption>> listCategories({String? locale}) async {
+    final rows = await _client.rpc(
+      'list_categories',
+      params: {
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<CategoryOption>(
+          (row) => CategoryOption.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
   Future<List<ExpenseCategoryOption>> listExpenseCategories({
     required String shopId,
     String? locale,
@@ -255,11 +963,17 @@ class ShopApi {
 
   /// Lists past sales (originals only) reverse-chronological. `before`
   /// is the pagination cursor: pass the oldest `occurredAt` from the
-  /// previous page to fetch older rows.
+  /// previous page to fetch older rows. `dateFrom` / `dateTo` clamp to
+  /// a date window (server-side); `partyId` narrows to one customer.
+  /// "Include voided" is enforced client-side by inspecting
+  /// `isVoided` on the returned rows.
   Future<List<SaleSummary>> listSales({
     required String shopId,
     DateTime? before,
     int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? partyId,
   }) async {
     final rows = await _client.rpc(
       'list_sales',
@@ -267,6 +981,9 @@ class ShopApi {
         'p_shop_id': shopId,
         'p_before': before?.toIso8601String(),
         'p_limit': limit,
+        'p_date_from': dateFrom?.toIso8601String(),
+        'p_date_to': dateTo?.toIso8601String(),
+        'p_party_id': partyId,
       },
     );
     if (rows is! List) return const [];
@@ -291,6 +1008,10 @@ class ShopApi {
     return SaleSummary.fromJson(Map<String, dynamic>.from(rows.first));
   }
 
+  /// Sale lines for the detail receipt. Rows include
+  /// `shop_item_unit_id` (the snapshot packaging) and `packaging_label`
+  /// derived from the snapshot fields so the receipt stays consistent
+  /// even after later packaging edits.
   Future<List<SaleLineDetail>> getSaleLines({
     required String shopId,
     required String txnId,
@@ -332,11 +1053,14 @@ class ShopApi {
     return result as String;
   }
 
-  /// Receive-side mirror of listSales. Same row shape.
+  /// Receive-side mirror of listSales. Same row shape and filter params.
   Future<List<ReceiveSummary>> listReceives({
     required String shopId,
     DateTime? before,
     int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? partyId,
   }) async {
     final rows = await _client.rpc(
       'list_receives',
@@ -344,12 +1068,105 @@ class ShopApi {
         'p_shop_id': shopId,
         'p_before': before?.toIso8601String(),
         'p_limit': limit,
+        'p_date_from': dateFrom?.toIso8601String(),
+        'p_date_to': dateTo?.toIso8601String(),
+        'p_party_id': partyId,
       },
     );
     if (rows is! List) return const [];
     return rows
         .map<ReceiveSummary>(
           (row) => ReceiveSummary.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Full party directory for the Parties screen. Same row shape as
+  /// `search_parties` (reuse `PartySearchResult`); supports "all"
+  /// type and a `hasBalanceOnly` toggle for the Parties screen filter.
+  Future<List<PartySearchResult>> listParties({
+    required String shopId,
+    String query = '',
+    String? type,
+    bool hasBalanceOnly = false,
+    int limit = 200,
+  }) async {
+    final rows = await _client.rpc(
+      'list_parties',
+      params: {
+        'p_shop_id': shopId,
+        'p_query': query,
+        'p_type': type,
+        'p_has_balance_only': hasBalanceOnly,
+        'p_limit': limit,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<PartySearchResult>(
+          (row) => PartySearchResult.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Payment history — paginated. Direction 'I' = inbound (customer
+  /// paid us), 'O' = outbound (we paid a supplier); null = both.
+  Future<List<PaymentSummary>> listPayments({
+    required String shopId,
+    DateTime? before,
+    int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? partyId,
+    String? direction,
+  }) async {
+    final rows = await _client.rpc(
+      'list_payments',
+      params: {
+        'p_shop_id': shopId,
+        'p_before': before?.toIso8601String(),
+        'p_limit': limit,
+        'p_date_from': dateFrom?.toIso8601String(),
+        'p_date_to': dateTo?.toIso8601String(),
+        'p_party_id': partyId,
+        'p_direction': direction,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<PaymentSummary>(
+          (row) => PaymentSummary.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Expense-side mirror — paginated history with date + category
+  /// filters. Category name is locale-resolved server-side.
+  Future<List<ExpenseSummary>> listExpenses({
+    required String shopId,
+    DateTime? before,
+    int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? categoryId,
+    String? locale,
+  }) async {
+    final rows = await _client.rpc(
+      'list_expenses',
+      params: {
+        'p_shop_id': shopId,
+        'p_before': before?.toIso8601String(),
+        'p_limit': limit,
+        'p_date_from': dateFrom?.toIso8601String(),
+        'p_date_to': dateTo?.toIso8601String(),
+        'p_category_id': categoryId,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<ExpenseSummary>(
+          (row) => ExpenseSummary.fromJson(Map<String, dynamic>.from(row)),
         )
         .toList(growable: false);
   }
@@ -366,6 +1183,8 @@ class ShopApi {
     return ReceiveSummary.fromJson(Map<String, dynamic>.from(rows.first));
   }
 
+  /// Receive lines for the detail bono. Same `shop_item_unit_id` +
+  /// `packaging_label` snapshot fields as `getSaleLines`.
   Future<List<ReceiveLineDetail>> getReceiveLines({
     required String shopId,
     required String txnId,
@@ -432,8 +1251,10 @@ class ShopApi {
   }
 
   /// post_receive — supplier-attributed inventory + payable updates.
-  /// Always requires a party (the supplier); v1 sends per-unit cost
-  /// (`unit_cost`) and skips the alternative `line_total` shape.
+  /// Always requires a party (the supplier). Each line carries the
+  /// packaging (`shop_item_unit_id`) plus the cashier-typed `lineTotal`
+  /// so the bono total matches the paper exactly; the server derives
+  /// per-unit cost from `line_total / quantity`.
   Future<String> postReceive({
     required String shopId,
     required String partyId,
@@ -544,6 +1365,7 @@ class ShopApi {
     String? currencyCode,
     String? defaultLanguageCode,
     String? timezone,
+    bool? lowStockWarningEnabled,
   }) async {
     final patch = <String, dynamic>{};
     if (name != null && name.trim().isNotEmpty) patch['name'] = name.trim();
@@ -554,8 +1376,253 @@ class ShopApi {
     if (timezone != null && timezone.trim().isNotEmpty) {
       patch['timezone'] = timezone.trim();
     }
+    if (lowStockWarningEnabled != null) {
+      patch['low_stock_warning_enabled'] = lowStockWarningEnabled;
+    }
     if (patch.isEmpty) return;
     await _client.from('shop').update(patch).eq('id', shopId);
+  }
+
+  /// Persists the per-item low-stock warning threshold (in base units).
+  /// Pass null to clear — the warning then falls back to the shop-wide
+  /// "below 1" rule. Cashier or owner can call this.
+  Future<void> setShopItemReorderThreshold({
+    required String shopId,
+    required String shopItemId,
+    required num? reorderThreshold,
+  }) async {
+    await _client.rpc(
+      'set_shop_item_reorder_threshold',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_id': shopItemId,
+        'p_reorder_threshold': reorderThreshold,
+      },
+    );
+  }
+
+  /// Uploads the picked bono bytes to the `shop-documents` bucket and
+  /// inserts a `document` row of type `bono`. Returns the new
+  /// document_id, which Receive SAVE then passes to `post_receive` as
+  /// `p_document_id`. Storage path is `{shop_id}/bono/{uuid}.{ext}`.
+  Future<String> uploadBonoImage({
+    required String shopId,
+    required Uint8List bytes,
+    required String mimeType,
+    required String fileExtension,
+  }) async {
+    // Path shape is fixed by the `document_storage_path_shape` check
+    // in 0008: `{shop_id}/documents/{document_id}/image.{ext}`. We mint
+    // the document UUID client-side so the path can be built before
+    // upload, then pass that same id into the RPC.
+    final documentId = uuidV4();
+    final path = '$shopId/documents/$documentId/image.$fileExtension';
+    await _client.storage.from('shop-documents').uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(contentType: mimeType, upsert: false),
+        );
+    final result = await _client.rpc(
+      'create_bono_document',
+      params: {
+        'p_shop_id': shopId,
+        'p_document_id': documentId,
+        'p_storage_path': path,
+        'p_mime_type': mimeType,
+        'p_size_bytes': bytes.length,
+      },
+    );
+    return result as String;
+  }
+
+  /// Flip the per-screen default flags on a packaging row. Setting a
+  /// flag to true atomically unsets the previous holder in the same
+  /// shop_item (one default per side). Setting both false leaves the
+  /// shop_item with no default — the picker falls back to base.
+  Future<void> setShopItemUnitDefaultFlags({
+    required String shopId,
+    required String shopItemUnitId,
+    required bool isDefaultSale,
+    required bool isDefaultReceive,
+  }) async {
+    await _client.rpc(
+      'set_shop_item_unit_default_flags',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_unit_id': shopItemUnitId,
+        'p_is_default_sale': isDefaultSale,
+        'p_is_default_receive': isDefaultReceive,
+      },
+    );
+  }
+
+  /// Owner-only. Sets (or clears, when [categoryId] is null) the
+  /// category on an existing shop_item. Backed by the
+  /// `set_shop_item_category` RPC introduced in 0038.
+  Future<void> setShopItemCategory({
+    required String shopId,
+    required String shopItemId,
+    required String? categoryId,
+  }) async {
+    await _client.rpc(
+      'set_shop_item_category',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_id': shopItemId,
+        'p_category_id': categoryId,
+      },
+    );
+  }
+
+  /// Owner-only. Soft-removes a non-base packaging — flips is_active
+  /// to false and clears any default-sale/receive flags. Refuses on
+  /// the base packaging. Idempotent.
+  Future<void> deactivateShopItemUnit({
+    required String shopId,
+    required String shopItemUnitId,
+  }) async {
+    await _client.rpc(
+      'deactivate_shop_item_unit',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_unit_id': shopItemUnitId,
+      },
+    );
+  }
+
+  /// Removes a non-display alias from a shop_item. Refuses to remove
+  /// the active display alias (the user must add a replacement first).
+  Future<void> removeShopItemAlias({
+    required String shopId,
+    required String aliasId,
+  }) async {
+    await _client.rpc(
+      'remove_shop_item_alias',
+      params: {
+        'p_shop_id': shopId,
+        'p_alias_id': aliasId,
+      },
+    );
+  }
+
+  /// Adds a barcode to a packaging. `isPrimary: true` atomically
+  /// demotes any previous primary in the same packaging. Returns the
+  /// barcode row id.
+  Future<String> addShopItemBarcode({
+    required String shopId,
+    required String shopItemUnitId,
+    required String barcode,
+    bool isPrimary = false,
+    String? symbology,
+  }) async {
+    final result = await _client.rpc(
+      'add_shop_item_barcode',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_unit_id': shopItemUnitId,
+        'p_barcode': barcode,
+        'p_is_primary': isPrimary,
+        'p_symbology': symbology,
+      },
+    );
+    return result as String;
+  }
+
+  Future<void> removeShopItemBarcode({
+    required String shopId,
+    required String barcodeId,
+  }) async {
+    await _client.rpc(
+      'remove_shop_item_barcode',
+      params: {
+        'p_shop_id': shopId,
+        'p_barcode_id': barcodeId,
+      },
+    );
+  }
+
+  /// Promotes one barcode to primary, atomically demoting whichever
+  /// barcode was previously primary on the same packaging.
+  Future<void> setPrimaryShopItemBarcode({
+    required String shopId,
+    required String barcodeId,
+  }) async {
+    await _client.rpc(
+      'set_primary_shop_item_barcode',
+      params: {
+        'p_shop_id': shopId,
+        'p_barcode_id': barcodeId,
+      },
+    );
+  }
+
+  /// Top movers report — aggregates sales over the last
+  /// [periodDays] and returns the busiest products + dead stock in
+  /// one round trip. Server caps each segment at [limit].
+  Future<ProductVelocity> listProductVelocity({
+    required String shopId,
+    int periodDays = 7,
+    int limit = 10,
+    String? locale,
+  }) async {
+    final result = await _client.rpc(
+      'list_product_velocity',
+      params: {
+        'p_shop_id': shopId,
+        'p_period_days': periodDays,
+        'p_limit': limit,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    final map = Map<String, dynamic>.from(result as Map);
+    final topRaw = (map['top'] as List?) ?? const [];
+    final deadRaw = (map['dead'] as List?) ?? const [];
+    return ProductVelocity(
+      top: topRaw
+          .map<TopMoverRow>(
+            (row) => TopMoverRow.fromJson(Map<String, dynamic>.from(row)),
+          )
+          .toList(growable: false),
+      dead: deadRaw
+          .map<DeadStockRow>(
+            (row) => DeadStockRow.fromJson(Map<String, dynamic>.from(row)),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  /// Owner-only stock adjustment. Single-line shape sufficient for
+  /// the product-detail "Adjust stock" sheet (opening / correction /
+  /// spoilage). `unitCost` is required by the server when reason
+  /// increases stock and no prior stock exists; for everyday
+  /// "set/add/subtract" corrections we pass null and let the server's
+  /// avg-cost logic carry forward.
+  Future<String> postInventoryAdjustment({
+    required String shopId,
+    required String reasonCode,
+    required String shopItemId,
+    required num quantityDelta,
+    num? unitCost,
+    String? clientOpId,
+    String? notes,
+  }) async {
+    final result = await _client.rpc(
+      'post_inventory_adjustment',
+      params: {
+        'p_shop_id': shopId,
+        'p_reason_code': reasonCode,
+        'p_lines': [
+          {
+            'shop_item_id': shopItemId,
+            'quantity_delta': quantityDelta,
+            if (unitCost != null) 'unit_cost': unitCost, // ignore: use_null_aware_elements
+          }
+        ],
+        'p_client_op_id': clientOpId,
+        'p_notes': notes,
+      },
+    );
+    return result as String;
   }
 
   /// Fetch a single shop row for projecting back into AuthController state
@@ -565,7 +1632,7 @@ class ShopApi {
     final row = await _client
         .from('shop')
         .select(
-          'id, name, setup_status, currency_code, default_language_code, timezone',
+          'id, name, setup_status, currency_code, default_language_code, timezone, onboarding_dismissed_at, low_stock_warning_enabled',
         )
         .eq('id', shopId)
         .maybeSingle();

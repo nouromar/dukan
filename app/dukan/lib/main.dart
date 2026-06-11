@@ -1,21 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/app/auth_bootstrap.dart' show AuthBootstrap, AuthRouter;
 import 'package:dukan/config/app_config.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/observability/crash_reporter.dart';
 import 'package:dukan/shared/fallback_localizations.dart';
 import 'package:dukan/shared/locale_controller.dart';
 import 'package:dukan/shared/supabase_config_screen.dart';
 
 Future<void> main() async {
+  final appConfig = AppConfig.fromEnvironment();
+  if (appConfig.hasSentry) {
+    await SentryFlutter.init((options) {
+      options.dsn = appConfig.sentryDsn;
+      // Empty strings here are silently fine — Sentry just won't surface
+      // those fields in the dashboard.
+      options.environment = appConfig.appEnvironment;
+      if (appConfig.appVersion.isNotEmpty) {
+        options.release = 'dukan@${appConfig.appVersion}';
+      }
+      // Performance tracing off by default — it adds network noise the
+      // pilot shops can't afford. Re-enable per environment if needed.
+      options.tracesSampleRate = 0.0;
+      // PII guard: even though we set user.id ourselves below, double
+      // up here so the SDK never auto-attaches IP / cookies / etc.
+      options.sendDefaultPii = false;
+    }, appRunner: () => _runApp(appConfig));
+    CrashReporter.install(enabled: true);
+  } else {
+    await _runApp(appConfig);
+  }
+}
+
+Future<void> _runApp(AppConfig appConfig) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final appConfig = AppConfig.fromEnvironment();
   SupabaseClient? supabaseClient;
-
   if (appConfig.hasSupabase) {
     await Supabase.initialize(
       url: appConfig.supabaseUrl,

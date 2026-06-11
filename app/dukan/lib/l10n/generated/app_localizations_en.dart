@@ -12,10 +12,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Dukan';
 
   @override
-  String get languageEnglish => 'EN';
+  String get languageEnglish => 'English';
 
   @override
-  String get languageSomali => 'SO';
+  String get languageSomali => 'Somali';
 
   @override
   String get homeHint => 'Choose today\'s job';
@@ -116,10 +116,551 @@ class AppLocalizationsEn extends AppLocalizations {
       'New supplier stub — name and phone in production.';
 
   @override
-  String get repeatLastBono => 'Repeat last bono';
+  String get repeatLastBono => 'Repeat last receive';
 
   @override
   String get bonoAttached => 'Bono attached';
+
+  @override
+  String get bonoAttachTooltip => 'Attach bono photo';
+
+  @override
+  String get bonoAttachedTooltip => 'Bono attached — tap to replace';
+
+  @override
+  String get bonoAttachCamera => 'Take photo';
+
+  @override
+  String get bonoAttachGallery => 'Choose from gallery';
+
+  @override
+  String get bonoAttachedToast => 'Bono photo attached';
+
+  @override
+  String get bonoAttachFailedMessage => 'Could not attach the bono. Try again.';
+
+  @override
+  String get partyDetailTitle => 'Party';
+
+  @override
+  String get partyDetailLoadFailedMessage => 'Could not load this party.';
+
+  @override
+  String get partyDetailReceivableLabel => 'They owe you';
+
+  @override
+  String get partyDetailPayableLabel => 'You owe them';
+
+  @override
+  String get partyDetailPayButton => 'PAY';
+
+  @override
+  String get partyDetailSalesHeader => 'Sales';
+
+  @override
+  String get partyDetailReceivesHeader => 'Receives';
+
+  @override
+  String get partyDetailPaymentsHeader => 'Payments';
+
+  @override
+  String get homeTodayHeader => 'Today';
+
+  @override
+  String get homeSalesTodayLabel => 'Sales today';
+
+  @override
+  String get homeReceivablesLabel => 'Customers owe you';
+
+  @override
+  String get homePayablesLabel => 'You owe suppliers';
+
+  @override
+  String get homeLowStockLabel => 'Low stock';
+
+  @override
+  String homeLowStockCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+      zero: 'none',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get receivablesTitle => 'Customers owe you';
+
+  @override
+  String get receivablesEmptyMessage => 'No one owes you right now.';
+
+  @override
+  String get payablesTitle => 'You owe suppliers';
+
+  @override
+  String get payablesEmptyMessage => 'You don\'t owe anyone right now.';
+
+  @override
+  String get lowStockReportTitle => 'Low stock';
+
+  @override
+  String get lowStockReportEmptyMessage => 'Nothing is running low.';
+
+  @override
+  String get reportLoadFailedMessage =>
+      'Could not load. Pull down to try again.';
+
+  @override
+  String get filterTooltip => 'Filter';
+
+  @override
+  String get filterSheetTitle => 'Filter';
+
+  @override
+  String get filterApplyButton => 'APPLY';
+
+  @override
+  String get filterResetButton => 'Reset';
+
+  @override
+  String get dateRangeToday => 'Today';
+
+  @override
+  String get dateRangeWeek => 'Last 7 days';
+
+  @override
+  String get dateRangeMonth => 'This month';
+
+  @override
+  String get dateRangeAll => 'All time';
+
+  @override
+  String get dateRangeCustom => 'Custom…';
+
+  @override
+  String get filterPartyLabel => 'Party';
+
+  @override
+  String get filterPartyAny => 'Anyone';
+
+  @override
+  String get filterIncludeVoided => 'Include voided';
+
+  @override
+  String get filterHideVoided => 'Hide voided';
+
+  @override
+  String get filterCategoryLabel => 'Category';
+
+  @override
+  String get filterCategoryAny => 'All categories';
+
+  @override
+  String get filterLowStockOnly => 'Low stock only';
+
+  @override
+  String get filterNoPriceOnly => 'No price yet';
+
+  @override
+  String get saleHistorySearchHint => 'Search sales';
+
+  @override
+  String get receiveHistorySearchHint => 'Search receives';
+
+  @override
+  String get receivablesSearchHint => 'Search customer';
+
+  @override
+  String get payablesSearchHint => 'Search supplier';
+
+  @override
+  String get lowStockSearchHint => 'Search product';
+
+  @override
+  String get filterChipDateAll => 'All time';
+
+  @override
+  String filterChipParty(String name) {
+    return 'Party: $name';
+  }
+
+  @override
+  String get filterChipVoided => 'Including voided';
+
+  @override
+  String get filterChipHideVoided => 'Hiding voided';
+
+  @override
+  String filterChipCategory(String name) {
+    return '$name';
+  }
+
+  @override
+  String get filterChipLowStock => 'Low stock';
+
+  @override
+  String get filterChipNoPrice => 'No price';
+
+  @override
+  String get drawerHistoryHeader => 'HISTORY';
+
+  @override
+  String get drawerSalesHistory => 'Sales history';
+
+  @override
+  String get drawerReceiveHistory => 'Receive history';
+
+  @override
+  String get drawerExpenseHistory => 'Expense history';
+
+  @override
+  String get expenseHistoryTitle => 'Expenses';
+
+  @override
+  String get expenseHistoryLoadFailedMessage =>
+      'Could not load expenses. Pull down to try again.';
+
+  @override
+  String get expenseHistoryEmptyMessage => 'No expenses yet.';
+
+  @override
+  String get drawerPaymentHistory => 'Payment history';
+
+  @override
+  String get paymentHistoryTitle => 'Payments';
+
+  @override
+  String get paymentHistoryLoadFailedMessage =>
+      'Could not load payments. Pull down to try again.';
+
+  @override
+  String get paymentHistoryEmptyMessage => 'No payments yet.';
+
+  @override
+  String get paymentHistoryNoParty => 'Cash';
+
+  @override
+  String get paymentHistoryRefundBadge => 'refund';
+
+  @override
+  String get paymentDirectionLabel => 'Direction';
+
+  @override
+  String get paymentDirectionAny => 'Any direction';
+
+  @override
+  String get paymentDirectionInbound => 'Customer paid you';
+
+  @override
+  String get paymentDirectionOutbound => 'You paid supplier';
+
+  @override
+  String get drawerParties => 'Customers & suppliers';
+
+  @override
+  String get partiesTitle => 'Customers & suppliers';
+
+  @override
+  String get partiesSearchHint => 'Search by name or phone';
+
+  @override
+  String get partiesLoadFailedMessage =>
+      'Could not load. Pull down to try again.';
+
+  @override
+  String get partiesEmptyMessage => 'No customers or suppliers yet.';
+
+  @override
+  String partiesEmptyForQuery(String query) {
+    return 'No matches for \"$query\".';
+  }
+
+  @override
+  String get partiesHasBalanceChip => 'Has balance only';
+
+  @override
+  String get partyTypeLabel => 'Type';
+
+  @override
+  String get partyTypeAny => 'Anyone';
+
+  @override
+  String get partyTypeCustomer => 'Customer';
+
+  @override
+  String get partyTypeSupplier => 'Supplier';
+
+  @override
+  String get partyTypeBoth => 'Customer + supplier';
+
+  @override
+  String get partiesAddButton => 'Add';
+
+  @override
+  String get partyNewOpeningReceivableLabel => 'Opening balance (they owe you)';
+
+  @override
+  String get partyNewOpeningPayableLabel => 'Opening balance (you owe them)';
+
+  @override
+  String get partyNewOpeningBalanceHelper =>
+      'Optional — for old debts from before this app.';
+
+  @override
+  String get partyDetailEditTooltip => 'Edit name & phone';
+
+  @override
+  String get drawerPeopleHeader => 'PEOPLE';
+
+  @override
+  String get drawerCustomers => 'Customers';
+
+  @override
+  String get drawerSuppliers => 'Suppliers';
+
+  @override
+  String get customersTitle => 'Customers';
+
+  @override
+  String get suppliersTitle => 'Suppliers';
+
+  @override
+  String get customersSearchHint => 'Search customer';
+
+  @override
+  String get suppliersSearchHint => 'Search supplier';
+
+  @override
+  String get customersAddButton => 'Add';
+
+  @override
+  String get suppliersAddButton => 'Add';
+
+  @override
+  String get customersHasBalanceChip => 'Has receivable only';
+
+  @override
+  String get suppliersHasBalanceChip => 'Has payable only';
+
+  @override
+  String get customersHeadlineLabel => 'Customers owe you';
+
+  @override
+  String get suppliersHeadlineLabel => 'You owe suppliers';
+
+  @override
+  String customersHeadlineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count customers with balance',
+      one: '1 customer with balance',
+      zero: 'No customers with balance',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String suppliersHeadlineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count suppliers with balance',
+      one: '1 supplier with balance',
+      zero: 'No suppliers with balance',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get peopleSortLabel => 'Sort';
+
+  @override
+  String get peopleSortByReceivable => 'By debt (most first)';
+
+  @override
+  String get peopleSortByPayable => 'By debt (most first)';
+
+  @override
+  String get peopleSortByName => 'Alphabetical';
+
+  @override
+  String stockAdjustTitle(String name) {
+    return 'Adjust $name stock';
+  }
+
+  @override
+  String stockAdjustCurrentLabel(String amount, String unit) {
+    return 'Current: $amount $unit';
+  }
+
+  @override
+  String get stockAdjustModeOpening => 'Opening';
+
+  @override
+  String get stockAdjustModeAdd => 'Add';
+
+  @override
+  String get stockAdjustModeSubtract => 'Subtract';
+
+  @override
+  String get stockAdjustModeSetExact => 'Set exact';
+
+  @override
+  String get stockAdjustModeOpeningHelper =>
+      'Stock you had on day one — before this app.';
+
+  @override
+  String get stockAdjustModeAddHelper =>
+      'Stock received outside a bono (e.g. found behind the shelf).';
+
+  @override
+  String get stockAdjustModeSubtractHelper =>
+      'Spoilage, waste, or any loss you can\'t refund.';
+
+  @override
+  String get stockAdjustModeSetExactHelper =>
+      'Type the new total after a physical count.';
+
+  @override
+  String stockAdjustAmountLabel(String unit) {
+    return 'Amount ($unit)';
+  }
+
+  @override
+  String get stockAdjustNotesLabel => 'Note (optional)';
+
+  @override
+  String stockAdjustPreview(String amount, String unit) {
+    return 'New stock: $amount $unit';
+  }
+
+  @override
+  String get stockAdjustSaveButton => 'SAVE';
+
+  @override
+  String get stockAdjustFailedMessage =>
+      'Could not save the adjustment. Try again.';
+
+  @override
+  String get stockAdjustInvalidAmountMessage => 'Enter a valid amount.';
+
+  @override
+  String get barcodeAddDialogTitle => 'Add barcode';
+
+  @override
+  String get barcodeAddDialogHint => 'e.g. 6291100123456';
+
+  @override
+  String get barcodeAddDialogSetPrimary => 'Make primary';
+
+  @override
+  String get barcodeChipMakePrimary => 'Make primary';
+
+  @override
+  String get barcodeChipRemove => 'Remove';
+
+  @override
+  String get barcodeAddTooltip => 'Add barcode';
+
+  @override
+  String get barcodeNoneForBase => '— loose / by weight';
+
+  @override
+  String get aliasAddDialogTitle => 'Add another name';
+
+  @override
+  String get aliasAddDialogHint => 'e.g. Riis (Somali)';
+
+  @override
+  String get aliasAddDialogLanguage => 'Language';
+
+  @override
+  String get aliasChipRemove => 'Remove';
+
+  @override
+  String get aliasAddTooltip => 'Add other name';
+
+  @override
+  String get languageNone => 'Any';
+
+  @override
+  String productsHeadline(int total, int low, int noPrice) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total products',
+      one: '1 product',
+      zero: 'No products yet',
+    );
+    return '$_temp0 · $low low · $noPrice without price';
+  }
+
+  @override
+  String get productsSortLabel => 'Sort';
+
+  @override
+  String get productsSortByName => 'Name (A–Z)';
+
+  @override
+  String get productsSortByStockLow => 'Stock (low first)';
+
+  @override
+  String get drawerProductsHeader => 'PRODUCTS';
+
+  @override
+  String get drawerTopMovers => 'Top movers';
+
+  @override
+  String get topMoversTitle => 'Top movers';
+
+  @override
+  String topMoversPeriodSubtitle(int days) {
+    return 'Last $days days';
+  }
+
+  @override
+  String get topMoversPeriodTooltip => 'Period';
+
+  @override
+  String topMoversPeriodOption(int days) {
+    return 'Last $days days';
+  }
+
+  @override
+  String get topMoversTopSegment => 'Top sellers';
+
+  @override
+  String get topMoversDeadSegment => 'Dead stock (no sales)';
+
+  @override
+  String get topMoversEmptyMessage => 'No sales in this period.';
+
+  @override
+  String get drawerReportsHeader => 'REPORTS';
+
+  @override
+  String get drawerReceivables => 'Customers owe you';
+
+  @override
+  String get drawerPayables => 'You owe suppliers';
+
+  @override
+  String get drawerLowStock => 'Low stock';
+
+  @override
+  String get drawerSetupHeader => 'SETUP';
+
+  @override
+  String get drawerProducts => 'Products';
+
+  @override
+  String get drawerSettings => 'Settings';
+
+  @override
+  String get drawerOpenTooltip => 'Menu';
 
   @override
   String get attachBono => 'Attach bono photo';
@@ -407,6 +948,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTimezoneLabel => 'Timezone';
 
   @override
+  String get settingsLowStockWarningLabel => 'Low-stock warning';
+
+  @override
+  String get settingsLowStockWarningHint =>
+      'Show a red dot on low items and a toast after a sale that runs them low.';
+
+  @override
   String get settingsSaveButton => 'SAVE';
 
   @override
@@ -601,6 +1149,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentTypeSupplier => 'Supplier';
 
   @override
+  String get paymentTypeCustomerHint => 'Customer is paying you back';
+
+  @override
+  String get paymentTypeSupplierHint => 'You are paying the supplier';
+
+  @override
   String get paymentPickCustomerButton => 'Pick customer';
 
   @override
@@ -677,7 +1231,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'No expense categories yet. Pick a shop type in Settings.';
 
   @override
-  String get saleHistoryTitle => 'Sales today';
+  String get saleHistoryTitle => 'Sales';
+
+  @override
+  String get historyYesterday => 'Yesterday';
 
   @override
   String get saleHistoryTooltip => 'Sales history';
@@ -733,6 +1290,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleDetailLoadFailedMessage => 'Could not load this sale.';
 
   @override
+  String get saleReceiptShareButton => 'SHARE RECEIPT';
+
+  @override
+  String get saleReceiptDoneButton => 'DONE';
+
+  @override
+  String get saleReceiptShareTitle => 'Share receipt';
+
+  @override
+  String get saleReceiptSharePrint => 'Print';
+
+  @override
+  String get saleReceiptShareWhatsApp => 'WhatsApp';
+
+  @override
+  String get saleReceiptShareComingSoon =>
+      'Coming soon — receipt will print/share here.';
+
+  @override
+  String get saleHistoryReceiptTooltip => 'Open receipt';
+
+  @override
   String get saleVoidConfirmTitle => 'Void this sale?';
 
   @override
@@ -772,24 +1351,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyMenuSales => 'Sales history';
 
   @override
-  String get historyMenuReceives => 'Bono history';
+  String get historyMenuReceives => 'Receive history';
 
   @override
   String get historyMenuTooltip => 'History';
 
   @override
-  String get receiveHistoryTitle => 'Bonos today';
+  String get receiveHistoryTitle => 'Receives';
 
   @override
-  String get receiveHistoryTooltip => 'Bono history';
+  String get receiveHistoryTooltip => 'Receive history';
 
   @override
   String get receiveHistoryEmptyMessage =>
-      'No bonos yet. The first SAVE on the Receive screen will land here.';
+      'No receives yet. The first SAVE on the Receive screen will land here.';
 
   @override
   String get receiveHistoryLoadFailedMessage =>
-      'Could not load bonos. Check your internet and try again.';
+      'Could not load receives. Check your internet and try again.';
 
   @override
   String receiveHistorySupplierLabel(Object name) {
@@ -800,13 +1379,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveHistoryVoidedBadge => 'Voided';
 
   @override
-  String get receiveDetailTitle => 'Bono';
+  String get receiveDetailTitle => 'Receive';
 
   @override
   String get receiveDetailVoidedHeader => 'Voided';
 
   @override
-  String get receiveDetailVoidButton => 'VOID THIS BONO';
+  String get receiveDetailVoidButton => 'VOID THIS RECEIVE';
 
   @override
   String receiveDetailLineSubtotal(
@@ -822,14 +1401,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveDetailTotalLabel => 'Total';
 
   @override
-  String get receiveDetailLoadFailedMessage => 'Could not load this bono.';
+  String get receiveDetailLoadFailedMessage => 'Could not load this receive.';
 
   @override
-  String get receiveVoidConfirmTitle => 'Void this bono?';
+  String get receiveVoidConfirmTitle => 'Void this receive?';
 
   @override
   String get receiveVoidConfirmBody =>
-      'Use this only when you typed the bono wrong. It reverses the bono, removes the stock, and clears what you owe the supplier for it.';
+      'Use this only when you typed the receive wrong. It reverses the receive, removes the stock, and clears what you owe the supplier for it.';
 
   @override
   String get receiveVoidMistakesOnlyHint =>
@@ -842,15 +1421,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveVoidConfirmNo => 'CANCEL';
 
   @override
-  String get receiveVoidedToast => 'Bono voided';
+  String get receiveVoidedToast => 'Receive voided';
 
   @override
   String get receiveVoidFailedMessage =>
-      'Could not void this bono. Check your internet and try again.';
+      'Could not void this receive. Check your internet and try again.';
 
   @override
   String get receiveVoidBlockedStockMessage =>
-      'Some items from this bono have already moved. Void blocked.';
+      'Some items from this receive have already moved. Void blocked.';
 
   @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
@@ -915,11 +1494,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get supplierPickerNoBonosLabel => 'no bonos yet';
+  String get supplierPickerNoBonosLabel => 'no receives yet';
 
   @override
   String get supplierPickerEmptyMessage =>
-      'No suppliers yet. Add one when you record a bono.';
+      'No suppliers yet. Add one when you record a receive.';
 
   @override
   String supplierPickerSearchEmptyMessage(Object query) {
@@ -942,7 +1521,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get receiveEmptyMessage =>
-      'Tap an item to start the bono. Search if it\'s not in the grid.';
+      'Tap an item to start the receive. Search if it\'s not in the grid.';
 
   @override
   String get receiveLineQuantityLabel => 'Qty';
@@ -955,6 +1534,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String receiveLineTotalLabel(Object currency) {
     return '$currency total';
+  }
+
+  @override
+  String receiveLineDerivedPerUnit(String money, String packaging) {
+    return '= $money per $packaging';
   }
 
   @override
@@ -997,7 +1581,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get receiveLinesClearConfirmBody => 'This won\'t undo any saved bono.';
+  String get receiveLinesClearConfirmBody =>
+      'This won\'t undo any saved receive.';
 
   @override
   String get receiveLinesClearConfirmYes => 'CLEAR';
@@ -1009,11 +1594,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveSaveButton => 'SAVE';
 
   @override
-  String get receiveSavedToast => 'Bono saved (on credit)';
+  String get receiveSavedToast => 'Receive saved (on credit)';
 
   @override
   String get receivePostFailedMessage =>
-      'Could not save the bono. Check your internet and try again.';
+      'Could not save the receive. Check your internet and try again.';
 
   @override
   String get receiveNeedSupplierMessage => 'Pick a supplier before saving.';
@@ -1040,4 +1625,384 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unitPickerLoadFailedMessage => 'Could not load units. Try again.';
+
+  @override
+  String get unitPickerAddPackagingButton => '+ Add packaging';
+
+  @override
+  String addNewItemSearchResult(Object query) {
+    return '+ Add new item: “$query”';
+  }
+
+  @override
+  String get addNewItemSheetTitle => 'Add new item';
+
+  @override
+  String get addNewItemNameLabel => 'Name';
+
+  @override
+  String get addNewItemUnitLabel => 'Unit';
+
+  @override
+  String get addNewItemUnitChooseHint => 'Choose';
+
+  @override
+  String addNewItemPriceLabel(Object unit) {
+    return 'Sale price per $unit';
+  }
+
+  @override
+  String get addNewItemCategoryLabel => 'Category (optional)';
+
+  @override
+  String get addNewItemCategoryChooseHint => 'Choose';
+
+  @override
+  String get addNewItemCancelButton => 'CANCEL';
+
+  @override
+  String get addNewItemAddToSaleButton => 'ADD TO SALE';
+
+  @override
+  String get addNewItemAddToReceiveButton => 'ADD TO RECEIVE';
+
+  @override
+  String get addNewItemMissingNameMessage => 'Name is required';
+
+  @override
+  String get addNewItemMissingUnitMessage => 'Pick a unit';
+
+  @override
+  String get addNewItemInvalidPriceMessage => 'Enter a price (0 or more)';
+
+  @override
+  String get addNewItemFailedMessage => 'Could not create the item. Try again.';
+
+  @override
+  String get addNewItemHowSoldHeader => 'How is it sold?';
+
+  @override
+  String get addNewItemHowDeliveredHeader => 'How did the supplier deliver?';
+
+  @override
+  String addNewItemBaseOnlyTile(String base) {
+    return 'By $base';
+  }
+
+  @override
+  String addNewItemPickedPriceLabel(String packaging) {
+    return 'Sale price per $packaging';
+  }
+
+  @override
+  String get addNewItemCustomPackagingEntry => '+ Custom packaging';
+
+  @override
+  String get addNewItemCustomBaseUnitLabel => 'Base unit';
+
+  @override
+  String get addNewItemCustomSoldUnitLabel => 'Sold as';
+
+  @override
+  String addNewItemCustomConversionLabel(String base, String sold) {
+    return 'How many $base in 1 $sold?';
+  }
+
+  @override
+  String get addNewItemMissingPackagingMessage => 'Pick how it is sold';
+
+  @override
+  String get addNewItemLoadOptionsFailedHint =>
+      'Could not load suggestions. Pick custom packaging.';
+
+  @override
+  String get addNewItemUseCustomButton => 'USE THIS PACKAGING';
+
+  @override
+  String get addNewItemLooseType => 'Loose';
+
+  @override
+  String get addNewItemBackToTypes => '← Back';
+
+  @override
+  String get addPackagingSheetTitle => 'Add packaging';
+
+  @override
+  String get addPackagingUnitLabel => 'Unit';
+
+  @override
+  String addPackagingConversionLabel(Object base, Object unit) {
+    return 'How many $base in 1 $unit?';
+  }
+
+  @override
+  String addPackagingPriceLabel(Object unit) {
+    return 'Sale price per $unit (optional)';
+  }
+
+  @override
+  String get addPackagingSaveButton => 'ADD PACKAGING';
+
+  @override
+  String get addPackagingFailedMessage =>
+      'Could not add the packaging. Try again.';
+
+  @override
+  String addPackagingHeaderBaseUnit(Object unit) {
+    return 'Base unit · $unit';
+  }
+
+  @override
+  String get addPackagingSuggestionsHeader => 'Common packagings';
+
+  @override
+  String get addPackagingCustomEntry => '+ Custom packaging';
+
+  @override
+  String get addPackagingLessCommonHeader => 'Less common';
+
+  @override
+  String packagingConversionPreview(String unit, String qty, String base) {
+    return '1 $unit holds $qty $base';
+  }
+
+  @override
+  String get addPackagingBackToSuggestions => '← Back to suggestions';
+
+  @override
+  String addPackagingPickedPriceLabel(Object packaging) {
+    return 'Sale price per $packaging (optional)';
+  }
+
+  @override
+  String get addPackagingNoSuggestionsHint =>
+      'No common packagings yet for this base unit — define your own below.';
+
+  @override
+  String get addPackagingLoadFailedHint =>
+      'Could not load suggestions. Define your own below.';
+
+  @override
+  String lineEditorCostHintLabel(String cost) {
+    return 'Your last cost: $cost. Add your usual markup.';
+  }
+
+  @override
+  String lineEditorSiblingHintLabel(String packaging, String price) {
+    return '$packaging sells at $price. Use that as a guide.';
+  }
+
+  @override
+  String negativeStockToast(Object amount, Object item, Object unit) {
+    return '$item stock is now $amount $unit. Receive soon.';
+  }
+
+  @override
+  String negativeStockMoreItems(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more items',
+      one: '1 more item',
+    );
+    return '+ $_temp0 low';
+  }
+
+  @override
+  String lowStockToast(String amount, String item, String unit) {
+    return '$item stock is low — only $amount $unit left. Receive soon.';
+  }
+
+  @override
+  String lowStockMoreItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more items',
+      one: '1 more item',
+    );
+    return '+ $_temp0 low';
+  }
+
+  @override
+  String get shopItemEditorTitleCreate => 'Add product';
+
+  @override
+  String get shopItemEditorTitleEdit => 'Edit product';
+
+  @override
+  String get productEditorLoadFailedMessage =>
+      'Could not load this product. Try again.';
+
+  @override
+  String get shopItemDetailAliasesHeader => 'Other names';
+
+  @override
+  String get shopItemDetailBarcodesHeader => 'Barcodes';
+
+  @override
+  String get shopItemEditorNameLabel => 'Name';
+
+  @override
+  String get shopItemEditorBaseUnitLabel => 'Base unit';
+
+  @override
+  String get shopItemEditorCategoryLabel => 'Category';
+
+  @override
+  String get shopItemEditorReorderThresholdLabel =>
+      'Warn when stock drops below';
+
+  @override
+  String shopItemEditorReorderThresholdHelper(String unit) {
+    return 'In $unit. Leave blank for no warning.';
+  }
+
+  @override
+  String get shopItemEditorPackagingsHeader => 'Packagings';
+
+  @override
+  String get shopItemEditorAddPackagingButton => 'Add packaging';
+
+  @override
+  String get shopItemEditorBaseBadge => 'BASE';
+
+  @override
+  String get removePackagingTooltip => 'Remove packaging';
+
+  @override
+  String get shopItemEditorItemSectionHeader => 'Item';
+
+  @override
+  String get shopItemEditorEditHint =>
+      'Edit prices and defaults from the product detail screen.';
+
+  @override
+  String get removePackagingConfirmBody =>
+      'Remove this packaging? You can add it back later.';
+
+  @override
+  String get removePackagingConfirmAction => 'REMOVE';
+
+  @override
+  String get shopItemEditorSaveButton => 'SAVE';
+
+  @override
+  String get shopItemEditorSaveAndAddAnotherButton => 'SAVE & ADD ANOTHER';
+
+  @override
+  String shopItemEditorSavedAndContinueToast(String name) {
+    return '$name saved — add another';
+  }
+
+  @override
+  String get shopItemDetailEditPrice => 'Edit price';
+
+  @override
+  String get shopItemDetailDefaultSaleBadge => 'default sale';
+
+  @override
+  String get shopItemDetailDefaultReceiveBadge => 'default receive';
+
+  @override
+  String get shopItemDetailNoPriceLabel => 'no price yet';
+
+  @override
+  String shopItemDetailCurrentStockLabel(Object amount, Object unit) {
+    return '$amount $unit in stock';
+  }
+
+  @override
+  String shopItemDetailReorderBelowLabel(Object amount, Object unit) {
+    return 'Reorder below $amount $unit';
+  }
+
+  @override
+  String get catalogPickerTitle => 'Browse catalog';
+
+  @override
+  String get catalogPickerSearchHint => 'Search global catalog';
+
+  @override
+  String get catalogPickerActivatedBadge => 'already added';
+
+  @override
+  String catalogPickerAddButton(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return 'ADD $_temp0';
+  }
+
+  @override
+  String catalogPickerAddedToast(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0 added';
+  }
+
+  @override
+  String get setupOnboardingTitle => 'Set up your products';
+
+  @override
+  String setupOnboardingBody(Object count, Object template) {
+    return 'We added $count items from the $template template. You can start selling now — prices fill in as you sell.\n\nOr take a minute to:';
+  }
+
+  @override
+  String get setupOnboardingAddItemsTitle => 'Add my own items';
+
+  @override
+  String get setupOnboardingAddItemsBody =>
+      'Items the template didn\'t include';
+
+  @override
+  String get setupOnboardingSetPricesTitle => 'Set prices on top items';
+
+  @override
+  String get setupOnboardingSetPricesBody =>
+      'So sales don\'t pause for a price prompt';
+
+  @override
+  String get setupOnboardingBrowseCatalogTitle => 'Browse the catalog';
+
+  @override
+  String get setupOnboardingBrowseCatalogBody =>
+      'Activate more items from our list';
+
+  @override
+  String get setupOnboardingSkipButton => 'SKIP — START SELLING';
+
+  @override
+  String get scanCameraTooltip => 'Scan barcode';
+
+  @override
+  String get scannerSheetTitle => 'Scan a barcode';
+
+  @override
+  String get scannerTorchTooltip => 'Torch';
+
+  @override
+  String get scannerHoldSteady => 'Hold steady — 15 to 25 cm from the code';
+
+  @override
+  String scanUnknownPillLabel(String code) {
+    return 'Unknown barcode: $code';
+  }
+
+  @override
+  String get scanUnknownCreateAction => 'Create new';
+
+  @override
+  String get scanUnknownDismissAction => 'Dismiss';
+
+  @override
+  String get scanLookupFailed => 'Couldn\'t look up that barcode';
 }

@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
-import 'package:dukan/products/products_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -24,6 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _timezoneController;
   late String _currencyCode;
   late String _languageCode;
+  late bool _lowStockWarningEnabled;
   late Future<_SettingsReferenceData> _refsFuture;
   bool _saving = false;
 
@@ -34,6 +34,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _timezoneController = TextEditingController(text: widget.shop.timezone);
     _currencyCode = widget.shop.currencyCode;
     _languageCode = widget.shop.defaultLanguageCode;
+    _lowStockWarningEnabled = widget.shop.lowStockWarningEnabled;
     final api = context.read<ShopApi>();
     _refsFuture = Future.wait([api.listCurrencies(), api.listLanguages()])
         .then(
@@ -63,6 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         currencyCode: _currencyCode,
         defaultLanguageCode: _languageCode,
         timezone: _timezoneController.text,
+        lowStockWarningEnabled: _lowStockWarningEnabled,
       );
       await auth.refreshSelectedShop();
       if (!mounted) return;
@@ -145,7 +147,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     labelText: l.settingsTimezoneLabel,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _lowStockWarningEnabled,
+                  onChanged: _saving
+                      ? null
+                      : (v) =>
+                          setState(() => _lowStockWarningEnabled = v),
+                  title: Text(l.settingsLowStockWarningLabel),
+                  subtitle: Text(l.settingsLowStockWarningHint),
+                ),
+                const SizedBox(height: 16),
                 FilledButton(
                   onPressed: _saving ? null : _save,
                   child: _saving
@@ -153,24 +166,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : Text(l.settingsSaveButton),
                 ),
                 const SizedBox(height: 28),
-                const Divider(),
-                Card(
-                  margin: EdgeInsets.zero,
-                  child: ListTile(
-                    minVerticalPadding: 18,
-                    leading: const Icon(Icons.inventory_2_outlined),
-                    title: Text(
-                      l.productsTitle,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ProductsScreen(shop: widget.shop),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             );
           },

@@ -65,20 +65,24 @@ void main() {
       SaleLineDetail(
         lineNo: 1,
         itemId: 'i1',
+        shopItemUnitId: 'siu-1',
         itemName: 'Bariis',
         quantity: 3,
         unitLabel: 'kg',
         unitAmount: 1.5,
         lineTotal: 4.5,
+        packagingLabel: 'Kg',
       ),
       SaleLineDetail(
         lineNo: 2,
         itemId: 'i2',
+        shopItemUnitId: 'siu-2',
         itemName: 'Sonkor',
         quantity: 2,
         unitLabel: 'kg',
         unitAmount: 1.0,
         lineTotal: 2.0,
+        packagingLabel: 'Kg',
       ),
     ];
 
@@ -111,8 +115,8 @@ void main() {
     expect(find.text(en.saleDetailCashLabel), findsOneWidget);
     expect(find.text(en.saleDetailDebtLabel), findsOneWidget);
     // Cash $4 + Debt $6 against a $10 total.
-    expect(find.text('\$4'), findsOneWidget);
-    expect(find.text('\$6'), findsOneWidget);
+    expect(find.text('\$4.00'), findsOneWidget);
+    expect(find.text('\$6.00'), findsOneWidget);
   });
 
   testWidgets('voided sale shows banner + hides VOID button', (tester) async {
@@ -163,11 +167,13 @@ void main() {
         SaleLineDetail(
           lineNo: 1,
           itemId: 'i1',
+          shopItemUnitId: 'siu-1',
           itemName: 'Bariis',
           quantity: 1,
           unitLabel: 'kg',
           unitAmount: 10,
           lineTotal: 10,
+          packagingLabel: 'Kg',
         ),
       ];
       num? capturedRefund;
@@ -234,11 +240,13 @@ void main() {
       SaleLineDetail(
         lineNo: 1,
         itemId: 'i1',
+        shopItemUnitId: 'siu-1',
         itemName: 'Bariis',
         quantity: 1,
         unitLabel: 'kg',
         unitAmount: 12.5,
         lineTotal: 12.5,
+        packagingLabel: 'Kg',
       ),
     ];
     String? capturedTxnId;

@@ -1,14 +1,30 @@
+// Products screen — v2 (data-model-v2.md §11.11). Lists the shop_items
+// this shop carries (one row per shop_item, not per packaging). Activation
+// of new catalog items moved out of this screen into the catalog picker;
+// shop-local item creation lives in the shop_item editor. This file is
+// pure list + navigation — no posting, no activation, no price edits.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/products/catalog_picker_screen.dart';
+import 'package:dukan/products/products_filter_sheet.dart';
+import 'package:dukan/products/shop_item_detail_screen.dart';
+import 'package:dukan/products/shop_item_editor_screen.dart';
+import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
-import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/list_filter_bar.dart';
+import 'package:dukan/shared/low_stock.dart';
+import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/realtime.dart';
+import 'package:dukan/shared/stock_format.dart';
+
+enum _ProductsSort { name, stockLowFirst }
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({required this.shop, super.key});
@@ -21,13 +37,44 @@ class ProductsScreen extends StatefulWidget {
 
 class _ProductsScreenState extends State<ProductsScreen> {
   final _searchController = TextEditingController();
-  late Future<List<ItemSearchResult>> _resultsFuture;
+  late Future<List<ShopItemSummary>> _resultsFuture;
   String _activeQuery = '';
   Timer? _debounce;
-  final Set<String> _adding = {};
-  bool _loadFailed = false;
+  ProductsFilters _filters = ProductsFilters.initial();
+  _ProductsSort _sort = _ProductsSort.name;
 
   String? _locale;
+  RealtimeWatcher? _watcher;
+
+  @override
+  void initState() {
+    super.initState();
+    // Filter on shop_id so a multi-shop owner using the same session
+    // only refetches when the *current* shop's products move. Price
+    // edits on a packaging row also bubble up via shop_item_unit so
+    // the "$1.00/Kg" subtitle stays current.
+    _watcher = RealtimeWatcher.tryCreate(
+      channelName: 'products_list:${widget.shop.id}',
+      subscriptions: [
+        RealtimeSubscription(
+          table: 'shop_item',
+          filter: realtimeEq('shop_id', widget.shop.id),
+        ),
+        RealtimeSubscription(
+          table: 'shop_item_unit',
+          filter: realtimeEq('shop_id', widget.shop.id),
+        ),
+      ],
+      onChange: _onRealtime,
+    );
+  }
+
+  void _onRealtime() {
+    if (!mounted) return;
+    setState(() {
+      _resultsFuture = _fetch(_activeQuery);
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -41,34 +88,62 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   @override
   void dispose() {
+    _watcher?.dispose();
     _searchController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
 
-  Future<List<ItemSearchResult>> _fetch(String query) async {
+  Future<List<ShopItemSummary>> _fetch(String query) async {
     try {
-      final results = await context.read<ShopApi>().searchItems(
+      return await context.read<ShopApi>().listShopItems(
         shopId: widget.shop.id,
-        query: query,
+        query: query.isEmpty ? null : query,
+        categoryId: _filters.categoryId,
         locale: Localizations.localeOf(context).languageCode,
       );
-      if (mounted && _loadFailed) {
-        setState(() => _loadFailed = false);
-      }
-      return results;
     } catch (error, stackTrace) {
       FlutterError.reportError(
         FlutterErrorDetails(
           exception: error,
           stack: stackTrace,
           library: 'dukan products',
-          context: ErrorDescription('searching items'),
+          context: ErrorDescription('listing shop items'),
         ),
       );
-      if (mounted) setState(() => _loadFailed = true);
       rethrow;
     }
+  }
+
+  Future<void> _openFilterSheet() async {
+    final next = await showProductsFilterSheet(
+      context,
+      current: _filters,
+    );
+    if (next == null || !mounted) return;
+    setState(() {
+      _filters = next;
+      _resultsFuture = _fetch(_activeQuery);
+    });
+  }
+
+  void _clearCategory() {
+    setState(() {
+      _filters = _filters.copyWith(clearCategory: true);
+      _resultsFuture = _fetch(_activeQuery);
+    });
+  }
+
+  void _clearNoPrice() {
+    setState(() {
+      _filters = _filters.copyWith(noPriceOnly: false);
+    });
+  }
+
+  void _clearLowStock() {
+    setState(() {
+      _filters = _filters.copyWith(lowStockOnly: false);
+    });
   }
 
   void _onSearchChanged(String value) {
@@ -82,60 +157,98 @@ class _ProductsScreenState extends State<ProductsScreen> {
     });
   }
 
-  Future<void> _activate(ItemSearchResult candidate) async {
-    final catalogItemId = candidate.catalogItemId;
-    if (catalogItemId == null) return;
-    setState(() => _adding.add(catalogItemId));
-    final l = tr(context);
-    try {
-      await context.read<ShopApi>().ensureShopItem(
-        shopId: widget.shop.id,
-        catalogItemId: catalogItemId,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.productsAddedToShopToast(candidate.name))),
-      );
-      setState(() {
-        _resultsFuture = _fetch(_activeQuery);
-      });
-    } on PostgrestException {
-      if (mounted) {
-        showError(context, l.productsAddToShopFailedMessage(candidate.name));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _adding.remove(catalogItemId));
-      }
-    }
+  void _reload() {
+    setState(() {
+      _resultsFuture = _fetch(_activeQuery);
+    });
   }
 
-  void _onTapNewItem() {
-    showError(context, tr(context).productsNewItemUnavailable);
+  Future<void> _openDetail(ShopItemSummary row) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => ShopItemDetailScreen(
+          shop: widget.shop,
+          shopItemId: row.shopItemId,
+          displayName: row.displayName,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    // Detail screen edits (price, packagings, aliases) can mutate the
+    // current_stock projection / unit_count — refresh on return so the
+    // list reflects whatever the sibling editor just did.
+    _reload();
+  }
+
+  Future<void> _openEditor() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => ShopItemEditorScreen(shop: widget.shop),
+      ),
+    );
+    if (!mounted) return;
+    _reload();
+  }
+
+  Future<void> _openCatalogPicker() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => CatalogPickerScreen(shop: widget.shop),
+      ),
+    );
+    if (!mounted) return;
+    _reload();
   }
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
     return Scaffold(
-      appBar: dukanAppBar(context, l.productsTitle),
+      appBar: dukanAppBar(
+        context,
+        l.productsTitle,
+        actions: [
+          IconButton(
+            tooltip: l.catalogPickerTitle,
+            onPressed: _openCatalogPicker,
+            icon: const Icon(Icons.menu_book_outlined),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openEditor,
+        icon: const Icon(Icons.add),
+        label: Text(l.productsNewItemButton),
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: TextField(
-                controller: _searchController,
-                onChanged: _onSearchChanged,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: l.productsSearchHint,
-                ),
-              ),
+            ListSearchBar(
+              controller: _searchController,
+              hintText: l.productsSearchHint,
+              onChanged: _onSearchChanged,
+              onFilterTap: _openFilterSheet,
+              filterCount: _filters.activeCount,
             ),
+            ActiveFiltersBar(chips: [
+              if (_filters.categoryId != null)
+                ActiveFilterChip(
+                  label: l.filterChipCategory(_filters.categoryName ?? ''),
+                  onRemove: _clearCategory,
+                ),
+              if (_filters.lowStockOnly)
+                ActiveFilterChip(
+                  label: l.filterChipLowStock,
+                  onRemove: _clearLowStock,
+                ),
+              if (_filters.noPriceOnly)
+                ActiveFilterChip(
+                  label: l.filterChipNoPrice,
+                  onRemove: _clearNoPrice,
+                ),
+            ]),
             Expanded(
-              child: FutureBuilder<List<ItemSearchResult>>(
+              child: FutureBuilder<List<ShopItemSummary>>(
                 future: _resultsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState != ConnectionState.done) {
@@ -144,32 +257,84 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   if (snapshot.hasError) {
                     return _ProductsErrorMessage(
                       message: l.productsLoadFailedMessage,
-                      onRetry: () => setState(() {
-                        _resultsFuture = _fetch(_activeQuery);
-                      }),
+                      onRetry: _reload,
                     );
                   }
-                  final results = snapshot.data ?? const <ItemSearchResult>[];
-                  if (results.isEmpty) {
-                    return _ProductsEmptyMessage(
-                      message: _activeQuery.isEmpty
-                          ? l.productsEmptyMessage
-                          : l.productsSearchEmptyMessage(_activeQuery),
-                    );
+                  final loaded =
+                      snapshot.data ?? const <ShopItemSummary>[];
+                  // Client-side filtering for low-stock + no-price-only:
+                  // server doesn't take these flags yet, and counts at
+                  // small shop scale (≤ a few hundred) are cheap.
+                  final results = loaded.where((r) {
+                    if (_filters.lowStockOnly &&
+                        !isLowStock(
+                          currentStock: r.currentStock,
+                          reorderThreshold: r.reorderThreshold,
+                        )) {
+                      return false;
+                    }
+                    if (_filters.noPriceOnly && r.anyPriceSet) return false;
+                    return true;
+                  }).toList(growable: false);
+                  // Apply user-picked sort.
+                  if (_sort == _ProductsSort.stockLowFirst) {
+                    results.sort((a, b) {
+                      // Low/zero stock floats first (lower current_stock
+                      // first), then name alphabetical as tiebreaker.
+                      final c = a.currentStock.compareTo(b.currentStock);
+                      return c != 0 ? c : a.displayName.compareTo(b.displayName);
+                    });
+                  } else {
+                    results.sort(
+                        (a, b) => a.displayName.compareTo(b.displayName));
                   }
-                  return _ProductsList(
-                    results: results,
-                    adding: _adding,
-                    onAdd: _activate,
+                  return CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: _HeadlineTile(rows: loaded),
+                      ),
+                      SliverToBoxAdapter(
+                        child: _SortBar(
+                          sort: _sort,
+                          onChanged: (v) => setState(() => _sort = v),
+                        ),
+                      ),
+                      if (results.isEmpty)
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Text(
+                                _activeQuery.isEmpty
+                                    ? l.productsEmptyMessage
+                                    : l.productsSearchEmptyMessage(_activeQuery),
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                          sliver: SliverList.separated(
+                            itemCount: results.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final row = results[index];
+                              return _ShopItemTile(
+                                row: row,
+                                shop: widget.shop,
+                                onTap: () => _openDetail(row),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
                   );
                 },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-              child: OutlinedButton(
-                onPressed: _onTapNewItem,
-                child: Text(l.productsNewItemButton),
               ),
             ),
           ],
@@ -179,150 +344,174 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 }
 
-class _ProductsList extends StatelessWidget {
-  const _ProductsList({
-    required this.results,
-    required this.adding,
-    required this.onAdd,
-  });
-
-  final List<ItemSearchResult> results;
-  final Set<String> adding;
-  final ValueChanged<ItemSearchResult> onAdd;
+class _HeadlineTile extends StatelessWidget {
+  const _HeadlineTile({required this.rows});
+  final List<ShopItemSummary> rows;
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    final activated = results.where((r) => r.isActivated).toList(growable: false);
-    final catalog = results.where((r) => !r.isActivated).toList(growable: false);
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      children: [
-        if (activated.isNotEmpty) ...[
-          _ProductsSectionHeader(label: l.productsInYourShop),
-          for (final item in activated) _ActivatedItemTile(item: item),
-          const SizedBox(height: 16),
-        ],
-        if (catalog.isNotEmpty) ...[
-          _ProductsSectionHeader(label: l.productsFromCatalog),
-          for (final item in catalog)
-            _CatalogCandidateTile(
-              item: item,
-              adding: adding.contains(item.catalogItemId),
-              onAdd: () => onAdd(item),
-            ),
-        ],
-      ],
+    final theme = Theme.of(context);
+    final total = rows.length;
+    final lowCount = rows
+        .where((r) => isLowStock(
+              currentStock: r.currentStock,
+              reorderThreshold: r.reorderThreshold,
+            ))
+        .length;
+    final noPriceCount = rows.where((r) => !r.anyPriceSet).length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.productsHeadline(total, lowCount, noPriceCount),
+                  style: theme.textTheme.bodyLarge,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
-class _ProductsSectionHeader extends StatelessWidget {
-  const _ProductsSectionHeader({required this.label});
-
-  final String label;
+class _SortBar extends StatelessWidget {
+  const _SortBar({required this.sort, required this.onChanged});
+  final _ProductsSort sort;
+  final ValueChanged<_ProductsSort> onChanged;
 
   @override
   Widget build(BuildContext context) {
+    final l = tr(context);
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 8, 4, 6),
-      child: Text(
-        label,
-        style: theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
-class _ActivatedItemTile extends StatelessWidget {
-  const _ActivatedItemTile({required this.item});
-
-  final ItemSearchResult item;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = tr(context);
-    final stock = item.currentStock;
-    final stockText = (stock == null || stock <= 0)
-        ? l.productsNoStock
-        : l.productsStockLabel(_trimNumber(stock), item.baseUnitLabel);
-    return Card(
-      child: ListTile(
-        minVerticalPadding: 16,
-        title: Text(
-          item.name,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        subtitle: Text(stockText),
-        trailing: item.salePrice == null
-            ? null
-            : Text(
-                _formatPrice(item.salePrice!),
-                style: Theme.of(context).textTheme.titleMedium,
+      padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
+      child: Row(
+        children: [
+          Text(
+            l.productsSortLabel,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 8),
+          DropdownButton<_ProductsSort>(
+            value: sort,
+            isDense: true,
+            underline: const SizedBox.shrink(),
+            onChanged: (v) {
+              if (v != null) onChanged(v);
+            },
+            items: [
+              DropdownMenuItem(
+                value: _ProductsSort.name,
+                child: Text(l.productsSortByName),
               ),
+              DropdownMenuItem(
+                value: _ProductsSort.stockLowFirst,
+                child: Text(l.productsSortByStockLow),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-class _CatalogCandidateTile extends StatelessWidget {
-  const _CatalogCandidateTile({
-    required this.item,
-    required this.adding,
-    required this.onAdd,
+class _ShopItemTile extends StatelessWidget {
+  const _ShopItemTile({
+    required this.row,
+    required this.shop,
+    required this.onTap,
   });
 
-  final ItemSearchResult item;
-  final bool adding;
-  final VoidCallback onAdd;
+  final ShopItemSummary row;
+  final ShopSummary shop;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    return Card(
-      child: ListTile(
-        minVerticalPadding: 16,
-        title: Text(
-          item.name,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        subtitle: item.salePrice == null
-            ? null
-            : Text(_formatPrice(item.salePrice!)),
-        trailing: adding
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2.5),
-              )
-            : FilledButton.tonal(
-                onPressed: onAdd,
-                child: Text(l.productsAddToShopButton),
-              ),
-      ),
+    final theme = Theme.of(context);
+    final low = isLowStock(
+      currentStock: row.currentStock,
+      reorderThreshold: row.reorderThreshold,
     );
-  }
-}
-
-class _ProductsEmptyMessage extends StatelessWidget {
-  const _ProductsEmptyMessage({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyLarge,
+    final stockText = formatCompoundStock(
+      stock: row.currentStock,
+      baseLabel: row.baseUnitLabel,
+    );
+    final subtitleBits = <Widget>[
+      if (row.categoryName != null && row.categoryName!.trim().isNotEmpty)
+        Text(row.categoryName!),
+      // Primary price (or "no price yet") — drives the most common
+      // "what does this cost again?" question from the row itself.
+      if (row.defaultSalePrice != null)
+        Text(
+          '${formatMoney(row.defaultSalePrice!, shop)}/${row.baseUnitLabel}',
+          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+        )
+      else
+        Text(
+          l.shopItemDetailNoPriceLabel,
+          style: TextStyle(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+    ];
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ListTile(
+        minVerticalPadding: 14,
+        onTap: onTap,
+        title: Text(
+          displayName(row.displayName),
+          style: theme.textTheme.titleMedium,
+        ),
+        subtitle: Wrap(
+          spacing: 6,
+          runSpacing: 2,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            for (var i = 0; i < subtitleBits.length; i++) ...[
+              subtitleBits[i],
+              if (i < subtitleBits.length - 1)
+                Text(
+                  '·',
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
+            ],
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              stockText,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: low ? theme.colorScheme.error : null,
+                fontWeight: low ? FontWeight.w800 : FontWeight.w500,
+              ),
+            ),
+            if (low)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(start: 4),
+                child: Icon(
+                  Icons.warning_amber_outlined,
+                  size: 18,
+                  color: theme.colorScheme.error,
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -358,15 +547,3 @@ class _ProductsErrorMessage extends StatelessWidget {
   }
 }
 
-String _trimNumber(double value) {
-  if (value == value.roundToDouble()) return value.toStringAsFixed(0);
-  return value
-      .toStringAsFixed(3)
-      .replaceFirst(RegExp(r'0+$'), '')
-      .replaceFirst(RegExp(r'\.$'), '');
-}
-
-String _formatPrice(double value) {
-  if (value == value.roundToDouble()) return value.toStringAsFixed(0);
-  return value.toStringAsFixed(2);
-}

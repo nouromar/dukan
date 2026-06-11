@@ -1,11 +1,13 @@
 // Sale history — reverse-chronological list of past sales for the
-// current shop. Reached via the history icon in the Sale screen's
-// app bar. Tap a row → detail screen with the receipt + VOID action.
+// current shop. Filters live in a bottom sheet (funnel icon in the app
+// bar); active non-date filters render as a compact dismissible chip
+// row above the list. Date scope shows as a subtitle in the app bar so
+// the user always knows what they're looking at without burning rows
+// of screen real estate.
 //
-// v1 shows the last `_pageLimit` sales (no infinite scroll yet);
-// pilot shops won't go deep enough on day one to need pagination
-// chrome. The list_sales RPC already supports the `before` cursor
-// so adding "load more" later is mechanical.
+// v1 fetches `_pageLimit` rows after the filter clamp; pilot shops
+// won't go deeper on day one. The RPC accepts a `before` cursor so
+// "load more" is mechanical when we need it.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,8 +15,11 @@ import 'package:provider/provider.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/sale/sale_detail_screen.dart';
-import 'package:dukan/shared/dukan_app_bar.dart';
+import 'package:dukan/sale/sale_history_filter_sheet.dart';
+import 'package:dukan/shared/date_range.dart';
+import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
 
 class SaleHistoryScreen extends StatefulWidget {
@@ -27,20 +32,25 @@ class SaleHistoryScreen extends StatefulWidget {
 }
 
 class _SaleHistoryScreenState extends State<SaleHistoryScreen> {
-  static const int _pageLimit = 50;
+  static const int _pageLimit = 100;
+  late SaleHistoryFilters _filters;
   late Future<List<SaleSummary>> _future;
 
   @override
   void initState() {
     super.initState();
+    _filters = SaleHistoryFilters.initial();
     _future = _fetch();
   }
 
   Future<List<SaleSummary>> _fetch() {
     return context.read<ShopApi>().listSales(
-      shopId: widget.shop.id,
-      limit: _pageLimit,
-    );
+          shopId: widget.shop.id,
+          limit: _pageLimit,
+          dateFrom: _filters.dateRange.from,
+          dateTo: _filters.dateRange.to,
+          partyId: _filters.partyId,
+        );
   }
 
   void _reload() {
@@ -53,59 +63,130 @@ class _SaleHistoryScreenState extends State<SaleHistoryScreen> {
         builder: (_) => SaleDetailScreen(shop: widget.shop, txnId: sale.txnId),
       ),
     );
-    // If the detail screen voided the sale, refresh the list so the
-    // ⓥ badge shows.
     if (didChange == true && mounted) _reload();
+  }
+
+  Future<void> _openFilterSheet() async {
+    final next = await showSaleHistoryFilterSheet(
+      context,
+      shop: widget.shop,
+      current: _filters,
+    );
+    if (next == null || !mounted) return;
+    setState(() {
+      _filters = next;
+      _future = _fetch();
+    });
+  }
+
+  void _clearParty() {
+    setState(() {
+      _filters = _filters.copyWith(clearParty: true);
+      _future = _fetch();
+    });
+  }
+
+  void _clearVoided() {
+    setState(() {
+      _filters = _filters.copyWith(hideVoided: false);
+      _future = _fetch();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
+    final chips = <ActiveFilterChip>[
+      if (_filters.partyId != null)
+        ActiveFilterChip(
+          label: l.filterChipParty(_filters.partyName ?? ''),
+          onRemove: _clearParty,
+        ),
+      if (_filters.hideVoided)
+        ActiveFilterChip(
+          label: l.filterChipHideVoided,
+          onRemove: _clearVoided,
+        ),
+    ];
     return Scaffold(
-      appBar: dukanAppBar(context, l.saleHistoryTitle),
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l.saleHistoryTitle),
+            Text(
+              dateRangeLabel(context, _filters.dateRange),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
+        actions: [
+          FilterFunnelAction(
+            onPressed: _openFilterSheet,
+            activeCount: _filters.activeBeyondDate +
+                (_filters.dateRange.isDefault ? 0 : 1),
+          ),
+        ],
+      ),
       body: SafeArea(
-        child: FutureBuilder<List<SaleSummary>>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Padding(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: Text(
-                    l.saleHistoryLoadFailedMessage,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-              );
-            }
-            final sales = snapshot.data ?? const <SaleSummary>[];
-            if (sales.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: Text(
-                    l.saleHistoryEmptyMessage,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: sales.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, i) => _SaleRow(
-                shop: widget.shop,
-                sale: sales[i],
-                onTap: () => _openDetail(sales[i]),
+        child: Column(
+          children: [
+            ActiveFiltersBar(chips: chips),
+            Expanded(
+              child: FutureBuilder<List<SaleSummary>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: Text(
+                          l.saleHistoryLoadFailedMessage,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    );
+                  }
+                  final all = snapshot.data ?? const <SaleSummary>[];
+                  final rows = _filters.hideVoided
+                      ? all.where((s) => !s.isVoided).toList(growable: false)
+                      : all;
+                  if (rows.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: Text(
+                          l.saleHistoryEmptyMessage,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    );
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () async => _reload(),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: rows.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, i) => _SaleRow(
+                        shop: widget.shop,
+                        sale: rows[i],
+                        onTap: () => _openDetail(rows[i]),
+                      ),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
@@ -132,12 +213,12 @@ class _SaleRow extends StatelessWidget {
         : l.saleHistoryCashLabel;
     return ListTile(
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      contentPadding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
       title: Row(
         children: [
           Expanded(
             child: Text(
-              _formatTime(sale.occurredAt),
+              formatHistoryStamp(context, sale.occurredAt),
               style: theme.textTheme.titleMedium,
             ),
           ),
@@ -156,6 +237,11 @@ class _SaleRow extends StatelessWidget {
         ],
       ),
       subtitle: Text(subtitle),
+      trailing: IconButton(
+        tooltip: l.saleHistoryReceiptTooltip,
+        icon: const Icon(Icons.receipt_long_outlined),
+        onPressed: onTap,
+      ),
     );
   }
 }
@@ -182,11 +268,4 @@ class _VoidedBadge extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatTime(DateTime dt) {
-  final local = dt.toLocal();
-  final h = local.hour.toString().padLeft(2, '0');
-  final m = local.minute.toString().padLeft(2, '0');
-  return '$h:$m';
 }

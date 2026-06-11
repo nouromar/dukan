@@ -205,7 +205,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ? null
                     : (set) => _onTypeChanged(set.first),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
+              // Short direction hint — non-tech shopkeepers don't always
+              // map "Customer / Supplier" to who's giving whom money.
+              Text(
+                isCustomer
+                    ? l.paymentTypeCustomerHint
+                    : l.paymentTypeSupplierHint,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: party == null

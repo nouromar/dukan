@@ -37,6 +37,12 @@ create table public.shop (
   setup_status text not null default 'not_started'
     check (setup_status in ('not_started', 'template_applied', 'opening_stock_done', 'ready')),
   setup_completed_at timestamptz,
+  -- Set once the shopkeeper dismisses the optional item-onboarding
+  -- step (data-model-v2 §11.10 T#154). NULL means the card still
+  -- appears on Home; non-null means dismissed. Independent of
+  -- setup_status — the shop is "ready" the moment template_applied
+  -- completes; this flag only controls the post-setup nag card.
+  onboarding_dismissed_at timestamptz,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

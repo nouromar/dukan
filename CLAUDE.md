@@ -13,13 +13,17 @@ Every decision is made **once, at setup** (by support staff or via a one-tap tem
 Templates live in the platform layer (`docs/architecture.md` § 8aa) and are applied idempotently. V1 support is a Help icon linked to WhatsApp/email; in-app support codes are disabled for v1. Support staff can configure setup data; they **cannot** post sales/receives/payments/voids/stock movements. Enforce this boundary in the backend, not only in UI.
 
 ## Canonical docs (read before contributing)
+- `docs/product-vision.md` — the three-component architecture (mobile + shop admin + system admin), north-star principles, invariants. Read first.
 - `docs/ux.md` — speed contract, interaction rules, anti-patterns. **Binding.**
 - `docs/ux-screens.md` — screen inventory, Level A daily-flow layouts, bottom-sheet patterns.
 - `docs/plan.md` — scope, phases, decisions, open questions.
 - `docs/architecture.md` — data model, RLS, OCR pipeline, design invariants.
 - `docs/backend-schema.md` — Supabase/Postgres schema, RLS, RPC posting functions, Storage policy, migration order.
 - `docs/templates-and-learning.md` — operating-template contents, fast-entry mappings, shop-specific learning rules.
-- `docs/admin-portal.md` — React/Next.js setup/support console; configuration only, never transaction posting.
+- `docs/roles-and-permissions.md` — capability vocabulary, role catalog, scope tiers (platform/org/shop).
+- `docs/mobile-app.md` — target-state design for the Flutter shop app. Companion: `docs/mobile-app-alignment.md` (punch list to reach target).
+- `docs/shop-admin-portal.md` — target-state design for the React/Next.js back-office portal used by org/shop owners.
+- `docs/system-admin-portal.md` — target-state design for the Dukan-internal mission-control portal. Supersedes `docs/admin-portal.md` (kept for historical reference until alignment doc lands).
 - `docs/local-development.md` — Supabase CLI local stack instructions and the local phone OTP fixture.
 - `docs/decisions.md` — decision log.
 
@@ -54,16 +58,16 @@ Any new feature must include a check that it doesn't regress these numbers for t
 - Posted transactions are immutable. Corrections via reversing entries (`reverses_transaction_id`), never edits.
 - COGS is snapshotted on each sale line at posting time. Profit reports use the snapshot, never live `avg_cost`.
 - Payments use a `payment_allocation` M2M so one payment can settle multiple debts.
-- Denormalized fields (`item.current_stock`, `item.avg_cost`, `party.receivable`, `party.payable`) are cached projections, updated only by posting procedures, with a nightly reconciliation view.
+- Denormalized fields (`shop_item.current_stock`, `shop_item.avg_cost`, `shop_item_unit.last_cost`, `shop_item_unit.sale_price`, `supplier_item_unit_cost.last_unit_cost`, `party.receivable`, `party.payable`) are cached projections, updated only by posting procedures, with a nightly reconciliation view. **Convention enforced by code review** — service role bypasses RLS, so admin portal and future tooling must go through the sanctioned RPCs (see `docs/data-model-v2.md` §7).
 - Item stock is tracked in the item's base unit; split packages use `item_unit` conversions.
 - Money and quantities use `numeric` — never floats.
 
 ## Scope discipline (v1 is a shop app, not an ERP)
-**Build now:** Sale, Receive (with bono image), Expense, Payment, customer/supplier balances, simple reports, English + Somali, single location, single currency per shop.
+**Build now:** Sale, Receive (with bono image), Expense, Payment, customer/supplier balances, simple reports, English + Somali, single location, single currency per shop. Plus an optional item-onboarding step at setup (add items, set prices, browse catalog — all skippable; doesn't block "start selling"). See `docs/data-model-v2.md` §3 and §11.10.
 
 **Out of v1:** stock-count workflow, first-class returns, multi-location/transfers, product variants/kits/BOM, promotions/discount engine, tax engine, approval workflows, procurement (POs/GRNs), hardware integrations, loyalty/store credit, barcode UI.
 
-**Inert v2 hooks (do not remove):** `location_id` on `stock_movement`, `barcode` on `item`, `client_op_id` on `transaction` and `payment`.
+**Inert v2 hooks (do not remove):** `location_id` on `stock_movement`, `client_op_id` on `transaction` and `payment`. (Barcodes are now first-class via `item_barcode` / `shop_item_barcode` per data-model-v2.)
 
 ## Language & copy
 - Somali is first-class, not a translation afterthought. Native Somali shopkeeper review before release.

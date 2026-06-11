@@ -33,8 +33,8 @@ void main() {
                   captured = await showUnitPicker(
                     context,
                     shopId: 'shop-1',
-                    baseUnitLabel: 'Kg',
-                    itemId: 'i1',
+                    shopItemId: 'si-1',
+                    screen: 'receive',
                   );
                 },
                 child: const Text('open'),
@@ -51,54 +51,66 @@ void main() {
     return () => captured;
   }
 
-  testWidgets('lists units from listItemUnits with default flagged', (
+  testWidgets('lists units from listShopItemUnits with default flagged', (
     tester,
   ) async {
-    api.onListItemUnits = (_, _, _, _) async => const [
+    api.onListShopItemUnits = (_, _, _) async => const [
       ReceiveUnitOption(
-        unitId: 'unit-kg',
+        shopItemUnitId: 'siu-kg',
         unitCode: 'kg',
         unitLabel: 'Kg',
+        packagingLabel: 'Kg',
         conversionToBase: 1,
+        salePrice: null,
+        lastCost: null,
         isDefault: false,
+        isBaseUnit: true,
       ),
       ReceiveUnitOption(
-        unitId: 'unit-bag',
+        shopItemUnitId: 'siu-bag-25',
         unitCode: 'bag',
         unitLabel: 'Bag',
+        packagingLabel: '25 Kg Bag',
         conversionToBase: 25,
+        salePrice: null,
+        lastCost: null,
         isDefault: true,
+        isBaseUnit: false,
       ),
     ];
 
     await pumpHostAndOpenSheet(tester);
 
+    // Packaging labels are what the picker renders.
     expect(find.text('Kg'), findsOneWidget);
-    expect(find.text('Bag'), findsOneWidget);
+    expect(find.text('25 Kg Bag'), findsOneWidget);
     expect(find.text(en.unitPickerDefaultBadge), findsOneWidget);
-    // Bag with conversion 25 should show "25 kg per bag"
-    expect(find.text(en.unitPickerConversion('25', 'kg', 'bag')), findsOneWidget);
-    // Kg with conversion 1 shows the "base unit" label
+    // The base unit row carries the "base unit" badge.
     expect(find.text(en.unitPickerBaseUnit), findsOneWidget);
   });
 
   testWidgets('tapping a unit returns it and closes the sheet', (tester) async {
-    api.onListItemUnits = (_, _, _, _) async => const [
+    api.onListShopItemUnits = (_, _, _) async => const [
       ReceiveUnitOption(
-        unitId: 'unit-bag',
+        shopItemUnitId: 'siu-bag-25',
         unitCode: 'bag',
         unitLabel: 'Bag',
+        packagingLabel: '25 Kg Bag',
         conversionToBase: 25,
+        salePrice: null,
+        lastCost: null,
         isDefault: true,
+        isBaseUnit: false,
       ),
     ];
 
     final readResult = await pumpHostAndOpenSheet(tester);
-    await tester.tap(find.text('Bag'));
+    await tester.tap(find.text('25 Kg Bag'));
     await tester.pumpAndSettle();
 
     final picked = readResult();
     expect(picked, isNotNull);
     expect(picked!.unitCode, 'bag');
+    expect(picked.shopItemUnitId, 'siu-bag-25');
   });
 }

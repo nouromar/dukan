@@ -1,0 +1,1707 @@
+[
+  {
+    "key": "appTitle",
+    "en": "Dukan",
+    "so": "Dukaan"
+  },
+  {
+    "key": "languageEnglish",
+    "en": "EN",
+    "so": "EN"
+  },
+  {
+    "key": "languageSomali",
+    "en": "SO",
+    "so": "SO"
+  },
+  {
+    "key": "homeHint",
+    "en": "Choose today's job",
+    "so": "Dooro shaqada maanta"
+  },
+  {
+    "key": "sale",
+    "en": "Sale",
+    "so": "Iibin"
+  },
+  {
+    "key": "receive",
+    "en": "Receive",
+    "so": "Alaab dajin"
+  },
+  {
+    "key": "payment",
+    "en": "Payment",
+    "so": "Lacag bixin"
+  },
+  {
+    "key": "expense",
+    "en": "Expense",
+    "so": "Qarashaad"
+  },
+  {
+    "key": "cash",
+    "en": "CASH",
+    "so": "KAASH"
+  },
+  {
+    "key": "debt",
+    "en": "DEBT",
+    "so": "DEYN"
+  },
+  {
+    "key": "confirm",
+    "en": "CONFIRM",
+    "so": "XAQIIJI"
+  },
+  {
+    "key": "searchItems",
+    "en": "Search items",
+    "so": "Raadi alaab"
+  },
+  {
+    "key": "favorites",
+    "en": "Favorites",
+    "so": "Kuwa la jecel yahay"
+  },
+  {
+    "key": "cart",
+    "en": "CART",
+    "so": "Danbiil"
+  },
+  {
+    "key": "itemsCount",
+    "en": "{count, plural, =0{0 items} =1{1 item} other{{count} items}}",
+    "so": "{count, plural, =0{0 alaab} =1{1 alaab} other{{count} alaab}}"
+  },
+  {
+    "key": "total",
+    "en": "Total",
+    "so": "Wadar"
+  },
+  {
+    "key": "savedUndo",
+    "en": "Saved.",
+    "so": "Waa la keydiyay."
+  },
+  {
+    "key": "undo",
+    "en": "Undo",
+    "so": "Ka noqo"
+  },
+  {
+    "key": "quantity",
+    "en": "Qty",
+    "so": "Tiro"
+  },
+  {
+    "key": "price",
+    "en": "Price",
+    "so": "Qiime"
+  },
+  {
+    "key": "optionalPrice",
+    "en": "Price override",
+    "so": "Qiime beddel"
+  },
+  {
+    "key": "addToCart",
+    "en": "ADD TO CART",
+    "so": "KU DAR"
+  },
+  {
+    "key": "cancel",
+    "en": "Cancel",
+    "so": "Jooji"
+  },
+  {
+    "key": "customerDebt",
+    "en": "Customer for debt",
+    "so": "Macmiilka deynta"
+  },
+  {
+    "key": "searchCustomers",
+    "en": "Search customers",
+    "so": "Raadi macmiil"
+  },
+  {
+    "key": "emptySaleHint",
+    "en": "Tap item tiles to add. Long-press for quantity or price.",
+    "so": "riix gaaban: hal ku dar danbiisha. Riix dheer: shaashada tirada iyo qiimaha."
+  },
+  {
+    "key": "receiveTitle",
+    "en": "Receive",
+    "so": "Alaab dajin"
+  },
+  {
+    "key": "supplierFirst",
+    "en": "Pick supplier first",
+    "so": "Marka hore dooro alaab keenaha"
+  },
+  {
+    "key": "recentSuppliers",
+    "en": "Recent suppliers",
+    "so": "Keenayaal dhawaan"
+  },
+  {
+    "key": "searchSuppliers",
+    "en": "Search suppliers",
+    "so": "Raadi alaab keenaha"
+  },
+  {
+    "key": "newSupplier",
+    "en": "+ New supplier",
+    "so": "+ Alaab keene cusub"
+  },
+  {
+    "key": "newSupplierStub",
+    "en": "New supplier stub — name and phone in production.",
+    "so": "Alaab keene cusub — magac iyo telefoon marka dambe."
+  },
+  {
+    "key": "repeatLastBono",
+    "en": "Repeat last receive",
+    "so": "Ku celi alaab dajintii hore"
+  },
+  {
+    "key": "bonoAttached",
+    "en": "Bono attached",
+    "so": "Bono waa la raaciyay"
+  },
+  {
+    "key": "attachBono",
+    "en": "Attach bono photo",
+    "so": "Ku dar sawir bono"
+  },
+  {
+    "key": "receiveFrom",
+    "en": "Receive from {supplier}",
+    "so": "Ka qaado {supplier}"
+  },
+  {
+    "key": "item",
+    "en": "Item",
+    "so": "Alaab"
+  },
+  {
+    "key": "searchItem",
+    "en": "Search item",
+    "so": "Raadi alaab"
+  },
+  {
+    "key": "unit",
+    "en": "Unit",
+    "so": "Halbeeg"
+  },
+  {
+    "key": "cost",
+    "en": "Cost",
+    "so": "Qiimaha uu ku fadhiyo"
+  },
+  {
+    "key": "perUnit",
+    "en": "per unit",
+    "so": "midkiiba"
+  },
+  {
+    "key": "line",
+    "en": "line",
+    "so": "sadar"
+  },
+  {
+    "key": "lineTotal",
+    "en": "Line total",
+    "so": "Wadarta sadar"
+  },
+  {
+    "key": "addLine",
+    "en": "ADD LINE",
+    "so": "KU DAR SADAR"
+  },
+  {
+    "key": "linesSoFar",
+    "en": "Lines so far: {count}",
+    "so": "Sadar: {count}"
+  },
+  {
+    "key": "bonoTotal",
+    "en": "Bono total",
+    "so": "Wadarta bono"
+  },
+  {
+    "key": "paidNow",
+    "en": "Paid now",
+    "so": "Hadda la bixiyay"
+  },
+  {
+    "key": "credit",
+    "en": "Credit",
+    "so": "Deyn"
+  },
+  {
+    "key": "paidAll",
+    "en": "Paid all",
+    "so": "Dhammaan bixi"
+  },
+  {
+    "key": "mismatchWarning",
+    "en": "Bono total differs from lines — OK to continue.",
+    "so": "Wadarta bono way ka duwan tahay iskudarka sadarada — OK in la sii socdo."
+  },
+  {
+    "key": "chooseItemWarning",
+    "en": "Choose item, qty, and cost.",
+    "so": "Dooro alaab, tiro, iyo qiimo."
+  },
+  {
+    "key": "confirmReceive",
+    "en": "CONFIRM RECEIVE",
+    "so": "XAQIIJI QAADASHO"
+  },
+  {
+    "key": "numberDone",
+    "en": "DONE",
+    "so": "DHAMME"
+  },
+  {
+    "key": "clear",
+    "en": "CLEAR",
+    "so": "TIRTIR"
+  },
+  {
+    "key": "backspace",
+    "en": "DEL",
+    "so": "DEL"
+  },
+  {
+    "key": "paymentTitle",
+    "en": "Customer payment",
+    "so": "Lacag bixin"
+  },
+  {
+    "key": "pickCustomer",
+    "en": "Pick customer",
+    "so": "Dooro macmiil"
+  },
+  {
+    "key": "amount",
+    "en": "Amount",
+    "so": "qadar Lacag"
+  },
+  {
+    "key": "confirmPayment",
+    "en": "CONFIRM PAYMENT",
+    "so": "XAQIIJI LACAGBIXIN"
+  },
+  {
+    "key": "expenseTitle",
+    "en": "Expense",
+    "so": "Qarashaad"
+  },
+  {
+    "key": "category",
+    "en": "Category",
+    "so": "Nooc"
+  },
+  {
+    "key": "confirmExpense",
+    "en": "CONFIRM EXPENSE",
+    "so": "XAQIIJI QARASH"
+  },
+  {
+    "key": "rent",
+    "en": "Rent",
+    "so": "Kiro"
+  },
+  {
+    "key": "power",
+    "en": "Power",
+    "so": "Koronto"
+  },
+  {
+    "key": "salary",
+    "en": "Salary",
+    "so": "Mushahar"
+  },
+  {
+    "key": "water",
+    "en": "Water",
+    "so": "Biyo"
+  },
+  {
+    "key": "transport",
+    "en": "Transport",
+    "so": "Gaadiid"
+  },
+  {
+    "key": "other",
+    "en": "Other",
+    "so": "Kale"
+  },
+  {
+    "key": "comingSoon",
+    "en": "Mock screen saved. Undo?",
+    "so": "Shaashad tijaabo waa la keydiyay. Ka noqo?"
+  },
+  {
+    "key": "supabaseConfigTitle",
+    "en": "Connect Dukan to Supabase",
+    "so": "Dukaan ku xir Supabase"
+  },
+  {
+    "key": "supabaseConfigMessage",
+    "en": "Add Supabase URL and anon key to use login. You can still open the prototype screens.",
+    "so": "Ku dar Supabase URL iyo anon key si login loo isticmaalo. Weli waad furi kartaa shaashadaha tijaabada."
+  },
+  {
+    "key": "supabaseConfigCommand",
+    "en": "flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...",
+    "so": "flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=..."
+  },
+  {
+    "key": "openPrototype",
+    "en": "Open prototype",
+    "so": "Fur tijaabada"
+  },
+  {
+    "key": "loginTitle",
+    "en": "Login",
+    "so": "Soo gal"
+  },
+  {
+    "key": "loginHeadline",
+    "en": "Use your phone number",
+    "so": "Isticmaal telefoonkaaga"
+  },
+  {
+    "key": "loginBody",
+    "en": "We will send a one-time code. Dukan can deliver it by WhatsApp from the backend.",
+    "so": "Waxaan kuu diraynaa kood hal mar la isticmaalo, text ama whatsapp."
+  },
+  {
+    "key": "phoneNumberLabel",
+    "en": "Phone number",
+    "so": "Lambarka telefoonka"
+  },
+  {
+    "key": "sendOtpButton",
+    "en": "SEND CODE",
+    "so": "DIR KOOD"
+  },
+  {
+    "key": "verifyOtpTitle",
+    "en": "Enter code",
+    "so": "Geli kood"
+  },
+  {
+    "key": "verifyOtpHeadline",
+    "en": "Check your phone",
+    "so": "Eeg telefoonkaaga"
+  },
+  {
+    "key": "verifyOtpBody",
+    "en": "Enter the code sent to {phone}.",
+    "so": "Geli koodka loo diray {phone}."
+  },
+  {
+    "key": "otpCodeLabel",
+    "en": "Code",
+    "so": "Kood"
+  },
+  {
+    "key": "verifyOtpButton",
+    "en": "VERIFY",
+    "so": "XAQIIJI"
+  },
+  {
+    "key": "changePhoneButton",
+    "en": "Change phone number",
+    "so": "Bedel lambarka telefoonka"
+  },
+  {
+    "key": "ownerOnboardingTitle",
+    "en": "Create shop",
+    "so": "Abuur dukaan"
+  },
+  {
+    "key": "ownerOnboardingHeadline",
+    "en": "Set up your first shop",
+    "so": "Diyaari dukaanka koowaad"
+  },
+  {
+    "key": "ownerOnboardingBody",
+    "en": "Enter the business and shop names. You can add workers later.",
+    "so": "Geli magaca ganacsiga iyo dukaanka. Shaqaale waad ku dari kartaa marka dambe."
+  },
+  {
+    "key": "businessNameLabel",
+    "en": "Business name",
+    "so": "Magaca ganacsiga"
+  },
+  {
+    "key": "shopNameLabel",
+    "en": "Shop name",
+    "so": "Magaca dukaanka"
+  },
+  {
+    "key": "createShopButton",
+    "en": "CREATE SHOP",
+    "so": "ABUUR DUKAAN"
+  },
+  {
+    "key": "chooseShopTitle",
+    "en": "Choose shop",
+    "so": "Dooro dukaan"
+  },
+  {
+    "key": "shopSetupStatus",
+    "en": "Setup: {status}",
+    "so": "Diyaarin: {status}"
+  },
+  {
+    "key": "activeShopLabel",
+    "en": "Shop: {shop}",
+    "so": "Dukaan: {shop}"
+  },
+  {
+    "key": "signOut",
+    "en": "Sign out",
+    "so": "Ka bax"
+  },
+  {
+    "key": "invalidPhoneMessage",
+    "en": "Enter a valid phone number, for example +252612345678.",
+    "so": "Geli lambar telefoon sax ah, tusaale +252612345678."
+  },
+  {
+    "key": "missingPendingPhoneMessage",
+    "en": "Start with your phone number first.",
+    "so": "Marka hore ku bilow lambarka telefoonkaaga."
+  },
+  {
+    "key": "missingShopNamesMessage",
+    "en": "Enter both business name and shop name.",
+    "so": "Geli magaca ganacsiga iyo magaca dukaanka labadaba."
+  },
+  {
+    "key": "sendOtpFailedMessage",
+    "en": "We could not send the code. Check the phone number or internet and try again.",
+    "so": "Koodka lama diri karin. Hubi lambarka ama internetka, ka dib mar kale isku day."
+  },
+  {
+    "key": "verifyOtpFailedMessage",
+    "en": "The code is wrong or expired. Check the code and try again.",
+    "so": "Koodku waa khalad ama wuu dhacay. Hubi koodka, ka dib mar kale isku day."
+  },
+  {
+    "key": "createShopFailedMessage",
+    "en": "We could not create the shop. Check your internet and try again.",
+    "so": "Dukaanka lama abuuri karin. Hubi internetka, ka dib mar kale isku day."
+  },
+  {
+    "key": "shopLoadFailedTitle",
+    "en": "Could not open shops",
+    "so": "Dukaamada lama furi karin"
+  },
+  {
+    "key": "shopLoadFailedMessage",
+    "en": "Check your internet and try again. If this continues, ask the shop owner to check your access.",
+    "so": "Hubi internetka, ka dib mar kale isku day. Haddii ay sii socoto, milkiilaha ha kuu hubiyo gelitaanka."
+  },
+  {
+    "key": "tryAgain",
+    "en": "TRY AGAIN",
+    "so": "MAR KALE ISKU DAY"
+  },
+  {
+    "key": "setupStepTemplateTitle",
+    "en": "Choose your shop type",
+    "so": "Dooro nooca dukaankaaga"
+  },
+  {
+    "key": "setupStepTemplateBody",
+    "en": "Pick a starter pack so common items and settings are ready for you.",
+    "so": "Dooro xirmo bilow si waxyaalaha caadiga ah iyo goobaha loo diyaariyo."
+  },
+  {
+    "key": "setupStepTemplateDone",
+    "en": "Type chosen: {name}",
+    "so": "Nooca la doortay: {name}"
+  },
+  {
+    "key": "setupStepFinishTitle",
+    "en": "Finish setup",
+    "so": "Dhamee diyaarinta"
+  },
+  {
+    "key": "setupStepFinishBody",
+    "en": "Confirm and start using your shop.",
+    "so": "Xaqiiji oo bilow isticmaalka dukaankaaga."
+  },
+  {
+    "key": "setupStepFinishButton",
+    "en": "FINISH SETUP",
+    "so": "DHAMEE DIYAARINTA"
+  },
+  {
+    "key": "templatePickerTitle",
+    "en": "Choose your shop type",
+    "so": "Dooro nooca dukaankaaga"
+  },
+  {
+    "key": "applyTemplateButton",
+    "en": "USE THIS",
+    "so": "ISTICMAAL TAN"
+  },
+  {
+    "key": "applyTemplateFailedMessage",
+    "en": "Could not apply the template. Check your internet and try again.",
+    "so": "Xirmada lama dabaqi karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "templatesEmptyMessage",
+    "en": "No shop types are available yet. Contact support if this keeps happening.",
+    "so": "Weli ma jiraan noocyo dukaan. La xiriir support haddii ay sii socoto."
+  },
+  {
+    "key": "completeSetupFailedMessage",
+    "en": "Could not finish setup. Try again.",
+    "so": "Diyaarinta lama dhamayn. Isku day mar kale."
+  },
+  {
+    "key": "settingsTitle",
+    "en": "Settings",
+    "so": "Diyaarinta"
+  },
+  {
+    "key": "openSettings",
+    "en": "Settings",
+    "so": "Diyaarinta"
+  },
+  {
+    "key": "settingsShopNameLabel",
+    "en": "Shop name",
+    "so": "Magaca dukaanka"
+  },
+  {
+    "key": "settingsCurrencyLabel",
+    "en": "Currency",
+    "so": "Lacagta"
+  },
+  {
+    "key": "settingsLanguageLabel",
+    "en": "Default language",
+    "so": "Luuqada caadiga ah"
+  },
+  {
+    "key": "settingsTimezoneLabel",
+    "en": "Timezone",
+    "so": "Saacadda goobta"
+  },
+  {
+    "key": "settingsSaveButton",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  {
+    "key": "settingsSavedToast",
+    "en": "Settings saved",
+    "so": "Diyaarinta waa la keydiyay"
+  },
+  {
+    "key": "settingsSaveFailedMessage",
+    "en": "Could not save settings. Try again.",
+    "so": "Diyaarinta lama keydin karin. Isku day mar kale."
+  },
+  {
+    "key": "productsTitle",
+    "en": "Products",
+    "so": "Alaabo"
+  },
+  {
+    "key": "productsSearchHint",
+    "en": "Search Somali or English",
+    "so": "Ku Raadi Soomaali ama Ingiriis"
+  },
+  {
+    "key": "productsInYourShop",
+    "en": "In your shop",
+    "so": "Dukaankaaga ku jira"
+  },
+  {
+    "key": "productsFromCatalog",
+    "en": "From catalog",
+    "so": "Liiska guud"
+  },
+  {
+    "key": "productsStockLabel",
+    "en": "{quantity} {unit} in stock",
+    "so": "{quantity} {unit} oo yaal"
+  },
+  {
+    "key": "productsNoStock",
+    "en": "No stock yet",
+    "so": "Dukaanka ma taal"
+  },
+  {
+    "key": "productsAddToShopButton",
+    "en": "ADD",
+    "so": "KU DAR"
+  },
+  {
+    "key": "productsAddingToShop",
+    "en": "Adding…",
+    "so": "Lagu darayaa…"
+  },
+  {
+    "key": "productsAddedToShopToast",
+    "en": "{name} added to your shop",
+    "so": "{name} ayaa lagu daray dukaankaaga"
+  },
+  {
+    "key": "productsAddToShopFailedMessage",
+    "en": "Could not add {name}. Try again.",
+    "so": "{name} luguma darin. Isku day mar kale."
+  },
+  {
+    "key": "productsNewItemButton",
+    "en": "+ NEW ITEM",
+    "so": "+ Alaab CUSUB"
+  },
+  {
+    "key": "productsNewItemUnavailable",
+    "en": "Adding off-catalog items comes later.",
+    "so": "Alaabo aan liiska guud ku jirin waxaa lugu dari kari doonaa hadhow."
+  },
+  {
+    "key": "productsEmptyMessage",
+    "en": "No items yet. Add one from the catalog below.",
+    "so": "Alaabo maleh. Kudar hadda liiska guud."
+  },
+  {
+    "key": "productsSearchEmptyMessage",
+    "en": "Nothing matches “{query}”.",
+    "so": "Wax la mid ah “{query}” maleh."
+  },
+  {
+    "key": "productsLoadFailedMessage",
+    "en": "Could not load products. Check your internet and try again.",
+    "so": "Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "saleTitle",
+    "en": "Sale",
+    "so": "Iibin"
+  },
+  {
+    "key": "saleSearchHint",
+    "en": "Search Somali or English",
+    "so": "Ku Raadi Soomaali ama Ingiriis"
+  },
+  {
+    "key": "saleCartSummary",
+    "en": "{count, plural, =0{No items} =1{1 item} other{{count} items}} · {total}",
+    "so": "{count, plural, =0{Alaab maleh} =1{1 shay} other{{count} shay}} · {total}"
+  },
+  {
+    "key": "saleEmptyFavoritesMessage",
+    "en": "Add products from the catalog to see them here.",
+    "so": "Ku dar alaabo liiska guud si aad halkan ku aragto."
+  },
+  {
+    "key": "saleSearchEmptyMessage",
+    "en": "Nothing matches “{query}”.",
+    "so": "Wax la mid ah “{query}” ma jiraan."
+  },
+  {
+    "key": "saleLoadFailedMessage",
+    "en": "Could not load items. Check your internet and try again.",
+    "so": "Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "saleCash",
+    "en": "Cash",
+    "so": "Lacag"
+  },
+  {
+    "key": "saleDebt",
+    "en": "Debt",
+    "so": "Deyn"
+  },
+  {
+    "key": "salePickCustomerButton",
+    "en": "Pick customer",
+    "so": "Dooro macmiil"
+  },
+  {
+    "key": "saleCustomerChip",
+    "en": "{name} · owes {amount}",
+    "so": "{name} · wuxuu qabaa {amount}"
+  },
+  {
+    "key": "saleSaveButton",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  {
+    "key": "saleSavedToast",
+    "en": "Saved",
+    "so": "Waa la keydiyay"
+  },
+  {
+    "key": "salePostFailedMessage",
+    "en": "Could not save the sale. Check your internet and try again.",
+    "so": "Iibka lama keydin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "saleNeedItemsMessage",
+    "en": "Add at least one item before saving.",
+    "so": "Marka hore ku dar ugu yaraan hal shay."
+  },
+  {
+    "key": "saleNeedCustomerMessage",
+    "en": "Pick the customer for this debt sale.",
+    "so": "Dooro macmiilka iibka deynta ah."
+  },
+  {
+    "key": "saleAddedItemToast",
+    "en": "{name} added",
+    "so": "{name} waa lugudaray"
+  },
+  {
+    "key": "saleAddItemFailedMessage",
+    "en": "Could not add {name}. Try again.",
+    "so": "{name} luguma dari karin. Isku day mar kale."
+  },
+  {
+    "key": "customerPickerTitle",
+    "en": "Choose customer",
+    "so": "Dooro macmiil"
+  },
+  {
+    "key": "customerPickerSearchHint",
+    "en": "Search name or phone",
+    "so": "Raadi magaca ama telefoonka"
+  },
+  {
+    "key": "customerPickerOwesLabel",
+    "en": "owes {amount}",
+    "so": "wuxuu qabaa{amount}"
+  },
+  {
+    "key": "customerPickerNoDebtLabel",
+    "en": "no debt",
+    "so": "deyn la'aan"
+  },
+  {
+    "key": "customerPickerEmptyMessage",
+    "en": "No customers yet. Add one when you record a debt sale.",
+    "so": "Wali macmiil ma jiro. Ku dar marka aad qorto iib deyn ah."
+  },
+  {
+    "key": "customerPickerSearchEmptyMessage",
+    "en": "No customers match “{query}”.",
+    "so": "Macmiil la mid ah “{query}” ma jiro."
+  },
+  {
+    "key": "customerPickerLoadFailedMessage",
+    "en": "Could not load customers. Check your internet and try again.",
+    "so": "Macaamiisha lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "customerNewButton",
+    "en": "+ NEW CUSTOMER",
+    "so": "+ MACMIIL CUSUB"
+  },
+  {
+    "key": "partyNewCustomerTitle",
+    "en": "New customer",
+    "so": "Macmiil cusub"
+  },
+  {
+    "key": "partyNewSupplierTitle",
+    "en": "New supplier",
+    "so": "Alaab keene cusub"
+  },
+  {
+    "key": "partyNewNameLabel",
+    "en": "Name",
+    "so": "Magaca"
+  },
+  {
+    "key": "partyNewPhoneLabel",
+    "en": "Phone (optional)",
+    "so": "Telefoonka (haddii la rabo)"
+  },
+  {
+    "key": "partyNewSaveButton",
+    "en": "ADD",
+    "so": "KU DAR"
+  },
+  {
+    "key": "partyNewNameRequiredMessage",
+    "en": "Enter a name",
+    "so": "Geli magac"
+  },
+  {
+    "key": "partyNewSaveFailedMessage",
+    "en": "Could not add. Check your internet and try again.",
+    "so": "Luguma dari karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "paymentTypeCustomer",
+    "en": "Customer",
+    "so": "Macmiil"
+  },
+  {
+    "key": "paymentTypeSupplier",
+    "en": "Supplier",
+    "so": "Alaab keene"
+  },
+  {
+    "key": "paymentTypeCustomerHint",
+    "en": "Customer is paying you back",
+    "so": "Macmiilku wuxuu ku siinayaa lacag"
+  },
+  {
+    "key": "paymentTypeSupplierHint",
+    "en": "You are paying the supplier",
+    "so": "Waxaad alaab keenaha siinaysaa lacag"
+  },
+  {
+    "key": "paymentPickCustomerButton",
+    "en": "Pick customer",
+    "so": "Dooro macmiil"
+  },
+  {
+    "key": "paymentPickSupplierButton",
+    "en": "Pick supplier",
+    "so": "Dooro alaab keene"
+  },
+  {
+    "key": "paymentCustomerOwesLabel",
+    "en": "Owes you {amount}",
+    "so": "Wuxuu kuu leeyahay {amount}"
+  },
+  {
+    "key": "paymentSupplierOwedLabel",
+    "en": "You owe {amount}",
+    "so": "Waxaad ka qabtaa {amount}"
+  },
+  {
+    "key": "paymentAmountLabel",
+    "en": "Amount paid",
+    "so": "Lacagta la bixiyay"
+  },
+  {
+    "key": "paymentSaveButton",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  {
+    "key": "paymentSavedToast",
+    "en": "Payment saved",
+    "so": "Lacag bixinta waa la keydiyay"
+  },
+  {
+    "key": "paymentNeedPartyMessage",
+    "en": "Pick a {type, select, supplier{supplier} other{customer}} first.",
+    "so": "Marka hore dooro {type, select, supplier{alaab keenaha} other{macmiilka}}."
+  },
+  {
+    "key": "paymentNeedAmountMessage",
+    "en": "Enter an amount greater than zero.",
+    "so": "Geli lacag ka badan eber."
+  },
+  {
+    "key": "paymentExceedsBalanceMessage",
+    "en": "Amount cannot exceed the outstanding balance ({amount}).",
+    "so": "Lacagtu kama badnaan karto wadarta deynta ({amount})."
+  },
+  {
+    "key": "paymentPostFailedMessage",
+    "en": "Could not save the payment. Check your internet and try again.",
+    "so": "Lacag bixinta lama keydin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "expenseCategoryLabel",
+    "en": "Category",
+    "so": "Nooca"
+  },
+  {
+    "key": "expenseAmountLabel",
+    "en": "Amount",
+    "so": "Lacagta"
+  },
+  {
+    "key": "expenseSaveButton",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  {
+    "key": "expenseSavedToast",
+    "en": "Expense saved",
+    "so": "Qarashka waa la keydiyay"
+  },
+  {
+    "key": "expenseNeedCategoryMessage",
+    "en": "Pick a category first.",
+    "so": "Marka hore dooro nooc."
+  },
+  {
+    "key": "expenseNeedAmountMessage",
+    "en": "Enter an amount greater than zero.",
+    "so": "Geli lacag ka badan eber."
+  },
+  {
+    "key": "expenseLoadFailedMessage",
+    "en": "Could not load categories. Check your internet and try again.",
+    "so": "Noocyada lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "expensePostFailedMessage",
+    "en": "Could not save the expense. Check your internet and try again.",
+    "so": "Qarashka lama keydin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "expenseEmptyMessage",
+    "en": "No expense categories yet. Pick a shop type in Settings.",
+    "so": "Wali noocyada qarashaadka lama galin. Ka dooro nooca dukaanka meesha Diyaarinta."
+  },
+  {
+    "key": "saleHistoryTitle",
+    "en": "Sales today",
+    "so": "Iibka maanta"
+  },
+  {
+    "key": "saleHistoryTooltip",
+    "en": "Sales history",
+    "so": "Sooyaalka iibka"
+  },
+  {
+    "key": "saleHistoryEmptyMessage",
+    "en": "No sales yet. The first SAVE on the Sale screen will land here.",
+    "so": "Wali waxba lama gadin.  Marka hore wax gad."
+  },
+  {
+    "key": "saleHistoryLoadFailedMessage",
+    "en": "Could not load sales. Check your internet and try again.",
+    "so": "Iibka lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "saleHistoryCashLabel",
+    "en": "Cash",
+    "so": "Kaash"
+  },
+  {
+    "key": "saleHistoryDebtLabel",
+    "en": "Debt · {name}",
+    "so": "Deyn · {name}"
+  },
+  {
+    "key": "saleHistoryVoidedBadge",
+    "en": "Voided",
+    "so": "LagaNoqday"
+  },
+  {
+    "key": "saleDetailTitle",
+    "en": "Sale",
+    "so": "Iib"
+  },
+  {
+    "key": "saleDetailVoidedHeader",
+    "en": "Voided",
+    "so": "LagaNoqday"
+  },
+  {
+    "key": "saleDetailVoidButton",
+    "en": "VOID THIS SALE",
+    "so": "Ka noqo IIBKA"
+  },
+  {
+    "key": "saleDetailLineSubtotal",
+    "en": "{quantity} {unit} × {unitPrice} = {subtotal}",
+    "so": "{quantity} {unit} × {unitPrice} = {subtotal}"
+  },
+  {
+    "key": "saleDetailTotalLabel",
+    "en": "Total",
+    "so": "Wadar"
+  },
+  {
+    "key": "saleDetailCashLabel",
+    "en": "Cash",
+    "so": "Kaash"
+  },
+  {
+    "key": "saleDetailDebtLabel",
+    "en": "Debt",
+    "so": "Deyn"
+  },
+  {
+    "key": "saleDetailLoadFailedMessage",
+    "en": "Could not load this sale.",
+    "so": "Iibkaan lama soo dejin karin."
+  },
+  {
+    "key": "saleVoidConfirmTitle",
+    "en": "Void this sale?",
+    "so": "Ka noqo iibkan?"
+  },
+  {
+    "key": "saleVoidConfirmBody",
+    "en": "This will reverse the sale, restore the stock, and clear the customer's debt for it.",
+    "so": "Iibka waa laga noqo doonaa, alaabta kayd-ka lugu celi doonaa, deynta macmiilka waa laga jari doonaa."
+  },
+  {
+    "key": "saleVoidConfirmYes",
+    "en": "VOID",
+    "so": "KaNoqo"
+  },
+  {
+    "key": "saleVoidConfirmNo",
+    "en": "CANCEL",
+    "so": "JOOJI"
+  },
+  {
+    "key": "saleVoidRefundCheckboxLabel",
+    "en": "Refund cash to the customer",
+    "so": "Lacagta u celi macmiilka"
+  },
+  {
+    "key": "saleVoidRefundAmountLabel",
+    "en": "Refund amount",
+    "so": "Lacagta la celiyay"
+  },
+  {
+    "key": "saleVoidRefundPaidHint",
+    "en": "paid: {amount}",
+    "so": "la bixiyay: {amount}"
+  },
+  {
+    "key": "saleVoidRefundExceedsPaidMessage",
+    "en": "Refund cannot exceed the cash paid ({paid}).",
+    "so": "Lacagta la celiyay kama badnaan karto lacagta la bixiyay ({paid})."
+  },
+  {
+    "key": "saleVoidedToast",
+    "en": "Sale voided",
+    "so": "Iibka waa laga noqday"
+  },
+  {
+    "key": "saleVoidFailedMessage",
+    "en": "Could not void this sale. Check your internet and try again.",
+    "so": "Iibka lagama noqo karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "historyMenuSales",
+    "en": "Sales history",
+    "so": "Sooyaalka iibka"
+  },
+  {
+    "key": "historyMenuReceives",
+    "en": "Receive history",
+    "so": "Sooyaalka Alaab keenida"
+  },
+  {
+    "key": "historyMenuTooltip",
+    "en": "History",
+    "so": "Sooyaal"
+  },
+  {
+    "key": "receiveHistoryTitle",
+    "en": "Receives today",
+    "so": "Alaabtii La dajiyey maanta"
+  },
+  {
+    "key": "receiveHistoryTooltip",
+    "en": "Receive history",
+    "so": "Sooyaalka Alaab keenida"
+  },
+  {
+    "key": "receiveHistoryEmptyMessage",
+    "en": "No receives yet. The first SAVE on the Receive screen will land here.",
+    "so": "Wali Alaab Lama dejin. Marka hore alaab daji."
+  },
+  {
+    "key": "receiveHistoryLoadFailedMessage",
+    "en": "Could not load receives. Check your internet and try again.",
+    "so": "Sooyaalka Alaab Keenida lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "receiveHistorySupplierLabel",
+    "en": "Supplier · {name}",
+    "so": "Alaab keene · {name}"
+  },
+  {
+    "key": "receiveHistoryVoidedBadge",
+    "en": "Voided",
+    "so": "Laga Noqday"
+  },
+  {
+    "key": "receiveDetailTitle",
+    "en": "Receive",
+    "so": "Alaab La Dajiyey"
+  },
+  {
+    "key": "receiveDetailVoidedHeader",
+    "en": "Voided",
+    "so": "Laga Noqday"
+  },
+  {
+    "key": "receiveDetailVoidButton",
+    "en": "VOID THIS RECEIVE",
+    "so": "Ka Noqo BONADAN"
+  },
+  {
+    "key": "receiveDetailLineSubtotal",
+    "en": "{quantity} {unit} × {unitCost} = {subtotal}",
+    "so": "{quantity} {unit} × {unitCost} = {subtotal}"
+  },
+  {
+    "key": "receiveDetailTotalLabel",
+    "en": "Total",
+    "so": "Wadar"
+  },
+  {
+    "key": "receiveDetailLoadFailedMessage",
+    "en": "Could not load this receive.",
+    "so": "Alaab dajintan lama soo dejin karin."
+  },
+  {
+    "key": "receiveVoidConfirmTitle",
+    "en": "Void this receive?",
+    "so": "Ka noqo alaab dajintan?"
+  },
+  {
+    "key": "receiveVoidConfirmBody",
+    "en": "Use this only when you typed the receive wrong. It reverses the receive, removes the stock, and clears what you owe the supplier for it.",
+    "so": "Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dajinta. Alaab dajinta waa laga noqo doonaa, alaabta kayd-ka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto ee alaab dajintan waa la nadiifin doonaa."
+  },
+  {
+    "key": "receiveVoidMistakesOnlyHint",
+    "en": "Mistakes only. For real returns to the supplier, record a Payment instead.",
+    "so": "Kaliya qaladaad. Haddii aad alaab keenaha wax u celineyso, taas u qor lacag-bixinta."
+  },
+  {
+    "key": "receiveVoidConfirmYes",
+    "en": "VOID",
+    "so": "KaNoqo"
+  },
+  {
+    "key": "receiveVoidConfirmNo",
+    "en": "CANCEL",
+    "so": "JOOJI"
+  },
+  {
+    "key": "receiveVoidedToast",
+    "en": "Receive voided",
+    "so": "Alaab dajinta waa laga noqday"
+  },
+  {
+    "key": "receiveVoidFailedMessage",
+    "en": "Could not void this receive. Check your internet and try again.",
+    "so": "Alaab dajinta lagama noqo karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "receiveVoidBlockedStockMessage",
+    "en": "Some items from this receive have already moved. Void blocked.",
+    "so": "Alaabaha alaab dajintan qaarkood mar hore wuu dhaqaaqay. Ka noqoshada waa la joojiyay."
+  },
+  {
+    "key": "cartLineSubtotal",
+    "en": "{quantity} × {unitPrice} = {subtotal}",
+    "so": "{quantity} × {unitPrice} = {subtotal}"
+  },
+  {
+    "key": "cartRemoveLineTooltip",
+    "en": "Remove {name}",
+    "so": "Ka saar {name}"
+  },
+  {
+    "key": "cartExpandHint",
+    "en": "Show items",
+    "so": "Muuji shayada"
+  },
+  {
+    "key": "cartCollapseHint",
+    "en": "Hide items",
+    "so": "Qari shayada"
+  },
+  {
+    "key": "cartClearAllButton",
+    "en": "Clear all",
+    "so": "Tirtir dhammaan"
+  },
+  {
+    "key": "cartClearConfirmTitle",
+    "en": "Clear {count, plural, =1{1 item} other{{count} items}} from cart?",
+    "so": "Ka tirtir {count, plural, =1{1 shay} other{{count} shay}} danbiisha?"
+  },
+  {
+    "key": "cartClearConfirmBody",
+    "en": "This won't undo any saved sale.",
+    "so": "Tan ma noqonayso iib hore loo keydiyay."
+  },
+  {
+    "key": "cartClearConfirmYes",
+    "en": "CLEAR",
+    "so": "TIRTIR"
+  },
+  {
+    "key": "cartClearConfirmNo",
+    "en": "CANCEL",
+    "so": "JOOJI"
+  },
+  {
+    "key": "lineEditorDoneButton",
+    "en": "DONE",
+    "so": "DHAMME"
+  },
+  {
+    "key": "lineEditorPriceRequiredHelper",
+    "en": "Set a price for this item",
+    "so": "Geli qiimaha shaygan"
+  },
+  {
+    "key": "lineEditorInvalidPriceMessage",
+    "en": "Enter a number 0 or more",
+    "so": "Geli lambar 0 ama wax ka badan"
+  },
+  {
+    "key": "lineEditorTilePriceMissing",
+    "en": "—",
+    "so": "—"
+  },
+  {
+    "key": "supplierPickerTitle",
+    "en": "Pick supplier",
+    "so": "Dooro alaab keenaha"
+  },
+  {
+    "key": "supplierPickerSearchHint",
+    "en": "Search name or phone",
+    "so": "Ku Raadi magaca ama telefoonka"
+  },
+  {
+    "key": "supplierPickerOwesLabel",
+    "en": "you owe {amount}",
+    "so": "waxaad ka qabtaa {amount}"
+  },
+  {
+    "key": "supplierPickerNoBonosLabel",
+    "en": "no receives yet",
+    "so": "alaab dajin maleh"
+  },
+  {
+    "key": "supplierPickerEmptyMessage",
+    "en": "No suppliers yet. Add one when you record a receive.",
+    "so": "Alaab keene maleh. Ku dar marka aad qorto alaab dajin."
+  },
+  {
+    "key": "supplierPickerSearchEmptyMessage",
+    "en": "No suppliers match “{query}”.",
+    "so": "Alaab keene la mid ah “{query}” maleh."
+  },
+  {
+    "key": "supplierPickerLoadFailedMessage",
+    "en": "Could not load suppliers. Check your internet and try again.",
+    "so": "Alaab keenayaasha lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "supplierNewButton",
+    "en": "+ NEW SUPPLIER",
+    "so": "+ ALAAB KEENE CUSUB"
+  },
+  {
+    "key": "receiveSearchHint",
+    "en": "Search Somali or English",
+    "so": "Ku Raadi Soomaali ama Ingiriis"
+  },
+  {
+    "key": "receiveLoadFailedMessage",
+    "en": "Could not load items. Check your internet and try again.",
+    "so": "Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "receiveEmptyMessage",
+    "en": "Tap an item to start the receive. Search if it's not in the grid.",
+    "so": "Taabo alaab si aad u bilowdo alaab dajin. Ku raadi haddii aysan ku jirin shabakada."
+  },
+  {
+    "key": "receiveLineQuantityLabel",
+    "en": "Qty",
+    "so": "Tirada"
+  },
+  {
+    "key": "receiveLinePerUnitLabel",
+    "en": "{currency} per {unit}",
+    "so": "{currency} mid kasta {unit}"
+  },
+  {
+    "key": "receiveLineTotalLabel",
+    "en": "{currency} total",
+    "so": "{currency} wadarta"
+  },
+  {
+    "key": "receiveAddLineButton",
+    "en": "ADD LINE",
+    "so": "KU DAR SADAR"
+  },
+  {
+    "key": "receiveLineSubtotal",
+    "en": "{quantity} {unit} = {total}",
+    "so": "{quantity} {unit} · {total}"
+  },
+  {
+    "key": "receiveLineRemoveTooltip",
+    "en": "Remove {name}",
+    "so": "Ka saar {name}"
+  },
+  {
+    "key": "receiveLinesSummary",
+    "en": "{count, plural, =0{No lines} =1{1 line} other{{count} lines}} · {total}",
+    "so": "{count, plural, =0{Wax sadar ah maleh} =1{1 sadar} other{{count} sadar}} · {total}"
+  },
+  {
+    "key": "receiveLinesClearAllButton",
+    "en": "Clear all",
+    "so": "Tirtir dhammaan"
+  },
+  {
+    "key": "receiveLinesClearConfirmTitle",
+    "en": "Clear {count, plural, =1{1 line} other{{count} lines}}?",
+    "so": "Tirtir {count, plural, =1{1 sadar} other{{count} sadar}}?"
+  },
+  {
+    "key": "receiveLinesClearConfirmBody",
+    "en": "This won't undo any saved receive.",
+    "so": "Tan ma noqonayso alaab dajin hore loo keydiyay."
+  },
+  {
+    "key": "receiveLinesClearConfirmYes",
+    "en": "CLEAR",
+    "so": "TIRTIR"
+  },
+  {
+    "key": "receiveLinesClearConfirmNo",
+    "en": "CANCEL",
+    "so": "JOOJI"
+  },
+  {
+    "key": "receiveSaveButton",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  {
+    "key": "receiveSavedToast",
+    "en": "Receive saved (on credit)",
+    "so": "Alaab dajin waa la keydiyay (deyn)"
+  },
+  {
+    "key": "receivePostFailedMessage",
+    "en": "Could not save the receive. Check your internet and try again.",
+    "so": "Alaab dajinta lama keydin karin. Hubi internetka oo isku day mar kale."
+  },
+  {
+    "key": "receiveNeedSupplierMessage",
+    "en": "Pick a supplier before saving.",
+    "so": "Dooro alaab keene ka hor inta aadan keydin."
+  },
+  {
+    "key": "receiveNeedLinesMessage",
+    "en": "Add at least one line before saving.",
+    "so": "Marka hore ku dar ugu yaraan hal sadar."
+  },
+  {
+    "key": "receiveInvalidNumberMessage",
+    "en": "Enter a positive number",
+    "so": "Geli lambar wanaagsan"
+  },
+  {
+    "key": "unitPickerTitle",
+    "en": "Choose unit",
+    "so": "Dooro halbeeg"
+  },
+  {
+    "key": "unitPickerDefaultBadge",
+    "en": "default",
+    "so": "caadi"
+  },
+  {
+    "key": "unitPickerBaseUnit",
+    "en": "base unit",
+    "so": "halbeeg aasaasi"
+  },
+  {
+    "key": "unitPickerConversion",
+    "en": "{multiplier} {base} per {unit}",
+    "so": "{multiplier} {base} {unit} walba"
+  },
+  {
+    "key": "unitPickerLoadFailedMessage",
+    "en": "Could not load units. Try again.",
+    "so": "Halbeegyada lama soo dejin karin. Isku day mar kale."
+  },
+  {
+    "key": "unitPickerAddPackagingButton",
+    "en": "+ Add packaging",
+    "so": "+ Ku dar baakad"
+  },
+  {
+    "key": "addNewItemSearchResult",
+    "en": "+ Add new item: “{query}”",
+    "so": "+ Ku dar alaab cusub: “{query}”"
+  },
+  {
+    "key": "addNewItemSheetTitle",
+    "en": "Add new item",
+    "so": "Ku dar alaab cusub"
+  },
+  {
+    "key": "addNewItemNameLabel",
+    "en": "Name",
+    "so": "Magaca"
+  },
+  {
+    "key": "addNewItemUnitLabel",
+    "en": "Unit",
+    "so": "Halbeeg"
+  },
+  {
+    "key": "addNewItemUnitChooseHint",
+    "en": "Choose",
+    "so": "Dooro"
+  },
+  {
+    "key": "addNewItemPriceLabel",
+    "en": "Sale price per {unit}",
+    "so": "Qiimaha iibka mid kasta {unit}"
+  },
+  {
+    "key": "addNewItemCategoryLabel",
+    "en": "Category (optional)",
+    "so": "Nooca (ikhtiyaari)"
+  },
+  {
+    "key": "addNewItemCategoryChooseHint",
+    "en": "Choose",
+    "so": "Dooro"
+  },
+  {
+    "key": "addNewItemCancelButton",
+    "en": "CANCEL",
+    "so": "JOOJI"
+  },
+  {
+    "key": "addNewItemAddToSaleButton",
+    "en": "ADD TO SALE",
+    "so": "KU DAR IIBKA"
+  },
+  {
+    "key": "addNewItemAddToReceiveButton",
+    "en": "ADD TO RECEIVE",
+    "so": "KU DAR ALAAB DAJINTA"
+  },
+  {
+    "key": "addNewItemMissingNameMessage",
+    "en": "Name is required",
+    "so": "Magaca waa loo baahan yahay"
+  },
+  {
+    "key": "addNewItemMissingUnitMessage",
+    "en": "Pick a unit",
+    "so": "Dooro halbeeg"
+  },
+  {
+    "key": "addNewItemInvalidPriceMessage",
+    "en": "Enter a price (0 or more)",
+    "so": "Geli qiimaha (0 ama wax ka badan)"
+  },
+  {
+    "key": "addNewItemFailedMessage",
+    "en": "Could not create the item. Try again.",
+    "so": "Alaabta lama abuuri karin. Isku day mar kale."
+  },
+  {
+    "key": "addPackagingSheetTitle",
+    "en": "Add packaging",
+    "so": "Ku dar baakad"
+  },
+  {
+    "key": "addPackagingUnitLabel",
+    "en": "Unit",
+    "so": "Halbeeg"
+  },
+  {
+    "key": "addPackagingConversionLabel",
+    "en": "How many {base} per {unit}",
+    "so": "Imisa {base} ayey {unit} ku jiraan"
+  },
+  {
+    "key": "addPackagingPriceLabel",
+    "en": "Sale price per {unit} (optional)",
+    "so": "Qiimaha iibka mid kasta {unit} (ikhtiyaari)"
+  },
+  {
+    "key": "addPackagingSaveButton",
+    "en": "ADD PACKAGING",
+    "so": "KU DAR BAAKAD"
+  },
+  {
+    "key": "addPackagingFailedMessage",
+    "en": "Could not add the packaging. Try again.",
+    "so": "Baakadda luguma dari karin. Isku day mar kale."
+  },
+  {
+    "key": "negativeStockToast",
+    "en": "{item} stock is now {amount} {unit}. Receive soon.",
+    "so": "{item} kayd-ka hadda waa {amount} {unit}. Soo qaado dhaqso."
+  },
+  {
+    "key": "negativeStockMoreItems",
+    "en": "+ {count, plural, =1{1 more item} other{{count} more items}} low",
+    "so": "+ {count, plural, =1{1 shay oo kale} other{{count} shay oo kale}} oo kayd hooseeya"
+  },
+  {
+    "key": "shopItemEditorTitleCreate",
+    "en": "Add product",
+    "so": "Ku dar alaab cusub"
+  },
+  {
+    "key": "shopItemEditorTitleEdit",
+    "en": "Edit product",
+    "so": "Bedel alaabta"
+  },
+  {
+    "key": "shopItemEditorNameLabel",
+    "en": "Name",
+    "so": "Magaca"
+  },
+  {
+    "key": "shopItemEditorBaseUnitLabel",
+    "en": "Base unit",
+    "so": "Halbeeg aasaasi"
+  },
+  {
+    "key": "shopItemEditorCategoryLabel",
+    "en": "Category",
+    "so": "Nooca"
+  },
+  {
+    "key": "shopItemEditorPackagingsHeader",
+    "en": "Packagings",
+    "so": "Baakado"
+  },
+  {
+    "key": "shopItemEditorAddPackagingButton",
+    "en": "+ Add packaging",
+    "so": "+ Ku dar baakad"
+  },
+  {
+    "key": "shopItemEditorSaveButton",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  {
+    "key": "shopItemDetailEditPrice",
+    "en": "Edit price",
+    "so": "Bedel qiimaha"
+  },
+  {
+    "key": "shopItemDetailDefaultSaleBadge",
+    "en": "default sale",
+    "so": "iib caadi"
+  },
+  {
+    "key": "shopItemDetailDefaultReceiveBadge",
+    "en": "default receive",
+    "so": "alaab caadi"
+  },
+  {
+    "key": "shopItemDetailNoPriceLabel",
+    "en": "no price yet",
+    "so": "qiimo maleh"
+  },
+  {
+    "key": "shopItemDetailCurrentStockLabel",
+    "en": "{amount} {unit} in stock",
+    "so": "{amount} {unit} ayaa yaal"
+  },
+  {
+    "key": "shopItemDetailReorderBelowLabel",
+    "en": "Reorder below {amount} {unit}",
+    "so": "Soo qaado marka uu yaraado {amount} {unit}"
+  },
+  {
+    "key": "catalogPickerTitle",
+    "en": "Browse catalog",
+    "so": "Eeg liiska guud"
+  },
+  {
+    "key": "catalogPickerSearchHint",
+    "en": "Search global catalog",
+    "so": "Ku Raadi liiska guud"
+  },
+  {
+    "key": "catalogPickerActivatedBadge",
+    "en": "already added",
+    "so": "horeyba"
+  },
+  {
+    "key": "catalogPickerAddButton",
+    "en": "ADD {count, plural, =1{1 item} other{{count} items}}",
+    "so": "KU DAR {count, plural, =1{1 shay} other{{count} shay}}"
+  },
+  {
+    "key": "catalogPickerAddedToast",
+    "en": "{count, plural, =1{1 item} other{{count} items}} added",
+    "so": "{count, plural, =1{1 shay} other{{count} shay}} ayaa la daray"
+  },
+  {
+    "key": "setupOnboardingTitle",
+    "en": "Set up your products",
+    "so": "U habee alaabadaada"
+  },
+  {
+    "key": "setupOnboardingBody",
+    "en": "We added {count} items from the {template} template. You can start selling now — prices fill in as you sell.\n\nOr take a minute to:",
+    "so": "Waxaan kuugu darnay {count} alaab oo ka mid ah qaabka {template}. Hadda iibi waad bilaaban kartaa — qiimayaashu way buuxin doonaan markaad iibinayso.\n\nAma daqiiqad ku qaad:"
+  },
+  {
+    "key": "setupOnboardingAddItemsTitle",
+    "en": "Add my own items",
+    "so": "Ku dar alaabadayda"
+  },
+  {
+    "key": "setupOnboardingAddItemsBody",
+    "en": "Items the template didn't include",
+    "so": "Alaabaha qaabku aanu lahayn"
+  },
+  {
+    "key": "setupOnboardingSetPricesTitle",
+    "en": "Set prices on top items",
+    "so": "U dhig qiimayaal alaabta caanka ah"
+  },
+  {
+    "key": "setupOnboardingSetPricesBody",
+    "en": "So sales don't pause for a price prompt",
+    "so": "Si aanu iibku u dhabaalayn qiimo weydiin"
+  },
+  {
+    "key": "setupOnboardingBrowseCatalogTitle",
+    "en": "Browse the catalog",
+    "so": "Eeg liiska guud"
+  },
+  {
+    "key": "setupOnboardingBrowseCatalogBody",
+    "en": "Activate more items from our list",
+    "so": "Ka dhaqaaji alaabo dheeraad ah liiskayaga"
+  },
+  {
+    "key": "setupOnboardingSkipButton",
+    "en": "SKIP — START SELLING",
+    "so": "BOOD — BILOW IIBKA"
+  }
+]

@@ -48,7 +48,7 @@ create table public.ocr_correction (
   document_id uuid not null,
   raw_text text not null check (length(btrim(raw_text)) > 0),
   accepted_entity_table text not null
-    check (accepted_entity_table in ('item', 'party', 'expense_category', 'unknown')),
+    check (accepted_entity_table in ('shop_item', 'party', 'expense_category', 'unknown')),
   accepted_entity_id uuid,
   confidence numeric(5, 4) check (confidence is null or (confidence >= 0 and confidence <= 1)),
   created_by uuid not null default auth.uid() references auth.users(id) on delete restrict,

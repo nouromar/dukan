@@ -1,10 +1,12 @@
 // Receive-screen state: the supplier we're recording a bono from + the
-// lines we've accumulated. Lifted out of the screen widgets so the state
-// survives back/forward navigation between the supplier picker, the
-// receive screen, and (eventually) a bono-photo capture flow.
+// lines we've accumulated. Lifted out of the screen widgets so the
+// state survives back/forward navigation between the supplier picker,
+// the receive screen, and (eventually) a bono-photo capture flow.
 //
-// Single-supplier-at-a-time for v1 (matches the Sale single-cart). Held
-// supplier sessions are not modelled.
+// v2 model: receive lines key on `shopItemUnitId` — the packaging the
+// supplier delivered. Same item received as a 25 kg bag and a 10 kg
+// bag in the same bono are two distinct lines (correct: they have
+// different per-packaging last_cost values).
 //
 // SAVE always posts a fully-credit receive transaction (decisions.md
 // Q15 — TODO). Cash paid at delivery is recorded separately via the
@@ -16,26 +18,36 @@ import 'package:dukan/api/types.dart';
 
 class ReceiveLine {
   ReceiveLine({
+    required this.shopItemUnitId,
+    required this.shopItemId,
     required this.itemId,
-    required this.catalogItemId,
-    required this.name,
-    required this.receiveUnitCode,
-    required this.receiveUnitLabel,
+    required this.displayName,
+    required this.packagingLabel,
+    required this.baseUnitLabel,
     required this.quantity,
     required this.lineTotal,
   });
 
-  /// Non-null for activated items. Null for catalog candidates that
-  /// need ensure_shop_item resolution before posting.
+  /// The packaging this bono line was rung up against. The server
+  /// derives shop_item, base_quantity, conversion and stock_movement
+  /// unit_cost from this id at post time.
+  final String shopItemUnitId;
+  final String shopItemId;
+
+  /// Null when this is a shop-only item (no global catalog provenance).
   final String? itemId;
-  /// Non-null for catalog candidates; null for already-activated items.
-  final String? catalogItemId;
-  final String name;
-  /// The receive unit (e.g., "bag") the supplier delivered in.
-  /// Lookups its unit_id at post time via the units cache.
-  final String receiveUnitCode;
-  final String receiveUnitLabel;
-  final int quantity;
+
+  final String displayName;
+
+  /// "25 kg bag" / "kg" — what the cashier sees on the chip.
+  final String packagingLabel;
+  final String baseUnitLabel;
+
+  /// Numeric so weighed-on-delivery items (e.g., 12.5 kg of meat) can
+  /// land on a bono without forcing integerization. Server's
+  /// `transaction_line.quantity` is already `numeric(14,3)`.
+  final num quantity;
+
   /// What the cashier entered as the bono line total. Sent to
   /// post_receive as line_total; per-unit cost (= lineTotal / quantity)
   /// is computed server-side.
@@ -47,6 +59,7 @@ class ReceiveLine {
 class ReceiveSnapshot {
   const ReceiveSnapshot({required this.lines, required this.supplier});
 
+  /// Keyed by `shopItemUnitId`.
   final Map<String, ReceiveLine> lines;
   final PartySearchResult? supplier;
 }
@@ -59,8 +72,8 @@ class ReceiveController extends ChangeNotifier {
   PartySearchResult? get supplier => _supplier;
 
   int get lineCount => _lines.length;
-  int get unitCount =>
-      _lines.values.fold(0, (sum, line) => sum + line.quantity);
+  num get unitCount =>
+      _lines.values.fold<num>(0, (sum, line) => sum + line.quantity);
   double get bonoTotal =>
       _lines.values.fold(0, (sum, line) => sum + line.lineTotal.toDouble());
   bool get isEmpty => _lines.isEmpty;
@@ -74,42 +87,68 @@ class ReceiveController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Add a new line OR replace an existing line for the same item.
-  /// Unlike Sale's `addItem`, every editor confirmation is authoritative:
-  /// the cashier might be correcting a previous qty/total.
-  ///
-  /// `unitCode` + `unitLabel` override the item's default receive unit
-  /// — passed by the form when the cashier opens the unit picker and
-  /// chooses something other than the default. When null, falls back to
-  /// the item's default receive unit.
-  void addOrReplaceLine(
-    ItemSearchResult item, {
-    required int quantity,
+  /// Add a new line OR replace an existing line for the same
+  /// packaging. Every editor confirmation is authoritative — the
+  /// cashier may be correcting a previous qty/total.
+  void addOrReplaceLine({
+    required String shopItemUnitId,
+    required String shopItemId,
+    required String? itemId,
+    required String displayName,
+    required String packagingLabel,
+    required String baseUnitLabel,
+    required num quantity,
     required num lineTotal,
-    String? unitCode,
-    String? unitLabel,
   }) {
-    final key = item.itemId ?? item.catalogItemId;
-    if (key == null) return;
-    _lines[key] = ReceiveLine(
-      itemId: item.itemId,
-      catalogItemId: item.catalogItemId,
-      name: item.name,
-      receiveUnitCode: unitCode ?? item.receiveUnitCode,
-      receiveUnitLabel: unitLabel ?? item.receiveUnitLabel,
+    _lines[shopItemUnitId] = ReceiveLine(
+      shopItemUnitId: shopItemUnitId,
+      shopItemId: shopItemId,
+      itemId: itemId,
+      displayName: displayName,
+      packagingLabel: packagingLabel,
+      baseUnitLabel: baseUnitLabel,
       quantity: quantity,
       lineTotal: lineTotal,
     );
     notifyListeners();
   }
 
-  void removeLine(String key) {
-    if (_lines.remove(key) == null) return;
+  /// Used when the cashier swaps the packaging on an existing line
+  /// (e.g., they typed bono qty against "25 kg bag" then realized the
+  /// supplier delivered "50 kg bag"). Removes the old keyed line and
+  /// adds the new keyed line in one notify.
+  void switchLinePackaging({
+    required String oldShopItemUnitId,
+    required String newShopItemUnitId,
+    required String shopItemId,
+    required String? itemId,
+    required String displayName,
+    required String packagingLabel,
+    required String baseUnitLabel,
+    required num quantity,
+    required num lineTotal,
+  }) {
+    _lines.remove(oldShopItemUnitId);
+    _lines[newShopItemUnitId] = ReceiveLine(
+      shopItemUnitId: newShopItemUnitId,
+      shopItemId: shopItemId,
+      itemId: itemId,
+      displayName: displayName,
+      packagingLabel: packagingLabel,
+      baseUnitLabel: baseUnitLabel,
+      quantity: quantity,
+      lineTotal: lineTotal,
+    );
     notifyListeners();
   }
 
-  /// Wipes lines; keeps the supplier so the cashier can re-enter without
-  /// re-picking from the supplier screen.
+  void removeLine(String shopItemUnitId) {
+    if (_lines.remove(shopItemUnitId) == null) return;
+    notifyListeners();
+  }
+
+  /// Wipes lines; keeps the supplier so the cashier can re-enter
+  /// without re-picking.
   void clearLines() {
     if (_lines.isEmpty) return;
     _lines.clear();
@@ -132,11 +171,12 @@ class ReceiveController extends ChangeNotifier {
       lines: {
         for (final entry in _lines.entries)
           entry.key: ReceiveLine(
+            shopItemUnitId: entry.value.shopItemUnitId,
+            shopItemId: entry.value.shopItemId,
             itemId: entry.value.itemId,
-            catalogItemId: entry.value.catalogItemId,
-            name: entry.value.name,
-            receiveUnitCode: entry.value.receiveUnitCode,
-            receiveUnitLabel: entry.value.receiveUnitLabel,
+            displayName: entry.value.displayName,
+            packagingLabel: entry.value.packagingLabel,
+            baseUnitLabel: entry.value.baseUnitLabel,
             quantity: entry.value.quantity,
             lineTotal: entry.value.lineTotal,
           ),

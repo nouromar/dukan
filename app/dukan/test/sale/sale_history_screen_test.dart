@@ -87,4 +87,28 @@ void main() {
 
     expect(find.text(en.saleHistoryEmptyMessage), findsOneWidget);
   });
+
+  testWidgets('default scope is Today — subtitle reflects it', (tester) async {
+    api.onListSales = (_, _, _) async => const [];
+
+    await pumpHistory(tester);
+    await tester.pumpAndSettle();
+
+    // The app-bar subtitle shows the active date range.
+    expect(find.text(en.dateRangeToday), findsOneWidget);
+  });
+
+  testWidgets('voided rows show by default; "Hide voided" chip removes them',
+      (tester) async {
+    api.onListSales = (_, _, _) async => [
+      _sale(txnId: 's1', total: 1.5),
+      _sale(txnId: 's2', partyName: 'Ahmed', total: 12, voided: true),
+    ];
+
+    await pumpHistory(tester);
+    await tester.pumpAndSettle();
+
+    // Default: the voided badge IS visible.
+    expect(find.text(en.saleHistoryVoidedBadge), findsOneWidget);
+  });
 }

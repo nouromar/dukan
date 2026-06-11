@@ -55,6 +55,7 @@ void main() {
           currencyCode,
           defaultLanguageCode,
           timezone,
+          lowStockWarningEnabled,
         }) async {
           captured = {
             'shopId': shopId,
@@ -62,6 +63,7 @@ void main() {
             'currencyCode': currencyCode,
             'defaultLanguageCode': defaultLanguageCode,
             'timezone': timezone,
+            'lowStockWarningEnabled': lowStockWarningEnabled,
           };
         };
 
@@ -79,11 +81,4 @@ void main() {
     expect(captured!['timezone'], 'Africa/Mogadishu');
   });
 
-  testWidgets('Products tile is shown and tappable', (tester) async {
-    await pumpSettings(tester);
-    await tester.pumpAndSettle();
-
-    expect(find.text(en.productsTitle), findsOneWidget);
-    expect(find.byIcon(Icons.inventory_2_outlined), findsOneWidget);
-  });
 }

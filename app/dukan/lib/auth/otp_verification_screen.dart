@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/shared/digit_input.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -71,7 +71,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
               maxLength: 6,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              // LTR + ASCII digit-only so Arabic/Persian-script
+              // keyboards still produce a usable code.
+              textDirection: TextDirection.ltr,
+              inputFormatters: const [DigitsOnlyInputFormatter()],
               decoration: InputDecoration(labelText: l.otpCodeLabel),
               onSubmitted: (_) => _verifying ? null : _verifyOtp(),
             ),

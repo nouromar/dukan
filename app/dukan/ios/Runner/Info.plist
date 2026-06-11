@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Dukan uses the camera to scan product barcodes. Photos of the barcode never leave your phone.</string>
 </dict>
 </plist>

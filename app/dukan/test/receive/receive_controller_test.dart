@@ -30,66 +30,97 @@ void main() {
 
     test('addOrReplaceLine sets and replaces (no incrementing)', () {
       final c = ReceiveController();
-      final item = fakeActivatedItem(itemId: 'i1');
-      c.addOrReplaceLine(item, quantity: 3, lineTotal: 12);
+      c.addOrReplaceLine(
+        shopItemUnitId: 'siu-1',
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        displayName: 'Bariis',
+        packagingLabel: 'Kg',
+        baseUnitLabel: 'Kg',
+        quantity: 3,
+        lineTotal: 12,
+      );
       expect(c.lineCount, 1);
-      expect(c.lines['i1']!.quantity, 3);
-      expect(c.lines['i1']!.lineTotal, 12);
-      expect(c.lines['i1']!.unitCost, 4); // computed from total/qty
+      expect(c.lines['siu-1']!.quantity, 3);
+      expect(c.lines['siu-1']!.lineTotal, 12);
+      expect(c.lines['siu-1']!.unitCost, 4); // computed from total/qty
 
       // Adding again REPLACES — does not increment.
-      c.addOrReplaceLine(item, quantity: 5, lineTotal: 22.5);
-      expect(c.lines['i1']!.quantity, 5);
-      expect(c.lines['i1']!.lineTotal, 22.5);
-      expect(c.lines['i1']!.unitCost, 4.5);
+      c.addOrReplaceLine(
+        shopItemUnitId: 'siu-1',
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        displayName: 'Bariis',
+        packagingLabel: 'Kg',
+        baseUnitLabel: 'Kg',
+        quantity: 5,
+        lineTotal: 22.5,
+      );
+      expect(c.lines['siu-1']!.quantity, 5);
+      expect(c.lines['siu-1']!.lineTotal, 22.5);
+      expect(c.lines['siu-1']!.unitCost, 4.5);
     });
 
-    test('line carries the receive unit, not the base unit', () {
+    test('line carries the packaging label, not the base unit', () {
       final c = ReceiveController();
       c.addOrReplaceLine(
-        fakeActivatedItem(
-          itemId: 'i1',
-          baseUnitCode: 'kg',
-          baseUnitLabel: 'Kg',
-          receiveUnitCode: 'bag',
-          receiveUnitLabel: 'Bag',
-        ),
+        shopItemUnitId: 'siu-bag',
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        displayName: 'Bariis',
+        packagingLabel: '25 Kg Bag',
+        baseUnitLabel: 'Kg',
         quantity: 5,
         lineTotal: 120,
       );
-      expect(c.lines['i1']!.receiveUnitCode, 'bag');
-      expect(c.lines['i1']!.receiveUnitLabel, 'Bag');
+      expect(c.lines['siu-bag']!.packagingLabel, '25 Kg Bag');
+      expect(c.lines['siu-bag']!.baseUnitLabel, 'Kg');
     });
 
-    test('catalog candidates key by catalog_item_id when itemId is null', () {
+    test('lines key by shopItemUnitId; shop-only items have null itemId', () {
       final c = ReceiveController();
       c.addOrReplaceLine(
-        fakeCatalogCandidate(catalogItemId: 'c1'),
+        shopItemUnitId: 'siu-shop-only',
+        shopItemId: 'si-shop-only',
+        itemId: null,
+        displayName: 'Caano qalalan',
+        packagingLabel: 'Packet',
+        baseUnitLabel: 'Packet',
         quantity: 1,
         lineTotal: 2,
       );
-      expect(c.lines.keys.first, 'c1');
-      expect(c.lines['c1']!.itemId, isNull);
-      expect(c.lines['c1']!.catalogItemId, 'c1');
+      expect(c.lines.keys.first, 'siu-shop-only');
+      expect(c.lines['siu-shop-only']!.itemId, isNull);
+      expect(c.lines['siu-shop-only']!.shopItemId, 'si-shop-only');
     });
 
     test('removeLine drops the line and notifies', () {
       final c = ReceiveController();
       c.addOrReplaceLine(
-        fakeActivatedItem(itemId: 'i1'),
+        shopItemUnitId: 'siu-1',
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        displayName: 'Bariis',
+        packagingLabel: 'Kg',
+        baseUnitLabel: 'Kg',
         quantity: 1,
         lineTotal: 1,
       );
       c.addOrReplaceLine(
-        fakeActivatedItem(itemId: 'i2'),
+        shopItemUnitId: 'siu-2',
+        shopItemId: 'si-2',
+        itemId: 'i2',
+        displayName: 'Sonkor',
+        packagingLabel: 'Kg',
+        baseUnitLabel: 'Kg',
         quantity: 1,
         lineTotal: 1,
       );
       var notified = 0;
       c.addListener(() => notified++);
 
-      c.removeLine('i1');
-      expect(c.lines.keys, ['i2']);
+      c.removeLine('siu-1');
+      expect(c.lines.keys, ['siu-2']);
       expect(notified, 1);
       c.removeLine('nope');
       expect(notified, 1);
@@ -98,12 +129,22 @@ void main() {
     test('bonoTotal is the sum of line_totals', () {
       final c = ReceiveController();
       c.addOrReplaceLine(
-        fakeActivatedItem(itemId: 'i1'),
+        shopItemUnitId: 'siu-1',
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        displayName: 'Bariis',
+        packagingLabel: 'Bag',
+        baseUnitLabel: 'Kg',
         quantity: 5,
         lineTotal: 120,
       );
       c.addOrReplaceLine(
-        fakeActivatedItem(itemId: 'i2'),
+        shopItemUnitId: 'siu-2',
+        shopItemId: 'si-2',
+        itemId: 'i2',
+        displayName: 'Sonkor',
+        packagingLabel: 'Kg',
+        baseUnitLabel: 'Kg',
         quantity: 2,
         lineTotal: 6,
       );
@@ -114,7 +155,12 @@ void main() {
       final c = ReceiveController();
       c.setSupplier(fakeCustomer());
       c.addOrReplaceLine(
-        fakeActivatedItem(itemId: 'i1'),
+        shopItemUnitId: 'siu-1',
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        displayName: 'Bariis',
+        packagingLabel: 'Kg',
+        baseUnitLabel: 'Kg',
         quantity: 1,
         lineTotal: 1,
       );
@@ -131,7 +177,12 @@ void main() {
       final c = ReceiveController();
       c.setSupplier(fakeCustomer(name: 'Hassan'));
       c.addOrReplaceLine(
-        fakeActivatedItem(itemId: 'i1'),
+        shopItemUnitId: 'siu-1',
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        displayName: 'Bariis',
+        packagingLabel: 'Bag',
+        baseUnitLabel: 'Kg',
         quantity: 5,
         lineTotal: 100,
       );
@@ -143,8 +194,8 @@ void main() {
 
       c.restore(snap);
       expect(c.lineCount, 1);
-      expect(c.lines['i1']!.quantity, 5);
-      expect(c.lines['i1']!.lineTotal, 100);
+      expect(c.lines['siu-1']!.quantity, 5);
+      expect(c.lines['siu-1']!.lineTotal, 100);
       expect(c.supplier?.name, 'Hassan');
     });
   });

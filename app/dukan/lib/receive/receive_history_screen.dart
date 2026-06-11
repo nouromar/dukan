@@ -1,11 +1,6 @@
-// Bono (receive) history — reverse-chronological list of past bonos
-// for the current shop. Reached via the history menu on Home or the
-// history icon on the Receive screen's app bar. Tap a row → detail
-// screen with the bono lines + VOID action (mistakes only).
-//
-// Mirrors SaleHistoryScreen tightly — same shape, but receives in v1
-// are always credit, so there's no Cash branch; subtitle always shows
-// the supplier.
+// Bono (receive) history — reverse-chronological list of past bonos.
+// Mirrors SaleHistoryScreen — same filter surface (date / supplier /
+// hide voided), same scope-subtitle pattern in the app bar.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,8 +8,11 @@ import 'package:provider/provider.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/receive/receive_detail_screen.dart';
-import 'package:dukan/shared/dukan_app_bar.dart';
+import 'package:dukan/receive/receive_history_filter_sheet.dart';
+import 'package:dukan/shared/date_range.dart';
+import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
 
 class ReceiveHistoryScreen extends StatefulWidget {
@@ -27,25 +25,28 @@ class ReceiveHistoryScreen extends StatefulWidget {
 }
 
 class _ReceiveHistoryScreenState extends State<ReceiveHistoryScreen> {
-  static const int _pageLimit = 50;
+  static const int _pageLimit = 100;
+  late ReceiveHistoryFilters _filters;
   late Future<List<ReceiveSummary>> _future;
 
   @override
   void initState() {
     super.initState();
+    _filters = ReceiveHistoryFilters.initial();
     _future = _fetch();
   }
 
   Future<List<ReceiveSummary>> _fetch() {
     return context.read<ShopApi>().listReceives(
-      shopId: widget.shop.id,
-      limit: _pageLimit,
-    );
+          shopId: widget.shop.id,
+          limit: _pageLimit,
+          dateFrom: _filters.dateRange.from,
+          dateTo: _filters.dateRange.to,
+          partyId: _filters.supplierId,
+        );
   }
 
-  void _reload() {
-    setState(() => _future = _fetch());
-  }
+  void _reload() => setState(() => _future = _fetch());
 
   Future<void> _openDetail(ReceiveSummary receive) async {
     final didChange = await Navigator.of(context).push<bool>(
@@ -57,54 +58,127 @@ class _ReceiveHistoryScreenState extends State<ReceiveHistoryScreen> {
     if (didChange == true && mounted) _reload();
   }
 
+  Future<void> _openFilterSheet() async {
+    final next = await showReceiveHistoryFilterSheet(
+      context,
+      shop: widget.shop,
+      current: _filters,
+    );
+    if (next == null || !mounted) return;
+    setState(() {
+      _filters = next;
+      _future = _fetch();
+    });
+  }
+
+  void _clearSupplier() {
+    setState(() {
+      _filters = _filters.copyWith(clearSupplier: true);
+      _future = _fetch();
+    });
+  }
+
+  void _clearVoidedHide() {
+    setState(() {
+      _filters = _filters.copyWith(hideVoided: false);
+      _future = _fetch();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
+    final chips = <ActiveFilterChip>[
+      if (_filters.supplierId != null)
+        ActiveFilterChip(
+          label: l.filterChipParty(_filters.supplierName ?? ''),
+          onRemove: _clearSupplier,
+        ),
+      if (_filters.hideVoided)
+        ActiveFilterChip(
+          label: l.filterChipHideVoided,
+          onRemove: _clearVoidedHide,
+        ),
+    ];
     return Scaffold(
-      appBar: dukanAppBar(context, l.receiveHistoryTitle),
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l.receiveHistoryTitle),
+            Text(
+              dateRangeLabel(context, _filters.dateRange),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
+        actions: [
+          FilterFunnelAction(
+            onPressed: _openFilterSheet,
+            activeCount: _filters.activeBeyondDate +
+                (_filters.dateRange.isDefault ? 0 : 1),
+          ),
+        ],
+      ),
       body: SafeArea(
-        child: FutureBuilder<List<ReceiveSummary>>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Padding(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: Text(
-                    l.receiveHistoryLoadFailedMessage,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-              );
-            }
-            final receives = snapshot.data ?? const <ReceiveSummary>[];
-            if (receives.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: Text(
-                    l.receiveHistoryEmptyMessage,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: receives.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, i) => _ReceiveRow(
-                shop: widget.shop,
-                receive: receives[i],
-                onTap: () => _openDetail(receives[i]),
+        child: Column(
+          children: [
+            ActiveFiltersBar(chips: chips),
+            Expanded(
+              child: FutureBuilder<List<ReceiveSummary>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: Text(
+                          l.receiveHistoryLoadFailedMessage,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    );
+                  }
+                  final all = snapshot.data ?? const <ReceiveSummary>[];
+                  final rows = _filters.hideVoided
+                      ? all.where((r) => !r.isVoided).toList(growable: false)
+                      : all;
+                  if (rows.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: Text(
+                          l.receiveHistoryEmptyMessage,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    );
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () async => _reload(),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: rows.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, i) => _ReceiveRow(
+                        shop: widget.shop,
+                        receive: rows[i],
+                        onTap: () => _openDetail(rows[i]),
+                      ),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
@@ -126,9 +200,6 @@ class _ReceiveRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     final theme = Theme.of(context);
-    // Receives in v1 always have a supplier; partyName is non-null.
-    // Fallback to "—" defensively so a corrupt row doesn't crash the
-    // list rather than the list silently dropping it.
     final supplierName = receive.partyName ?? '—';
     return ListTile(
       onTap: onTap,
@@ -137,7 +208,7 @@ class _ReceiveRow extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              _formatTime(receive.occurredAt),
+              formatHistoryStamp(context, receive.occurredAt),
               style: theme.textTheme.titleMedium,
             ),
           ),
@@ -183,11 +254,4 @@ class _VoidedBadge extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatTime(DateTime dt) {
-  final local = dt.toLocal();
-  final h = local.hour.toString().padLeft(2, '0');
-  final m = local.minute.toString().padLeft(2, '0');
-  return '$h:$m';
 }

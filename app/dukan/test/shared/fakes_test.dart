@@ -72,6 +72,10 @@ void main() {
     expect(fakeTemplate().code, 'grocery');
     expect(fakeActivatedItem().isActivated, isTrue);
     expect(fakeCatalogCandidate().isActivated, isFalse);
-    expect(fakeCatalogCandidate().itemId, isNull);
+    // v2: catalog candidate IS a global item that hasn't been
+    // activated by the shop yet. itemId is set (it's the global id);
+    // shopItemId is null until ensureShopItem runs.
+    expect(fakeCatalogCandidate().shopItemId, isNull);
+    expect(fakeCatalogCandidate().itemId, isNotNull);
   });
 }

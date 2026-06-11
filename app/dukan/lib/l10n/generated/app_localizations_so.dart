@@ -12,25 +12,25 @@ class AppLocalizationsSo extends AppLocalizations {
   String get appTitle => 'Dukaan';
 
   @override
-  String get languageEnglish => 'EN';
+  String get languageEnglish => 'Ingiriis';
 
   @override
-  String get languageSomali => 'SO';
+  String get languageSomali => 'Soomaali';
 
   @override
   String get homeHint => 'Dooro shaqada maanta';
 
   @override
-  String get sale => 'Iib';
+  String get sale => 'Iibin';
 
   @override
-  String get receive => 'Qaadasho';
+  String get receive => 'Alaab dajin';
 
   @override
-  String get payment => 'Bixin';
+  String get payment => 'Lacag bixin';
 
   @override
-  String get expense => 'Kharash';
+  String get expense => 'Qarashaad';
 
   @override
   String get cash => 'KAASH';
@@ -48,7 +48,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get favorites => 'Kuwa la jecel yahay';
 
   @override
-  String get cart => 'GAARI';
+  String get cart => 'Danbiil';
 
   @override
   String itemsCount(num count) {
@@ -93,31 +93,575 @@ class AppLocalizationsSo extends AppLocalizations {
   String get searchCustomers => 'Raadi macmiil';
 
   @override
-  String get emptySaleHint => 'Taabo alaabta. Riix dheer tiro ama qiime.';
+  String get emptySaleHint =>
+      'riix gaaban: hal ku dar danbiisha. Riix dheer: shaashada tirada iyo qiimaha.';
 
   @override
-  String get receiveTitle => 'Qaadasho';
+  String get receiveTitle => 'Alaab dajin';
 
   @override
-  String get supplierFirst => 'Marka hore dooro keenaha';
+  String get supplierFirst => 'Marka hore dooro alaab keenaha';
 
   @override
   String get recentSuppliers => 'Keenayaal dhawaan';
 
   @override
-  String get searchSuppliers => 'Raadi keenaha';
+  String get searchSuppliers => 'Raadi alaab keenaha';
 
   @override
-  String get newSupplier => '+ Keene cusub';
+  String get newSupplier => '+ Alaab keene cusub';
 
   @override
-  String get newSupplierStub => 'Keene cusub — magac iyo telefoon marka dambe.';
+  String get newSupplierStub =>
+      'Alaab keene cusub — magac iyo telefoon marka dambe.';
 
   @override
-  String get repeatLastBono => 'Ku celi bonadii hore';
+  String get repeatLastBono => 'Ku celi alaab dajintii hore';
 
   @override
   String get bonoAttached => 'Bono waa la raaciyay';
+
+  @override
+  String get bonoAttachTooltip => 'Sawir bonoga';
+
+  @override
+  String get bonoAttachedTooltip =>
+      'Bono waa la sawiray — taabo si aad u beddesho';
+
+  @override
+  String get bonoAttachCamera => 'Sawir hadda';
+
+  @override
+  String get bonoAttachGallery => 'Sawir ka hor leh';
+
+  @override
+  String get bonoAttachedToast => 'Sawirka bonoga waa la raaciyay';
+
+  @override
+  String get bonoAttachFailedMessage =>
+      'Bonoga lama raacin karin. Isku day mar kale.';
+
+  @override
+  String get partyDetailTitle => 'Qof';
+
+  @override
+  String get partyDetailLoadFailedMessage => 'Qofkan lama soo dejin karin.';
+
+  @override
+  String get partyDetailReceivableLabel => 'Adigaa lacag laguu leeyahay';
+
+  @override
+  String get partyDetailPayableLabel => 'Iyagaa lacag lagu leeyahay';
+
+  @override
+  String get partyDetailPayButton => 'LACAG BIXI';
+
+  @override
+  String get partyDetailSalesHeader => 'Iibka';
+
+  @override
+  String get partyDetailReceivesHeader => 'Alaab La dajiyey';
+
+  @override
+  String get partyDetailPaymentsHeader => 'Lacagaha la bixiyey';
+
+  @override
+  String get homeTodayHeader => 'Maanta';
+
+  @override
+  String get homeSalesTodayLabel => 'Iibka maanta';
+
+  @override
+  String get homeReceivablesLabel => 'Deyn lagaa qabo';
+
+  @override
+  String get homePayablesLabel => 'Deyn Aaad Qabto';
+
+  @override
+  String get homeLowStockLabel => 'Alaab yaraatey';
+
+  @override
+  String homeLowStockCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count alaab',
+      one: '1 alaab',
+      zero: 'midna',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get receivablesTitle => 'Deyn lagaa qabo';
+
+  @override
+  String get receivablesEmptyMessage => 'Cidna kuu lahayn waqtigan.';
+
+  @override
+  String get payablesTitle => 'Deyn Aaad Qabto';
+
+  @override
+  String get payablesEmptyMessage => 'Cidna lahayn lacag waqtigan.';
+
+  @override
+  String get lowStockReportTitle => 'Alaabta yaraatey';
+
+  @override
+  String get lowStockReportEmptyMessage => 'Wax yaraatey ma jiraan.';
+
+  @override
+  String get reportLoadFailedMessage =>
+      'Ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.';
+
+  @override
+  String get filterTooltip => 'Shaandhee';
+
+  @override
+  String get filterSheetTitle => 'Shaandhee';
+
+  @override
+  String get filterApplyButton => 'ISTICMAAL';
+
+  @override
+  String get filterResetButton => 'Tirtir';
+
+  @override
+  String get dateRangeToday => 'Maanta';
+
+  @override
+  String get dateRangeWeek => '7-da maalmood ee tegay';
+
+  @override
+  String get dateRangeMonth => 'Bishaan';
+
+  @override
+  String get dateRangeAll => 'Waqti kasta';
+
+  @override
+  String get dateRangeCustom => 'Doorasho…';
+
+  @override
+  String get filterPartyLabel => 'Qof';
+
+  @override
+  String get filterPartyAny => 'Qof kasta';
+
+  @override
+  String get filterIncludeVoided => 'Ku dar kuwa la tirtiray';
+
+  @override
+  String get filterHideVoided => 'Qari kuwa la tirtiray';
+
+  @override
+  String get filterCategoryLabel => 'Qaybta';
+
+  @override
+  String get filterCategoryAny => 'Qayb kasta';
+
+  @override
+  String get filterLowStockOnly => 'Kaliya kuwa yaraatey';
+
+  @override
+  String get filterNoPriceOnly => 'Aan qiimo lahayn';
+
+  @override
+  String get saleHistorySearchHint => 'Raadi iibka';
+
+  @override
+  String get receiveHistorySearchHint => 'Raadi alaab la qaatey';
+
+  @override
+  String get receivablesSearchHint => 'Raadi macmiil';
+
+  @override
+  String get payablesSearchHint => 'Raadi bixiye';
+
+  @override
+  String get lowStockSearchHint => 'Raadi alaab';
+
+  @override
+  String get filterChipDateAll => 'Waqti kasta';
+
+  @override
+  String filterChipParty(String name) {
+    return 'Qof: $name';
+  }
+
+  @override
+  String get filterChipVoided => 'Iyo kuwa la tirtiray';
+
+  @override
+  String get filterChipHideVoided => 'La qariyay kuwa la tirtiray';
+
+  @override
+  String filterChipCategory(String name) {
+    return '$name';
+  }
+
+  @override
+  String get filterChipLowStock => 'Yaraatey';
+
+  @override
+  String get filterChipNoPrice => 'Aan qiimo lahayn';
+
+  @override
+  String get drawerHistoryHeader => 'TAARIIKH';
+
+  @override
+  String get drawerSalesHistory => 'Taariikhda iibka';
+
+  @override
+  String get drawerReceiveHistory => 'Taariikhda alaabta la qaatay';
+
+  @override
+  String get drawerExpenseHistory => 'Taariikhda kharashka';
+
+  @override
+  String get expenseHistoryTitle => 'Kharashaadka';
+
+  @override
+  String get expenseHistoryLoadFailedMessage =>
+      'Kharashka ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.';
+
+  @override
+  String get expenseHistoryEmptyMessage => 'Kharash weli ma jiro.';
+
+  @override
+  String get drawerPaymentHistory => 'Taariikhda lacagaha';
+
+  @override
+  String get paymentHistoryTitle => 'Lacagaha';
+
+  @override
+  String get paymentHistoryLoadFailedMessage =>
+      'Lacagaha ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.';
+
+  @override
+  String get paymentHistoryEmptyMessage => 'Lacag weli ma jiro.';
+
+  @override
+  String get paymentHistoryNoParty => 'Kaash';
+
+  @override
+  String get paymentHistoryRefundBadge => 'celin';
+
+  @override
+  String get paymentDirectionLabel => 'Jihada';
+
+  @override
+  String get paymentDirectionAny => 'Jiho kasta';
+
+  @override
+  String get paymentDirectionInbound => 'Macmiil ku bixiyay';
+
+  @override
+  String get paymentDirectionOutbound => 'Bixiye aad bixisay';
+
+  @override
+  String get drawerParties => 'Macaamiisha & bixiyayaasha';
+
+  @override
+  String get partiesTitle => 'Macaamiisha & bixiyayaasha';
+
+  @override
+  String get partiesSearchHint => 'Raadi magac ama telefoon';
+
+  @override
+  String get partiesLoadFailedMessage =>
+      'Ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.';
+
+  @override
+  String get partiesEmptyMessage => 'Macaamiil ama bixiye weli ma jiro.';
+
+  @override
+  String partiesEmptyForQuery(String query) {
+    return 'Wax la mid ah \"$query\" lama helin.';
+  }
+
+  @override
+  String get partiesHasBalanceChip => 'Oo qaba deyn kaliya';
+
+  @override
+  String get partyTypeLabel => 'Nooca';
+
+  @override
+  String get partyTypeAny => 'Qof kasta';
+
+  @override
+  String get partyTypeCustomer => 'Macmiil';
+
+  @override
+  String get partyTypeSupplier => 'Bixiye';
+
+  @override
+  String get partyTypeBoth => 'Macmiil + Bixiye';
+
+  @override
+  String get partiesAddButton => 'Ku dar';
+
+  @override
+  String get partyNewOpeningReceivableLabel => 'Deyn furitaan (kuugu leh)';
+
+  @override
+  String get partyNewOpeningPayableLabel => 'Deyn furitaan (aad u leh)';
+
+  @override
+  String get partyNewOpeningBalanceHelper =>
+      'Ikhtiyaari — deynta hore ka horeysay app-kan.';
+
+  @override
+  String get partyDetailEditTooltip => 'Bedel magaca & telefoonka';
+
+  @override
+  String get drawerPeopleHeader => 'DADKA';
+
+  @override
+  String get drawerCustomers => 'Macaamiisha';
+
+  @override
+  String get drawerSuppliers => 'Bixiyayaasha';
+
+  @override
+  String get customersTitle => 'Macaamiisha';
+
+  @override
+  String get suppliersTitle => 'Bixiyayaasha';
+
+  @override
+  String get customersSearchHint => 'Raadi macmiil';
+
+  @override
+  String get suppliersSearchHint => 'Raadi bixiye';
+
+  @override
+  String get customersAddButton => 'Ku dar';
+
+  @override
+  String get suppliersAddButton => 'Ku dar';
+
+  @override
+  String get customersHasBalanceChip => 'Oo deyn kuu leh';
+
+  @override
+  String get suppliersHasBalanceChip => 'Oo deyn ku leh';
+
+  @override
+  String get customersHeadlineLabel => 'Deyn lagaa qabo';
+
+  @override
+  String get suppliersHeadlineLabel => 'Deyn aad qabto';
+
+  @override
+  String customersHeadlineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count macaamiil oo deyn leh',
+      one: '1 macmiil oo deyn leh',
+      zero: 'Macmiil deyn leh ma jiro',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String suppliersHeadlineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bixiye oo deyn leh',
+      one: '1 bixiye oo deyn leh',
+      zero: 'Bixiye deyn leh ma jiro',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get peopleSortLabel => 'Habayn';
+
+  @override
+  String get peopleSortByReceivable => 'Deyn (kii ugu badnaa horta)';
+
+  @override
+  String get peopleSortByPayable => 'Deyn (kii ugu badnaa horta)';
+
+  @override
+  String get peopleSortByName => 'Magac (alifba)';
+
+  @override
+  String stockAdjustTitle(String name) {
+    return 'Hagaaji kayd $name';
+  }
+
+  @override
+  String stockAdjustCurrentLabel(String amount, String unit) {
+    return 'Hadda: $amount $unit';
+  }
+
+  @override
+  String get stockAdjustModeOpening => 'Furitaan';
+
+  @override
+  String get stockAdjustModeAdd => 'Ku dar';
+
+  @override
+  String get stockAdjustModeSubtract => 'Ka jar';
+
+  @override
+  String get stockAdjustModeSetExact => 'Cusub';
+
+  @override
+  String get stockAdjustModeOpeningHelper =>
+      'Kayddii aad hore u haysatay ka hor app-kan.';
+
+  @override
+  String get stockAdjustModeAddHelper => 'Kayd la helay oo aan bono ku jirin.';
+
+  @override
+  String get stockAdjustModeSubtractHelper =>
+      'Burburin, lumin, ama wax aan dib loo celin karin.';
+
+  @override
+  String get stockAdjustModeSetExactHelper =>
+      'Geli tirada saxda ah ee aad heshay.';
+
+  @override
+  String stockAdjustAmountLabel(String unit) {
+    return 'Tirada ($unit)';
+  }
+
+  @override
+  String get stockAdjustNotesLabel => 'Faallo (ikhtiyaari)';
+
+  @override
+  String stockAdjustPreview(String amount, String unit) {
+    return 'Kaydka cusub: $amount $unit';
+  }
+
+  @override
+  String get stockAdjustSaveButton => 'KEYDI';
+
+  @override
+  String get stockAdjustFailedMessage =>
+      'Ma keydin karno hagaajinta. Isku day mar kale.';
+
+  @override
+  String get stockAdjustInvalidAmountMessage => 'Geli tiro sax ah.';
+
+  @override
+  String get barcodeAddDialogTitle => 'Ku dar bar code';
+
+  @override
+  String get barcodeAddDialogHint => 'tusaale: 6291100123456';
+
+  @override
+  String get barcodeAddDialogSetPrimary => 'Ka dhig kan koowaad';
+
+  @override
+  String get barcodeChipMakePrimary => 'Ka dhig kan koowaad';
+
+  @override
+  String get barcodeChipRemove => 'Tirtir';
+
+  @override
+  String get barcodeAddTooltip => 'Ku dar bar code';
+
+  @override
+  String get barcodeNoneForBase => '— miisaan';
+
+  @override
+  String get aliasAddDialogTitle => 'Ku dar magac kale';
+
+  @override
+  String get aliasAddDialogHint => 'tusaale: Rice (Ingiriis)';
+
+  @override
+  String get aliasAddDialogLanguage => 'Luqadda';
+
+  @override
+  String get aliasChipRemove => 'Tirtir';
+
+  @override
+  String get aliasAddTooltip => 'Ku dar magac kale';
+
+  @override
+  String get languageNone => 'Mid kasta';
+
+  @override
+  String productsHeadline(int total, int low, int noPrice) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total alaab',
+      one: '1 alaab',
+      zero: 'Alaab weli ma jiro',
+    );
+    return '$_temp0 · $low yaraatey · $noPrice qiimo la\'aan';
+  }
+
+  @override
+  String get productsSortLabel => 'Habayn';
+
+  @override
+  String get productsSortByName => 'Magaca (A–Z)';
+
+  @override
+  String get productsSortByStockLow => 'Kayd (kii ugu yaraa horta)';
+
+  @override
+  String get drawerProductsHeader => 'ALAABTA';
+
+  @override
+  String get drawerTopMovers => 'Kuwa ugu badan iibka';
+
+  @override
+  String get topMoversTitle => 'Kuwa ugu badan iibka';
+
+  @override
+  String topMoversPeriodSubtitle(int days) {
+    return '$days-dii maalmood';
+  }
+
+  @override
+  String get topMoversPeriodTooltip => 'Muddo';
+
+  @override
+  String topMoversPeriodOption(int days) {
+    return '$days-dii maalmood';
+  }
+
+  @override
+  String get topMoversTopSegment => 'Kuwa ugu badan iibka';
+
+  @override
+  String get topMoversDeadSegment => 'Kayd aan iib lahayn';
+
+  @override
+  String get topMoversEmptyMessage => 'Iib waqtigan ma jiro.';
+
+  @override
+  String get drawerReportsHeader => 'WARBIXIN';
+
+  @override
+  String get drawerReceivables => 'Deyn lagaa qabo';
+
+  @override
+  String get drawerPayables => 'Deyn Aaad Qabto';
+
+  @override
+  String get drawerLowStock => 'Alaab yaraatey';
+
+  @override
+  String get drawerSetupHeader => 'DEJINTA';
+
+  @override
+  String get drawerProducts => 'Alaabta';
+
+  @override
+  String get drawerSettings => 'Habayn';
+
+  @override
+  String get drawerOpenTooltip => 'Liiska';
 
   @override
   String get attachBono => 'Ku dar sawir bono';
@@ -137,23 +681,23 @@ class AppLocalizationsSo extends AppLocalizations {
   String get unit => 'Halbeeg';
 
   @override
-  String get cost => 'Qiime gadasho';
+  String get cost => 'Qiimaha uu ku fadhiyo';
 
   @override
   String get perUnit => 'midkiiba';
 
   @override
-  String get line => 'xariiq';
+  String get line => 'sadar';
 
   @override
-  String get lineTotal => 'Wadarta xariiqda';
+  String get lineTotal => 'Wadarta sadar';
 
   @override
-  String get addLine => 'KU DAR XARIIQ';
+  String get addLine => 'KU DAR SADAR';
 
   @override
   String linesSoFar(Object count) {
-    return 'Xariiqyo: $count';
+    return 'Sadar: $count';
   }
 
   @override
@@ -170,10 +714,10 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get mismatchWarning =>
-      'Wadarta bono way ka duwan tahay xariiqyada — waa OK.';
+      'Wadarta bono way ka duwan tahay iskudarka sadarada — OK in la sii socdo.';
 
   @override
-  String get chooseItemWarning => 'Dooro alaab, tiro, iyo qiime.';
+  String get chooseItemWarning => 'Dooro alaab, tiro, iyo qiimo.';
 
   @override
   String get confirmReceive => 'XAQIIJI QAADASHO';
@@ -188,25 +732,25 @@ class AppLocalizationsSo extends AppLocalizations {
   String get backspace => 'DEL';
 
   @override
-  String get paymentTitle => 'Bixin macmiil';
+  String get paymentTitle => 'Lacag bixin';
 
   @override
   String get pickCustomer => 'Dooro macmiil';
 
   @override
-  String get amount => 'Lacag';
+  String get amount => 'qadar Lacag';
 
   @override
-  String get confirmPayment => 'XAQIIJI BIXIN';
+  String get confirmPayment => 'XAQIIJI LACAGBIXIN';
 
   @override
-  String get expenseTitle => 'Kharash';
+  String get expenseTitle => 'Qarashaad';
 
   @override
   String get category => 'Nooc';
 
   @override
-  String get confirmExpense => 'XAQIIJI KHARASH';
+  String get confirmExpense => 'XAQIIJI QARASH';
 
   @override
   String get rent => 'Kiro';
@@ -251,7 +795,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get loginBody =>
-      'Waxaan kuu diraynaa kood hal mar la isticmaalo. Dukaan wuxuu backend-ka uga diri karaa WhatsApp.';
+      'Waxaan kuu diraynaa kood hal mar la isticmaalo, text ama whatsapp.';
 
   @override
   String get phoneNumberLabel => 'Lambarka telefoonka';
@@ -381,11 +925,11 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get templatesEmptyMessage =>
-      'Weli ma jiraan noocyo dukaan oo la heli karo. La xiriir taageerada haddii ay sii socoto.';
+      'Weli ma jiraan noocyo dukaan. La xiriir support haddii ay sii socoto.';
 
   @override
   String get completeSetupFailedMessage =>
-      'Diyaarinta lama dhamayn karin. Isku day mar kale.';
+      'Diyaarinta lama dhamayn. Isku day mar kale.';
 
   @override
   String get settingsTitle => 'Diyaarinta';
@@ -406,20 +950,27 @@ class AppLocalizationsSo extends AppLocalizations {
   String get settingsTimezoneLabel => 'Saacadda goobta';
 
   @override
+  String get settingsLowStockWarningLabel => 'Digniinta kayd-yari';
+
+  @override
+  String get settingsLowStockWarningHint =>
+      'Muuji dhibic cas alaabta hooseysa, iyo digniin marka iib ka dhigo mid hooseeya.';
+
+  @override
   String get settingsSaveButton => 'KEYDI';
 
   @override
-  String get settingsSavedToast => 'Diyaarintu waa la keydiyay';
+  String get settingsSavedToast => 'Diyaarinta waa la keydiyay';
 
   @override
   String get settingsSaveFailedMessage =>
       'Diyaarinta lama keydin karin. Isku day mar kale.';
 
   @override
-  String get productsTitle => 'Walxaha';
+  String get productsTitle => 'Alaabo';
 
   @override
-  String get productsSearchHint => 'Raadi Soomaali ama Ingiriis';
+  String get productsSearchHint => 'Ku Raadi Soomaali ama Ingiriis';
 
   @override
   String get productsInYourShop => 'Dukaankaaga ku jira';
@@ -429,11 +980,11 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String productsStockLabel(Object quantity, Object unit) {
-    return '$quantity $unit oo kaydsan';
+    return '$quantity $unit oo yaal';
   }
 
   @override
-  String get productsNoStock => 'Wax kayd ah ma jiraan';
+  String get productsNoStock => 'Dukaanka ma taal';
 
   @override
   String get productsAddToShopButton => 'KU DAR';
@@ -448,50 +999,49 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String productsAddToShopFailedMessage(Object name) {
-    return '$name lama dari karin. Isku day mar kale.';
+    return '$name luguma darin. Isku day mar kale.';
   }
 
   @override
-  String get productsNewItemButton => '+ WALAX CUSUB';
+  String get productsNewItemButton => '+ Alaab CUSUB';
 
   @override
   String get productsNewItemUnavailable =>
-      'Walxaha aan liiska guud ku jirin waxaa la dari doonaa marka dambe.';
+      'Alaabo aan liiska guud ku jirin waxaa lugu dari kari doonaa hadhow.';
 
   @override
-  String get productsEmptyMessage =>
-      'Walxo weli ma jiraan. Ka dar mid liiska guud.';
+  String get productsEmptyMessage => 'Alaabo maleh. Kudar hadda liiska guud.';
 
   @override
   String productsSearchEmptyMessage(Object query) {
-    return 'Wax la mid ah “$query” ma jiraan.';
+    return 'Wax la mid ah “$query” maleh.';
   }
 
   @override
   String get productsLoadFailedMessage =>
-      'Walxaha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+      'Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get saleTitle => 'Iibin';
 
   @override
-  String get saleSearchHint => 'Raadi Soomaali ama Ingiriis';
+  String get saleSearchHint => 'Ku Raadi Soomaali ama Ingiriis';
 
   @override
   String saleCartSummary(num count, Object total) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count walxood',
-      one: '1 walax',
-      zero: 'Wax walax ah ma jiraan',
+      other: '$count shay',
+      one: '1 shay',
+      zero: 'Alaab maleh',
     );
     return '$_temp0 · $total';
   }
 
   @override
   String get saleEmptyFavoritesMessage =>
-      'Ka dar walxo liiska guud si aad halkan ku aragto.';
+      'Ku dar alaabo liiska guud si aad halkan ku aragto.';
 
   @override
   String saleSearchEmptyMessage(Object query) {
@@ -500,7 +1050,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get saleLoadFailedMessage =>
-      'Walxaha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+      'Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get saleCash => 'Lacag';
@@ -513,7 +1063,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String saleCustomerChip(Object amount, Object name) {
-    return '$name · waxa la leeyahay $amount';
+    return '$name · wuxuu qabaa $amount';
   }
 
   @override
@@ -527,19 +1077,19 @@ class AppLocalizationsSo extends AppLocalizations {
       'Iibka lama keydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
-  String get saleNeedItemsMessage => 'Marka hore ku dar ugu yaraan hal walax.';
+  String get saleNeedItemsMessage => 'Marka hore ku dar ugu yaraan hal shay.';
 
   @override
   String get saleNeedCustomerMessage => 'Dooro macmiilka iibka deynta ah.';
 
   @override
   String saleAddedItemToast(Object name) {
-    return '$name waa la daray';
+    return '$name waa lugudaray';
   }
 
   @override
   String saleAddItemFailedMessage(Object name) {
-    return '$name lama dari karin. Isku day mar kale.';
+    return '$name luguma dari karin. Isku day mar kale.';
   }
 
   @override
@@ -550,7 +1100,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String customerPickerOwesLabel(Object amount) {
-    return 'waxa la leeyahay $amount';
+    return 'wuxuu qabaa$amount';
   }
 
   @override
@@ -576,7 +1126,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get partyNewCustomerTitle => 'Macmiil cusub';
 
   @override
-  String get partyNewSupplierTitle => 'Keene cusub';
+  String get partyNewSupplierTitle => 'Alaab keene cusub';
 
   @override
   String get partyNewNameLabel => 'Magaca';
@@ -592,19 +1142,25 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get partyNewSaveFailedMessage =>
-      'Lama dari karin. Hubi internetka oo isku day mar kale.';
+      'Luguma dari karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get paymentTypeCustomer => 'Macmiil';
 
   @override
-  String get paymentTypeSupplier => 'Keene';
+  String get paymentTypeSupplier => 'Alaab keene';
+
+  @override
+  String get paymentTypeCustomerHint => 'Macmiilku wuxuu ku siinayaa lacag';
+
+  @override
+  String get paymentTypeSupplierHint => 'Waxaad alaab keenaha siinaysaa lacag';
 
   @override
   String get paymentPickCustomerButton => 'Dooro macmiil';
 
   @override
-  String get paymentPickSupplierButton => 'Dooro keene';
+  String get paymentPickSupplierButton => 'Dooro alaab keene';
 
   @override
   String paymentCustomerOwesLabel(Object amount) {
@@ -613,7 +1169,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String paymentSupplierOwedLabel(Object amount) {
-    return 'Waxaad ku leedahay $amount';
+    return 'Waxaad ka qabtaa $amount';
   }
 
   @override
@@ -623,12 +1179,12 @@ class AppLocalizationsSo extends AppLocalizations {
   String get paymentSaveButton => 'KEYDI';
 
   @override
-  String get paymentSavedToast => 'Bixinta waa la keydiyay';
+  String get paymentSavedToast => 'Lacag bixinta waa la keydiyay';
 
   @override
   String paymentNeedPartyMessage(String type) {
     String _temp0 = intl.Intl.selectLogic(type, {
-      'supplier': 'keenaha',
+      'supplier': 'alaab keenaha',
       'other': 'macmiilka',
     });
     return 'Marka hore dooro $_temp0.';
@@ -644,7 +1200,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get paymentPostFailedMessage =>
-      'Bixinta lama keydin karin. Hubi internetka oo isku day mar kale.';
+      'Lacag bixinta lama keydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get expenseCategoryLabel => 'Nooca';
@@ -656,7 +1212,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get expenseSaveButton => 'KEYDI';
 
   @override
-  String get expenseSavedToast => 'Kharashka waa la keydiyay';
+  String get expenseSavedToast => 'Qarashka waa la keydiyay';
 
   @override
   String get expenseNeedCategoryMessage => 'Marka hore dooro nooc.';
@@ -670,25 +1226,28 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get expensePostFailedMessage =>
-      'Kharashka lama keydin karin. Hubi internetka oo isku day mar kale.';
+      'Qarashka lama keydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get expenseEmptyMessage =>
-      'Wali noocyo kharash ma jiraan. Dooro nooca dukaanka Diyaarinta.';
+      'Wali noocyada qarashaadka lama galin. Ka dooro nooca dukaanka meesha Diyaarinta.';
 
   @override
-  String get saleHistoryTitle => 'Iibyada maanta';
+  String get saleHistoryTitle => 'Iibka';
 
   @override
-  String get saleHistoryTooltip => 'Taariikhda iibka';
+  String get historyYesterday => 'Shalay';
+
+  @override
+  String get saleHistoryTooltip => 'Sooyaalka iibka';
 
   @override
   String get saleHistoryEmptyMessage =>
-      'Wali iib ma jiro. KEYDI hore ee shaashada Iibka ayaa halkan ku soo galaya.';
+      'Wali waxba lama gadin.  Marka hore wax gad.';
 
   @override
   String get saleHistoryLoadFailedMessage =>
-      'Iibyada lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+      'Iibka lama soo dejin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get saleHistoryCashLabel => 'Kaash';
@@ -699,16 +1258,16 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get saleHistoryVoidedBadge => 'Tirtiran';
+  String get saleHistoryVoidedBadge => 'LagaNoqday';
 
   @override
   String get saleDetailTitle => 'Iib';
 
   @override
-  String get saleDetailVoidedHeader => 'Tirtiran';
+  String get saleDetailVoidedHeader => 'LagaNoqday';
 
   @override
-  String get saleDetailVoidButton => 'TIRTIR IIBKA';
+  String get saleDetailVoidButton => 'Ka noqo IIBKA';
 
   @override
   String saleDetailLineSubtotal(
@@ -733,20 +1292,42 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleDetailLoadFailedMessage => 'Iibkaan lama soo dejin karin.';
 
   @override
-  String get saleVoidConfirmTitle => 'Iibkan ma tirtir?';
+  String get saleReceiptShareButton => 'U DIR RASIID';
+
+  @override
+  String get saleReceiptDoneButton => 'DHAMMEYSTIR';
+
+  @override
+  String get saleReceiptShareTitle => 'Dir rasiidka';
+
+  @override
+  String get saleReceiptSharePrint => 'Daabac';
+
+  @override
+  String get saleReceiptShareWhatsApp => 'WhatsApp';
+
+  @override
+  String get saleReceiptShareComingSoon =>
+      'Si dhakhso ah — rasiidka halkan ayuu kaa diran doonaa.';
+
+  @override
+  String get saleHistoryReceiptTooltip => 'Fur rasiidka';
+
+  @override
+  String get saleVoidConfirmTitle => 'Ka noqo iibkan?';
 
   @override
   String get saleVoidConfirmBody =>
-      'Iibka waa la rogi doonaa, kayd-ka waa la celin doonaa, oo deynta macmiilka waxa la nadiifin doonaa.';
+      'Iibka waa laga noqo doonaa, alaabta kayd-ka lugu celi doonaa, deynta macmiilka waa laga jari doonaa.';
 
   @override
-  String get saleVoidConfirmYes => 'TIRTIR';
+  String get saleVoidConfirmYes => 'KaNoqo';
 
   @override
   String get saleVoidConfirmNo => 'JOOJI';
 
   @override
-  String get saleVoidRefundCheckboxLabel => 'Lacagta ku celi macmiilka';
+  String get saleVoidRefundCheckboxLabel => 'Lacagta u celi macmiilka';
 
   @override
   String get saleVoidRefundAmountLabel => 'Lacagta la celiyay';
@@ -762,51 +1343,51 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get saleVoidedToast => 'Iibka waa la tirtiray';
+  String get saleVoidedToast => 'Iibka waa laga noqday';
 
   @override
   String get saleVoidFailedMessage =>
-      'Iibka lama tirtiri karin. Hubi internetka oo isku day mar kale.';
+      'Iibka lagama noqo karin. Hubi internetka oo isku day mar kale.';
 
   @override
-  String get historyMenuSales => 'Taariikhda iibka';
+  String get historyMenuSales => 'Sooyaalka iibka';
 
   @override
-  String get historyMenuReceives => 'Taariikhda bonada';
+  String get historyMenuReceives => 'Sooyaalka Alaab keenida';
 
   @override
-  String get historyMenuTooltip => 'Taariikh';
+  String get historyMenuTooltip => 'Sooyaal';
 
   @override
-  String get receiveHistoryTitle => 'Bonadii maanta';
+  String get receiveHistoryTitle => 'Alaabtii La dajiyey';
 
   @override
-  String get receiveHistoryTooltip => 'Taariikhda bonada';
+  String get receiveHistoryTooltip => 'Sooyaalka Alaab keenida';
 
   @override
   String get receiveHistoryEmptyMessage =>
-      'Wali bono ma jiro. KEYDI hore ee shaashada Bonada ayaa halkan ku soo galaya.';
+      'Wali Alaab Lama dejin. Marka hore alaab daji.';
 
   @override
   String get receiveHistoryLoadFailedMessage =>
-      'Bonada lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+      'Sooyaalka Alaab Keenida lama soo dejin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String receiveHistorySupplierLabel(Object name) {
-    return 'Keene · $name';
+    return 'Alaab keene · $name';
   }
 
   @override
-  String get receiveHistoryVoidedBadge => 'Tirtiran';
+  String get receiveHistoryVoidedBadge => 'Laga Noqday';
 
   @override
-  String get receiveDetailTitle => 'Bono';
+  String get receiveDetailTitle => 'Alaab La Dajiyey';
 
   @override
-  String get receiveDetailVoidedHeader => 'Tirtiran';
+  String get receiveDetailVoidedHeader => 'Laga Noqday';
 
   @override
-  String get receiveDetailVoidButton => 'TIRTIR BONADAN';
+  String get receiveDetailVoidButton => 'Ka Noqo BONADAN';
 
   @override
   String receiveDetailLineSubtotal(
@@ -822,35 +1403,36 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveDetailTotalLabel => 'Wadar';
 
   @override
-  String get receiveDetailLoadFailedMessage => 'Bonadan lama soo dejin karin.';
+  String get receiveDetailLoadFailedMessage =>
+      'Alaab dajintan lama soo dejin karin.';
 
   @override
-  String get receiveVoidConfirmTitle => 'Bonadan ma tirtir?';
+  String get receiveVoidConfirmTitle => 'Ka noqo alaab dajintan?';
 
   @override
   String get receiveVoidConfirmBody =>
-      'Tan u isticmaal kaliya marka aad qaladka u dhigtay bonada. Bonada waa la rogi doonaa, kayd-ka waa la dhimi doonaa, oo lacagta aad keenaha ku leedahay ee bonadan waa la tirtir doonaa.';
+      'Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dajinta. Alaab dajinta waa laga noqo doonaa, alaabta kayd-ka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto ee alaab dajintan waa la nadiifin doonaa.';
 
   @override
   String get receiveVoidMistakesOnlyHint =>
-      'Kaliya qaladaad. Haddii aad keenaha wax u celineyso, taas u qor lacag-bixinta.';
+      'Kaliya qaladaad. Haddii aad alaab keenaha wax u celineyso, taas u qor lacag-bixinta.';
 
   @override
-  String get receiveVoidConfirmYes => 'TIRTIR';
+  String get receiveVoidConfirmYes => 'KaNoqo';
 
   @override
   String get receiveVoidConfirmNo => 'JOOJI';
 
   @override
-  String get receiveVoidedToast => 'Bonadu waa la tirtiray';
+  String get receiveVoidedToast => 'Alaab dajinta waa laga noqday';
 
   @override
   String get receiveVoidFailedMessage =>
-      'Bonada lama tirtiri karin. Hubi internetka oo isku day mar kale.';
+      'Alaab dajinta lagama noqo karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get receiveVoidBlockedStockMessage =>
-      'Walxaha bonadan qaarkood mar hore wuu dhaqaaqay. Tirtiridda way joojin tahay.';
+      'Alaabaha alaab dajintan qaarkood mar hore wuu dhaqaaqay. Ka noqoshada waa la joojiyay.';
 
   @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
@@ -863,10 +1445,10 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get cartExpandHint => 'Muuji walxaha';
+  String get cartExpandHint => 'Muuji shayada';
 
   @override
-  String get cartCollapseHint => 'Qari walxaha';
+  String get cartCollapseHint => 'Qari shayada';
 
   @override
   String get cartClearAllButton => 'Tirtir dhammaan';
@@ -876,10 +1458,10 @@ class AppLocalizationsSo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count walxood',
-      one: '1 walax',
+      other: '$count shay',
+      one: '1 shay',
     );
-    return 'Ka tirtir $_temp0 gaariga?';
+    return 'Ka tirtir $_temp0 danbiisha?';
   }
 
   @override
@@ -895,7 +1477,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get lineEditorDoneButton => 'DHAMME';
 
   @override
-  String get lineEditorPriceRequiredHelper => 'Geli qiimaha walaxdan';
+  String get lineEditorPriceRequiredHelper => 'Geli qiimaha shaygan';
 
   @override
   String get lineEditorInvalidPriceMessage => 'Geli lambar 0 ama wax ka badan';
@@ -904,45 +1486,45 @@ class AppLocalizationsSo extends AppLocalizations {
   String get lineEditorTilePriceMissing => '—';
 
   @override
-  String get supplierPickerTitle => 'Dooro keenaha';
+  String get supplierPickerTitle => 'Dooro alaab keenaha';
 
   @override
-  String get supplierPickerSearchHint => 'Raadi magaca ama telefoonka';
+  String get supplierPickerSearchHint => 'Ku Raadi magaca ama telefoonka';
 
   @override
   String supplierPickerOwesLabel(Object amount) {
-    return 'waxaad ku leedahay $amount';
+    return 'waxaad ka qabtaa $amount';
   }
 
   @override
-  String get supplierPickerNoBonosLabel => 'bono weli ma jirin';
+  String get supplierPickerNoBonosLabel => 'alaab dajin maleh';
 
   @override
   String get supplierPickerEmptyMessage =>
-      'Wali keene ma jiro. Ku dar marka aad qorto bono.';
+      'Alaab keene maleh. Ku dar marka aad qorto alaab dajin.';
 
   @override
   String supplierPickerSearchEmptyMessage(Object query) {
-    return 'Keene la mid ah “$query” ma jiro.';
+    return 'Alaab keene la mid ah “$query” maleh.';
   }
 
   @override
   String get supplierPickerLoadFailedMessage =>
-      'Keenayaasha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+      'Alaab keenayaasha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
 
   @override
-  String get supplierNewButton => '+ KEENE CUSUB';
+  String get supplierNewButton => '+ ALAAB KEENE CUSUB';
 
   @override
-  String get receiveSearchHint => 'Raadi Soomaali ama Ingiriis';
+  String get receiveSearchHint => 'Ku Raadi Soomaali ama Ingiriis';
 
   @override
   String get receiveLoadFailedMessage =>
-      'Walxaha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
+      'Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get receiveEmptyMessage =>
-      'Taabo walax si aad u bilowdo bono. Raadi haddii aysan ku jirin shabakada.';
+      'Taabo alaab si aad u bilowdo alaab dajin. Ku raadi haddii aysan ku jirin shabakada.';
 
   @override
   String get receiveLineQuantityLabel => 'Tirada';
@@ -958,7 +1540,12 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get receiveAddLineButton => 'KU DAR XARIIQ';
+  String receiveLineDerivedPerUnit(String money, String packaging) {
+    return '= $money mid kasta $packaging';
+  }
+
+  @override
+  String get receiveAddLineButton => 'KU DAR SADAR';
 
   @override
   String receiveLineSubtotal(Object quantity, Object total, Object unit) {
@@ -975,9 +1562,9 @@ class AppLocalizationsSo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count xariiqyo',
-      one: '1 xariiq',
-      zero: 'Wax xariiq ah ma jiraan',
+      other: '$count sadar',
+      one: '1 sadar',
+      zero: 'Wax sadar ah maleh',
     );
     return '$_temp0 · $total';
   }
@@ -990,15 +1577,15 @@ class AppLocalizationsSo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count xariiqyo',
-      one: '1 xariiq',
+      other: '$count sadar',
+      one: '1 sadar',
     );
     return 'Tirtir $_temp0?';
   }
 
   @override
   String get receiveLinesClearConfirmBody =>
-      'Tan ma noqonayso bono hore loo keydiyay.';
+      'Tan ma noqonayso alaab dajin hore loo keydiyay.';
 
   @override
   String get receiveLinesClearConfirmYes => 'TIRTIR';
@@ -1010,19 +1597,19 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveSaveButton => 'KEYDI';
 
   @override
-  String get receiveSavedToast => 'Bono waa la keydiyay (deyn)';
+  String get receiveSavedToast => 'Alaab dajin waa la keydiyay (deyn)';
 
   @override
   String get receivePostFailedMessage =>
-      'Bonadu lama keydin karin. Hubi internetka oo isku day mar kale.';
+      'Alaab dajinta lama keydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get receiveNeedSupplierMessage =>
-      'Dooro keene ka hor inta aadan keydin.';
+      'Dooro alaab keene ka hor inta aadan keydin.';
 
   @override
   String get receiveNeedLinesMessage =>
-      'Marka hore ku dar ugu yaraan hal xariiq.';
+      'Marka hore ku dar ugu yaraan hal sadar.';
 
   @override
   String get receiveInvalidNumberMessage => 'Geli lambar wanaagsan';
@@ -1044,4 +1631,389 @@ class AppLocalizationsSo extends AppLocalizations {
   @override
   String get unitPickerLoadFailedMessage =>
       'Halbeegyada lama soo dejin karin. Isku day mar kale.';
+
+  @override
+  String get unitPickerAddPackagingButton => '+ Ku dar baakad';
+
+  @override
+  String addNewItemSearchResult(Object query) {
+    return '+ Ku dar alaab cusub: “$query”';
+  }
+
+  @override
+  String get addNewItemSheetTitle => 'Ku dar alaab cusub';
+
+  @override
+  String get addNewItemNameLabel => 'Magaca';
+
+  @override
+  String get addNewItemUnitLabel => 'Halbeeg';
+
+  @override
+  String get addNewItemUnitChooseHint => 'Dooro';
+
+  @override
+  String addNewItemPriceLabel(Object unit) {
+    return 'Qiimaha iibka mid kasta $unit';
+  }
+
+  @override
+  String get addNewItemCategoryLabel => 'Nooca (ikhtiyaari)';
+
+  @override
+  String get addNewItemCategoryChooseHint => 'Dooro';
+
+  @override
+  String get addNewItemCancelButton => 'JOOJI';
+
+  @override
+  String get addNewItemAddToSaleButton => 'KU DAR IIBKA';
+
+  @override
+  String get addNewItemAddToReceiveButton => 'KU DAR ALAAB DAJINTA';
+
+  @override
+  String get addNewItemMissingNameMessage => 'Magaca waa loo baahan yahay';
+
+  @override
+  String get addNewItemMissingUnitMessage => 'Dooro halbeeg';
+
+  @override
+  String get addNewItemInvalidPriceMessage =>
+      'Geli qiimaha (0 ama wax ka badan)';
+
+  @override
+  String get addNewItemFailedMessage =>
+      'Alaabta lama abuuri karin. Isku day mar kale.';
+
+  @override
+  String get addNewItemHowSoldHeader => 'Sidee loo iibiyaa?';
+
+  @override
+  String get addNewItemHowDeliveredHeader =>
+      'Sidee bay alaabkeeneha u keenaan?';
+
+  @override
+  String addNewItemBaseOnlyTile(String base) {
+    return '$base ku iibiya';
+  }
+
+  @override
+  String addNewItemPickedPriceLabel(String packaging) {
+    return 'Qiimaha iibka mid kasta $packaging';
+  }
+
+  @override
+  String get addNewItemCustomPackagingEntry => '+ Baakad gaar ah';
+
+  @override
+  String get addNewItemCustomBaseUnitLabel => 'Halbeegga aasaasi';
+
+  @override
+  String get addNewItemCustomSoldUnitLabel => 'Loo iibiyo';
+
+  @override
+  String addNewItemCustomConversionLabel(String base, String sold) {
+    return 'Imisa $base ayaa ku jira 1 $sold?';
+  }
+
+  @override
+  String get addNewItemMissingPackagingMessage => 'Dooro sida loo iibiyo';
+
+  @override
+  String get addNewItemLoadOptionsFailedHint =>
+      'Soo jeedimaha lama soo dejin karin. Dooro baakad gaar ah.';
+
+  @override
+  String get addNewItemUseCustomButton => 'ISTICMAAL BAAKADAN';
+
+  @override
+  String get addNewItemLooseType => 'Furan';
+
+  @override
+  String get addNewItemBackToTypes => '← Dib u noqo';
+
+  @override
+  String get addPackagingSheetTitle => 'Ku dar baakad';
+
+  @override
+  String get addPackagingUnitLabel => 'Halbeeg';
+
+  @override
+  String addPackagingConversionLabel(Object base, Object unit) {
+    return 'Imisa $base ayaa ku jira 1 $unit?';
+  }
+
+  @override
+  String addPackagingPriceLabel(Object unit) {
+    return 'Qiimaha iibka mid kasta $unit (ikhtiyaari)';
+  }
+
+  @override
+  String get addPackagingSaveButton => 'KU DAR BAAKAD';
+
+  @override
+  String get addPackagingFailedMessage =>
+      'Baakadda luguma dari karin. Isku day mar kale.';
+
+  @override
+  String addPackagingHeaderBaseUnit(Object unit) {
+    return 'Halbeeg aasaasi · $unit';
+  }
+
+  @override
+  String get addPackagingSuggestionsHeader => 'Baakado caadi ah';
+
+  @override
+  String get addPackagingCustomEntry => '+ Baakad gaar ah';
+
+  @override
+  String get addPackagingLessCommonHeader => 'Kuwo aan caadi ahayn';
+
+  @override
+  String packagingConversionPreview(String unit, String qty, String base) {
+    return '1 $unit waxay qaaddaa $qty $base';
+  }
+
+  @override
+  String get addPackagingBackToSuggestions => '← Ku noqo soo jeedimaha';
+
+  @override
+  String addPackagingPickedPriceLabel(Object packaging) {
+    return 'Qiimaha iibka mid kasta $packaging (ikhtiyaari)';
+  }
+
+  @override
+  String get addPackagingNoSuggestionsHint =>
+      'Halbeegan wali baakado caadi ah uma jiraan — hoosta ka qor mid gaar ah.';
+
+  @override
+  String get addPackagingLoadFailedHint =>
+      'Soo jeedimaha lama soo dejin karin. Hoosta ka qor mid gaar ah.';
+
+  @override
+  String lineEditorCostHintLabel(String cost) {
+    return 'Qiimaha aad ku iibsatay ugu dambeysay: $cost. Ku dar dheeraadkaaga caadi ah.';
+  }
+
+  @override
+  String lineEditorSiblingHintLabel(String packaging, String price) {
+    return '$packaging waxay iibsataa $price. Tan tixraac.';
+  }
+
+  @override
+  String negativeStockToast(Object amount, Object item, Object unit) {
+    return '$item kayd-ka hadda waa $amount $unit. Soo qaado dhaqso.';
+  }
+
+  @override
+  String negativeStockMoreItems(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count shay oo kale',
+      one: '1 shay oo kale',
+    );
+    return '+ $_temp0 oo kayd hooseeya';
+  }
+
+  @override
+  String lowStockToast(String amount, String item, String unit) {
+    return '$item kayd-ka wuu hooseeyaa — kaliya $amount $unit ayaa hadhay. Soo qaado dhaqso.';
+  }
+
+  @override
+  String lowStockMoreItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count shay oo kale',
+      one: '1 shay oo kale',
+    );
+    return '+ $_temp0 oo kayd hooseeya';
+  }
+
+  @override
+  String get shopItemEditorTitleCreate => 'Ku dar alaab cusub';
+
+  @override
+  String get shopItemEditorTitleEdit => 'Bedel alaabta';
+
+  @override
+  String get productEditorLoadFailedMessage =>
+      'Lama soo dejin karin alaabtan. Isku day mar kale.';
+
+  @override
+  String get shopItemDetailAliasesHeader => 'Magacyo kale';
+
+  @override
+  String get shopItemDetailBarcodesHeader => 'Bar codes';
+
+  @override
+  String get shopItemEditorNameLabel => 'Magaca';
+
+  @override
+  String get shopItemEditorBaseUnitLabel => 'Halbeeg aasaasi';
+
+  @override
+  String get shopItemEditorCategoryLabel => 'Nooca';
+
+  @override
+  String get shopItemEditorReorderThresholdLabel =>
+      'Soo digi marka kayd-ku ka hooseeyo';
+
+  @override
+  String shopItemEditorReorderThresholdHelper(String unit) {
+    return '$unit ku qor. Ka tag bannaan haddii aadan rabin digniin.';
+  }
+
+  @override
+  String get shopItemEditorPackagingsHeader => 'Baakado';
+
+  @override
+  String get shopItemEditorAddPackagingButton => 'Ku dar baakad';
+
+  @override
+  String get shopItemEditorBaseBadge => 'ASAAS';
+
+  @override
+  String get removePackagingTooltip => 'Tirtir baakadda';
+
+  @override
+  String get shopItemEditorItemSectionHeader => 'Alaab';
+
+  @override
+  String get shopItemEditorEditHint =>
+      'Bedel qiimaha iyo defaults-ka bogga alaabta.';
+
+  @override
+  String get removePackagingConfirmBody =>
+      'Ma tirtirayaa baakaddan? Mar dambe wad ku celin kartaa.';
+
+  @override
+  String get removePackagingConfirmAction => 'TIRTIR';
+
+  @override
+  String get shopItemEditorSaveButton => 'KEYDI';
+
+  @override
+  String get shopItemEditorSaveAndAddAnotherButton =>
+      'KEYDI OO KU DAR MID KALE';
+
+  @override
+  String shopItemEditorSavedAndContinueToast(String name) {
+    return '$name waa la keydiyay — ku dar mid kale';
+  }
+
+  @override
+  String get shopItemDetailEditPrice => 'Bedel qiimaha';
+
+  @override
+  String get shopItemDetailDefaultSaleBadge => 'iib caadi';
+
+  @override
+  String get shopItemDetailDefaultReceiveBadge => 'alaab caadi';
+
+  @override
+  String get shopItemDetailNoPriceLabel => 'qiimo maleh';
+
+  @override
+  String shopItemDetailCurrentStockLabel(Object amount, Object unit) {
+    return '$amount $unit ayaa yaal';
+  }
+
+  @override
+  String shopItemDetailReorderBelowLabel(Object amount, Object unit) {
+    return 'Soo qaado marka uu yaraado $amount $unit';
+  }
+
+  @override
+  String get catalogPickerTitle => 'Eeg liiska guud';
+
+  @override
+  String get catalogPickerSearchHint => 'Ku Raadi liiska guud';
+
+  @override
+  String get catalogPickerActivatedBadge => 'horeyba';
+
+  @override
+  String catalogPickerAddButton(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count shay',
+      one: '1 shay',
+    );
+    return 'KU DAR $_temp0';
+  }
+
+  @override
+  String catalogPickerAddedToast(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count shay',
+      one: '1 shay',
+    );
+    return '$_temp0 ayaa la daray';
+  }
+
+  @override
+  String get setupOnboardingTitle => 'U habee alaabadaada';
+
+  @override
+  String setupOnboardingBody(Object count, Object template) {
+    return 'Waxaan kuugu darnay $count alaab oo ka mid ah qaabka $template. Hadda iibi waad bilaaban kartaa — qiimayaashu way buuxin doonaan markaad iibinayso.\n\nAma daqiiqad ku qaad:';
+  }
+
+  @override
+  String get setupOnboardingAddItemsTitle => 'Ku dar alaabadayda';
+
+  @override
+  String get setupOnboardingAddItemsBody => 'Alaabaha qaabku aanu lahayn';
+
+  @override
+  String get setupOnboardingSetPricesTitle =>
+      'U dhig qiimayaal alaabta caanka ah';
+
+  @override
+  String get setupOnboardingSetPricesBody =>
+      'Si aanu iibku u dhabaalayn qiimo weydiin';
+
+  @override
+  String get setupOnboardingBrowseCatalogTitle => 'Eeg liiska guud';
+
+  @override
+  String get setupOnboardingBrowseCatalogBody =>
+      'Ka dhaqaaji alaabo dheeraad ah liiskayaga';
+
+  @override
+  String get setupOnboardingSkipButton => 'BOOD — BILOW IIBKA';
+
+  @override
+  String get scanCameraTooltip => 'Akhri jeegga';
+
+  @override
+  String get scannerSheetTitle => 'Akhri jeegga';
+
+  @override
+  String get scannerTorchTooltip => 'Iftiin';
+
+  @override
+  String get scannerHoldSteady =>
+      'Si toosan u qabo — 15 ilaa 25 cm meel jeegga';
+
+  @override
+  String scanUnknownPillLabel(String code) {
+    return 'Jeeg lama yaqaano: $code';
+  }
+
+  @override
+  String get scanUnknownCreateAction => 'Cusub abuur';
+
+  @override
+  String get scanUnknownDismissAction => 'Iska saar';
+
+  @override
+  String get scanLookupFailed => 'Jeegga lama heli karo';
 }

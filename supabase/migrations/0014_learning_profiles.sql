@@ -1,3 +1,24 @@
+-- Per-shop learning artifacts and suggestion cache.
+--
+-- v2 schema notes:
+--   - The old `learned_supplier_item_cost` table is gone. It is
+--     replaced by `supplier_item_unit_cost` in 0007 (keyed on packaging
+--     rather than item). Do not recreate it here.
+--   - Per-shop `item` is now `shop_item`; all FKs target shop_item.
+--   - Display names live in the alias chain — `v_shop_suggestions`
+--     reads them via `shop_item_display_name(...)` from 0013.
+--   - Template-driven suggestion seeding now resolves template_item by
+--     code → global `item` → shop_item (the shop's activation row).
+--   - `unit_id` columns still target the global `unit` table since
+--     per-shop unit configuration is out of scope for v1.
+
+-- ---------------------------------------------------------------------------
+-- shop_item_usage
+-- ---------------------------------------------------------------------------
+--
+-- Aggregate usage per (shop, shop_item). Drives recency boosts in
+-- search ranking and "frequently sold" suggestions.
+
 create table public.shop_item_usage (
   id uuid primary key default extensions.gen_random_uuid(),
   shop_id uuid not null references public.shop(id) on delete cascade,
@@ -12,8 +33,16 @@ create table public.shop_item_usage (
   updated_at timestamptz not null default now(),
   unique (shop_id, item_id),
   unique (shop_id, id),
-  foreign key (shop_id, item_id) references public.item(shop_id, id) on delete cascade
+  foreign key (shop_id, item_id) references public.shop_item(shop_id, id) on delete cascade
 );
+
+-- ---------------------------------------------------------------------------
+-- shop_item_entry_profile
+-- ---------------------------------------------------------------------------
+--
+-- Tracks recurring (unit, quantity) combinations on sale/receive lines.
+-- Powers quantity-suggestion chips. unit_id stays on the global `unit`
+-- table — per-shop units are out of v1 scope.
 
 create table public.shop_item_entry_profile (
   id uuid primary key default extensions.gen_random_uuid(),
@@ -29,8 +58,16 @@ create table public.shop_item_entry_profile (
   updated_at timestamptz not null default now(),
   unique (shop_id, item_id, context, unit_id, quantity),
   unique (shop_id, id),
-  foreign key (shop_id, item_id) references public.item(shop_id, id) on delete cascade
+  foreign key (shop_id, item_id) references public.shop_item(shop_id, id) on delete cascade
 );
+
+-- ---------------------------------------------------------------------------
+-- shop_supplier_item_profile
+-- ---------------------------------------------------------------------------
+--
+-- Per-supplier learned usage. Drives "this supplier usually brings ..."
+-- suggestion lists in Receive search. NOT the cost cache — that lives
+-- in supplier_item_unit_cost (0007) keyed on packaging.
 
 create table public.shop_supplier_item_profile (
   id uuid primary key default extensions.gen_random_uuid(),
@@ -47,8 +84,12 @@ create table public.shop_supplier_item_profile (
   unique (shop_id, supplier_id, item_id, unit_id),
   unique (shop_id, id),
   foreign key (shop_id, supplier_id) references public.party(shop_id, id) on delete cascade,
-  foreign key (shop_id, item_id) references public.item(shop_id, id) on delete cascade
+  foreign key (shop_id, item_id) references public.shop_item(shop_id, id) on delete cascade
 );
+
+-- ---------------------------------------------------------------------------
+-- shop_party_usage
+-- ---------------------------------------------------------------------------
 
 create table public.shop_party_usage (
   id uuid primary key default extensions.gen_random_uuid(),
@@ -66,6 +107,10 @@ create table public.shop_party_usage (
   unique (shop_id, id),
   foreign key (shop_id, party_id) references public.party(shop_id, id) on delete cascade
 );
+
+-- ---------------------------------------------------------------------------
+-- shop_suggestion
+-- ---------------------------------------------------------------------------
 
 create table public.shop_suggestion (
   id uuid primary key default extensions.gen_random_uuid(),
@@ -90,7 +135,7 @@ create table public.shop_suggestion (
   updated_at timestamptz not null default now(),
   unique (shop_id, screen, context_key, suggestion_type, target_key, source),
   unique (shop_id, id),
-  foreign key (shop_id, item_id) references public.item(shop_id, id) on delete cascade,
+  foreign key (shop_id, item_id) references public.shop_item(shop_id, id) on delete cascade,
   foreign key (shop_id, party_id) references public.party(shop_id, id) on delete cascade,
   foreign key (shop_id, expense_category_id) references public.expense_category(shop_id, id) on delete cascade,
   check (
@@ -115,6 +160,13 @@ create index shop_suggestion_read_idx
   on public.shop_suggestion (shop_id, screen, context_key, rank)
   where is_active;
 
+-- ---------------------------------------------------------------------------
+-- v_shop_suggestions
+-- ---------------------------------------------------------------------------
+--
+-- Read-side projection used by the app. Resolves display name via the
+-- alias chain (see shop_item_display_name in 0013).
+
 create view public.v_shop_suggestions
 with (security_invoker = true)
 as
@@ -125,8 +177,7 @@ select
   ss.context_key,
   ss.suggestion_type,
   ss.item_id,
-  i.code as item_code,
-  coalesce(i.name_override, i.name) as item_name,
+  public.shop_item_display_name(ss.item_id, 'en') as item_name,
   ss.party_id,
   p.name as party_name,
   ss.expense_category_id,
@@ -145,9 +196,9 @@ select
   ss.created_at,
   ss.updated_at
 from public.shop_suggestion ss
-left join public.item i
-  on i.shop_id = ss.shop_id
-  and i.id = ss.item_id
+left join public.shop_item si
+  on si.shop_id = ss.shop_id
+  and si.id = ss.item_id
 left join public.party p
   on p.shop_id = ss.shop_id
   and p.id = ss.party_id
@@ -157,6 +208,10 @@ left join public.expense_category ec
 left join public.payment_method pm on pm.id = ss.payment_method_id
 left join public.unit u on u.id = ss.unit_id
 where ss.is_active;
+
+-- ---------------------------------------------------------------------------
+-- Helpers
+-- ---------------------------------------------------------------------------
 
 create or replace function public._suggestion_target_key(
   p_item_id uuid,
@@ -276,6 +331,15 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------------
+-- rebuild_shop_suggestions(shop_id)
+-- ---------------------------------------------------------------------------
+--
+-- Seeds template-driven suggestions for a shop after a template
+-- application. Template rows reference items by global `item.code`;
+-- we resolve those to the shop's `shop_item` (which must already be
+-- activated by `apply_template` for the join to land).
+
 create or replace function public.rebuild_shop_suggestions(p_shop_id uuid)
 returns void
 language plpgsql
@@ -290,6 +354,8 @@ begin
     raise exception 'Not allowed to rebuild suggestions for this shop';
   end if;
 
+  -- Item suggestions sourced from template_item, resolved via the
+  -- global item row to the shop's activation row.
   insert into public.shop_suggestion (
     shop_id,
     screen,
@@ -306,8 +372,8 @@ begin
     screen_code,
     'global',
     'item',
-    public._suggestion_target_key(i.id, null, null, null, null, null, null),
-    i.id,
+    public._suggestion_target_key(si.id, null, null, null, null, null, null),
+    si.id,
     'template',
     public._suggestion_rank('template', 0, min(sort_order)),
     true
@@ -322,16 +388,18 @@ begin
     join public.template_item ti on ti.template_id = ta.template_id
     where ta.shop_id = p_shop_id and ta.status = 'applied'
   ) template_items
-  join public.item i
-    on i.shop_id = p_shop_id
-    and i.code = template_items.item_code
-  group by i.id, screen_code
+  join public.item gi on gi.code = template_items.item_code
+  join public.shop_item si
+    on si.shop_id = p_shop_id
+    and si.item_id = gi.id
+  group by si.id, screen_code
   on conflict (shop_id, screen, context_key, suggestion_type, target_key, source)
   do update set
     rank = least(public.shop_suggestion.rank, excluded.rank),
     is_active = true,
     updated_at = now();
 
+  -- Quantity suggestions sourced from template_quantity_suggestion.
   insert into public.shop_suggestion (
     shop_id,
     screen,
@@ -350,8 +418,8 @@ begin
     tqs.context,
     'global',
     'quantity',
-    public._suggestion_target_key(i.id, null, null, null, u.id, tqs.quantity, null),
-    i.id,
+    public._suggestion_target_key(si.id, null, null, null, u.id, tqs.quantity, null),
+    si.id,
     u.id,
     tqs.quantity,
     'template',
@@ -359,21 +427,23 @@ begin
     true
   from public.template_application ta
   join public.template_quantity_suggestion tqs on tqs.template_id = ta.template_id
-  join public.item i
-    on i.shop_id = p_shop_id
-    and i.code = tqs.item_code
+  join public.item gi on gi.code = tqs.item_code
+  join public.shop_item si
+    on si.shop_id = p_shop_id
+    and si.item_id = gi.id
   join public.unit u on u.code = tqs.unit_code and u.is_active
   where ta.shop_id = p_shop_id
     and ta.status = 'applied'
     and tqs.item_code is not null
     and tqs.context in ('sale', 'receive')
-  group by tqs.context, i.id, u.id, tqs.quantity
+  group by tqs.context, si.id, u.id, tqs.quantity
   on conflict (shop_id, screen, context_key, suggestion_type, target_key, source)
   do update set
     rank = least(public.shop_suggestion.rank, excluded.rank),
     is_active = true,
     updated_at = now();
 
+  -- Quick-action seeds (item or expense_category, per row).
   insert into public.shop_suggestion (
     shop_id,
     screen,
@@ -391,33 +461,35 @@ begin
     tqa.screen,
     'global',
     case when tqa.item_code is not null then 'item' else 'expense_category' end,
-    public._suggestion_target_key(i.id, null, ec.id, null, null, null, null),
-    i.id,
+    public._suggestion_target_key(si.id, null, ec.id, null, null, null, null),
+    si.id,
     ec.id,
     'template',
     public._suggestion_rank('template', 0, min(tqa.position)),
     true
   from public.template_application ta
   join public.template_quick_action tqa on tqa.template_id = ta.template_id
-  left join public.item i
-    on i.shop_id = p_shop_id
-    and i.code = tqa.item_code
+  left join public.item gi on gi.code = tqa.item_code
+  left join public.shop_item si
+    on si.shop_id = p_shop_id
+    and si.item_id = gi.id
   left join public.expense_category ec
     on ec.shop_id = p_shop_id
     and ec.code = tqa.expense_category_code
   where ta.shop_id = p_shop_id
     and ta.status = 'applied'
     and (
-      (tqa.item_code is not null and i.id is not null)
+      (tqa.item_code is not null and si.id is not null)
       or (tqa.expense_category_code is not null and ec.id is not null)
     )
-  group by tqa.screen, tqa.item_code, i.id, ec.id
+  group by tqa.screen, tqa.item_code, si.id, ec.id
   on conflict (shop_id, screen, context_key, suggestion_type, target_key, source)
   do update set
     rank = least(public.shop_suggestion.rank, excluded.rank),
     is_active = true,
     updated_at = now();
 
+  -- Expense category catalog (independent of template_item rows).
   insert into public.shop_suggestion (
     shop_id,
     screen,
@@ -468,6 +540,14 @@ create trigger template_application_seed_shop_suggestions
 after update of status on public.template_application
 for each row
 execute function public._seed_shop_suggestions_after_template_application();
+
+-- ---------------------------------------------------------------------------
+-- Learn from transaction_line / payment
+-- ---------------------------------------------------------------------------
+--
+-- These triggers read `new.item_id` (now a `shop_item.id`) and
+-- `new.unit_id` (still a global `unit.id`). The shape is unchanged
+-- from the pre-v2 trigger.
 
 create or replace function public._learn_from_transaction_line()
 returns trigger
@@ -732,6 +812,10 @@ create trigger payment_learn_from_insert
 after insert on public.payment
 for each row
 execute function public._learn_from_payment();
+
+-- ---------------------------------------------------------------------------
+-- RLS + grants
+-- ---------------------------------------------------------------------------
 
 alter table public.shop_item_usage enable row level security;
 alter table public.shop_item_entry_profile enable row level security;

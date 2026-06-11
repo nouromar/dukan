@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:dukan/api/types.dart';
+
 class MockItem {
   const MockItem({
     required this.id,
@@ -1227,3 +1229,257 @@ const mockItems = <MockItem>[
     icon: Icons.spa,
   ),
 ];
+
+// ---------------------------------------------------------------------------
+// v2 API DTO fixtures.
+//
+// The daily-flow screens (sale_screen, receive_screen, products_screen)
+// fetch via `ShopApi` against Supabase RPCs in real builds, so these
+// fixtures are not wired into the runtime by default. They exist so any
+// future prototype/test harness can hand them to the screens without
+// having to fabricate UUIDs and packaging labels inline.
+//
+// IDs are stable hard-coded strings, not real UUIDs — they only need to be
+// unique within the fixture set. Packaging labels follow the
+// `"{conversion} {base_unit} {pack}"` convention used by the server
+// helpers (see `0007_items_parties.sql`).
+// ---------------------------------------------------------------------------
+
+const mockItemSearchResults = <ItemSearchResult>[
+  // Rice — base unit kg, default sale packaging is the 25 kg bag.
+  ItemSearchResult(
+    shopItemId: 'mock-shop-item-rice',
+    itemId: 'mock-item-rice',
+    displayName: 'Basmati Rice',
+    baseUnitCode: 'kg',
+    baseUnitLabel: 'kg',
+    defaultShopItemUnitId: 'mock-siu-rice-bag',
+    defaultUnitCode: 'bag',
+    defaultUnitLabel: 'bag',
+    defaultUnitConversionToBase: 25,
+    defaultUnitSalePrice: 26,
+    defaultUnitLastCost: 22,
+    currentStock: 75,
+    packagingLabel: '25 kg bag',
+    isActivated: true,
+    rankReason: 'alias_exact_locale',
+  ),
+  // Sugar — single packaging, base unit kg.
+  ItemSearchResult(
+    shopItemId: 'mock-shop-item-sugar',
+    itemId: 'mock-item-sugar',
+    displayName: 'Sugar',
+    baseUnitCode: 'kg',
+    baseUnitLabel: 'kg',
+    defaultShopItemUnitId: 'mock-siu-sugar-kg',
+    defaultUnitCode: 'kg',
+    defaultUnitLabel: 'kg',
+    defaultUnitConversionToBase: 1,
+    defaultUnitSalePrice: 1.4,
+    defaultUnitLastCost: 1.05,
+    currentStock: 40,
+    packagingLabel: 'kg',
+    isActivated: true,
+    rankReason: 'alias_prefix_locale',
+  ),
+  // Cooking oil — base unit L, sold by the bottle (default).
+  ItemSearchResult(
+    shopItemId: 'mock-shop-item-oil',
+    itemId: 'mock-item-oil',
+    displayName: 'Cooking Oil',
+    baseUnitCode: 'L',
+    baseUnitLabel: 'L',
+    defaultShopItemUnitId: 'mock-siu-oil-bottle',
+    defaultUnitCode: 'bottle',
+    defaultUnitLabel: 'bottle',
+    defaultUnitConversionToBase: 1,
+    defaultUnitSalePrice: 3,
+    defaultUnitLastCost: 2.4,
+    currentStock: 28,
+    packagingLabel: '1 L bottle',
+    isActivated: true,
+    rankReason: 'name_prefix',
+  ),
+  // Wheat flour — base unit kg, default sale packaging is the 10 kg bag.
+  ItemSearchResult(
+    shopItemId: 'mock-shop-item-flour',
+    itemId: 'mock-item-flour',
+    displayName: 'Wheat Flour',
+    baseUnitCode: 'kg',
+    baseUnitLabel: 'kg',
+    defaultShopItemUnitId: 'mock-siu-flour-bag',
+    defaultUnitCode: 'bag',
+    defaultUnitLabel: 'bag',
+    defaultUnitConversionToBase: 10,
+    defaultUnitSalePrice: 9.5,
+    defaultUnitLastCost: 7.8,
+    currentStock: 30,
+    packagingLabel: '10 kg bag',
+    isActivated: true,
+    rankReason: 'alias_exact_locale',
+  ),
+  // Tea — unactivated global catalog hit (sale tap must call
+  // ensureShopItem first). shopItemId and defaultShopItemUnitId are null.
+  ItemSearchResult(
+    shopItemId: null,
+    itemId: 'mock-item-tea',
+    displayName: 'Black Tea 250g',
+    baseUnitCode: 'pack',
+    baseUnitLabel: 'packet',
+    defaultShopItemUnitId: null,
+    defaultUnitCode: null,
+    defaultUnitLabel: null,
+    defaultUnitConversionToBase: null,
+    defaultUnitSalePrice: null,
+    defaultUnitLastCost: null,
+    currentStock: null,
+    packagingLabel: null,
+    isActivated: false,
+    rankReason: 'alias_prefix_any',
+  ),
+];
+
+const mockShopItemSummaries = <ShopItemSummary>[
+  ShopItemSummary(
+    shopItemId: 'mock-shop-item-rice',
+    itemId: 'mock-item-rice',
+    displayName: 'Basmati Rice',
+    categoryName: 'Staples',
+    baseUnitCode: 'kg',
+    baseUnitLabel: 'kg',
+    currentStock: 75,
+    unitCount: 2,
+    isActive: true,
+  ),
+  ShopItemSummary(
+    shopItemId: 'mock-shop-item-sugar',
+    itemId: 'mock-item-sugar',
+    displayName: 'Sugar',
+    categoryName: 'Staples',
+    baseUnitCode: 'kg',
+    baseUnitLabel: 'kg',
+    currentStock: 40,
+    unitCount: 1,
+    isActive: true,
+  ),
+  ShopItemSummary(
+    shopItemId: 'mock-shop-item-oil',
+    itemId: 'mock-item-oil',
+    displayName: 'Cooking Oil',
+    categoryName: 'Staples',
+    baseUnitCode: 'L',
+    baseUnitLabel: 'L',
+    currentStock: 28,
+    unitCount: 1,
+    isActive: true,
+  ),
+  ShopItemSummary(
+    shopItemId: 'mock-shop-item-flour',
+    itemId: 'mock-item-flour',
+    displayName: 'Wheat Flour',
+    categoryName: 'Staples',
+    baseUnitCode: 'kg',
+    baseUnitLabel: 'kg',
+    currentStock: 30,
+    unitCount: 2,
+    isActive: true,
+  ),
+];
+
+/// Per-packaging detail rows for the shop_item editor. Keyed by the
+/// `shopItemId` so the editor screen can look up "the packagings for this
+/// item" without filtering a flat list.
+const mockShopItemUnits = <String, List<ShopItemUnitDetail>>{
+  'mock-shop-item-rice': <ShopItemUnitDetail>[
+    ShopItemUnitDetail(
+      shopItemUnitId: 'mock-siu-rice-kg',
+      itemUnitId: 'mock-iu-rice-kg',
+      unitCode: 'kg',
+      unitLabel: 'kg',
+      packagingLabel: 'kg',
+      conversionToBase: 1,
+      salePrice: 1.2,
+      lastCost: 0.95,
+      isDefaultSale: false,
+      isDefaultReceive: false,
+      isBaseUnit: true,
+      isActive: true,
+    ),
+    ShopItemUnitDetail(
+      shopItemUnitId: 'mock-siu-rice-bag',
+      itemUnitId: 'mock-iu-rice-bag',
+      unitCode: 'bag',
+      unitLabel: 'bag',
+      packagingLabel: '25 kg bag',
+      conversionToBase: 25,
+      salePrice: 26,
+      lastCost: 22,
+      isDefaultSale: true,
+      isDefaultReceive: true,
+      isBaseUnit: false,
+      isActive: true,
+    ),
+  ],
+  'mock-shop-item-sugar': <ShopItemUnitDetail>[
+    ShopItemUnitDetail(
+      shopItemUnitId: 'mock-siu-sugar-kg',
+      itemUnitId: 'mock-iu-sugar-kg',
+      unitCode: 'kg',
+      unitLabel: 'kg',
+      packagingLabel: 'kg',
+      conversionToBase: 1,
+      salePrice: 1.4,
+      lastCost: 1.05,
+      isDefaultSale: true,
+      isDefaultReceive: true,
+      isBaseUnit: true,
+      isActive: true,
+    ),
+  ],
+  'mock-shop-item-oil': <ShopItemUnitDetail>[
+    ShopItemUnitDetail(
+      shopItemUnitId: 'mock-siu-oil-bottle',
+      itemUnitId: 'mock-iu-oil-bottle',
+      unitCode: 'bottle',
+      unitLabel: 'bottle',
+      packagingLabel: '1 L bottle',
+      conversionToBase: 1,
+      salePrice: 3,
+      lastCost: 2.4,
+      isDefaultSale: true,
+      isDefaultReceive: true,
+      isBaseUnit: true,
+      isActive: true,
+    ),
+  ],
+  'mock-shop-item-flour': <ShopItemUnitDetail>[
+    ShopItemUnitDetail(
+      shopItemUnitId: 'mock-siu-flour-kg',
+      itemUnitId: 'mock-iu-flour-kg',
+      unitCode: 'kg',
+      unitLabel: 'kg',
+      packagingLabel: 'kg',
+      conversionToBase: 1,
+      salePrice: 1.1,
+      lastCost: 0.85,
+      isDefaultSale: false,
+      isDefaultReceive: false,
+      isBaseUnit: true,
+      isActive: true,
+    ),
+    ShopItemUnitDetail(
+      shopItemUnitId: 'mock-siu-flour-bag',
+      itemUnitId: 'mock-iu-flour-bag',
+      unitCode: 'bag',
+      unitLabel: 'bag',
+      packagingLabel: '10 kg bag',
+      conversionToBase: 10,
+      salePrice: 9.5,
+      lastCost: 7.8,
+      isDefaultSale: true,
+      isDefaultReceive: true,
+      isBaseUnit: false,
+      isActive: true,
+    ),
+  ],
+};

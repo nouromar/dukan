@@ -176,18 +176,102 @@ class FakeShopApi implements ShopApi {
   Future<List<TemplateOption>> Function()? onListAvailableTemplates;
   Future<void> Function(String shopId, String templateId)? onApplyTemplate;
   Future<void> Function(String shopId)? onCompleteSetup;
-  Future<String> Function(String shopId, String catalogItemId)?
+  Future<void> Function(String shopId)? onDismissOnboarding;
+  final List<String> dismissOnboardingCalls = [];
+  Future<String> Function(String shopId, String itemId)?
   onEnsureShopItem;
-  Future<void> Function(String shopId, String itemId, num salePrice)?
-  onSetItemSalePrice;
-  final List<({String itemId, num salePrice})> setItemSalePriceCalls = [];
+  Future<void> Function(String shopId, String shopItemUnitId, num? salePrice)?
+  onSetShopItemUnitSalePrice;
+  final List<({String shopItemUnitId, num? salePrice})>
+  setShopItemUnitSalePriceCalls = [];
   Future<List<ReceiveUnitOption>> Function(
     String shopId,
-    String? itemId,
-    String? catalogItemId,
+    String shopItemId,
     String screen,
   )?
-  onListItemUnits;
+  onListShopItemUnits;
+  Future<CreateShopItemResult> Function(
+    String shopId,
+    String name,
+    String languageCode,
+    String baseUnitCode,
+    num? salePrice,
+    String? categoryId,
+    String? soldUnitCode,
+    num? soldConversion,
+    String defaultSide,
+  )?
+  onCreateShopItem;
+  final List<
+    ({
+      String name,
+      String languageCode,
+      String baseUnitCode,
+      num? salePrice,
+      String? categoryId,
+      String? soldUnitCode,
+      num? soldConversion,
+      String defaultSide,
+    })
+  >
+  createShopItemCalls = [];
+  Future<String> Function(
+    String shopId,
+    String shopItemId,
+    String unitCode,
+    num conversionToBase,
+    num? salePrice,
+  )?
+  onCreateShopItemUnit;
+  final List<({String shopItemId, String unitCode, num conversionToBase})>
+  createShopItemUnitCalls = [];
+  Future<String> Function(
+    String shopId,
+    String shopItemId,
+    String aliasText,
+    String? languageCode,
+    bool isDisplay,
+    String source,
+  )?
+  onAddShopItemAlias;
+  Future<List<ShopItemSummary>> Function(
+    String shopId,
+    String? categoryId,
+    String? query,
+    String? locale,
+  )?
+  onListShopItems;
+  Future<ShopItemDetail> Function(
+    String shopId,
+    String shopItemId,
+    String? locale,
+  )?
+  onGetShopItem;
+  Future<List<ShopItemStock>> Function(
+    String shopId,
+    List<String> shopItemIds,
+    String? locale,
+  )?
+  onFetchShopItemStocks;
+  final List<({String shopId, List<String> shopItemIds})>
+  fetchShopItemStocksCalls = [];
+  Future<List<PackagingSuggestion>> Function(
+    String shopId,
+    String shopItemId,
+    String baseUnitCode,
+    String? categoryId,
+    String? locale,
+    int limit,
+  )?
+  onSuggestItemPackagings;
+  Future<List<CategoryUnitSuggestion>> Function(
+    String categoryId,
+    String? locale,
+    int limit,
+  )?
+  onSuggestCategoryUnits;
+  Future<NewItemOptions> Function(String? categoryId, String? locale)?
+  onFetchNewItemOptions;
   Future<List<ItemSearchResult>> Function(
     String shopId,
     String query,
@@ -271,6 +355,18 @@ class FakeShopApi implements ShopApi {
     int limit,
   )?
   onListReceives;
+  Future<List<ExpenseSummary>> Function(
+    String shopId,
+    DateTime? before,
+    int limit,
+  )?
+  onListExpenses;
+  Future<List<PaymentSummary>> Function(
+    String shopId,
+    DateTime? before,
+    int limit,
+  )?
+  onListPayments;
   Future<ReceiveSummary?> Function(String shopId, String txnId)? onGetReceive;
   Future<List<ReceiveLineDetail>> Function(String shopId, String txnId)?
   onGetReceiveLines;
@@ -294,6 +390,7 @@ class FakeShopApi implements ShopApi {
     String? currencyCode,
     String? defaultLanguageCode,
     String? timezone,
+    bool? lowStockWarningEnabled,
   })?
   onUpdateShopDefaults;
   Future<ShopSummary?> Function(String shopId)? onFetchShop;
@@ -320,56 +417,277 @@ class FakeShopApi implements ShopApi {
   }
 
   @override
+  Future<void> dismissOnboarding({required String shopId}) async {
+    dismissOnboardingCalls.add(shopId);
+    if (onDismissOnboarding != null) return onDismissOnboarding!(shopId);
+  }
+
+  @override
   Future<String> ensureShopItem({
     required String shopId,
-    required String catalogItemId,
+    required String itemId,
   }) async {
     if (onEnsureShopItem != null) {
-      return onEnsureShopItem!(shopId, catalogItemId);
+      return onEnsureShopItem!(shopId, itemId);
     }
-    return 'fake-item-${catalogItemId.hashCode}';
+    return 'fake-shop-item-${itemId.hashCode}';
   }
 
   @override
-  Future<void> setItemSalePrice({
+  Future<void> setShopItemUnitSalePrice({
     required String shopId,
-    required String itemId,
-    required num salePrice,
+    required String shopItemUnitId,
+    required num? salePrice,
   }) async {
-    setItemSalePriceCalls.add((itemId: itemId, salePrice: salePrice));
-    if (onSetItemSalePrice != null) {
-      return onSetItemSalePrice!(shopId, itemId, salePrice);
+    setShopItemUnitSalePriceCalls
+        .add((shopItemUnitId: shopItemUnitId, salePrice: salePrice));
+    if (onSetShopItemUnitSalePrice != null) {
+      return onSetShopItemUnitSalePrice!(shopId, shopItemUnitId, salePrice);
     }
   }
 
   @override
-  Future<List<ReceiveUnitOption>> listItemUnits({
+  Future<List<ReceiveUnitOption>> listShopItemUnits({
     required String shopId,
-    String? itemId,
-    String? catalogItemId,
+    required String shopItemId,
     String screen = 'receive',
   }) async {
-    if (onListItemUnits != null) {
-      return onListItemUnits!(shopId, itemId, catalogItemId, screen);
+    if (onListShopItemUnits != null) {
+      return onListShopItemUnits!(shopId, shopItemId, screen);
     }
-    // Sensible default: two units (base + a receive unit) so tests not
-    // explicitly setting onListItemUnits still exercise the picker.
+    // Sensible default: base unit (kg) + a 25 kg bag packaging, so
+    // tests not explicitly setting onListShopItemUnits still exercise
+    // the picker. The 25 kg bag is the default-for-screen on both
+    // 'sale' and 'receive' contexts.
     return const [
       ReceiveUnitOption(
-        unitId: 'unit-kg',
+        shopItemUnitId: 'unit-kg',
         unitCode: 'kg',
         unitLabel: 'Kg',
+        packagingLabel: 'Kg',
         conversionToBase: 1,
+        salePrice: null,
+        lastCost: null,
         isDefault: false,
+        isBaseUnit: true,
       ),
       ReceiveUnitOption(
-        unitId: 'unit-bag',
+        shopItemUnitId: 'unit-bag-25',
         unitCode: 'bag',
         unitLabel: 'Bag',
+        packagingLabel: '25 Kg Bag',
         conversionToBase: 25,
+        salePrice: null,
+        lastCost: null,
         isDefault: true,
+        isBaseUnit: false,
       ),
     ];
+  }
+
+  @override
+  Future<CreateShopItemResult> createShopItem({
+    required String shopId,
+    required String name,
+    required String languageCode,
+    required String baseUnitCode,
+    num? salePrice,
+    String? categoryId,
+    String? soldUnitCode,
+    num? soldConversion,
+    String defaultSide = 'sale',
+  }) async {
+    createShopItemCalls.add((
+      name: name,
+      languageCode: languageCode,
+      baseUnitCode: baseUnitCode,
+      salePrice: salePrice,
+      categoryId: categoryId,
+      soldUnitCode: soldUnitCode,
+      soldConversion: soldConversion,
+      defaultSide: defaultSide,
+    ));
+    if (onCreateShopItem != null) {
+      return onCreateShopItem!(
+        shopId,
+        name,
+        languageCode,
+        baseUnitCode,
+        salePrice,
+        categoryId,
+        soldUnitCode,
+        soldConversion,
+        defaultSide,
+      );
+    }
+    final id = 'fake-shop-item-${name.hashCode}';
+    return (
+      shopItemId: id,
+      defaultShopItemUnitId: 'fake-default-unit-${name.hashCode}',
+    );
+  }
+
+  @override
+  Future<String> createShopItemUnit({
+    required String shopId,
+    required String shopItemId,
+    required String unitCode,
+    required num conversionToBase,
+    num? salePrice,
+  }) async {
+    createShopItemUnitCalls.add((
+      shopItemId: shopItemId,
+      unitCode: unitCode,
+      conversionToBase: conversionToBase,
+    ));
+    if (onCreateShopItemUnit != null) {
+      return onCreateShopItemUnit!(
+        shopId,
+        shopItemId,
+        unitCode,
+        conversionToBase,
+        salePrice,
+      );
+    }
+    return 'fake-shop-item-unit-${unitCode.hashCode}-'
+        '${conversionToBase.hashCode}';
+  }
+
+  final List<
+      ({
+        String shopItemId,
+        String aliasText,
+        String? languageCode,
+        bool isDisplay,
+      })> addShopItemAliasCalls = [];
+
+  @override
+  Future<String> addShopItemAlias({
+    required String shopId,
+    required String shopItemId,
+    required String aliasText,
+    String? languageCode,
+    bool isDisplay = false,
+    String source = 'manual',
+  }) async {
+    addShopItemAliasCalls.add((
+      shopItemId: shopItemId,
+      aliasText: aliasText,
+      languageCode: languageCode,
+      isDisplay: isDisplay,
+    ));
+    if (onAddShopItemAlias != null) {
+      return onAddShopItemAlias!(
+        shopId,
+        shopItemId,
+        aliasText,
+        languageCode,
+        isDisplay,
+        source,
+      );
+    }
+    return 'fake-alias-${aliasText.hashCode}';
+  }
+
+  @override
+  Future<List<ShopItemSummary>> listShopItems({
+    required String shopId,
+    String? categoryId,
+    String? query,
+    String? locale,
+  }) async {
+    if (onListShopItems != null) {
+      return onListShopItems!(shopId, categoryId, query, locale);
+    }
+    return const [];
+  }
+
+  @override
+  Future<ShopItemDetail> getShopItem({
+    required String shopId,
+    required String shopItemId,
+    String? locale,
+  }) async {
+    if (onGetShopItem != null) {
+      return onGetShopItem!(shopId, shopItemId, locale);
+    }
+    // Default empty detail — tests that exercise getShopItem set the
+    // callback explicitly.
+    return const ShopItemDetail(
+      header: ShopItemSummary(
+        shopItemId: 'fake-shop-item',
+        itemId: null,
+        displayName: 'Fake Item',
+        categoryName: null,
+        baseUnitCode: 'piece',
+        baseUnitLabel: 'Piece',
+        currentStock: 0,
+        unitCount: 1,
+        isActive: true,
+      ),
+      units: [],
+      aliases: [],
+      barcodes: [],
+    );
+  }
+
+  @override
+  Future<List<PackagingSuggestion>> suggestItemPackagings({
+    required String shopId,
+    required String shopItemId,
+    required String baseUnitCode,
+    String? categoryId,
+    String? locale,
+    int limit = 8,
+  }) async {
+    if (onSuggestItemPackagings != null) {
+      return onSuggestItemPackagings!(
+        shopId,
+        shopItemId,
+        baseUnitCode,
+        categoryId,
+        locale,
+        limit,
+      );
+    }
+    return const [];
+  }
+
+  @override
+  Future<List<CategoryUnitSuggestion>> suggestCategoryUnits({
+    required String categoryId,
+    String? locale,
+    int limit = 5,
+  }) async {
+    if (onSuggestCategoryUnits != null) {
+      return onSuggestCategoryUnits!(categoryId, locale, limit);
+    }
+    return const [];
+  }
+
+  @override
+  Future<NewItemOptions> fetchNewItemOptions({
+    String? categoryId,
+    String? locale,
+  }) async {
+    if (onFetchNewItemOptions != null) {
+      return onFetchNewItemOptions!(categoryId, locale);
+    }
+    return const NewItemOptions(baseUnits: [], packagedUnits: []);
+  }
+
+  @override
+  Future<List<ShopItemStock>> fetchShopItemStocks({
+    required String shopId,
+    required List<String> shopItemIds,
+    String? locale,
+  }) async {
+    fetchShopItemStocksCalls
+        .add((shopId: shopId, shopItemIds: shopItemIds));
+    if (onFetchShopItemStocks != null) {
+      return onFetchShopItemStocks!(shopId, shopItemIds, locale);
+    }
+    return const [];
   }
 
   @override
@@ -414,6 +732,56 @@ class FakeShopApi implements ShopApi {
     return 'fake-party-${name.hashCode}';
   }
 
+  Future<void> Function(
+    String shopId,
+    String partyId,
+    String name,
+    String? phone,
+  )?
+  onUpdateParty;
+  final List<({String partyId, String name, String? phone})> updatePartyCalls =
+      [];
+
+  @override
+  Future<void> updateParty({
+    required String shopId,
+    required String partyId,
+    required String name,
+    String? phone,
+  }) async {
+    updatePartyCalls.add((partyId: partyId, name: name, phone: phone));
+    if (onUpdateParty != null) {
+      return onUpdateParty!(shopId, partyId, name, phone);
+    }
+  }
+
+  Future<String> Function(
+    String shopId,
+    String partyId,
+    num amount,
+    String direction,
+  )?
+  onPostOpeningPartyBalance;
+  final List<({String partyId, num amount, String direction})>
+      postOpeningPartyBalanceCalls = [];
+
+  @override
+  Future<String> postOpeningPartyBalance({
+    required String shopId,
+    required String partyId,
+    required num amount,
+    required String direction,
+    String? clientOpId,
+    String? notes,
+  }) async {
+    postOpeningPartyBalanceCalls
+        .add((partyId: partyId, amount: amount, direction: direction));
+    if (onPostOpeningPartyBalance != null) {
+      return onPostOpeningPartyBalance!(shopId, partyId, amount, direction);
+    }
+    return 'fake-opening-${partyId.hashCode}';
+  }
+
   @override
   Future<List<UnitOption>> listUnits() async {
     if (onListUnits != null) return onListUnits!();
@@ -451,6 +819,126 @@ class FakeShopApi implements ShopApi {
       );
     }
     return 'fake-txn-${clientOpId.hashCode}';
+  }
+
+  Future<String> Function(
+    String shopId,
+    Uint8List bytes,
+    String mimeType,
+    String fileExtension,
+  )?
+  onUploadBonoImage;
+  final List<({String shopId, int sizeBytes, String mimeType})>
+  uploadBonoImageCalls = [];
+
+  @override
+  Future<String> uploadBonoImage({
+    required String shopId,
+    required Uint8List bytes,
+    required String mimeType,
+    required String fileExtension,
+  }) async {
+    uploadBonoImageCalls.add((
+      shopId: shopId,
+      sizeBytes: bytes.length,
+      mimeType: mimeType,
+    ));
+    if (onUploadBonoImage != null) {
+      return onUploadBonoImage!(shopId, bytes, mimeType, fileExtension);
+    }
+    return 'fake-doc-id';
+  }
+
+  Future<TodaySummary> Function(String shopId, String? locale)?
+  onGetTodaySummary;
+
+  @override
+  Future<TodaySummary> getTodaySummary({
+    required String shopId,
+    String? locale,
+  }) async {
+    if (onGetTodaySummary != null) return onGetTodaySummary!(shopId, locale);
+    return const TodaySummary(
+      salesToday: 0,
+      receivablesTotal: 0,
+      payablesTotal: 0,
+      lowStockCount: 0,
+    );
+  }
+
+  Future<List<PartyBalanceRow>> Function(String shopId, String? locale)?
+  onListReceivables;
+
+  @override
+  Future<List<PartyBalanceRow>> listReceivables({
+    required String shopId,
+    String? locale,
+  }) async {
+    if (onListReceivables != null) return onListReceivables!(shopId, locale);
+    return const [];
+  }
+
+  Future<List<PartyBalanceRow>> Function(String shopId, String? locale)?
+  onListPayables;
+
+  @override
+  Future<List<PartyBalanceRow>> listPayables({
+    required String shopId,
+    String? locale,
+  }) async {
+    if (onListPayables != null) return onListPayables!(shopId, locale);
+    return const [];
+  }
+
+  Future<List<LowStockRow>> Function(String shopId, String? locale)?
+  onListLowStock;
+
+  @override
+  Future<List<LowStockRow>> listLowStock({
+    required String shopId,
+    String? locale,
+  }) async {
+    if (onListLowStock != null) return onListLowStock!(shopId, locale);
+    return const [];
+  }
+
+  Future<PartyDetail> Function(String shopId, String partyId, int limit)?
+  onGetPartyDetail;
+
+  @override
+  Future<PartyDetail> getPartyDetail({
+    required String shopId,
+    required String partyId,
+    int limit = 20,
+  }) async {
+    if (onGetPartyDetail != null) {
+      return onGetPartyDetail!(shopId, partyId, limit);
+    }
+    return PartyDetail(
+      header: PartyDetailHeader(
+        id: partyId,
+        name: 'Test Party',
+        phone: null,
+        typeCode: 'customer',
+        receivable: 0,
+        payable: 0,
+        isActive: true,
+      ),
+      sales: const [],
+      receives: const [],
+      payments: const [],
+    );
+  }
+
+  Future<List<CategoryOption>> Function(String? locale)? onListCategories;
+
+  @override
+  Future<List<CategoryOption>> listCategories({String? locale}) async {
+    if (onListCategories != null) return onListCategories!(locale);
+    return const [
+      CategoryOption(id: 'cat-grocery', code: 'grocery', name: 'Grocery'),
+      CategoryOption(id: 'cat-staples', code: 'staples', name: 'Staples'),
+    ];
   }
 
   @override
@@ -499,6 +987,9 @@ class FakeShopApi implements ShopApi {
     required String shopId,
     DateTime? before,
     int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? partyId,
   }) async {
     if (onListSales != null) return onListSales!(shopId, before, limit);
     return const [];
@@ -541,8 +1032,61 @@ class FakeShopApi implements ShopApi {
     required String shopId,
     DateTime? before,
     int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? partyId,
   }) async {
     if (onListReceives != null) return onListReceives!(shopId, before, limit);
+    return const [];
+  }
+
+  @override
+  Future<List<ExpenseSummary>> listExpenses({
+    required String shopId,
+    DateTime? before,
+    int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? categoryId,
+    String? locale,
+  }) async {
+    if (onListExpenses != null) return onListExpenses!(shopId, before, limit);
+    return const [];
+  }
+
+  @override
+  Future<List<PaymentSummary>> listPayments({
+    required String shopId,
+    DateTime? before,
+    int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? partyId,
+    String? direction,
+  }) async {
+    if (onListPayments != null) return onListPayments!(shopId, before, limit);
+    return const [];
+  }
+
+  Future<List<PartySearchResult>> Function(
+    String shopId,
+    String query,
+    String? type,
+    bool hasBalanceOnly,
+  )?
+  onListParties;
+
+  @override
+  Future<List<PartySearchResult>> listParties({
+    required String shopId,
+    String query = '',
+    String? type,
+    bool hasBalanceOnly = false,
+    int limit = 200,
+  }) async {
+    if (onListParties != null) {
+      return onListParties!(shopId, query, type, hasBalanceOnly);
+    }
     return const [];
   }
 
@@ -658,6 +1202,7 @@ class FakeShopApi implements ShopApi {
     String? currencyCode,
     String? defaultLanguageCode,
     String? timezone,
+    bool? lowStockWarningEnabled,
   }) async {
     if (onUpdateShopDefaults != null) {
       return onUpdateShopDefaults!(
@@ -666,6 +1211,72 @@ class FakeShopApi implements ShopApi {
         currencyCode: currencyCode,
         defaultLanguageCode: defaultLanguageCode,
         timezone: timezone,
+        lowStockWarningEnabled: lowStockWarningEnabled,
+      );
+    }
+  }
+
+  Future<void> Function(
+    String shopId,
+    String shopItemId,
+    num? reorderThreshold,
+  )?
+  onSetShopItemReorderThreshold;
+  final List<
+    ({String shopItemId, num? reorderThreshold})
+  > setShopItemReorderThresholdCalls = [];
+
+  @override
+  Future<void> setShopItemReorderThreshold({
+    required String shopId,
+    required String shopItemId,
+    required num? reorderThreshold,
+  }) async {
+    setShopItemReorderThresholdCalls
+        .add((shopItemId: shopItemId, reorderThreshold: reorderThreshold));
+    if (onSetShopItemReorderThreshold != null) {
+      return onSetShopItemReorderThreshold!(
+        shopId,
+        shopItemId,
+        reorderThreshold,
+      );
+    }
+  }
+
+  Future<void> Function(
+    String shopId,
+    String shopItemUnitId,
+    bool isDefaultSale,
+    bool isDefaultReceive,
+  )?
+  onSetShopItemUnitDefaultFlags;
+  final List<
+    ({
+      String shopItemUnitId,
+      bool isDefaultSale,
+      bool isDefaultReceive,
+    })
+  >
+  setShopItemUnitDefaultFlagsCalls = [];
+
+  @override
+  Future<void> setShopItemUnitDefaultFlags({
+    required String shopId,
+    required String shopItemUnitId,
+    required bool isDefaultSale,
+    required bool isDefaultReceive,
+  }) async {
+    setShopItemUnitDefaultFlagsCalls.add((
+      shopItemUnitId: shopItemUnitId,
+      isDefaultSale: isDefaultSale,
+      isDefaultReceive: isDefaultReceive,
+    ));
+    if (onSetShopItemUnitDefaultFlags != null) {
+      return onSetShopItemUnitDefaultFlags!(
+        shopId,
+        shopItemUnitId,
+        isDefaultSale,
+        isDefaultReceive,
       );
     }
   }
@@ -674,6 +1285,169 @@ class FakeShopApi implements ShopApi {
   Future<ShopSummary?> fetchShop(String shopId) async {
     if (onFetchShop != null) return onFetchShop!(shopId);
     return null;
+  }
+
+  Future<void> Function(String shopId, String shopItemId, String? categoryId)?
+      onSetShopItemCategory;
+  final List<({String shopItemId, String? categoryId})>
+      setShopItemCategoryCalls = [];
+
+  @override
+  Future<void> setShopItemCategory({
+    required String shopId,
+    required String shopItemId,
+    required String? categoryId,
+  }) async {
+    setShopItemCategoryCalls
+        .add((shopItemId: shopItemId, categoryId: categoryId));
+    if (onSetShopItemCategory != null) {
+      return onSetShopItemCategory!(shopId, shopItemId, categoryId);
+    }
+  }
+
+  Future<void> Function(String shopId, String shopItemUnitId)?
+      onDeactivateShopItemUnit;
+  final List<String> deactivateShopItemUnitCalls = [];
+
+  @override
+  Future<void> deactivateShopItemUnit({
+    required String shopId,
+    required String shopItemUnitId,
+  }) async {
+    deactivateShopItemUnitCalls.add(shopItemUnitId);
+    if (onDeactivateShopItemUnit != null) {
+      return onDeactivateShopItemUnit!(shopId, shopItemUnitId);
+    }
+  }
+
+  final List<String> removeShopItemAliasCalls = [];
+
+  @override
+  Future<void> removeShopItemAlias({
+    required String shopId,
+    required String aliasId,
+  }) async {
+    removeShopItemAliasCalls.add(aliasId);
+  }
+
+  final List<
+      ({
+        String shopItemUnitId,
+        String barcode,
+        bool isPrimary,
+      })> addShopItemBarcodeCalls = [];
+  Future<String> Function(
+    String shopId,
+    String shopItemUnitId,
+    String barcode,
+    bool isPrimary,
+  )? onAddShopItemBarcode;
+
+  @override
+  Future<String> addShopItemBarcode({
+    required String shopId,
+    required String shopItemUnitId,
+    required String barcode,
+    bool isPrimary = false,
+    String? symbology,
+  }) async {
+    addShopItemBarcodeCalls.add((
+      shopItemUnitId: shopItemUnitId,
+      barcode: barcode,
+      isPrimary: isPrimary,
+    ));
+    if (onAddShopItemBarcode != null) {
+      return onAddShopItemBarcode!(
+          shopId, shopItemUnitId, barcode, isPrimary);
+    }
+    return 'fake-barcode-${barcode.hashCode}';
+  }
+
+  final List<String> removeShopItemBarcodeCalls = [];
+
+  @override
+  Future<void> removeShopItemBarcode({
+    required String shopId,
+    required String barcodeId,
+  }) async {
+    removeShopItemBarcodeCalls.add(barcodeId);
+  }
+
+  final List<String> setPrimaryShopItemBarcodeCalls = [];
+
+  @override
+  Future<void> setPrimaryShopItemBarcode({
+    required String shopId,
+    required String barcodeId,
+  }) async {
+    setPrimaryShopItemBarcodeCalls.add(barcodeId);
+  }
+
+  Future<ProductVelocity> Function(
+    String shopId,
+    int periodDays,
+    int limit,
+    String? locale,
+  )? onListProductVelocity;
+
+  @override
+  Future<ProductVelocity> listProductVelocity({
+    required String shopId,
+    int periodDays = 7,
+    int limit = 10,
+    String? locale,
+  }) async {
+    if (onListProductVelocity != null) {
+      return onListProductVelocity!(shopId, periodDays, limit, locale);
+    }
+    return const ProductVelocity(top: [], dead: []);
+  }
+
+  final List<
+      ({
+        String reasonCode,
+        String shopItemId,
+        num quantityDelta,
+        num? unitCost,
+        String? notes,
+      })> postInventoryAdjustmentCalls = [];
+  Future<String> Function(
+    String shopId,
+    String reasonCode,
+    String shopItemId,
+    num quantityDelta,
+    num? unitCost,
+    String? notes,
+  )? onPostInventoryAdjustment;
+
+  @override
+  Future<String> postInventoryAdjustment({
+    required String shopId,
+    required String reasonCode,
+    required String shopItemId,
+    required num quantityDelta,
+    num? unitCost,
+    String? clientOpId,
+    String? notes,
+  }) async {
+    postInventoryAdjustmentCalls.add((
+      reasonCode: reasonCode,
+      shopItemId: shopItemId,
+      quantityDelta: quantityDelta,
+      unitCost: unitCost,
+      notes: notes,
+    ));
+    if (onPostInventoryAdjustment != null) {
+      return onPostInventoryAdjustment!(
+        shopId,
+        reasonCode,
+        shopItemId,
+        quantityDelta,
+        unitCost,
+        notes,
+      );
+    }
+    return 'fake-adj-${shopItemId.hashCode}';
   }
 }
 
@@ -687,6 +1461,8 @@ ShopSummary fakeShop({
   String currencySymbol = '\$',
   String defaultLanguageCode = 'so',
   String timezone = 'Africa/Mogadishu',
+  DateTime? onboardingDismissedAt,
+  bool lowStockWarningEnabled = false,
 }) => ShopSummary(
   id: id,
   name: name,
@@ -695,6 +1471,11 @@ ShopSummary fakeShop({
   currencySymbol: currencySymbol,
   defaultLanguageCode: defaultLanguageCode,
   timezone: timezone,
+  // Default to "already dismissed" (now). Tests for the onboarding
+  // screen pass `onboardingDismissedAt: null` explicitly.
+  onboardingDismissedAt:
+      onboardingDismissedAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+  lowStockWarningEnabled: lowStockWarningEnabled,
 );
 
 TemplateOption fakeTemplate({
@@ -703,29 +1484,39 @@ TemplateOption fakeTemplate({
   String name = 'Grocery',
 }) => TemplateOption(id: id, code: code, name: name);
 
+/// Activated shop item search result — has both shopItemId and a
+/// default packaging. Use for tests that exercise the fast-tap path.
 ItemSearchResult fakeActivatedItem({
-  String itemId = 'item-1',
-  String? catalogItemId = 'catalog-1',
-  String name = 'Bariis Basmati',
+  String shopItemId = 'shop-item-1',
+  String? itemId = 'item-1',
+  String displayName = 'Bariis Basmati',
   String baseUnitCode = 'kg',
   String baseUnitLabel = 'Kg',
-  String receiveUnitCode = 'bag',
-  String receiveUnitLabel = 'Bag',
-  double? salePrice = 1.5,
-  double? lastCost,
+  String defaultShopItemUnitId = 'shop-item-unit-1',
+  String defaultUnitCode = 'kg',
+  String defaultUnitLabel = 'Kg',
+  double defaultUnitConversionToBase = 1,
+  double? defaultUnitSalePrice = 1.5,
+  double? defaultUnitLastCost,
   double? currentStock = 50,
+  String? packagingLabel = 'Kg',
+  String? rankReason = 'alias_prefix_locale',
 }) => ItemSearchResult(
+  shopItemId: shopItemId,
   itemId: itemId,
-  catalogItemId: catalogItemId,
-  name: name,
+  displayName: displayName,
   baseUnitCode: baseUnitCode,
   baseUnitLabel: baseUnitLabel,
-  receiveUnitCode: receiveUnitCode,
-  receiveUnitLabel: receiveUnitLabel,
-  salePrice: salePrice,
-  lastCost: lastCost,
+  defaultShopItemUnitId: defaultShopItemUnitId,
+  defaultUnitCode: defaultUnitCode,
+  defaultUnitLabel: defaultUnitLabel,
+  defaultUnitConversionToBase: defaultUnitConversionToBase,
+  defaultUnitSalePrice: defaultUnitSalePrice,
+  defaultUnitLastCost: defaultUnitLastCost,
   currentStock: currentStock,
+  packagingLabel: packagingLabel,
   isActivated: true,
+  rankReason: rankReason,
 );
 
 PartySearchResult fakeCustomer({
@@ -742,25 +1533,28 @@ PartySearchResult fakeCustomer({
   payable: 0,
 );
 
+/// Unactivated catalog-only result — shopItemId + defaultShopItemUnitId
+/// are null, isActivated is false. Use for tests that exercise the
+/// "tap auto-activates via ensureShopItem" path.
 ItemSearchResult fakeCatalogCandidate({
-  String catalogItemId = 'catalog-2',
-  String name = 'Caano qalaylan',
+  String itemId = 'item-2',
+  String displayName = 'Caano qalalan',
   String baseUnitCode = 'packet',
   String baseUnitLabel = 'Packet',
-  String receiveUnitCode = 'carton',
-  String receiveUnitLabel = 'Carton',
-  double? salePrice = 3.0,
-  double? lastCost,
 }) => ItemSearchResult(
-  itemId: null,
-  catalogItemId: catalogItemId,
-  name: name,
+  shopItemId: null,
+  itemId: itemId,
+  displayName: displayName,
   baseUnitCode: baseUnitCode,
   baseUnitLabel: baseUnitLabel,
-  receiveUnitCode: receiveUnitCode,
-  receiveUnitLabel: receiveUnitLabel,
-  salePrice: salePrice,
-  lastCost: lastCost,
+  defaultShopItemUnitId: null,
+  defaultUnitCode: null,
+  defaultUnitLabel: null,
+  defaultUnitConversionToBase: null,
+  defaultUnitSalePrice: null,
+  defaultUnitLastCost: null,
   currentStock: null,
+  packagingLabel: null,
   isActivated: false,
+  rankReason: 'alias_prefix_locale',
 );

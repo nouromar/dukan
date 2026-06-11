@@ -3,10 +3,14 @@
 // abandon the sale. Clearing is explicit (via the Clear-all button in
 // the expanded drawer, or by SAVE on a successful post).
 //
+// v2 model: cart lines are keyed by `shopItemUnitId` (the packaging),
+// not by item. Selling 1 bag and 1 kg loose of the same item is two
+// distinct lines because the cashier rang up two distinct packagings.
+// Switching a line's packaging in the long-press editor is a
+// remove-and-add (the key changes).
+//
 // Single-cart for v1. Multi-cart (`held: const []` + hold/resume/discard)
-// is the documented v2 extension; see docs/decisions.md Q13. The shape
-// below is the one we want today so v2 is mechanical rather than
-// architectural.
+// is the documented v2 extension; see docs/decisions.md Q13.
 
 import 'package:flutter/foundation.dart';
 
@@ -14,29 +18,46 @@ import 'package:dukan/api/types.dart';
 
 class CartLine {
   CartLine({
+    required this.shopItemUnitId,
+    required this.shopItemId,
     required this.itemId,
-    required this.catalogItemId,
-    required this.name,
-    required this.baseUnitCode,
+    required this.displayName,
+    required this.packagingLabel,
     required this.baseUnitLabel,
     required this.unitPrice,
     this.quantity = 1,
     this.priceWasEntered = false,
   });
 
+  /// Primary key for the cart map.
+  final String shopItemUnitId;
+
+  /// The parent shop_item (one item, possibly multiple packagings on
+  /// distinct cart lines). Kept so the Sale screen can group / dedupe
+  /// when needed (e.g., for stock-impact previews).
+  final String shopItemId;
+
+  /// Null when the line came from a shop-only item.
   final String? itemId;
-  final String? catalogItemId;
-  final String name;
-  final String baseUnitCode;
+
+  final String displayName;
+
+  /// Derived "25 kg bag" / "kg" — already locale-resolved by the search RPC.
+  final String packagingLabel;
+
+  /// Base unit's display label (e.g., "Kg") — useful when showing
+  /// "= 25 kg" subtotals for multi-packaging items.
   final String baseUnitLabel;
+
   final num unitPrice;
-  int quantity;
+  /// Numeric to allow fractional units (e.g., 0.5 kg of rice loose).
+  /// Server's `transaction_line.quantity` is already `numeric(14,3)`.
+  num quantity;
 
   /// True if `unitPrice` came out of the long-press / no-price line
-  /// editor (tap on a no-price tile, long-press on any tile, long-press
-  /// on a cart row). The Sale SAVE flow uses this to call
-  /// `set_item_sale_price` so future taps on the same item fast-add at
-  /// the entered price instead of re-prompting.
+  /// editor. The Sale SAVE flow uses this to call
+  /// `setShopItemUnitSalePrice` so future taps on the same packaging
+  /// fast-add at the entered price instead of re-prompting.
   final bool priceWasEntered;
 
   num get subtotal => unitPrice * quantity;
@@ -51,8 +72,7 @@ class CartSnapshot {
     required this.customer,
   });
 
-  /// Keyed by item_id or catalog_item_id (whichever is non-null on the
-  /// underlying search result).
+  /// Keyed by `shopItemUnitId`.
   final Map<String, CartLine> lines;
   final bool debt;
   final PartySearchResult? customer;
@@ -64,63 +84,72 @@ class CartController extends ChangeNotifier {
   PartySearchResult? _customer;
 
   /// Active cart view, immutable from the outside. Keys are stable per
-  /// item — adding the same search result a second time increments the
-  /// existing line's quantity rather than creating a new line.
+  /// packaging — adding the same packaging a second time increments
+  /// the existing line's quantity rather than creating a new line.
   Map<String, CartLine> get lines => Map.unmodifiable(_lines);
   bool get debt => _debt;
   PartySearchResult? get customer => _customer;
 
-  int get itemCount =>
-      _lines.values.fold(0, (sum, line) => sum + line.quantity);
+  /// "Items in cart" — sum of integer line counts (one line counted
+  /// once per row). Fractional qty is for the per-line math; the
+  /// cart summary counts rows, not weight.
+  int get itemCount => _lines.length;
   double get total =>
       _lines.values.fold(0, (sum, line) => sum + line.subtotal.toDouble());
   bool get isEmpty => _lines.isEmpty;
   bool get isNotEmpty => _lines.isNotEmpty;
 
   /// Multi-cart v2 shape (docs/decisions.md Q13): always empty in v1.
-  /// Stubs below let consumers write code that compiles forward when the
-  /// list and methods are turned on.
   List<HeldCart> get held => const [];
 
   // ----- mutations --------------------------------------------------------
 
+  /// Default tap path. Requires the search result to be activated
+  /// (defaultShopItemUnitId non-null). The Sale screen ensures this by
+  /// calling ensureShopItem before reaching here on unactivated items.
   void addItem(ItemSearchResult item) {
-    final key = item.itemId ?? item.catalogItemId;
-    if (key == null) return;
-    final existing = _lines[key];
+    final shopItemUnitId = item.defaultShopItemUnitId;
+    final shopItemId = item.shopItemId;
+    if (shopItemUnitId == null || shopItemId == null) return;
+    final existing = _lines[shopItemUnitId];
     if (existing != null) {
       existing.quantity += 1;
     } else {
-      _lines[key] = CartLine(
+      _lines[shopItemUnitId] = CartLine(
+        shopItemUnitId: shopItemUnitId,
+        shopItemId: shopItemId,
         itemId: item.itemId,
-        catalogItemId: item.catalogItemId,
-        name: item.name,
-        baseUnitCode: item.baseUnitCode,
+        displayName: item.displayName,
+        packagingLabel: item.packagingLabel ?? item.baseUnitLabel,
         baseUnitLabel: item.baseUnitLabel,
-        unitPrice: item.salePrice ?? 0,
+        unitPrice: item.defaultUnitSalePrice ?? 0,
       );
     }
     notifyListeners();
   }
 
-  /// Used by the long-press / no-price line editor. Replaces any existing
-  /// line for the item with the explicit quantity + unitPrice the cashier
-  /// confirmed in the sheet (no incrementing — the editor's quantity is
-  /// the authoritative one). Marks the line so SAVE persists the price
-  /// back to item.sale_price.
-  void addOrReplaceFromEditor(
-    ItemSearchResult item, {
-    required int quantity,
+  /// Used by the long-press / no-price line editor when adding a new
+  /// line (cashier picked a packaging + entered a price in the sheet).
+  /// Replaces any existing line for the same packaging with the
+  /// explicit quantity + unitPrice. Marks the line so SAVE persists
+  /// the price.
+  void addOrReplaceFromEditor({
+    required String shopItemUnitId,
+    required String shopItemId,
+    required String? itemId,
+    required String displayName,
+    required String packagingLabel,
+    required String baseUnitLabel,
+    required num quantity,
     required num unitPrice,
   }) {
-    final key = item.itemId ?? item.catalogItemId;
-    if (key == null) return;
-    _lines[key] = CartLine(
-      itemId: item.itemId,
-      catalogItemId: item.catalogItemId,
-      name: item.name,
-      baseUnitCode: item.baseUnitCode,
-      baseUnitLabel: item.baseUnitLabel,
+    _lines[shopItemUnitId] = CartLine(
+      shopItemUnitId: shopItemUnitId,
+      shopItemId: shopItemId,
+      itemId: itemId,
+      displayName: displayName,
+      packagingLabel: packagingLabel,
+      baseUnitLabel: baseUnitLabel,
       unitPrice: unitPrice,
       quantity: quantity,
       priceWasEntered: true,
@@ -128,22 +157,23 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Used by the long-press editor opened on an existing cart row. Mutates
-  /// the line in place (keys are stable). No-op if the line was already
-  /// removed between open and confirm. Marks the line so SAVE persists
-  /// the price back to item.sale_price.
+  /// Used by the long-press editor opened on an existing cart row,
+  /// when the cashier did NOT switch packaging. Mutates the line in
+  /// place. No-op if the line was already removed between open and
+  /// confirm. Marks the line so SAVE persists the price.
   void updateLineFromEditor(
-    String key, {
-    required int quantity,
+    String shopItemUnitId, {
+    required num quantity,
     required num unitPrice,
   }) {
-    final existing = _lines[key];
+    final existing = _lines[shopItemUnitId];
     if (existing == null) return;
-    _lines[key] = CartLine(
+    _lines[shopItemUnitId] = CartLine(
+      shopItemUnitId: existing.shopItemUnitId,
+      shopItemId: existing.shopItemId,
       itemId: existing.itemId,
-      catalogItemId: existing.catalogItemId,
-      name: existing.name,
-      baseUnitCode: existing.baseUnitCode,
+      displayName: existing.displayName,
+      packagingLabel: existing.packagingLabel,
       baseUnitLabel: existing.baseUnitLabel,
       unitPrice: unitPrice,
       quantity: quantity,
@@ -152,8 +182,37 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void removeLine(String key) {
-    if (_lines.remove(key) == null) return;
+  /// Long-press editor used to switch a line's packaging — the key
+  /// changes, so we remove the old line and add the new one in a
+  /// single notification.
+  void switchLinePackaging({
+    required String oldShopItemUnitId,
+    required String newShopItemUnitId,
+    required String shopItemId,
+    required String? itemId,
+    required String displayName,
+    required String packagingLabel,
+    required String baseUnitLabel,
+    required num quantity,
+    required num unitPrice,
+  }) {
+    _lines.remove(oldShopItemUnitId);
+    _lines[newShopItemUnitId] = CartLine(
+      shopItemUnitId: newShopItemUnitId,
+      shopItemId: shopItemId,
+      itemId: itemId,
+      displayName: displayName,
+      packagingLabel: packagingLabel,
+      baseUnitLabel: baseUnitLabel,
+      unitPrice: unitPrice,
+      quantity: quantity,
+      priceWasEntered: true,
+    );
+    notifyListeners();
+  }
+
+  void removeLine(String shopItemUnitId) {
+    if (_lines.remove(shopItemUnitId) == null) return;
     notifyListeners();
   }
 
@@ -187,10 +246,11 @@ class CartController extends ChangeNotifier {
       lines: {
         for (final entry in _lines.entries)
           entry.key: CartLine(
+            shopItemUnitId: entry.value.shopItemUnitId,
+            shopItemId: entry.value.shopItemId,
             itemId: entry.value.itemId,
-            catalogItemId: entry.value.catalogItemId,
-            name: entry.value.name,
-            baseUnitCode: entry.value.baseUnitCode,
+            displayName: entry.value.displayName,
+            packagingLabel: entry.value.packagingLabel,
             baseUnitLabel: entry.value.baseUnitLabel,
             unitPrice: entry.value.unitPrice,
             quantity: entry.value.quantity,
@@ -215,21 +275,18 @@ class CartController extends ChangeNotifier {
 
   // ----- v2 multi-cart stubs (per decisions.md Q13) ----------------------
 
-  /// Hold the active cart under a label and start fresh. v2.
   void hold(String label) {
     throw UnimplementedError(
       'Multi-cart is deferred to v2; see docs/decisions.md Q13.',
     );
   }
 
-  /// Swap a held cart into the active slot. v2.
   void resume(String heldCartId) {
     throw UnimplementedError(
       'Multi-cart is deferred to v2; see docs/decisions.md Q13.',
     );
   }
 
-  /// Discard a held cart. v2.
   void discard(String heldCartId) {
     throw UnimplementedError(
       'Multi-cart is deferred to v2; see docs/decisions.md Q13.',
@@ -237,9 +294,7 @@ class CartController extends ChangeNotifier {
   }
 }
 
-/// Placeholder for the v2 held-cart record. Kept in the same file so when
-/// multi-cart ships, the model lives next to the controller that owns it.
-/// In v1 the `held` list is always empty so this type is never instantiated.
+/// Placeholder for the v2 held-cart record.
 class HeldCart {
   const HeldCart({required this.id, required this.label});
   final String id;

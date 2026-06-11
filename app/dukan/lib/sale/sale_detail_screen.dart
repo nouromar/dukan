@@ -1,7 +1,13 @@
-// Receipt-style detail view for one past sale. Owner sees a VOID
-// action when the sale is within the 7-day window and not already
-// voided (decisions.md Q12). Pops back with `true` after a successful
-// void so the history list refreshes.
+// Receipt view for a single sale. Reached two ways:
+//   1. As a route from Sale history (Scaffold-wrapped `SaleDetailScreen`).
+//   2. As a modal bottom sheet from the Sale screen right after a
+//      successful SAVE (`showSaleReceiptSheet`).
+//
+// Both surfaces render the same `SaleReceiptView`, which fetches the
+// header + lines for a txn_id and lays them out receipt-style with a
+// SHARE button (v1 stub — opens a "coming soon" sheet wired for
+// print + WhatsApp). The history path additionally surfaces VOID when
+// the sale is within the 7-day window (decisions.md Q12).
 
 import 'dart:math' as math;
 
@@ -23,17 +29,137 @@ import 'package:dukan/shared/money.dart';
 /// or a positive number to record an outbound payment for that amount.
 typedef VoidDialogOutcome = ({num? refundAmount});
 
-class SaleDetailScreen extends StatefulWidget {
+class SaleDetailScreen extends StatelessWidget {
   const SaleDetailScreen({required this.shop, required this.txnId, super.key});
 
   final ShopSummary shop;
   final String txnId;
 
   @override
-  State<SaleDetailScreen> createState() => _SaleDetailScreenState();
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return Scaffold(
+      appBar: dukanAppBar(context, l.saleDetailTitle),
+      body: SafeArea(
+        child: SaleReceiptView(
+          shop: shop,
+          txnId: txnId,
+          showVoidAffordance: true,
+          onAfterVoid: () => Navigator.of(context).pop(true),
+        ),
+      ),
+    );
+  }
 }
 
-class _SaleDetailScreenState extends State<SaleDetailScreen> {
+/// Bottom-sheet entry point used by the Sale screen right after a
+/// successful SAVE. Pops with `void` — there's no return value the
+/// caller needs (the post is already confirmed).
+Future<void> showSaleReceiptSheet(
+  BuildContext context, {
+  required ShopSummary shop,
+  required String txnId,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => _SaleReceiptSheet(shop: shop, txnId: txnId),
+  );
+}
+
+class _SaleReceiptSheet extends StatelessWidget {
+  const _SaleReceiptSheet({required this.shop, required this.txnId});
+
+  final ShopSummary shop;
+  final String txnId;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.92;
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + viewInsets),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l.saleDetailTitle,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l.saleReceiptDoneButton,
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // SaleReceiptView's body uses Expanded(ListView) which
+              // needs a bounded vertical constraint — Flexible inside
+              // a Column with mainAxisSize.min provides exactly that.
+              // No SingleChildScrollView wrapper (that would unbound
+              // the height and break the Expanded).
+              Flexible(
+                child: SaleReceiptView(
+                  shop: shop,
+                  txnId: txnId,
+                  // Void from a freshly-completed sale is confusing —
+                  // the cashier just rang it up. They can void from
+                  // history if needed.
+                  showVoidAffordance: false,
+                ),
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                ),
+                child: Text(l.saleReceiptDoneButton),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SaleReceiptView extends StatefulWidget {
+  const SaleReceiptView({
+    required this.shop,
+    required this.txnId,
+    this.showVoidAffordance = true,
+    this.onAfterVoid,
+    super.key,
+  });
+
+  final ShopSummary shop;
+  final String txnId;
+
+  /// When false (post-save sheet), the VOID button is hidden and
+  /// `onAfterVoid` is ignored.
+  final bool showVoidAffordance;
+
+  /// Called after a successful void so the host (history detail page)
+  /// can pop back with a "refresh" flag. Ignored when
+  /// `showVoidAffordance` is false.
+  final VoidCallback? onAfterVoid;
+
+  @override
+  State<SaleReceiptView> createState() => _SaleReceiptViewState();
+}
+
+class _SaleReceiptViewState extends State<SaleReceiptView> {
   final _random = math.Random();
   late Future<_SaleBundle> _future;
   bool _voiding = false;
@@ -46,7 +172,10 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
 
   Future<_SaleBundle> _load() async {
     final api = context.read<ShopApi>();
-    final header = await api.getSale(shopId: widget.shop.id, txnId: widget.txnId);
+    final header = await api.getSale(
+      shopId: widget.shop.id,
+      txnId: widget.txnId,
+    );
     if (header == null) {
       throw StateError('Sale not found');
     }
@@ -79,7 +208,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l.saleVoidedToast)),
       );
-      Navigator.of(context).pop(true);
+      widget.onAfterVoid?.call();
     } on PostgrestException catch (error, stackTrace) {
       _handleVoidFailure(error, stackTrace, l.saleVoidFailedMessage);
     } catch (error, stackTrace) {
@@ -112,39 +241,86 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
     return 'void-$ts-$r';
   }
 
+  Future<void> _onShare() async {
+    final l = tr(context);
+    // v1 stub — exposes the Print + WhatsApp choices so the affordance
+    // is real, but both branches just show a "coming soon" toast. Wires
+    // the hook so v1.x can drop in share_plus / a bluetooth printer
+    // adapter without touching the receipt screen layout.
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                l.saleReceiptShareTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.print_outlined),
+              title: Text(l.saleReceiptSharePrint),
+              onTap: () {
+                Navigator.of(context).pop();
+                _showComingSoon();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.chat_outlined),
+              title: Text(l.saleReceiptShareWhatsApp),
+              onTap: () {
+                Navigator.of(context).pop();
+                _showComingSoon();
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showComingSoon() {
+    if (!mounted) return;
+    final l = tr(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l.saleReceiptShareComingSoon)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    return Scaffold(
-      appBar: dukanAppBar(context, l.saleDetailTitle),
-      body: SafeArea(
-        child: FutureBuilder<_SaleBundle>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError || snapshot.data == null) {
-              return Padding(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: Text(
-                    l.saleDetailLoadFailedMessage,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-              );
-            }
-            return _SaleDetailBody(
-              shop: widget.shop,
-              bundle: snapshot.data!,
-              voiding: _voiding,
-              onVoid: () => _confirmAndVoid(snapshot.data!.header),
-            );
-          },
-        ),
-      ),
+    return FutureBuilder<_SaleBundle>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError || snapshot.data == null) {
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: Text(
+                l.saleDetailLoadFailedMessage,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ),
+          );
+        }
+        return _SaleReceiptBody(
+          shop: widget.shop,
+          bundle: snapshot.data!,
+          voiding: _voiding,
+          showVoidAffordance: widget.showVoidAffordance,
+          onVoid: () => _confirmAndVoid(snapshot.data!.header),
+          onShare: _onShare,
+        );
+      },
     );
   }
 }
@@ -155,20 +331,25 @@ class _SaleBundle {
   final List<SaleLineDetail> lines;
 }
 
-class _SaleDetailBody extends StatelessWidget {
-  const _SaleDetailBody({
+class _SaleReceiptBody extends StatelessWidget {
+  const _SaleReceiptBody({
     required this.shop,
     required this.bundle,
     required this.voiding,
+    required this.showVoidAffordance,
     required this.onVoid,
+    required this.onShare,
   });
 
   final ShopSummary shop;
   final _SaleBundle bundle;
   final bool voiding;
+  final bool showVoidAffordance;
   final VoidCallback onVoid;
+  final VoidCallback onShare;
 
   bool get _canVoid {
+    if (!showVoidAffordance) return false;
     if (bundle.header.isVoided) return false;
     final posted = bundle.header.postedAt;
     if (posted == null) return false;
@@ -233,6 +414,12 @@ class _SaleDetailBody extends StatelessWidget {
                 final qtyText = line.quantity == line.quantity.roundToDouble()
                     ? line.quantity.toInt().toString()
                     : line.quantity.toString();
+                // v2 receipts carry a packaging snapshot ("25 kg bag")
+                // separate from the unit label ("Kg"). Render with the
+                // packaging when present; fall back to the unit label
+                // for older receipts (pre-redesign rows where
+                // packaging_label is null).
+                final unitLabel = line.packagingLabel ?? line.unitLabel;
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                   title: Text(
@@ -245,7 +432,7 @@ class _SaleDetailBody extends StatelessWidget {
                     l.saleDetailLineSubtotal(
                       qtyText,
                       formatMoney(line.lineTotal, shop),
-                      line.unitLabel,
+                      unitLabel,
                       unitPriceText,
                     ),
                   ),
@@ -265,8 +452,21 @@ class _SaleDetailBody extends StatelessWidget {
               formatMoney(header.paidAmount, shop)),
           _amountRow(theme, l.saleDetailDebtLabel,
               formatMoney(header.totalAmount - header.paidAmount, shop)),
-          const SizedBox(height: 8),
-          if (_canVoid)
+          const SizedBox(height: 12),
+          // Primary action: share the receipt. Same widget in both the
+          // post-save sheet and the history route — keeps the share
+          // affordance one place even if its implementation evolves.
+          if (!header.isVoided)
+            FilledButton.icon(
+              onPressed: onShare,
+              icon: const Icon(Icons.ios_share),
+              label: Text(l.saleReceiptShareButton),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+          if (_canVoid) ...[
+            const SizedBox(height: 4),
             // Destructive secondary action: red text, right-aligned,
             // no fill. Findable but not the screen's primary CTA.
             Align(
@@ -285,6 +485,7 @@ class _SaleDetailBody extends StatelessWidget {
                     : Text(l.saleDetailVoidButton),
               ),
             ),
+          ],
         ],
       ),
     );

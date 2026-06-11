@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/sale/cart_controller.dart';
@@ -41,11 +42,19 @@ void main() {
     api.onSearchItems = (_, _, _, screen, _, _) async {
       expect(screen, 'sale');
       return [
-        fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
         fakeActivatedItem(
+          shopItemId: 'si-rice',
+          itemId: 'item-rice',
+          defaultShopItemUnitId: 'siu-rice',
+          displayName: 'Bariis Basmati',
+          defaultUnitSalePrice: 1.5,
+        ),
+        fakeActivatedItem(
+          shopItemId: 'si-sugar',
           itemId: 'item-sugar',
-          name: 'Sonkor',
-          salePrice: 1.0,
+          defaultShopItemUnitId: 'siu-sugar',
+          displayName: 'Sonkor',
+          defaultUnitSalePrice: 1.0,
         ),
       ];
     };
@@ -61,7 +70,13 @@ void main() {
     tester,
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
+      fakeActivatedItem(
+        shopItemId: 'si-rice',
+        itemId: 'item-rice',
+        defaultShopItemUnitId: 'siu-rice',
+        displayName: 'Bariis Basmati',
+        defaultUnitSalePrice: 1.5,
+      ),
     ];
 
     await pumpSale(tester);
@@ -78,7 +93,13 @@ void main() {
 
   testWidgets('tapping the same item twice increments quantity', (tester) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
+      fakeActivatedItem(
+        shopItemId: 'si-rice',
+        itemId: 'item-rice',
+        defaultShopItemUnitId: 'siu-rice',
+        displayName: 'Bariis Basmati',
+        defaultUnitSalePrice: 1.5,
+      ),
     ];
 
     await pumpSale(tester);
@@ -88,15 +109,16 @@ void main() {
     await tester.tap(find.text('Bariis Basmati'));
     await tester.pumpAndSettle();
 
+    // itemCount is now line count (1) regardless of qty (2).
     expect(
-      find.text(en.saleCartSummary(2, '\$3')),
+      find.text(en.saleCartSummary(1, '\$3.00')),
       findsOneWidget,
     );
   });
 
   testWidgets('SAVE is disabled with an empty cart', (tester) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(name: 'Bariis Basmati'),
+      fakeActivatedItem(displayName: 'Bariis Basmati'),
     ];
 
     await pumpSale(tester);
@@ -113,10 +135,12 @@ void main() {
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
       fakeActivatedItem(
+        shopItemId: 'si-rice',
         itemId: 'item-rice',
-        name: 'Bariis Basmati',
+        defaultShopItemUnitId: 'siu-rice',
+        displayName: 'Bariis Basmati',
         baseUnitCode: 'kg',
-        salePrice: 1.5,
+        defaultUnitSalePrice: 1.5,
       ),
     ];
     Map<String, dynamic>? capturedCall;
@@ -154,49 +178,108 @@ void main() {
     expect(capturedCall!['paidAmount'], 1.5);
     final lines = capturedCall!['lines'] as List<SaleLine>;
     expect(lines, hasLength(1));
-    expect(lines.first.itemId, 'item-rice');
+    expect(lines.first.shopItemUnitId, 'siu-rice');
     expect(lines.first.quantity, 1);
     expect(lines.first.unitPrice, 1.5);
-    expect(lines.first.unitId, isNotEmpty);
   });
 
-  testWidgets('SAVE clears the cart optimistically and shows the toast', (
-    tester,
-  ) async {
-    api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(name: 'Bariis Basmati', salePrice: 1.5),
-    ];
-    api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
+  testWidgets(
+    'SAVE clears the cart on success and opens the receipt sheet',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          shopItemId: 'si-rice',
+          itemId: 'item-rice',
+          defaultShopItemUnitId: 'siu-rice',
+          displayName: 'Bariis Basmati',
+          defaultUnitSalePrice: 1.5,
+        ),
+      ];
+      api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
+      // The receipt sheet fetches the freshly-posted sale; stub so it
+      // can render.
+      api.onGetSale = (_, txnId) async => SaleSummary(
+            txnId: txnId,
+            occurredAt: DateTime(2026, 6, 6, 14, 0),
+            postedAt: DateTime(2026, 6, 6, 14, 0),
+            partyId: null,
+            partyName: null,
+            totalAmount: 1.5,
+            paidAmount: 1.5,
+            paymentMethodCode: 'cash',
+            isVoided: false,
+            reversalTxnId: null,
+            voidedAt: null,
+          );
+      api.onGetSaleLines = (_, _) async => const [];
 
-    await pumpSale(tester);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Bariis Basmati'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
-    await tester.pump(); // optimistic clear + SnackBar enqueued
-    await tester.pumpAndSettle();
+      await pumpSale(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bariis Basmati'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
+      // Walk through:
+      //   pump 1: postFrameCallback fires → showModalBottomSheet
+      //   pump 2-4: route animates in
+      //   pump 5: sheet's _load microtask completes
+      //   pump 6: FutureBuilder rebuilds with data
+      // CircularProgressIndicator runs a ticker indefinitely, so we
+      // can't pumpAndSettle here.
+      for (var i = 0; i < 8; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
 
-    expect(find.text(en.saleSavedToast), findsWidgets);
-    expect(find.text(en.saleCartSummary(0, '\$0')), findsOneWidget);
-  });
+      expect(find.text(en.saleCartSummary(0, '\$0.00')), findsOneWidget);
+      expect(
+        find.widgetWithText(FilledButton, en.saleReceiptDoneButton),
+        findsOneWidget,
+      );
+      expect(find.text(en.saleReceiptShareButton), findsOneWidget);
+    },
+  );
 
   // --- Cart drawer (expandable inline lines) ---------------------------------
 
-  testWidgets('cart drawer is collapsed by default; tap summary expands it', (
+  testWidgets('cart drawer auto-expands on add; tap summary toggles', (
     tester,
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(itemId: 'item-rice', name: 'Bariis Basmati', salePrice: 1.5),
-      fakeActivatedItem(itemId: 'item-sugar', name: 'Sonkor', salePrice: 1.0),
+      fakeActivatedItem(
+        shopItemId: 'si-rice',
+        itemId: 'item-rice',
+        defaultShopItemUnitId: 'siu-rice',
+        displayName: 'Bariis Basmati',
+        defaultUnitSalePrice: 1.5,
+      ),
+      fakeActivatedItem(
+        shopItemId: 'si-sugar',
+        itemId: 'item-sugar',
+        defaultShopItemUnitId: 'siu-sugar',
+        displayName: 'Sonkor',
+        defaultUnitSalePrice: 1.0,
+      ),
     ];
 
     await pumpSale(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Bariis Basmati'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Sonkor'));
     await tester.pumpAndSettle();
 
-    // Collapsed: the line subtotals aren't rendered yet.
+    // Auto-expanded after the first add — both line subtotals visible.
+    expect(
+      find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
+      findsOneWidget,
+    );
+    expect(
+      find.text(en.cartLineSubtotal('1', '\$1.00', '\$1.00')),
+      findsOneWidget,
+    );
+
+    // Tapping the summary collapses; tapping again re-expands.
+    await tester.tap(find.text(en.saleCartSummary(2, '\$2.50')));
+    await tester.pumpAndSettle();
     expect(
       find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
       findsNothing,
@@ -204,13 +287,8 @@ void main() {
 
     await tester.tap(find.text(en.saleCartSummary(2, '\$2.50')));
     await tester.pumpAndSettle();
-
     expect(
       find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
-      findsOneWidget,
-    );
-    expect(
-      find.text(en.cartLineSubtotal('1', '\$1', '\$1')),
       findsOneWidget,
     );
   });
@@ -219,22 +297,34 @@ void main() {
     tester,
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(itemId: 'item-rice', name: 'Bariis Basmati', salePrice: 1.5),
-      fakeActivatedItem(itemId: 'item-sugar', name: 'Sonkor', salePrice: 1.0),
+      fakeActivatedItem(
+        shopItemId: 'si-rice',
+        itemId: 'item-rice',
+        defaultShopItemUnitId: 'siu-rice',
+        displayName: 'Bariis Basmati',
+        defaultUnitSalePrice: 1.5,
+      ),
+      fakeActivatedItem(
+        shopItemId: 'si-sugar',
+        itemId: 'item-sugar',
+        defaultShopItemUnitId: 'siu-sugar',
+        displayName: 'Sonkor',
+        defaultUnitSalePrice: 1.0,
+      ),
     ];
 
     await pumpSale(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Bariis Basmati'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Sonkor'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text(en.saleCartSummary(2, '\$2.50')));
-    await tester.pumpAndSettle();
+    // Auto-expanded after first add; no summary tap needed.
 
     final sonkorRemove = find.descendant(
       of: find.ancestor(
-        of: find.text(en.cartLineSubtotal('1', '\$1', '\$1')),
+        of: find.text(en.cartLineSubtotal('1', '\$1.00', '\$1.00')),
         matching: find.byType(ListTile),
       ),
       matching: find.byIcon(Icons.close),
@@ -243,31 +333,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(en.saleCartSummary(1, '\$1.50')), findsOneWidget);
-    expect(find.text(en.cartLineSubtotal('1', '\$1', '\$1')), findsNothing);
+    expect(find.text(en.cartLineSubtotal('1', '\$1.00', '\$1.00')), findsNothing);
   });
 
   testWidgets('SAVE button stays visible even with many cart lines', (
     tester,
   ) async {
-    // Eight items to stress the cart list — the drawer should scroll
-    // internally while SAVE remains visible at the bottom.
-    api.onSearchItems = (_, _, _, _, _, _) async => List.generate(
-      8,
-      (i) => fakeActivatedItem(
-        itemId: 'item-$i',
-        name: 'Item $i',
-        salePrice: 1.0,
-      ),
-    );
+    // Pre-load 8 lines via the controller so we don't have to scroll
+    // the 2-col grid into view for each tile tap. The drawer should
+    // scroll internally while SAVE remains visible at the bottom.
+    for (var i = 0; i < 8; i++) {
+      cart.addItem(
+        fakeActivatedItem(
+          shopItemId: 'si-$i',
+          itemId: 'item-$i',
+          defaultShopItemUnitId: 'siu-$i',
+          displayName: 'Item $i',
+          defaultUnitSalePrice: 1.0,
+        ),
+      );
+    }
+    api.onSearchItems = (_, _, _, _, _, _) async => const [];
 
     await pumpSale(tester);
-    await tester.pumpAndSettle();
-    for (var i = 0; i < 8; i++) {
-      await tester.tap(find.text('Item $i'));
-    }
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text(en.saleCartSummary(8, '\$8')));
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(FilledButton, en.saleSaveButton), findsOneWidget);
@@ -280,7 +368,13 @@ void main() {
   ) async {
     // Simulate a previously-built cart sitting in the controller.
     cart.addItem(
-      fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
+      fakeActivatedItem(
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        defaultShopItemUnitId: 'siu-1',
+        displayName: 'Bariis',
+        defaultUnitSalePrice: 1.5,
+      ),
     );
     api.onSearchItems = (_, _, _, _, _, _) async => const [];
 
@@ -297,19 +391,30 @@ void main() {
 
   testWidgets('Clear all button confirms and wipes the cart', (tester) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
-      fakeActivatedItem(itemId: 'i2', name: 'Sonkor', salePrice: 1.0),
+      fakeActivatedItem(
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        defaultShopItemUnitId: 'siu-1',
+        displayName: 'Bariis',
+        defaultUnitSalePrice: 1.5,
+      ),
+      fakeActivatedItem(
+        shopItemId: 'si-2',
+        itemId: 'i2',
+        defaultShopItemUnitId: 'siu-2',
+        displayName: 'Sonkor',
+        defaultUnitSalePrice: 1.0,
+      ),
     ];
 
     await pumpSale(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Bariis'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Sonkor'));
     await tester.pumpAndSettle();
 
-    // Open the drawer so Clear all is rendered.
-    await tester.tap(find.text(en.saleCartSummary(2, '\$2.50')));
-    await tester.pumpAndSettle();
+    // Cart auto-expanded after first add — Clear all is already rendered.
 
     await tester.tap(find.text(en.cartClearAllButton));
     await tester.pumpAndSettle();
@@ -329,7 +434,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(cart.isEmpty, isTrue);
-    expect(find.text(en.saleCartSummary(0, '\$0')), findsOneWidget);
+    expect(find.text(en.saleCartSummary(0, '\$0.00')), findsOneWidget);
   });
 
   // --- Line editor wiring (no-price + long-press) -----------------------
@@ -338,7 +443,7 @@ void main() {
     tester,
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(name: 'Free Sample', salePrice: null),
+      fakeActivatedItem(displayName: 'Free Sample', defaultUnitSalePrice: null),
     ];
 
     await pumpSale(tester);
@@ -350,7 +455,7 @@ void main() {
 
   testWidgets('tile shows — for items with sale_price = 0', (tester) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(name: 'Zero Priced', salePrice: 0),
+      fakeActivatedItem(displayName: 'Zero Priced', defaultUnitSalePrice: 0),
     ];
 
     await pumpSale(tester);
@@ -363,7 +468,13 @@ void main() {
     tester,
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(name: 'Free Sample', salePrice: null),
+      fakeActivatedItem(
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        defaultShopItemUnitId: 'siu-1',
+        displayName: 'Free Sample',
+        defaultUnitSalePrice: null,
+      ),
     ];
 
     await pumpSale(tester);
@@ -391,7 +502,13 @@ void main() {
     tester,
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(name: 'Bariis', salePrice: 1.5),
+      fakeActivatedItem(
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        defaultShopItemUnitId: 'siu-1',
+        displayName: 'Bariis',
+        defaultUnitSalePrice: 1.5,
+      ),
     ];
 
     await pumpSale(tester);
@@ -400,7 +517,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // DONE should be enabled because the price field is pre-filled with
-    // the item's own sale price.
+    // the packaging's stored sale price.
     final done = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, en.lineEditorDoneButton),
     );
@@ -415,17 +532,30 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(cart.itemCount, 3);
+    expect(cart.itemCount, 1);
+    expect(cart.lines.values.first.quantity, 3);
     expect(cart.lines.values.first.unitPrice, 1.5);
   });
 
   testWidgets(
-    'SAVE persists editor-entered prices via setItemSalePrice for each editor line',
+    'SAVE persists editor-entered prices via setShopItemUnitSalePrice for each editor line',
     (tester) async {
       api.onSearchItems = (_, _, _, _, _, _) async => [
-        fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
+        fakeActivatedItem(
+          shopItemId: 'si-1',
+          itemId: 'i1',
+          defaultShopItemUnitId: 'siu-1',
+          displayName: 'Bariis',
+          defaultUnitSalePrice: 1.5,
+        ),
         // No-price item — tapping it routes through the editor.
-        fakeActivatedItem(itemId: 'i2', name: 'Rooti', salePrice: 0),
+        fakeActivatedItem(
+          shopItemId: 'si-2',
+          itemId: 'i2',
+          defaultShopItemUnitId: 'siu-2',
+          displayName: 'Rooti',
+          defaultUnitSalePrice: 0,
+        ),
       ];
       api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
 
@@ -450,23 +580,43 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
       await tester.pumpAndSettle();
 
-      // Only the editor-entered line should trigger setItemSalePrice.
-      expect(api.setItemSalePriceCalls, hasLength(1));
-      expect(api.setItemSalePriceCalls.first.itemId, 'i2');
-      expect(api.setItemSalePriceCalls.first.salePrice, 0.25);
+      // Only the editor-entered line should trigger setShopItemUnitSalePrice.
+      expect(api.setShopItemUnitSalePriceCalls, hasLength(1));
+      expect(api.setShopItemUnitSalePriceCalls.first.shopItemUnitId, 'siu-2');
+      expect(api.setShopItemUnitSalePriceCalls.first.salePrice, 0.25);
     },
   );
 
   testWidgets(
-    'SAVE swallows a setItemSalePrice failure without surfacing an error',
+    'SAVE swallows a setShopItemUnitSalePrice failure without surfacing an error',
     (tester) async {
       api.onSearchItems = (_, _, _, _, _, _) async => [
-        fakeActivatedItem(itemId: 'i1', name: 'Rooti', salePrice: 0),
+        fakeActivatedItem(
+          shopItemId: 'si-1',
+          itemId: 'i1',
+          defaultShopItemUnitId: 'siu-1',
+          displayName: 'Rooti',
+          defaultUnitSalePrice: 0,
+        ),
       ];
       api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
-      api.onSetItemSalePrice = (_, _, _) async {
+      api.onSetShopItemUnitSalePrice = (_, _, _) async {
         throw Exception('boom');
       };
+      api.onGetSale = (_, txnId) async => SaleSummary(
+            txnId: txnId,
+            occurredAt: DateTime(2026, 6, 6, 14, 0),
+            postedAt: DateTime(2026, 6, 6, 14, 0),
+            partyId: null,
+            partyName: null,
+            totalAmount: 0.25,
+            paidAmount: 0.25,
+            paymentMethodCode: 'cash',
+            isVoided: false,
+            reversalTxnId: null,
+            voidedAt: null,
+          );
+      api.onGetSaleLines = (_, _) async => const [];
 
       await pumpSale(tester);
       await tester.pumpAndSettle();
@@ -485,20 +635,32 @@ void main() {
       FlutterError.onError = (_) {};
 
       await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
-      await tester.pumpAndSettle();
+      // Drive frames manually — receipt sheet's CPI never settles.
+      for (var i = 0; i < 8; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
 
-      // The "Saved" toast is still shown — the sale was posted, the
-      // failure is in the secondary price write-back which is non-fatal.
-      expect(find.text(en.saleSavedToast), findsWidgets);
+      // Sale posted (receipt sheet visible); the write-back failure
+      // never surfaces a user-facing error toast.
+      expect(
+        find.widgetWithText(FilledButton, en.saleReceiptDoneButton),
+        findsOneWidget,
+      );
       expect(find.text(en.salePostFailedMessage), findsNothing);
     },
   );
 
-  testWidgets('long-press on a cart row opens editor and updates the line', (
+  testWidgets('tap on a cart row opens editor and updates the line', (
     tester,
   ) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
+      fakeActivatedItem(
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        defaultShopItemUnitId: 'siu-1',
+        displayName: 'Bariis',
+        defaultUnitSalePrice: 1.5,
+      ),
     ];
 
     await pumpSale(tester);
@@ -506,16 +668,13 @@ void main() {
     await tester.tap(find.text('Bariis'));
     await tester.pumpAndSettle();
 
-    // Open the drawer so the row is hittable.
-    await tester.tap(find.text(en.saleCartSummary(1, '\$1.50')));
-    await tester.pumpAndSettle();
-
-    // Long-press the cart line (find the ListTile by its subtitle).
+    // Cart auto-expanded; the row is hittable directly. Tap opens the
+    // editor (long-press was retired — too fiddly one-handed).
     final lineTile = find.ancestor(
       of: find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
       matching: find.byType(ListTile),
     );
-    await tester.longPress(lineTile);
+    await tester.tap(lineTile);
     await tester.pumpAndSettle();
 
     // Change qty to 5, price stays at 1.5.
@@ -528,13 +687,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(cart.itemCount, 5);
+    // qty bumped to 5; itemCount stays 1 line (line count, not qty sum).
+    expect(cart.itemCount, 1);
+    expect(cart.lines.values.first.quantity, 5);
     expect(cart.lines.values.first.unitPrice, 1.5);
   });
 
   testWidgets('cart state survives Navigator push/pop', (tester) async {
     api.onSearchItems = (_, _, _, _, _, _) async => [
-      fakeActivatedItem(itemId: 'i1', name: 'Bariis', salePrice: 1.5),
+      fakeActivatedItem(
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        defaultShopItemUnitId: 'siu-1',
+        displayName: 'Bariis',
+        defaultUnitSalePrice: 1.5,
+      ),
     ];
 
     // Stand-in host that pushes the Sale screen on tap.
@@ -579,4 +746,162 @@ void main() {
       findsOneWidget,
     );
   });
+
+  // --- Negative-stock toast wiring -----------------------------------
+
+  /// Build a ShopItemDetail header so the negative-stock probe can sample
+  /// post-decrement stock per shopItemId for the batched stocks probe.
+  ShopItemStock stockRow({
+    required String shopItemId,
+    required String displayName,
+    required num stock,
+    String baseUnitLabel = 'Kg',
+  }) => ShopItemStock(
+    shopItemId: shopItemId,
+    displayName: displayName,
+    baseUnitCode: 'kg',
+    baseUnitLabel: baseUnitLabel,
+    currentStock: stock.toDouble(),
+  );
+
+  testWidgets(
+    'after a successful postSale (warning toggle on), low-stock rows'
+    ' trigger a toast each',
+    (tester) async {
+      // Shop with the low-stock warning toggle on. The fake's default
+      // is off; tests that need the probe to fire must opt in.
+      shop = fakeShop(lowStockWarningEnabled: true);
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          shopItemId: 'si-rice',
+          itemId: 'i-rice',
+          defaultShopItemUnitId: 'siu-rice',
+          displayName: 'Bariis',
+          baseUnitLabel: 'Kg',
+          defaultUnitSalePrice: 1.5,
+        ),
+      ];
+      api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
+      api.onGetSale = (_, txnId) async => SaleSummary(
+            txnId: txnId,
+            occurredAt: DateTime(2026, 6, 6, 14, 0),
+            postedAt: DateTime(2026, 6, 6, 14, 0),
+            partyId: null,
+            partyName: null,
+            totalAmount: 1.5,
+            paidAmount: 1.5,
+            paymentMethodCode: 'cash',
+            isVoided: false,
+            reversalTxnId: null,
+            voidedAt: null,
+          );
+      api.onGetSaleLines = (_, _) async => const [];
+      // Batched stock probe returns 0 (treated as low — below 1).
+      var probeCalls = 0;
+      api.onFetchShopItemStocks = (_, shopItemIds, _) async {
+        probeCalls++;
+        return [
+          for (final id in shopItemIds)
+            stockRow(
+              shopItemId: id,
+              displayName: 'Bariis',
+              stock: 0,
+              baseUnitLabel: 'Kg',
+            ),
+        ];
+      };
+
+      await pumpSale(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
+      // SAVE → post resolves → receipt sheet opens and the background
+      // low-stock probe fires. Pump forward a few seconds.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+
+      expect(probeCalls, greaterThan(0));
+      expect(
+        find.text(en.lowStockToast('0', 'Bariis', 'Kg')),
+        findsOneWidget,
+      );
+
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'more than 3 low items collapse into a "+ N more" summary toast',
+    (tester) async {
+      // Shop with toggle on so the probe fires.
+      shop = fakeShop(lowStockWarningEnabled: true);
+      // Five lines pre-populated via the controller — avoids scrolling
+      // the 2-col grid to reach Items 3 / 4 just to register taps.
+      for (var i = 0; i < 5; i++) {
+        cart.addItem(
+          fakeActivatedItem(
+            shopItemId: 'si-$i',
+            itemId: 'i-$i',
+            defaultShopItemUnitId: 'siu-$i',
+            displayName: 'Item$i',
+            defaultUnitSalePrice: 1,
+          ),
+        );
+      }
+      api.onSearchItems = (_, _, _, _, _, _) async => const [];
+      api.onPostSale = (_, _, _, _, _, _, _) async => 'fake-txn';
+      api.onGetSale = (_, txnId) async => SaleSummary(
+            txnId: txnId,
+            occurredAt: DateTime(2026, 6, 6, 14, 0),
+            postedAt: DateTime(2026, 6, 6, 14, 0),
+            partyId: null,
+            partyName: null,
+            totalAmount: 5,
+            paidAmount: 5,
+            paymentMethodCode: 'cash',
+            isVoided: false,
+            reversalTxnId: null,
+            voidedAt: null,
+          );
+      api.onGetSaleLines = (_, _) async => const [];
+      api.onFetchShopItemStocks = (_, shopItemIds, _) async => [
+        for (final id in shopItemIds)
+          stockRow(
+            shopItemId: id,
+            displayName: 'X-$id',
+            stock: -1,
+          ),
+      ];
+
+      await pumpSale(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
+
+      // Drive the post-save queue past the saved toast + the first
+      // three negative-stock toasts so the "+ N more" summary is the
+      // currently-displayed SnackBar. Each toast displays ~4s. We pump
+      // in 1s ticks rather than pumpAndSettle so we don't blast past
+      // the summary toast.
+      String? lastSummary;
+      final summary = en.lowStockMoreItems(2);
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(seconds: 1));
+        if (find.text(summary).evaluate().isNotEmpty) {
+          lastSummary = summary;
+          break;
+        }
+      }
+
+      expect(
+        lastSummary,
+        summary,
+        reason: 'Expected "$summary" to appear in the SnackBar queue',
+      );
+
+      await tester.pumpAndSettle();
+    },
+  );
 }

@@ -10,9 +10,11 @@ import 'package:dukan/auth/phone_login_screen.dart';
 import 'package:dukan/auth/shop_picker_screen.dart';
 import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/home/home_screen.dart';
+import 'package:dukan/observability/crash_reporter.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/sale/cart_controller.dart';
+import 'package:dukan/setup/setup_item_onboarding_screen.dart';
 import 'package:dukan/setup/shop_type_setup_screen.dart';
 import 'package:dukan/shared/friendly_error_screen.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -50,6 +52,8 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   late final PaymentController _paymentController;
   late final ExpenseController _expenseController;
   bool _hadSession = false;
+  String? _crashReportedUserId;
+  String? _crashReportedShopId;
 
   @override
   void initState() {
@@ -77,6 +81,28 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
       _expenseController.clearAll();
     }
     _hadSession = hasSession;
+    _syncCrashReporter();
+  }
+
+  // Push the current session's user + selected shop into Sentry scope
+  // so subsequent error events are attributable. We only send IDs —
+  // never phone numbers, names, or anything else identifying. Diffs
+  // against the last reported pair so we don't churn the SDK on every
+  // notification (the AuthController fires for many non-identity
+  // changes — shop list refresh, loading flags, etc.).
+  void _syncCrashReporter() {
+    final userId = _authController.session?.user.id;
+    final shopId = _authController.selectedShop?.id;
+    if (userId == _crashReportedUserId && shopId == _crashReportedShopId) {
+      return;
+    }
+    _crashReportedUserId = userId;
+    _crashReportedShopId = shopId;
+    if (userId == null) {
+      CrashReporter.clearUser();
+    } else {
+      CrashReporter.setUser(userId: userId, shopId: shopId);
+    }
   }
 
   @override
@@ -170,6 +196,14 @@ class AuthRouter extends StatelessWidget {
 
     if (!selectedShop.isReady) {
       return ShopTypeSetupScreen(shop: selectedShop);
+    }
+
+    // Optional item-onboarding step — appears once, never blocks
+    // selling. AuthRouter watches selectedShop; after the screen calls
+    // dismissOnboarding + refreshSelectedShop, isOnboardingPending
+    // flips to false and we fall through to HomeScreen.
+    if (selectedShop.isOnboardingPending) {
+      return SetupItemOnboardingScreen(shop: selectedShop);
     }
 
     return HomeScreen(shop: selectedShop, onSignOut: () => auth.signOut());

@@ -31,7 +31,11 @@ create table public.transaction_line (
   shop_id uuid not null references public.shop(id) on delete cascade,
   transaction_id uuid not null,
   line_no integer not null check (line_no > 0),
+  -- shop_item points at the per-shop projection (post v2 rename). The
+  -- packaging used on this specific line lives in shop_item_unit_id —
+  -- they must agree (enforced by a trigger below; critique #2).
   item_id uuid,
+  shop_item_unit_id uuid,
   expense_category_id uuid,
   quantity numeric(14, 3) check (quantity is null or quantity > 0),
   unit_id uuid references public.unit(id) on delete restrict,
@@ -40,16 +44,20 @@ create table public.transaction_line (
   item_name_snapshot text,
   unit_code_snapshot text,
   unit_conversion_to_base_snapshot numeric(14, 6) check (unit_conversion_to_base_snapshot is null or unit_conversion_to_base_snapshot > 0),
-  catalog_revision_id uuid references public.catalog_item_revision(id) on delete restrict,
   line_total numeric(14, 2) not null check (line_total >= 0),
   cogs_unit_cost numeric(14, 4) check (cogs_unit_cost is null or cogs_unit_cost >= 0),
   cogs_total numeric(14, 2) check (cogs_total is null or cogs_total >= 0),
   created_at timestamptz not null default now(),
   unique (shop_id, id),
   unique (shop_id, transaction_id, line_no),
+  -- Two valid line shapes:
+  --   (a) sale/receive item line: every item field including the
+  --       packaging FK and the unit snapshots must be set; expense_category_id null.
+  --   (b) expense line: every item field null; expense_category_id set.
   check (
     (
       item_id is not null
+      and shop_item_unit_id is not null
       and expense_category_id is null
       and quantity is not null
       and unit_id is not null
@@ -61,6 +69,7 @@ create table public.transaction_line (
     or
     (
       item_id is null
+      and shop_item_unit_id is null
       and expense_category_id is not null
       and quantity is null
       and unit_id is null
@@ -68,13 +77,48 @@ create table public.transaction_line (
       and item_name_snapshot is null
       and unit_code_snapshot is null
       and unit_conversion_to_base_snapshot is null
-      and catalog_revision_id is null
     )
   ),
   foreign key (shop_id, transaction_id) references public.txn(shop_id, id) on delete cascade,
-  foreign key (shop_id, item_id) references public.item(shop_id, id) on delete restrict,
+  foreign key (shop_id, item_id) references public.shop_item(shop_id, id) on delete restrict,
+  foreign key (shop_id, shop_item_unit_id) references public.shop_item_unit(shop_id, id) on delete restrict,
   foreign key (shop_id, expense_category_id) references public.expense_category(shop_id, id) on delete restrict
 );
+
+-- Critique #2: enforce that the packaging on a transaction_line
+-- belongs to the same shop_item the line references. Catches "sale of
+-- Rice with Sugar's packaging" at write time.
+create or replace function public.check_transaction_line_packaging_consistency()
+returns trigger
+language plpgsql
+as $$
+declare
+  v_packaging_shop_item_id uuid;
+begin
+  if new.shop_item_unit_id is null then
+    -- Expense line; nothing to check.
+    return new;
+  end if;
+  select shop_item_id into v_packaging_shop_item_id
+  from public.shop_item_unit
+  where id = new.shop_item_unit_id and shop_id = new.shop_id;
+  if v_packaging_shop_item_id is null then
+    raise exception
+      'transaction_line.shop_item_unit_id % not found in shop %',
+      new.shop_item_unit_id, new.shop_id;
+  end if;
+  if v_packaging_shop_item_id <> new.item_id then
+    raise exception
+      'transaction_line packaging mismatch: shop_item_unit % belongs to shop_item % but line.item_id is %',
+      new.shop_item_unit_id, v_packaging_shop_item_id, new.item_id;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger check_transaction_line_packaging_consistency_trg
+before insert or update on public.transaction_line
+for each row execute function public.check_transaction_line_packaging_consistency();
 
 create table public.payment (
   id uuid primary key default extensions.gen_random_uuid(),
@@ -85,14 +129,24 @@ create table public.payment (
   method_id uuid not null references public.payment_method(id) on delete restrict,
   occurred_at timestamptz not null,
   document_id uuid,
+  -- Set when this payment is an outbound refund recorded as part of
+  -- void_sale (Path B in the void-with-refund design). FK is composite
+  -- on (shop_id, refund_of_transaction_id) to keep tenant integrity.
+  refund_of_transaction_id uuid,
   client_op_id text,
   notes text,
   created_by uuid not null default auth.uid() references auth.users(id) on delete restrict,
   created_at timestamptz not null default now(),
   unique (shop_id, id),
   foreign key (shop_id, party_id) references public.party(shop_id, id) on delete restrict,
-  foreign key (shop_id, document_id) references public.document(shop_id, id) on delete restrict
+  foreign key (shop_id, document_id) references public.document(shop_id, id) on delete restrict,
+  foreign key (shop_id, refund_of_transaction_id)
+    references public.txn(shop_id, id) on delete restrict
 );
+
+create index payment_refund_of_transaction_idx
+  on public.payment (shop_id, refund_of_transaction_id)
+  where refund_of_transaction_id is not null;
 
 create unique index payment_shop_client_op_id_idx
   on public.payment (shop_id, client_op_id)
@@ -128,7 +182,7 @@ create table public.stock_movement (
     or
     (transaction_line_id is null and inventory_adjustment_line_id is not null)
   ),
-  foreign key (shop_id, item_id) references public.item(shop_id, id) on delete restrict,
+  foreign key (shop_id, item_id) references public.shop_item(shop_id, id) on delete restrict,
   foreign key (shop_id, location_id) references public.location(shop_id, id) on delete restrict,
   foreign key (shop_id, transaction_line_id) references public.transaction_line(shop_id, id) on delete cascade
 );
@@ -164,7 +218,7 @@ create table public.inventory_adjustment_line (
   created_at timestamptz not null default now(),
   unique (shop_id, id),
   foreign key (shop_id, adjustment_id) references public.inventory_adjustment(shop_id, id) on delete cascade,
-  foreign key (shop_id, item_id) references public.item(shop_id, id) on delete restrict
+  foreign key (shop_id, item_id) references public.shop_item(shop_id, id) on delete restrict
 );
 
 alter table public.stock_movement
@@ -186,6 +240,7 @@ create index txn_shop_type_status_occurred_at_idx on public.txn (shop_id, type_i
 create index txn_shop_party_occurred_at_idx on public.txn (shop_id, party_id, occurred_at desc);
 create index transaction_line_shop_transaction_idx on public.transaction_line (shop_id, transaction_id, line_no);
 create index transaction_line_shop_item_idx on public.transaction_line (shop_id, item_id);
+create index transaction_line_shop_item_unit_idx on public.transaction_line (shop_id, shop_item_unit_id) where shop_item_unit_id is not null;
 create index payment_shop_party_occurred_at_idx on public.payment (shop_id, party_id, occurred_at desc);
 create index payment_allocation_shop_transaction_idx on public.payment_allocation (shop_id, transaction_id);
 create index stock_movement_shop_item_occurred_at_idx on public.stock_movement (shop_id, item_id, occurred_at desc);

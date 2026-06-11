@@ -7,16 +7,21 @@
 //   * Favorites grid — search_items(screen='receive', p_party_id) so
 //     items this supplier has provided in past bonos rank to the top
 //     and the inline form can pre-fill cost from each tile's last_cost
-//   * Selected-item form — two-way bound (Per <unit>, Total) money
+//     (supplier-scoped when the partyId is passed).
+//   * Selected-item form — two-way bound (Per <packaging>, Total) money
 //     fields. Cashier types whichever matches the bono; the other
 //     auto-fills. Qty changes recompute whichever field was NOT the
-//     last one typed.
+//     last one typed. The packaging chip is tappable: opens the unit
+//     picker so the cashier can swap from the default (e.g., 25 kg
+//     bag) to another packaging (e.g., 50 kg bag) for the line.
 //   * Lines strip — expandable summary, like the Sale cart
 //   * SAVE — always creates a fully-credit receive (cash payment is a
 //     separate Payment-screen step; see decisions.md TODO)
 //
-// Tap routing on a tile loads the inline form. Unlike Sale, there is no
-// fast-add path — bonos vary line-by-line in a way sales don't.
+// v2 model: lines key on `shopItemUnitId` — the packaging the supplier
+// delivered. Same item received as a 25 kg bag and a 10 kg bag in the
+// same bono are two distinct lines (correct: distinct per-packaging
+// last_cost values, distinct stock movements).
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -28,19 +33,36 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/receive/add_new_item_sheet.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
+import 'package:dukan/shared/bono_image_picker.dart';
+import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/stock_format.dart';
+
+enum _BonoSource { camera, gallery }
 
 class ReceiveScreen extends StatefulWidget {
-  const ReceiveScreen({required this.shop, super.key});
+  const ReceiveScreen({
+    required this.shop,
+    this.bonoPicker,
+    super.key,
+  });
 
   final ShopSummary shop;
+
+  /// Injected so tests can substitute a fake. Production wires the
+  /// real `DefaultBonoImagePicker()` lazily on first attach so we
+  /// don't construct a platform-channel-backed picker when it isn't
+  /// used.
+  final BonoImagePicker? bonoPicker;
 
   @override
   State<ReceiveScreen> createState() => _ReceiveScreenState();
@@ -52,8 +74,19 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   String _activeQuery = '';
   Timer? _debounce;
   bool _saving = false;
+  bool _attachingBono = false;
+  String? _bonoDocumentId;
+  BonoImagePicker? _picker;
   bool _linesExpanded = false;
-  ItemSearchResult? _selectedItem;
+  // The activated item the cashier is composing a line for. `shopItemId`
+  // is guaranteed non-null (we run ensureShopItem before flipping the
+  // form on, even for unactivated catalog rows). Carries the default
+  // packaging + cost the form pre-fills from.
+  _SelectedItem? _selectedItem;
+  // True while we're running ensureShopItem for an unactivated catalog
+  // row. Used to render an inline "Activating..." indicator on the tile
+  // so the cashier sees the screen is doing something.
+  String? _activatingItemId;
   final _random = math.Random();
   String? _locale;
 
@@ -102,8 +135,187 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     });
   }
 
-  void _onTapTile(ItemSearchResult item) {
-    setState(() => _selectedItem = item);
+  // Tap routing on a result tile:
+  //   * Activated item with a default packaging → pre-fill the form.
+  //   * Unactivated catalog row → run ensureShopItem first, then list
+  //     the new shop_item's packagings (server creates a default base
+  //     packaging when activating) and pre-fill the form from that.
+  Future<void> _onTapTile(ItemSearchResult item) async {
+    final l = tr(context);
+    if (item.shopItemId != null && item.defaultShopItemUnitId != null) {
+      setState(() {
+        _selectedItem = _SelectedItem(
+          shopItemUnitId: item.defaultShopItemUnitId!,
+          shopItemId: item.shopItemId!,
+          itemId: item.itemId,
+          displayName: item.displayName,
+          packagingLabel:
+              item.packagingLabel ?? item.defaultUnitLabel ?? item.baseUnitLabel,
+          baseUnitCode: item.baseUnitCode,
+          baseUnitLabel: item.baseUnitLabel,
+          perUnitCost: item.defaultUnitLastCost,
+        );
+      });
+      return;
+    }
+    // Unactivated catalog row — itemId is set, shopItemId is null.
+    final itemId = item.itemId;
+    if (itemId == null) {
+      // Defensive: search rows should always have one or the other.
+      return;
+    }
+    setState(() => _activatingItemId = itemId);
+    try {
+      final api = context.read<ShopApi>();
+      final newShopItemId = await api.ensureShopItem(
+        shopId: widget.shop.id,
+        itemId: itemId,
+      );
+      final units = await api.listShopItemUnits(
+        shopId: widget.shop.id,
+        shopItemId: newShopItemId,
+        screen: 'receive',
+      );
+      if (!mounted) return;
+      // Prefer the receive default; fall back to base unit, then first
+      // entry. listShopItemUnits returns at least the base packaging
+      // for every activated shop_item.
+      final unit = _pickInitialUnit(units);
+      if (unit == null) {
+        showError(context, l.receiveLoadFailedMessage);
+        return;
+      }
+      setState(() {
+        _selectedItem = _SelectedItem(
+          shopItemUnitId: unit.shopItemUnitId,
+          shopItemId: newShopItemId,
+          itemId: itemId,
+          displayName: item.displayName,
+          packagingLabel: unit.packagingLabel,
+          baseUnitCode: item.baseUnitCode,
+          baseUnitLabel: item.baseUnitLabel,
+          perUnitCost: unit.lastCost,
+        );
+      });
+    } on PostgrestException catch (error, stackTrace) {
+      _reportError(error, stackTrace, 'ensure_shop_item');
+      if (mounted) showError(context, l.receiveLoadFailedMessage);
+    } catch (error, stackTrace) {
+      _reportError(error, stackTrace, 'ensure_shop_item');
+      if (mounted) showError(context, l.receiveLoadFailedMessage);
+    } finally {
+      if (mounted) setState(() => _activatingItemId = null);
+    }
+  }
+
+  ReceiveUnitOption? _pickInitialUnit(List<ReceiveUnitOption> units) {
+    if (units.isEmpty) return null;
+    for (final u in units) {
+      if (u.isDefault) return u;
+    }
+    for (final u in units) {
+      if (u.isBaseUnit) return u;
+    }
+    return units.first;
+  }
+
+  Future<void> _onAddNewItem(String query) async {
+    // Opens the receive variant of the +Add new item sheet — same shape
+    // as Sale, but the price field is optional (Receive only cares about
+    // cost; sale price can be set later from Products). On save the new
+    // packaging takes over as the currently-selected item so the inline
+    // line composer pre-fills against it. No cart-style append: receive
+    // composes one line at a time.
+    final result = await AddNewItemSheet.show(
+      context,
+      widget.shop,
+      initialName: query,
+    );
+    if (result == null || !mounted) return;
+    // Clear the search bar — the cashier's intent ("find or add this
+    // item") is fulfilled; the line composer below now owns focus.
+    // Leaving the old query in place would keep the "+ Add new" tile
+    // visible above an already-bound line, which looks like nothing
+    // happened.
+    _debounce?.cancel();
+    _searchController.clear();
+    setState(() {
+      _activeQuery = '';
+      _resultsFuture = _fetch('');
+      _selectedItem = _SelectedItem(
+        shopItemUnitId: result.shopItemUnitId,
+        shopItemId: result.shopItemId,
+        itemId: null,
+        displayName: result.displayName,
+        packagingLabel: result.packagingLabel,
+        baseUnitCode: result.baseUnitCode,
+        baseUnitLabel: result.baseUnitLabel,
+        // Newly-created item has no per-supplier last_cost yet — the
+        // cashier types it from the bono.
+        perUnitCost: null,
+      );
+    });
+    // Move focus to the qty field so the cashier can start filling the
+    // line immediately. Falls back gracefully if the qty field isn't
+    // mounted yet (the post-frame callback waits for the rebuild).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      FocusScope.of(context).unfocus();
+    });
+  }
+
+  Future<void> _onAttachBono() async {
+    if (_attachingBono) return;
+    final l = tr(context);
+    final source = await showModalBottomSheet<_BonoSource>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text(l.bonoAttachCamera),
+              onTap: () => Navigator.of(context).pop(_BonoSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(l.bonoAttachGallery),
+              onTap: () => Navigator.of(context).pop(_BonoSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
+    setState(() => _attachingBono = true);
+    final picker = _picker ??=
+        widget.bonoPicker ?? DefaultBonoImagePicker();
+    try {
+      final picked = source == _BonoSource.camera
+          ? await picker.pickFromCamera()
+          : await picker.pickFromGallery();
+      if (picked == null || !mounted) return;
+      final api = context.read<ShopApi>();
+      final docId = await api.uploadBonoImage(
+        shopId: widget.shop.id,
+        bytes: picked.bytes,
+        mimeType: picked.mimeType,
+        fileExtension: picked.fileExtension,
+      );
+      if (!mounted) return;
+      setState(() => _bonoDocumentId = docId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.bonoAttachedToast)),
+      );
+    } catch (error, stackTrace) {
+      _reportError(error, stackTrace, 'upload bono');
+      if (mounted) showError(context, l.bonoAttachFailedMessage);
+    } finally {
+      if (mounted) setState(() => _attachingBono = false);
+    }
   }
 
   void _onChangeSupplier() {
@@ -114,21 +326,44 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     );
   }
 
-  void _onAddLine(
-    int quantity,
-    num lineTotal,
-    String unitCode,
-    String unitLabel,
-  ) {
-    final item = _selectedItem;
-    if (item == null) return;
-    context.read<ReceiveController>().addOrReplaceLine(
-      item,
-      quantity: quantity,
-      lineTotal: lineTotal,
-      unitCode: unitCode,
-      unitLabel: unitLabel,
-    );
+  void _onAddLine({
+    required String shopItemUnitId,
+    required String shopItemId,
+    required String? itemId,
+    required String displayName,
+    required String packagingLabel,
+    required String baseUnitLabel,
+    required num quantity,
+    required num lineTotal,
+    required String? originalShopItemUnitId,
+  }) {
+    final controller = context.read<ReceiveController>();
+    if (originalShopItemUnitId != null &&
+        originalShopItemUnitId != shopItemUnitId &&
+        controller.lines.containsKey(originalShopItemUnitId)) {
+      controller.switchLinePackaging(
+        oldShopItemUnitId: originalShopItemUnitId,
+        newShopItemUnitId: shopItemUnitId,
+        shopItemId: shopItemId,
+        itemId: itemId,
+        displayName: displayName,
+        packagingLabel: packagingLabel,
+        baseUnitLabel: baseUnitLabel,
+        quantity: quantity,
+        lineTotal: lineTotal,
+      );
+    } else {
+      controller.addOrReplaceLine(
+        shopItemUnitId: shopItemUnitId,
+        shopItemId: shopItemId,
+        itemId: itemId,
+        displayName: displayName,
+        packagingLabel: packagingLabel,
+        baseUnitLabel: baseUnitLabel,
+        quantity: quantity,
+        lineTotal: lineTotal,
+      );
+    }
     setState(() {
       _selectedItem = null;
       _linesExpanded = true;
@@ -203,29 +438,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     );
 
     try {
-      final units = {for (final u in await api.listUnits()) u.code: u.id};
-      final lines = <ReceiveLinePayload>[];
-      for (final line in snapshot.lines.values) {
-        var itemId = line.itemId;
-        itemId ??= await api.ensureShopItem(
-          shopId: widget.shop.id,
-          catalogItemId: line.catalogItemId!,
-        );
-        // Crucially we pass the RECEIVE unit's id, not the base unit's.
-        // A 5-bag rice line otherwise gets recorded as 5 kg of stock.
-        final unitId = units[line.receiveUnitCode];
-        if (unitId == null) {
-          throw StateError('Unknown unit ${line.receiveUnitCode}');
-        }
-        lines.add(
+      final lines = <ReceiveLinePayload>[
+        for (final line in snapshot.lines.values)
           ReceiveLinePayload(
-            itemId: itemId,
+            shopItemUnitId: line.shopItemUnitId,
             quantity: line.quantity,
-            unitId: unitId,
             lineTotal: line.lineTotal,
           ),
-        );
-      }
+      ];
 
       await api.postReceive(
         shopId: widget.shop.id,
@@ -234,11 +454,13 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         // Always fully credit; cash payment is a separate Payment step.
         paidAmount: 0,
         paymentMethodCode: null,
+        documentId: _bonoDocumentId,
         clientOpId: _generateClientOpId(),
       );
 
       if (mounted) {
         controller.clearAll();
+        setState(() => _bonoDocumentId = null);
         Navigator.of(context).maybePop();
       }
     } on PostgrestException catch (error, stackTrace) {
@@ -256,17 +478,21 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     StackTrace stackTrace,
     String message,
   ) {
+    _reportError(error, stackTrace, 'post_receive');
+    if (!mounted) return;
+    context.read<ReceiveController>().restore(snapshot);
+    showError(context, message);
+  }
+
+  void _reportError(Object error, StackTrace stackTrace, String op) {
     FlutterError.reportError(
       FlutterErrorDetails(
         exception: error,
         stack: stackTrace,
         library: 'dukan receive',
-        context: ErrorDescription('post_receive'),
+        context: ErrorDescription(op),
       ),
     );
-    if (!mounted) return;
-    context.read<ReceiveController>().restore(snapshot);
-    showError(context, message);
   }
 
   String _generateClientOpId() {
@@ -285,6 +511,26 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         context,
         supplier == null ? l.receiveTitle : l.receiveFrom(supplier.name),
         actions: [
+          IconButton(
+            tooltip: _bonoDocumentId == null
+                ? l.bonoAttachTooltip
+                : l.bonoAttachedTooltip,
+            icon: _attachingBono
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(
+                    _bonoDocumentId == null
+                        ? Icons.photo_camera_outlined
+                        : Icons.check_circle,
+                    color: _bonoDocumentId == null
+                        ? null
+                        : Theme.of(context).colorScheme.primary,
+                  ),
+            onPressed: _saving || _attachingBono ? null : _onAttachBono,
+          ),
           IconButton(
             tooltip: l.receiveHistoryTooltip,
             icon: const Icon(Icons.history),
@@ -312,6 +558,12 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 controller: _searchController,
                 onChanged: _onSearchChanged,
                 textInputAction: TextInputAction.search,
+                // Mirror the Sale search field — Somali item names
+                // ("hilib", "ware") get mangled by OS autocorrect into
+                // English near-matches. Aliases on the index already
+                // handle partial matches.
+                autocorrect: false,
+                enableSuggestions: false,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search),
                   hintText: l.receiveSearchHint,
@@ -338,7 +590,13 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                     );
                   }
                   final results = snapshot.data ?? const <ItemSearchResult>[];
-                  if (results.isEmpty) {
+                  // Append a synthetic "+ Add new item" row when the
+                  // cashier has typed >= 3 chars — same affordance as
+                  // Sale. The tile is rendered with full-width by
+                  // straddling all three grid columns visually (we just
+                  // render it in the grid; consistent footprint).
+                  final showAddNew = _activeQuery.length >= 3;
+                  if (results.isEmpty && !showAddNew) {
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
@@ -352,41 +610,69 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                       ),
                     );
                   }
-                  return GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                      mainAxisExtent: 110,
-                    ),
-                    itemCount: results.length,
-                    itemBuilder: (context, i) {
-                      final item = results[i];
-                      final isSelected =
-                          _selectedItem != null &&
-                              (item.itemId ?? item.catalogItemId) ==
-                                  (_selectedItem!.itemId ??
-                                      _selectedItem!.catalogItemId);
-                      return _ReceiveItemTile(
-                        shop: widget.shop,
-                        item: item,
-                        selected: isSelected,
-                        onTap: _saving ? null : () => _onTapTile(item),
-                      );
-                    },
+                  // Promote +Add new above the grid so partial matches
+                  // never hide the "this isn't here, add it" escape hatch.
+                  return Column(
+                    children: [
+                      if (showAddNew)
+                        Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                          child: _AddNewItemBanner(
+                            query: _activeQuery,
+                            onTap: _saving
+                                ? null
+                                : () => _onAddNewItem(_activeQuery),
+                          ),
+                        ),
+                      Expanded(
+                        child: GridView.builder(
+                          padding:
+                              const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                          // Two columns × ~110dp — denser tile so the
+                          // name + cost don't float in whitespace.
+                          // Matches Sale.
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                            mainAxisExtent: 110,
+                          ),
+                          itemCount: results.length,
+                          itemBuilder: (context, i) {
+                            final item = results[i];
+                            final selectedShopItemId =
+                                _selectedItem?.shopItemId;
+                            final isSelected = selectedShopItemId !=
+                                    null &&
+                                item.shopItemId == selectedShopItemId;
+                            final isActivating =
+                                _activatingItemId != null &&
+                                    item.itemId == _activatingItemId;
+                            return _ReceiveItemTile(
+                              shop: widget.shop,
+                              item: item,
+                              selected: isSelected,
+                              activating: isActivating,
+                              onTap: (_saving ||
+                                      _activatingItemId != null)
+                                  ? null
+                                  : () => _onTapTile(item),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
             ),
             if (_selectedItem != null)
               _LineEntryForm(
-                key: ValueKey(
-                  _selectedItem!.itemId ?? _selectedItem!.catalogItemId,
-                ),
+                key: ValueKey(_selectedItem!.shopItemId),
                 shop: widget.shop,
-                item: _selectedItem!,
+                selected: _selectedItem!,
                 saving: _saving,
                 onAddLine: _onAddLine,
                 onCancel: () => setState(() => _selectedItem = null),
@@ -410,53 +696,172 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   }
 }
 
+/// Working state for a line the cashier is composing. Decoupled from
+/// `ItemSearchResult` because the form may have switched packaging
+/// after the initial tap — `shopItemUnitId`, `packagingLabel`, and
+/// `perUnitCost` track the *current* packaging, not the search row.
+class _SelectedItem {
+  const _SelectedItem({
+    required this.shopItemUnitId,
+    required this.shopItemId,
+    required this.itemId,
+    required this.displayName,
+    required this.packagingLabel,
+    required this.baseUnitCode,
+    required this.baseUnitLabel,
+    required this.perUnitCost,
+  });
+
+  final String shopItemUnitId;
+  final String shopItemId;
+  final String? itemId;
+  final String displayName;
+  final String packagingLabel;
+  /// Drives the AddPackagingSheet's suggestion query + custom-unit
+  /// filtering (the cashier can't pick the item's own base unit again).
+  final String baseUnitCode;
+  final String baseUnitLabel;
+
+  /// Supplier-specific when the search was called with `partyId`;
+  /// otherwise the shop-wide last cost for this packaging.
+  final double? perUnitCost;
+}
+
 class _ReceiveItemTile extends StatelessWidget {
   const _ReceiveItemTile({
     required this.shop,
     required this.item,
     required this.selected,
+    required this.activating,
     required this.onTap,
   });
 
   final ShopSummary shop;
   final ItemSearchResult item;
   final bool selected;
+  final bool activating;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final costText = item.lastCost == null
+    final costText = item.defaultUnitLastCost == null
         ? tr(context).lineEditorTilePriceMissing
-        : formatMoney(item.lastCost!, shop);
+        : formatMoney(item.defaultUnitLastCost!, shop);
+    final packaging =
+        item.packagingLabel ?? item.defaultUnitLabel ?? item.baseUnitLabel;
+    final low = isLowStock(
+      currentStock: item.currentStock,
+      reorderThreshold: item.reorderThreshold,
+    );
+    final stockText = item.currentStock == null
+        ? null
+        : formatCompoundStock(
+            stock: item.currentStock!,
+            baseLabel: item.baseUnitLabel,
+            packagingLabel: item.defaultUnitLabel,
+            conversion: item.defaultUnitConversionToBase,
+          );
     return Card(
       color: selected ? theme.colorScheme.primaryContainer : Colors.white,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                item.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    displayName(item.displayName),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$packaging · $costText',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                    ),
+                  ),
+                  if (stockText != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      stockText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: low ? FontWeight.w700 : FontWeight.w400,
+                        color: low
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.onSurface
+                                .withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (activating)
+              Positioned.fill(
+                child: Container(
+                  color: theme.colorScheme.surface.withValues(alpha: 0.6),
+                  alignment: Alignment.center,
+                  child: const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                '${item.receiveUnitLabel} · $costText',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-width banner shown above the partial-match grid when the cashier
+/// has typed ≥3 chars. Mirrors the Sale variant so both flows feel
+/// identical.
+class _AddNewItemBanner extends StatelessWidget {
+  const _AddNewItemBanner({required this.query, required this.onTap});
+
+  final String query;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    return Card(
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          child: Row(
+            children: [
+              const Icon(Icons.add_circle_outline),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l.addNewItemSearchResult(query),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -467,16 +872,21 @@ class _ReceiveItemTile extends StatelessWidget {
   }
 }
 
-// Two-way bound per-unit + total form. Cashier types into whichever
-// field matches their bono; the other recomputes. On qty change, the
-// last-typed money field stays authoritative and the other recomputes.
-// The unit label is tappable: opens a bottom sheet listing every
-// allow_receive unit so the cashier can swap from the default (e.g.,
-// bag) to base (kg) or another unit for partial bonos.
+// Qty + line total composer. Bonos consistently show line totals
+// ("5 bag rice $120"), not per-unit cost — so we ask for the total
+// only. Per-packaging cost is computed and shown as a small grey
+// "= $24 per bag" caption so the cashier can sanity-check without
+// having to fill another field.
+//
+// The packaging chip is tappable: opens the unit picker so the cashier
+// can swap from the default (e.g., 25 kg bag) to another packaging.
+// Switching packaging mid-edit is supported — ADD LINE then routes
+// through `switchLinePackaging` so any stale row for the original
+// packaging is removed in the same notify.
 class _LineEntryForm extends StatefulWidget {
   const _LineEntryForm({
     required this.shop,
-    required this.item,
+    required this.selected,
     required this.saving,
     required this.onAddLine,
     required this.onCancel,
@@ -484,14 +894,19 @@ class _LineEntryForm extends StatefulWidget {
   });
 
   final ShopSummary shop;
-  final ItemSearchResult item;
+  final _SelectedItem selected;
   final bool saving;
-  final void Function(
-    int quantity,
-    num lineTotal,
-    String unitCode,
-    String unitLabel,
-  )
+  final void Function({
+    required String shopItemUnitId,
+    required String shopItemId,
+    required String? itemId,
+    required String displayName,
+    required String packagingLabel,
+    required String baseUnitLabel,
+    required num quantity,
+    required num lineTotal,
+    required String? originalShopItemUnitId,
+  })
   onAddLine;
   final VoidCallback onCancel;
 
@@ -499,70 +914,67 @@ class _LineEntryForm extends StatefulWidget {
   State<_LineEntryForm> createState() => _LineEntryFormState();
 }
 
-enum _LastTypedMoney { perUnit, total }
-
 class _LineEntryFormState extends State<_LineEntryForm> {
   late final TextEditingController _qtyController;
-  late final TextEditingController _perUnitController;
   late final TextEditingController _totalController;
-  _LastTypedMoney _lastTyped = _LastTypedMoney.perUnit;
-  // Currently selected receive unit. Starts as the item's default; the
-  // unit picker can swap it. Affects what's sent to post_receive and
-  // what shows in the cart line.
-  late String _unitCode;
-  late String _unitLabel;
-  // Guard so programmatic controller updates don't trigger our listeners
-  // and cause feedback loops.
-  bool _suppressNotify = false;
+  // Currently selected packaging. Starts as the one the cashier tapped
+  // on the search tile; the unit picker can swap it. Carries the
+  // identity sent to post_receive plus the chip label rendered above.
+  // The "original" packaging (the one the form opened with) is read
+  // from `widget.selected.shopItemUnitId` on ADD LINE so the screen
+  // can route through `switchLinePackaging` if it was swapped.
+  late String _shopItemUnitId;
+  late String _packagingLabel;
 
   @override
   void initState() {
     super.initState();
-    final perUnit = widget.item.lastCost ?? 0;
-    _unitCode = widget.item.receiveUnitCode;
-    _unitLabel = widget.item.receiveUnitLabel;
+    _shopItemUnitId = widget.selected.shopItemUnitId;
+    _packagingLabel = widget.selected.packagingLabel;
     _qtyController = TextEditingController(text: '1');
-    _perUnitController = TextEditingController(
-      text: perUnit > 0 ? _formatField(perUnit) : '',
-    );
+    // Pre-fill the line total from last cost × qty so a familiar bono
+    // line lands in one tap. The cashier always corrects to whatever
+    // the paper says.
+    final perUnit = widget.selected.perUnitCost ?? 0;
     _totalController = TextEditingController(
-      text: perUnit > 0 ? _formatField(perUnit) : '',
+      text: perUnit > 0 ? _formatField(perUnit * 1) : '',
     );
-    _qtyController.addListener(_onQtyChanged);
-    _perUnitController.addListener(_onPerUnitChanged);
-    _totalController.addListener(_onTotalChanged);
+    _qtyController.addListener(_onChanged);
+    _totalController.addListener(_onChanged);
   }
 
   Future<void> _onTapUnit() async {
     final picked = await showUnitPicker(
       context,
       shopId: widget.shop.id,
-      baseUnitLabel: widget.item.baseUnitLabel,
-      itemId: widget.item.itemId,
-      catalogItemId: widget.item.itemId == null
-          ? widget.item.catalogItemId
-          : null,
+      shopItemId: widget.selected.shopItemId,
+      screen: 'receive',
+      baseUnitCode: widget.selected.baseUnitCode,
+      baseUnitLabel: widget.selected.baseUnitLabel,
     );
     if (picked == null || !mounted) return;
-    if (picked.unitCode == _unitCode) return;
+    if (picked.shopItemUnitId == _shopItemUnitId) return;
     setState(() {
-      _unitCode = picked.unitCode;
-      _unitLabel = picked.unitLabel;
-      // Clear cost fields — last_cost was scoped to the previous unit.
-      // The cashier types fresh values for the new unit.
-      _setProgrammatic(_perUnitController, '');
-      _setProgrammatic(_totalController, '');
-      _lastTyped = _LastTypedMoney.perUnit;
+      _shopItemUnitId = picked.shopItemUnitId;
+      _packagingLabel = picked.packagingLabel;
+      // Re-pre-fill the total from the new packaging's last_cost ×
+      // current qty so the cashier doesn't lose their typed qty just
+      // because they corrected the packaging.
+      final newCost = picked.lastCost;
+      final qty = num.tryParse(_qtyController.text.trim()) ?? 0;
+      if (newCost != null && newCost > 0 && qty > 0) {
+        _totalController.text = _formatField(newCost * qty);
+      } else {
+        _totalController.text = '';
+      }
     });
   }
 
   @override
   void dispose() {
-    _qtyController.removeListener(_onQtyChanged);
-    _perUnitController.removeListener(_onPerUnitChanged);
-    _totalController.removeListener(_onTotalChanged);
+    _qtyController.removeListener(_onChanged);
+    _totalController.removeListener(_onChanged);
     _qtyController.dispose();
-    _perUnitController.dispose();
     _totalController.dispose();
     super.dispose();
   }
@@ -580,71 +992,48 @@ class _LineEntryFormState extends State<_LineEntryForm> {
     return value.toStringAsFixed(2);
   }
 
-  void _setProgrammatic(TextEditingController c, String text) {
-    if (c.text == text) return;
-    _suppressNotify = true;
-    c.text = text;
-    _suppressNotify = false;
+  void _onChanged() {
+    if (mounted) setState(() {});
   }
 
-  void _onQtyChanged() {
-    if (_suppressNotify) return;
-    final qty = int.tryParse(_qtyController.text.trim());
-    if (qty == null || qty < 1) {
-      setState(() {});
-      return;
-    }
-    // Last-typed field stays authoritative; recompute the other.
-    if (_lastTyped == _LastTypedMoney.perUnit) {
-      final perUnit = _parse(_perUnitController.text);
-      if (perUnit != null) {
-        _setProgrammatic(_totalController, _formatField(perUnit * qty));
-      }
-    } else {
-      final total = _parse(_totalController.text);
-      if (total != null && qty > 0) {
-        _setProgrammatic(_perUnitController, _formatField(total / qty));
-      }
-    }
-    setState(() {});
-  }
-
-  void _onPerUnitChanged() {
-    if (_suppressNotify) return;
-    _lastTyped = _LastTypedMoney.perUnit;
-    final qty = int.tryParse(_qtyController.text.trim());
-    final perUnit = _parse(_perUnitController.text);
-    if (qty != null && qty > 0 && perUnit != null) {
-      _setProgrammatic(_totalController, _formatField(perUnit * qty));
-    } else if (perUnit == null) {
-      _setProgrammatic(_totalController, '');
-    }
-    setState(() {});
-  }
-
-  void _onTotalChanged() {
-    if (_suppressNotify) return;
-    _lastTyped = _LastTypedMoney.total;
-    final qty = int.tryParse(_qtyController.text.trim());
+  /// Derived per-packaging cost shown as a small caption under the
+  /// total field. Null when qty or total aren't yet typed; surfacing
+  /// "= /0 per bag" would be noise.
+  num? get _derivedPerUnit {
+    final qty = _parsedQty;
     final total = _parse(_totalController.text);
-    if (qty != null && qty > 0 && total != null) {
-      _setProgrammatic(_perUnitController, _formatField(total / qty));
-    } else if (total == null) {
-      _setProgrammatic(_perUnitController, '');
-    }
-    setState(() {});
+    if (qty == null || qty <= 0 || total == null || total <= 0) return null;
+    return total / qty;
+  }
+
+  num? get _parsedQty {
+    final raw = _qtyController.text.trim();
+    if (raw.isEmpty) return null;
+    final v = num.tryParse(raw);
+    if (v == null || v <= 0) return null;
+    return v;
   }
 
   bool get _canAdd {
-    final qty = int.tryParse(_qtyController.text.trim());
+    final qty = _parsedQty;
     final total = _parse(_totalController.text);
-    return qty != null && qty >= 1 && total != null && total > 0;
+    return qty != null && total != null && total > 0;
   }
 
   void _onAdd() {
-    final qty = int.tryParse(_qtyController.text.trim())!;
+    final qty = _parsedQty!;
     final total = _parse(_totalController.text)!;
-    widget.onAddLine(qty, total, _unitCode, _unitLabel);
+    widget.onAddLine(
+      shopItemUnitId: _shopItemUnitId,
+      shopItemId: widget.selected.shopItemId,
+      itemId: widget.selected.itemId,
+      displayName: widget.selected.displayName,
+      packagingLabel: _packagingLabel,
+      baseUnitLabel: widget.selected.baseUnitLabel,
+      quantity: qty,
+      lineTotal: total,
+      originalShopItemUnitId: widget.selected.shopItemUnitId,
+    );
   }
 
   @override
@@ -663,7 +1052,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
               children: [
                 Expanded(
                   child: Text(
-                    widget.item.name,
+                    displayName(widget.selected.displayName),
                     style: theme.textTheme.titleSmall,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -687,8 +1076,14 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                   width: 110,
                   child: TextField(
                     controller: _qtyController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      // Decimal-friendly so loose weighed items (12.5 kg
+                      // of meat) can land on a bono.
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
                     decoration: InputDecoration(
                       labelText: l.receiveLineQuantityLabel,
                       isDense: true,
@@ -696,71 +1091,71 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                InkWell(
-                  onTap: widget.saving ? null : _onTapUnit,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(_unitLabel, style: theme.textTheme.bodyLarge),
-                        const SizedBox(width: 2),
-                        const Icon(Icons.arrow_drop_down, size: 22),
-                      ],
+                // Packaging chip — the v2 key UX win. Renders the full
+                // packaging label (e.g., "25 kg bag") prominently so
+                // the cashier can verify they're entering against the
+                // right packaging before typing numbers.
+                Expanded(
+                  child: InkWell(
+                    onTap: widget.saving ? null : _onTapUnit,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _packagingLabel,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          const Icon(Icons.arrow_drop_down, size: 22),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                // Money field labels carry the "$" hint so it's obvious
-                // these are currency fields even before the cashier
-                // taps in. No additional prefixText — would be a second
-                // $ on screen once the field is focused.
-                Expanded(
-                  child: TextField(
-                    controller: _perUnitController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                    ],
-                    decoration: InputDecoration(
-                      labelText: l.receiveLinePerUnitLabel(
-                        widget.shop.currencySymbol,
-                        _unitLabel,
-                      ),
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: _totalController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                    ],
-                    decoration: InputDecoration(
-                      labelText: l.receiveLineTotalLabel(
-                        widget.shop.currencySymbol,
-                      ),
-                      isDense: true,
-                    ),
-                  ),
-                ),
+            // One money field only: the line total straight off the
+            // bono. Per-packaging cost is derived and shown as a small
+            // caption below so the cashier can sanity-check without
+            // having to fill an extra field.
+            TextField(
+              controller: _totalController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               ],
+              decoration: InputDecoration(
+                labelText:
+                    l.receiveLineTotalLabel(widget.shop.currencySymbol),
+                isDense: true,
+              ),
             ),
+            if (_derivedPerUnit != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                l.receiveLineDerivedPerUnit(
+                  formatMoney(_derivedPerUnit!, widget.shop),
+                  _packagingLabel,
+                ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
@@ -962,34 +1357,28 @@ class _ReceiveLineTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
-    final unit = _displayUnit(
-      line.receiveUnitCode,
-      line.receiveUnitLabel,
-      line.quantity,
-      isEnglish,
-    );
     // l.receiveLineSubtotal signature is (quantity, total, unit) — the
     // localization gen sorts placeholders alphabetically so the order
-    // here does NOT match the template's left-to-right reading.
+    // here does NOT match the template's left-to-right reading. The
+    // packaging label is the v2 unit identity (e.g., "25 kg bag").
     final subtitle = l.receiveLineSubtotal(
       '${line.quantity}',
       formatMoney(line.lineTotal, shop),
-      unit,
+      line.packagingLabel,
     );
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       dense: true,
       visualDensity: VisualDensity.compact,
       title: Text(
-        line.name,
+        line.displayName,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       subtitle: Text(subtitle),
       trailing: IconButton(
-        tooltip: l.receiveLineRemoveTooltip(line.name),
+        tooltip: l.receiveLineRemoveTooltip(line.displayName),
         icon: const Icon(Icons.close, size: 20),
         onPressed: enabled ? onRemove : null,
         padding: EdgeInsets.zero,
@@ -997,28 +1386,4 @@ class _ReceiveLineTile extends StatelessWidget {
       ),
     );
   }
-}
-
-
-// English plural forms for the unit codes we use. Hardcoded because a
-// blanket "+s" rule breaks "box" (→ "boxes" not "boxs") and isn't
-// grammatical for "kg". Somali plural rules are different (often
-// context-dependent); we use the label as-is for non-English locales.
-const _enUnitPlurals = <String, String>{
-  'piece': 'pieces',
-  'kg': 'kg',
-  'gram': 'grams',
-  'litre': 'litres',
-  'ml': 'ml',
-  'bag': 'bags',
-  'bottle': 'bottles',
-  'packet': 'packets',
-  'box': 'boxes',
-  'carton': 'cartons',
-};
-
-String _displayUnit(String code, String label, int quantity, bool isEnglish) {
-  final lower = label.toLowerCase();
-  if (!isEnglish || quantity == 1) return lower;
-  return _enUnitPlurals[code] ?? '${lower}s';
 }

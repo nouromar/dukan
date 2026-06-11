@@ -111,7 +111,7 @@ class AuthController extends ChangeNotifier {
       final rows = await _client
           .from('shop')
           .select(
-            'id, name, setup_status, currency_code, default_language_code, timezone',
+            'id, name, setup_status, currency_code, default_language_code, timezone, onboarding_dismissed_at, low_stock_warning_enabled',
           )
           .order('name');
 

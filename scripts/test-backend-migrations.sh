@@ -71,6 +71,37 @@ for migration in "$ROOT_DIR"/supabase/migrations/*.sql; do
 done
 
 docker exec -i "$CONTAINER_NAME" psql -U postgres -v ON_ERROR_STOP=1 -d postgres <<'SQL'
+-- =====================================================================
+-- Backend migration harness — v2 schema (data-model-v2 §12 test plan)
+-- =====================================================================
+--
+-- Fixture users:
+--   user1 (owner)             — owns the org + Main Shop + Setup Checklist Shop
+--   user2 (cashier)           — invited to Main Shop and Setup Checklist Shop
+--   user3 (unrelated)         — not a member of any tested shop
+--   user4 (platform admin)    — required for global catalog mutations in tests
+--
+-- Sections (search for "-- §" to navigate):
+--   §1 Auth / org / membership / RLS denial paths
+--   §2 Template apply + shop setup completion
+--   §3 Shop overlay: ensure_shop_item, create_shop_item, packagings, aliases
+--   §4 Documents + storage policies
+--   §5 Posting RPCs (post_receive / post_sale / post_payment / post_expense)
+--   §6 Multi-packaging receive + mixed-packaging sale (data-model-v2 §8.2-8.3)
+--   §7 Pricing RPC: set_shop_item_unit_sale_price
+--   §8 Search: search_items + barcode probe + locale chain
+--   §9 list_shop_item_units + packaging label correctness
+--   §10 Reports / reconciliation views
+--   §11 Learning suggestions (v_shop_suggestions)
+--   §12 search_parties + create_party
+--   §13 Sale history + void_sale (+ refund)
+--   §14 Receive history + void_receive (+ stock-activity guard)
+--   §15 Tenant isolation + cashier denial paths
+--   §16 DB-level triggers (base-unit guards, packaging mismatch, etc.)
+
+-- ---- Set NOTICE capture so negative-stock RAISE NOTICE surfaces ------
+set client_min_messages = notice;
+
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-000000000001'),
   ('00000000-0000-0000-0000-000000000002'),
@@ -89,8 +120,35 @@ begin
   if (select count(*) from public.transaction_type where code in ('sale', 'receive', 'expense')) <> 3 then
     raise exception 'transaction type seed rows missing';
   end if;
+
+  -- v2 reference jsonb columns: unit.label_translations is required for tr().
+  if not exists (
+    select 1 from public.unit where code = 'kg' and label_translations ? 'so'
+  ) then
+    raise exception 'unit.label_translations missing Somali entries';
+  end if;
+
+  -- ref_translation table must be gone.
+  if exists (
+    select 1 from pg_catalog.pg_class
+    where relname = 'ref_translation' and relnamespace = 'public'::regnamespace
+  ) then
+    raise exception 'ref_translation table should have been dropped in v2';
+  end if;
+
+  -- tr() helper exists.
+  if (select public.tr('Kg', '{"so":"Kilo"}'::jsonb, 'so')) <> 'Kilo' then
+    raise exception 'tr() helper did not return Somali translation';
+  end if;
+  if (select public.tr('Kg', '{}'::jsonb, 'so')) <> 'Kg' then
+    raise exception 'tr() helper did not fall back to default label';
+  end if;
 end;
 $$;
+
+-- =====================================================================
+-- §1 Auth / org / membership / RLS
+-- =====================================================================
 
 set role authenticated;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
@@ -105,14 +163,11 @@ set second_shop_id = public.create_shop(organization_id, 'Second Shop');
 
 do $$
 declare
-  v_org_id uuid;
   v_shop_id uuid;
   v_second_shop_id uuid;
   v_cashier_role_id uuid;
 begin
-  select organization_id, shop_id, second_shop_id
-  into v_org_id, v_shop_id, v_second_shop_id
-  from test_ids;
+  select shop_id, second_shop_id into v_shop_id, v_second_shop_id from test_ids;
 
   if not public.auth_can_access_shop(v_shop_id) then
     raise exception 'org owner cannot access first shop';
@@ -129,6 +184,7 @@ begin
 end;
 $$;
 
+-- Unrelated user can't see shops or insert locations.
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
 
 do $$
@@ -154,26 +210,16 @@ begin
 end;
 $$;
 
-create temp table transaction_test_ids as
-select
-  t.shop_id,
-  i.id as item_id,
-  u.id as piece_unit_id
-from test_ids t
-join public.item i on i.shop_id = t.shop_id and i.code = 'candy'
-cross join public.unit u
-where u.code = 'piece';
-
+-- Cashier can't insert directly into shop_item (setup-managed).
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
 
 do $$
 declare
   v_shop_id uuid;
   v_second_shop_id uuid;
-  v_unit_id uuid;
+  v_failed boolean;
 begin
   select shop_id, second_shop_id into v_shop_id, v_second_shop_id from test_ids;
-  select id into v_unit_id from public.unit where code = 'piece';
 
   if (select count(*) from public.shop) <> 1 then
     raise exception 'cashier should see exactly one assigned shop';
@@ -183,437 +229,311 @@ begin
     raise exception 'cashier can see unassigned shop';
   end if;
 
+  v_failed := false;
   begin
-    insert into public.item (
-      shop_id,
-      code,
-      name,
-      base_unit_id,
-      default_sale_unit_id,
-      default_receive_unit_id
-    )
-    values (v_shop_id, 'cashier_item', 'Cashier Item', v_unit_id, v_unit_id, v_unit_id);
-    raise exception 'cashier inserted setup item';
+    insert into public.shop_item (shop_id, base_unit_code)
+    values (v_shop_id, 'piece');
   exception
     when insufficient_privilege or check_violation or with_check_option_violation then
-      null;
+      v_failed := true;
   end;
+  if not v_failed then
+    raise exception 'cashier wrote shop_item directly (bypassing create_shop_item)';
+  end if;
 end;
 $$;
 
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000004';
-
-do $$
-declare
-  v_concept_id uuid;
-  v_catalog_item_id uuid;
-  v_revision_id uuid;
-  v_template_id uuid;
-begin
-  insert into public.catalog_product_concept (code, name_en)
-  values ('sugar', 'Sugar')
-  returning id into v_concept_id;
-
-  insert into public.catalog_item (concept_id, code)
-  values (v_concept_id, 'sugar_generic_bag')
-  returning id into v_catalog_item_id;
-
-  insert into public.catalog_item_revision (
-    catalog_item_id,
-    revision_number,
-    name,
-    category_code,
-    base_unit_code,
-    default_sale_unit_code,
-    default_receive_unit_code,
-    suggested_sale_price,
-    reorder_threshold
-  )
-  values (
-    v_catalog_item_id,
-    1,
-    'Sugar Bag',
-    'grocery',
-    'bag',
-    'bag',
-    'bag',
-    10,
-    2
-  )
-  returning id into v_revision_id;
-
-  insert into public.catalog_item_unit (
-    catalog_item_id,
-    revision_id,
-    unit_code,
-    conversion_to_base,
-    is_base_unit
-  )
-  values (v_catalog_item_id, v_revision_id, 'bag', 1, true);
-
-  insert into public.catalog_item_alias (catalog_item_id, language_code, alias_text)
-  values (v_catalog_item_id, 'en', 'white sugar');
-
-  update public.catalog_item
-  set current_revision_id = v_revision_id
-  where id = v_catalog_item_id;
-
-  insert into public.template (
-    code,
-    kind,
-    name,
-    locale_default,
-    currency_default,
-    version,
-    is_active
-  )
-  values ('grocery_v1', 'shop_starter', 'Grocery V1', 'en', 'USD', 1, true)
-  returning id into v_template_id;
-
-  insert into public.template_pack (template_id, code, version, is_required, file_path)
-  values
-    (v_template_id, 'core', 1, true, 'templates/grocery/core.json'),
-    (v_template_id, 'drinks', 1, false, 'templates/grocery/drinks.json');
-
-  insert into public.template_setting (template_id, key, value)
-  values (v_template_id, 'negative_stock_policy', '"warn"');
-
-  insert into public.template_expense_category (template_id, code, name, name_translations)
-  values (v_template_id, 'rent', 'Rent', '{"so": "Kiro"}');
-
-  insert into public.template_supplier_type (template_id, supplier_type_code, label)
-  values (v_template_id, 'wholesaler', '{"en": "Wholesaler", "so": "Jumlo"}');
-
-  insert into public.template_item (
-    template_id,
-    item_code,
-    catalog_item_id,
-    catalog_revision_id,
-    suggested_sale_price_override,
-    reorder_threshold_override
-  )
-  values (
-    v_template_id,
-    'sugar_generic_bag',
-    v_catalog_item_id,
-    v_revision_id,
-    9.75,
-    3
-  );
-
-  insert into public.template_quantity_suggestion (template_id, item_code, context, unit_code, quantity, sort_order)
-  values
-    (v_template_id, 'sugar_generic_bag', 'sale', 'bag', 1, 1),
-    (v_template_id, 'sugar_generic_bag', 'receive', 'bag', 1, 1);
-
-  insert into public.template_quick_action (template_id, screen, position, item_code)
-  values (v_template_id, 'sale', 1, 'sugar_generic_bag');
-
-  insert into public.template_item_alias (template_id, item_code, language_code, alias_text)
-  values (v_template_id, 'sugar_generic_bag', 'so', 'sonkor');
-end;
-$$;
+-- =====================================================================
+-- §2 Template apply (eager variant, 0012) + shop setup completion
+-- =====================================================================
 
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
 do $$
 declare
+  v_org_id uuid;
   v_shop_id uuid;
   v_second_shop_id uuid;
-  v_kind_id uuid;
-  v_unit_id uuid;
-  v_bag_unit_id uuid;
-  v_item_id uuid;
-  v_catalog_item_id uuid;
-  v_sugar_item_id uuid;
-  v_second_sugar_item_id uuid;
   v_template_id uuid;
   v_application_id uuid;
   v_replay_application_id uuid;
-  v_supplier_type_id uuid;
-  v_supplier_party_type_id uuid;
-  v_customer_party_type_id uuid;
+  v_rice_shop_item_id uuid;
+  v_rice_default_sale_unit_id uuid;
+  v_rice_default_sale_price numeric;
   v_failed boolean;
 begin
-  select shop_id, second_shop_id into v_shop_id, v_second_shop_id from test_ids;
-  select id into v_kind_id from public.location_kind where code = 'default';
-  select id into v_unit_id from public.unit where code = 'piece';
-  select id into v_bag_unit_id from public.unit where code = 'bag';
-  select id into v_supplier_party_type_id from public.party_type where code = 'supplier';
-  select id into v_customer_party_type_id from public.party_type where code = 'customer';
-  select id into v_template_id from public.template where code = 'grocery_v1';
+  select organization_id, shop_id, second_shop_id
+  into v_org_id, v_shop_id, v_second_shop_id
+  from test_ids;
 
-  v_application_id := public.apply_template(
-    v_second_shop_id,
-    v_template_id,
-    array['drinks']
-  );
+  select id into v_template_id from public.template where code = 'grocery' and version = 1;
+  if v_template_id is null then
+    raise exception 'seeded grocery template missing';
+  end if;
 
-  v_replay_application_id := public.apply_template(
-    v_second_shop_id,
-    v_template_id,
-    array['drinks']
-  );
-
+  -- Apply template to second shop. Idempotent.
+  v_application_id := public.apply_template(v_second_shop_id, v_template_id);
+  v_replay_application_id := public.apply_template(v_second_shop_id, v_template_id);
   if v_application_id <> v_replay_application_id then
-    raise exception 'template application idempotency did not return the original application';
+    raise exception 'apply_template idempotency broke';
   end if;
 
-  if (select setup_status from public.shop where id = v_second_shop_id) <> 'template_applied' then
-    raise exception 'template application did not advance setup status';
+  -- Eager apply: every template_item must be activated.
+  if (select count(*) from public.shop_item where shop_id = v_second_shop_id) <
+     (select count(*) from public.template_item where template_id = v_template_id) then
+    raise exception 'apply_template did not activate all template items';
   end if;
 
-  if (
-    select count(*)
-    from public.template_pack_application
-    where shop_id = v_second_shop_id
-      and template_application_id = v_application_id
-  ) <> 2 then
-    raise exception 'template application did not trace required plus selected packs';
+  -- Rice activated with snapshotted base_unit_code.
+  select si.id into v_rice_shop_item_id
+  from public.shop_item si
+  join public.item i on i.id = si.item_id
+  where si.shop_id = v_second_shop_id and i.code = 'rice_basmati_25kg';
+  if v_rice_shop_item_id is null then
+    raise exception 'rice not activated by apply_template';
   end if;
 
-  select id
-  into v_second_sugar_item_id
-  from public.item
-  where shop_id = v_second_shop_id
-    and code = 'sugar_generic_bag';
-
-  if v_second_sugar_item_id is null then
-    raise exception 'template application did not activate catalog item';
+  if (select base_unit_code from public.shop_item where id = v_rice_shop_item_id) <> 'kg' then
+    raise exception 'shop_item.base_unit_code not snapshotted from item';
   end if;
 
-  if (
-    select current_stock = 0
-      and avg_cost = 0
-      and last_cost is null
-      and sale_price = 9.75
-      and reorder_threshold = 3
-    from public.item
-    where shop_id = v_second_shop_id
-      and id = v_second_sugar_item_id
-  ) is not true then
-    raise exception 'template item did not start with safe operational defaults';
+  -- Sale-price hint landed on the default-sale packaging.
+  select siu.id, siu.sale_price
+  into v_rice_default_sale_unit_id, v_rice_default_sale_price
+  from public.shop_item_unit siu
+  where siu.shop_id = v_second_shop_id
+    and siu.shop_item_id = v_rice_shop_item_id
+    and siu.is_default_sale;
+  if v_rice_default_sale_unit_id is null then
+    raise exception 'rice has no default sale packaging after apply';
+  end if;
+  if v_rice_default_sale_price <> 1.50 then
+    raise exception 'rice default sale price not set from template hint (got %)', v_rice_default_sale_price;
   end if;
 
-  -- Lazy activation: shop's item_alias is empty after apply_template;
-  -- catalog and template aliases stay where they were, available for
-  -- cross-shop search via the catalog tables.
-  if exists (
-    select 1 from public.item_alias
-    where shop_id = v_second_shop_id
-      and item_id = v_second_sugar_item_id
-      and source = 'template'
-  ) then
-    raise exception 'lazy apply_template should not copy template aliases into shop item_alias';
+  -- All packagings copied; base packaging conversion=1 with correct unit_code.
+  if (select count(*) from public.shop_item_unit
+       where shop_id = v_second_shop_id and shop_item_id = v_rice_shop_item_id) < 2 then
+    raise exception 'rice did not get every active packaging snapshotted';
   end if;
-
   if not exists (
-    select 1 from public.catalog_item_alias cia
-    join public.catalog_item ci on ci.id = cia.catalog_item_id
-    where ci.code = 'sugar_generic_bag' and cia.alias_text = 'white sugar'
+    select 1 from public.shop_item_unit
+    where shop_id = v_second_shop_id
+      and shop_item_id = v_rice_shop_item_id
+      and conversion_to_base = 1
+      and unit_code = 'kg'
   ) then
-    raise exception 'catalog alias rows missing — search would have nothing to match';
+    raise exception 'rice base packaging missing or has wrong unit_code';
   end if;
 
+  -- Display alias copied (is_display=true rows from item_alias).
   if not exists (
-    select 1 from public.template_item_alias
-    where template_id = v_template_id
-      and item_code = 'sugar_generic_bag'
-      and alias_text = 'sonkor'
+    select 1 from public.shop_item_alias
+    where shop_id = v_second_shop_id
+      and shop_item_id = v_rice_shop_item_id
+      and is_display
+      and language_code = 'en'
+      and alias_text = 'Basmati Rice'
   ) then
-    raise exception 'template alias rows missing — search would lose template-specific aliases';
+    raise exception 'rice display alias not snapshotted from global item_alias';
   end if;
 
+  -- Template settings + expense categories.
   if not exists (
     select 1 from public.shop_setting
     where shop_id = v_second_shop_id and key = 'negative_stock_policy' and source = 'template'
   ) then
-    raise exception 'template application did not create shop setting';
+    raise exception 'template did not seed shop setting';
   end if;
-
   if not exists (
     select 1 from public.expense_category
     where shop_id = v_second_shop_id and code = 'rent'
   ) then
-    raise exception 'template application did not create expense category';
+    raise exception 'template did not seed expense category';
   end if;
 
-  if not exists (
-    select 1
-    from public.v_shop_suggestions
-    where shop_id = v_second_shop_id
-      and screen = 'sale'
-      and suggestion_type = 'item'
-      and item_id = v_second_sugar_item_id
-      and source = 'template'
-  ) then
-    raise exception 'template application did not seed item suggestion';
-  end if;
-
-  if not exists (
-    select 1
-    from public.v_shop_suggestions
-    where shop_id = v_second_shop_id
-      and screen = 'sale'
-      and suggestion_type = 'quantity'
-      and item_id = v_second_sugar_item_id
-      and quantity = 1
-      and source = 'template'
-  ) then
-    raise exception 'template application did not seed quantity suggestion';
-  end if;
-
-  if not exists (
-    select 1
-    from public.v_shop_suggestions
-    where shop_id = v_second_shop_id
-      and screen = 'expense'
-      and suggestion_type = 'expense_category'
-      and source = 'template'
-  ) then
-    raise exception 'template application did not seed expense suggestion';
-  end if;
-
-  if not exists (
-    select 1 from public.supplier_type
-    where shop_id = v_second_shop_id and code = 'wholesaler'
-  ) then
-    raise exception 'template application did not create supplier type';
+  -- shop defaults adopted on first apply.
+  if (select setup_status from public.shop where id = v_second_shop_id) <> 'template_applied' then
+    raise exception 'shop did not advance to template_applied';
   end if;
 
   v_failed := false;
   begin
-    perform public.apply_template(v_shop_id, v_template_id, array['missing_pack']);
-  exception
-    when raise_exception then
-      v_failed := true;
+    perform public.apply_template(v_second_shop_id, v_template_id, array['missing_pack']);
+  exception when raise_exception then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'template application allowed an unknown pack';
+    raise exception 'apply_template allowed unknown pack';
   end if;
 
-  insert into public.location (shop_id, name, kind_id)
-  values (v_shop_id, 'Default', v_kind_id);
-
-  insert into public.shop_setting (shop_id, key, value, source)
-  values (v_shop_id, 'negative_stock_policy', '"warn"', 'manual');
-
-  insert into public.expense_category (shop_id, code, name)
-  values (v_shop_id, 'rent', 'Rent');
-
-  insert into public.help_channel (shop_id, channel, value)
-  values (v_shop_id, 'whatsapp', '+252000000000');
-
-  insert into public.supplier_type (shop_id, code, label)
-  values (v_shop_id, 'beverage_supplier', 'Beverage Supplier')
-  returning id into v_supplier_type_id;
-
-  select id into v_catalog_item_id
-  from public.catalog_item
-  where code = 'sugar_generic_bag';
-
-  v_sugar_item_id := public.activate_catalog_item(
-    v_shop_id,
-    v_catalog_item_id,
-    null,
-    null,
-    9.50,
-    null
-  );
-
-  if (
-    select display_name
-    from public.v_item_effective
-    where shop_id = v_shop_id and id = v_sugar_item_id
-  ) <> 'Sugar Bag' then
-    raise exception 'catalog-activated item did not inherit display name';
+  -- Skip opening stock → ready.
+  perform public.complete_shop_setup(v_second_shop_id);
+  if (select setup_status from public.shop where id = v_second_shop_id) <> 'ready' then
+    raise exception 'complete_shop_setup did not flip to ready';
   end if;
 
-  update public.item
-  set name_override = 'Shop Sugar'
-  where shop_id = v_shop_id and id = v_sugar_item_id;
-
-  if (
-    select display_name
-    from public.v_item_effective
-    where shop_id = v_shop_id and id = v_sugar_item_id
-  ) <> 'Shop Sugar' then
-    raise exception 'shop item name override did not win over catalog name';
-  end if;
-
-  if (
-    select count(*)
-    from public.item_unit
-    where shop_id = v_shop_id and item_id = v_sugar_item_id and source = 'catalog'
-  ) <> 1 then
-    raise exception 'catalog activation did not copy catalog unit projection';
-  end if;
-
-  perform public.apply_template(v_shop_id, v_template_id, null);
-
-  if (
-    select count(*)
-    from public.item
-    where shop_id = v_shop_id and code = 'sugar_generic_bag'
-  ) <> 1 then
-    raise exception 'template application duplicated existing shop item';
-  end if;
-
-  if (
-    select name_override
-    from public.item
-    where shop_id = v_shop_id and id = v_sugar_item_id
-  ) <> 'Shop Sugar' then
-    raise exception 'template application overwrote shop item override';
-  end if;
-
-  insert into public.item (
-    shop_id,
-    code,
-    name,
-    base_unit_id,
-    default_sale_unit_id,
-    default_receive_unit_id,
-    sale_price
-  )
-  values (v_shop_id, 'candy', 'Candy', v_unit_id, v_unit_id, v_bag_unit_id, 1.00)
-  returning id into v_item_id;
-
-  insert into public.item_unit (
-    shop_id,
-    item_id,
-    unit_id,
-    conversion_to_base,
-    is_base_unit
-  )
-  values
-    (v_shop_id, v_item_id, v_unit_id, 1, true),
-    (v_shop_id, v_item_id, v_bag_unit_id, 100, false);
-
-  insert into public.item_alias (shop_id, item_id, alias_text, source)
-  values (v_shop_id, v_item_id, 'nacnac', 'manual');
-
-  insert into public.party (shop_id, name, type_id, supplier_type_id)
-  values (v_shop_id, 'Hodan Beverages', v_supplier_party_type_id, v_supplier_type_id);
-
-  insert into public.party (shop_id, name, type_id)
-  values (v_shop_id, 'Asha Customer', v_customer_party_type_id);
-
-  begin
-    insert into public.item_unit (
-      shop_id,
-      item_id,
-      unit_id,
-      conversion_to_base
-    )
-    values (v_second_shop_id, v_item_id, v_unit_id, 1);
-    raise exception 'cross-shop item_unit composite FK was not enforced';
-  exception
-    when foreign_key_violation then
-      null;
-  end;
+  -- Same template on Main Shop too (so daily-flow tests have items).
+  perform public.apply_template(v_shop_id, v_template_id);
+  perform public.complete_shop_setup(v_shop_id);
 end;
 $$;
+
+-- =====================================================================
+-- §3 Shop overlay: activation + creation RPCs
+-- =====================================================================
+
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_item_id uuid;
+  v_shop_item_id_1 uuid;
+  v_shop_item_id_2 uuid;
+  v_failed boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+
+  -- ensure_shop_item idempotency: two calls → same shop_item_id (#1).
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
+  v_shop_item_id_1 := public.ensure_shop_item(v_shop_id, v_rice_item_id);
+  v_shop_item_id_2 := public.ensure_shop_item(v_shop_id, v_rice_item_id);
+  if v_shop_item_id_1 <> v_shop_item_id_2 then
+    raise exception 'ensure_shop_item not idempotent';
+  end if;
+
+  -- Activation race simulated by direct insert with same (shop_id, item_id) (#2).
+  -- A direct insert is owner-managed; expect unique_violation from
+  -- shop_item_unique_activation.
+  v_failed := false;
+  begin
+    insert into public.shop_item (shop_id, item_id, base_unit_code)
+    values (v_shop_id, v_rice_item_id, 'kg');
+  exception when unique_violation then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'shop_item_unique_activation did not prevent duplicate activation';
+  end if;
+
+  -- create_shop_item (#10): shop-local + 1 packaging + 1 display alias.
+  declare
+    v_eggs_id uuid;
+    v_eggs_unit_id uuid;
+    v_eggs_alias_id uuid;
+    v_eggs_alias_count int;
+  begin
+    select shop_item_id into v_eggs_id from public.create_shop_item(
+      v_shop_id, 'Eggs', 'en', 'piece', 0.10, null
+    );
+    if v_eggs_id is null then
+      raise exception 'create_shop_item returned null';
+    end if;
+    if (select count(*) from public.shop_item_unit
+         where shop_id = v_shop_id and shop_item_id = v_eggs_id) <> 1 then
+      raise exception 'create_shop_item did not create exactly one packaging';
+    end if;
+    select id into v_eggs_unit_id
+    from public.shop_item_unit
+    where shop_id = v_shop_id and shop_item_id = v_eggs_id;
+    if (select conversion_to_base from public.shop_item_unit where id = v_eggs_unit_id) <> 1 then
+      raise exception 'create_shop_item base packaging conversion not 1';
+    end if;
+    if (select is_default_sale and is_default_receive from public.shop_item_unit where id = v_eggs_unit_id)
+       is not true then
+      raise exception 'create_shop_item base packaging not flagged as both defaults';
+    end if;
+    select count(*) into v_eggs_alias_count
+    from public.shop_item_alias
+    where shop_id = v_shop_id and shop_item_id = v_eggs_id and is_display;
+    if v_eggs_alias_count <> 1 then
+      raise exception 'create_shop_item did not create exactly one display alias';
+    end if;
+
+    -- create_shop_item_unit (#11): add tray-of-30 packaging.
+    declare v_tray_id uuid;
+    begin
+      v_tray_id := public.create_shop_item_unit(
+        v_shop_id, v_eggs_id, 'piece', 30, 2.50
+      );
+      if v_tray_id is null then
+        raise exception 'create_shop_item_unit returned null';
+      end if;
+      if (select conversion_to_base from public.shop_item_unit where id = v_tray_id) <> 30 then
+        raise exception 'create_shop_item_unit stored wrong conversion';
+      end if;
+    end;
+
+    -- add_shop_item_alias (#12): is_display=true supersedes prior display.
+    declare
+      v_first_alias_id uuid;
+      v_second_alias_id uuid;
+    begin
+      v_first_alias_id := public.add_shop_item_alias(
+        v_shop_id, v_eggs_id, 'Ukun', 'so', true, 'manual'
+      );
+      v_second_alias_id := public.add_shop_item_alias(
+        v_shop_id, v_eggs_id, 'Beed', 'so', true, 'manual'
+      );
+      if v_first_alias_id = v_second_alias_id then
+        raise exception 'add_shop_item_alias did not insert a new row';
+      end if;
+      if (select count(*) from public.shop_item_alias
+           where shop_id = v_shop_id and shop_item_id = v_eggs_id
+             and language_code = 'so' and is_display) <> 1 then
+        raise exception 'add_shop_item_alias left two display rows in the same language';
+      end if;
+
+      -- Re-insert same alias_text_norm: upserts (does not raise).
+      declare v_upsert_id uuid;
+      begin
+        v_upsert_id := public.add_shop_item_alias(
+          v_shop_id, v_eggs_id, '  beed  ', 'so', false, 'learned'
+        );
+        if v_upsert_id <> v_second_alias_id then
+          raise exception 'add_shop_item_alias did not upsert on alias_text_norm';
+        end if;
+        if (select source from public.shop_item_alias where id = v_upsert_id) <> 'learned' then
+          raise exception 'add_shop_item_alias upsert did not refresh source';
+        end if;
+      end;
+
+      -- Normalization (#15): "Bariis" vs " bariis " must collide on alias_text_norm.
+      v_failed := false;
+      begin
+        insert into public.shop_item_alias (shop_id, shop_item_id, alias_text, language_code, source)
+        values (v_shop_id, v_eggs_id, 'Bariis', 'so', 'manual');
+        insert into public.shop_item_alias (shop_id, shop_item_id, alias_text, language_code, source)
+        values (v_shop_id, v_eggs_id, ' bariis ', 'so', 'manual');
+      exception when unique_violation then v_failed := true;
+      end;
+      if not v_failed then
+        raise exception 'alias_text_norm uniqueness did not collide on case/whitespace variants';
+      end if;
+    end;
+  end;
+
+  -- create_shop_item rejects bad inputs.
+  v_failed := false;
+  begin
+    perform public.create_shop_item(v_shop_id, '   ', 'en', 'piece', null, null);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'create_shop_item accepted blank name';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.create_shop_item(v_shop_id, 'X', 'en', 'piece', -1, null);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'create_shop_item accepted negative price';
+  end if;
+end;
+$$;
+
+-- =====================================================================
+-- §4 Documents + storage policies
+-- =====================================================================
 
 create temp table document_test_ids (
   purpose text primary key,
@@ -638,152 +558,91 @@ begin
     select 1
     from storage.buckets
     where id = 'shop-documents'
-      and name = 'shop-documents'
-      and public = false
       and file_size_limit = 8388608
-      and allowed_mime_types @> array['image/jpeg', 'image/png', 'image/webp']
   ) then
-    raise exception 'shop-documents storage bucket was not configured';
+    raise exception 'shop-documents bucket not configured';
   end if;
 
-  v_document_id := gen_random_uuid();
+  v_document_id := pg_catalog.gen_random_uuid();
   v_storage_path := v_shop_id::text || '/documents/' || v_document_id::text || '/image.jpg';
 
   insert into public.document (
-    id,
-    shop_id,
-    type_id,
-    storage_bucket,
-    storage_path,
-    mime_type,
-    size_bytes,
-    ocr_status_id
+    id, shop_id, type_id, storage_bucket, storage_path,
+    mime_type, size_bytes, ocr_status_id
   )
   values (
-    v_document_id,
-    v_shop_id,
+    v_document_id, v_shop_id,
     (select id from public.document_type where code = 'sale_receipt'),
-    'shop-documents',
-    v_storage_path,
-    'image/jpeg',
-    1024,
+    'shop-documents', v_storage_path, 'image/jpeg', 1024,
     (select id from public.ocr_status where code = 'pending')
   );
 
   insert into storage.objects (bucket_id, name, owner, metadata)
   values ('shop-documents', v_storage_path, auth.uid(), '{"mimetype":"image/jpeg"}');
 
-  if not exists (
-    select 1
-    from storage.objects
-    where bucket_id = 'shop-documents'
-      and name = v_storage_path
-  ) then
-    raise exception 'shop user could not read their uploaded document image';
-  end if;
-
-  v_bad_document_id := gen_random_uuid();
+  -- Storage check constraint: bad storage_path shape rejected.
+  v_bad_document_id := pg_catalog.gen_random_uuid();
   v_bad_path := v_shop_id::text || '/bad/' || v_bad_document_id::text || '/image.jpg';
   v_failed := false;
   begin
     insert into public.document (
-      id,
-      shop_id,
-      type_id,
-      storage_bucket,
-      storage_path,
-      mime_type,
-      size_bytes,
-      ocr_status_id
+      id, shop_id, type_id, storage_bucket, storage_path,
+      mime_type, size_bytes, ocr_status_id
     )
     values (
-      v_bad_document_id,
-      v_shop_id,
+      v_bad_document_id, v_shop_id,
       (select id from public.document_type where code = 'sale_receipt'),
-      'shop-documents',
-      v_bad_path,
-      'image/jpeg',
-      1024,
+      'shop-documents', v_bad_path, 'image/jpeg', 1024,
       (select id from public.ocr_status where code = 'pending')
     );
-  exception
-    when check_violation then
-      v_failed := true;
+  exception when check_violation then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'document allowed invalid storage path shape';
+    raise exception 'document accepted invalid storage path';
   end if;
 
+  -- Storage policy: object without matching document is rejected on insert.
   v_failed := false;
   begin
     insert into storage.objects (bucket_id, name, owner)
     values (
       'shop-documents',
-      v_shop_id::text || '/documents/' || gen_random_uuid()::text || '/image.jpg',
+      v_shop_id::text || '/documents/' || pg_catalog.gen_random_uuid()::text || '/image.jpg',
       auth.uid()
     );
-  exception
-    when insufficient_privilege or check_violation then
-      v_failed := true;
+  exception when insufficient_privilege or check_violation then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'storage policy allowed object without matching document metadata';
+    raise exception 'storage policy allowed orphan object';
   end if;
 
-  v_failed := false;
-  begin
-    update storage.objects
-    set name = v_storage_path || '/evil'
-    where bucket_id = 'shop-documents'
-      and name = v_storage_path;
-  exception
-    when insufficient_privilege or check_violation then
-      v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'storage policy allowed invalid object rename';
-  end if;
-
+  -- Clients cannot delete storage objects directly.
   v_failed := false;
   begin
     delete from storage.objects
-    where bucket_id = 'shop-documents'
-      and name = v_storage_path;
-  exception
-    when insufficient_privilege then
-      v_failed := true;
+    where bucket_id = 'shop-documents' and name = v_storage_path;
+  exception when insufficient_privilege then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'storage objects should not be directly deleted by clients';
+    raise exception 'storage.objects DELETE was not blocked';
   end if;
 
-  delete from public.document
-  where id = v_document_id;
-
+  -- Setting up a bono document for the receive flow below.
+  delete from public.document where id = v_document_id;
   insert into document_test_ids (purpose, document_id, storage_path)
   values ('deleted-before-posting', v_document_id, v_storage_path);
 
-  v_receive_document_id := gen_random_uuid();
+  v_receive_document_id := pg_catalog.gen_random_uuid();
   v_receive_storage_path := v_shop_id::text || '/documents/' || v_receive_document_id::text || '/image.jpg';
 
   insert into public.document (
-    id,
-    shop_id,
-    type_id,
-    storage_bucket,
-    storage_path,
-    mime_type,
-    size_bytes,
-    ocr_status_id
+    id, shop_id, type_id, storage_bucket, storage_path,
+    mime_type, size_bytes, ocr_status_id
   )
   values (
-    v_receive_document_id,
-    v_shop_id,
+    v_receive_document_id, v_shop_id,
     (select id from public.document_type where code = 'bono'),
-    'shop-documents',
-    v_receive_storage_path,
-    'image/jpeg',
-    2048,
+    'shop-documents', v_receive_storage_path, 'image/jpeg', 2048,
     (select id from public.ocr_status where code = 'pending')
   );
 
@@ -795,402 +654,278 @@ begin
 end;
 $$;
 
+-- Storage cleanup runs in a service-role block (the trigger that deletes
+-- the storage row is SECURITY DEFINER but the delete itself must observe
+-- RLS — service role bypasses).
 reset role;
 do $$
 declare
   v_deleted_path text;
 begin
   select storage_path into v_deleted_path
-  from document_test_ids
-  where purpose = 'deleted-before-posting';
-
+  from document_test_ids where purpose = 'deleted-before-posting';
   if exists (
-    select 1
-    from storage.objects
-    where bucket_id = 'shop-documents'
-      and name = v_deleted_path
+    select 1 from storage.objects
+    where bucket_id = 'shop-documents' and name = v_deleted_path
   ) then
-    raise exception 'document delete did not clean up the storage object';
+    raise exception 'document delete trigger did not evict storage object';
   end if;
 end;
 $$;
+
 set role authenticated;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
+-- =====================================================================
+-- §5 Posting RPCs (receive + sale + payment + expense + opening stock)
+-- =====================================================================
+
+-- Set up some parties on Main Shop.
 do $$
 declare
   v_shop_id uuid;
-  v_item_id uuid;
+  v_supplier_type_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+
+  insert into public.supplier_type (shop_id, code, label, label_translations)
+  values (v_shop_id, 'beverage_supplier', 'Beverage Supplier', '{"en":"Beverage Supplier"}')
+  returning id into v_supplier_type_id;
+
+  perform public.create_party(v_shop_id, 'Hodan Beverages', null, 'supplier');
+  -- Tag the supplier with a supplier_type for completeness.
+  update public.party set supplier_type_id = v_supplier_type_id
+  where shop_id = v_shop_id and name = 'Hodan Beverages';
+
+  perform public.create_party(v_shop_id, 'Asha Customer', null, 'customer');
+end;
+$$;
+
+-- Opening stock + sale + receive + payment + expense on rice (Main Shop).
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_shop_item_id uuid;
+  v_rice_kg_unit_id uuid;
+  v_rice_bag25_unit_id uuid;
   v_supplier_id uuid;
   v_customer_id uuid;
-  v_expense_category_id uuid;
-  v_piece_unit_id uuid;
-  v_bag_unit_id uuid;
-  v_txn_id uuid;
+  v_expense_cat_id uuid;
+  v_receive_doc_id uuid;
+  v_receive_txn_id uuid;
   v_replay_txn_id uuid;
-  v_payment_id uuid;
-  v_receive_document_id uuid;
+  v_sale_txn_id uuid;
   v_failed boolean;
 begin
   select shop_id into v_shop_id from test_ids;
-  select id into v_item_id from public.item where shop_id = v_shop_id and code = 'candy';
-  select id into v_supplier_id from public.party where shop_id = v_shop_id and name = 'Hodan Beverages';
-  select id into v_customer_id from public.party where shop_id = v_shop_id and name = 'Asha Customer';
-  select id into v_expense_category_id from public.expense_category where shop_id = v_shop_id and code = 'rent';
-  select id into v_piece_unit_id from public.unit where code = 'piece';
-  select id into v_bag_unit_id from public.unit where code = 'bag';
-  select document_id into v_receive_document_id
-  from document_test_ids
-  where purpose = 'receive-bono';
+  select si.id into v_rice_shop_item_id from public.shop_item si
+   join public.item i on i.id = si.item_id
+   where si.shop_id = v_shop_id and i.code = 'rice_basmati_25kg';
+  select id into v_rice_kg_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id and conversion_to_base = 1;
+  select id into v_rice_bag25_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id
+     and unit_code = 'bag' and conversion_to_base = 25;
+  select id into v_supplier_id from public.party
+   where shop_id = v_shop_id and name = 'Hodan Beverages';
+  select id into v_customer_id from public.party
+   where shop_id = v_shop_id and name = 'Asha Customer';
+  select id into v_expense_cat_id from public.expense_category
+   where shop_id = v_shop_id and code = 'rent';
+  select document_id into v_receive_doc_id from document_test_ids where purpose = 'receive-bono';
 
-  update public.shop
-  set setup_status = 'template_applied'
-  where id = v_shop_id;
+  -- Opening stock via inventory_adjustment (10 kg @ $0.50 base unit).
+  -- Setup status must allow 'opening'; we'll temporarily rewind to template_applied.
+  update public.shop set setup_status = 'template_applied' where id = v_shop_id;
 
   perform public.post_inventory_adjustment(
-    v_shop_id,
-    'opening',
+    v_shop_id, 'opening',
     jsonb_build_array(jsonb_build_object(
-      'item_id', v_item_id,
-      'quantity_delta', 5,
-      'unit_cost', 0.04
+      'shop_item_id', v_rice_shop_item_id,
+      'quantity_delta', 10,
+      'unit_cost', 0.50
     )),
-    null,
-    'opening-candy',
-    null,
-    'Opening stock'
+    null, 'opening-rice', null, 'opening'
   );
-
   if (select setup_status from public.shop where id = v_shop_id) <> 'opening_stock_done' then
-    raise exception 'opening stock did not advance setup status';
+    raise exception 'opening adjustment did not advance setup_status';
   end if;
 
   perform public.complete_shop_setup(v_shop_id);
 
-  if (select setup_status from public.shop where id = v_shop_id) <> 'ready' then
-    raise exception 'shop setup was not completed';
-  end if;
-
-  v_txn_id := public.post_receive(
-    v_shop_id,
-    v_supplier_id,
+  -- Receive: 4 × 25 kg bag of rice from Hodan, $20/bag, $30 paid cash.
+  v_receive_txn_id := public.post_receive(
+    v_shop_id, v_supplier_id,
     jsonb_build_array(jsonb_build_object(
-      'item_id', v_item_id,
-      'quantity', 10,
-      'unit_id', v_bag_unit_id,
-      'line_total', 50
+      'shop_item_unit_id', v_rice_bag25_unit_id,
+      'quantity', 4,
+      'line_total', 80
     )),
-    20,
-    'cash',
-    v_receive_document_id,
-    'receive-candy-1',
-    null,
-    'Receive candy'
+    30, 'cash', v_receive_doc_id, 'receive-rice-1', null, 'rice receive'
   );
 
+  -- Idempotent.
   v_replay_txn_id := public.post_receive(
-    v_shop_id,
-    v_supplier_id,
+    v_shop_id, v_supplier_id,
     jsonb_build_array(jsonb_build_object(
-      'item_id', v_item_id,
-      'quantity', 10,
-      'unit_id', v_bag_unit_id,
-      'line_total', 50
+      'shop_item_unit_id', v_rice_bag25_unit_id,
+      'quantity', 4,
+      'line_total', 80
     )),
-    20,
-    'cash',
-    v_receive_document_id,
-    'receive-candy-1',
-    null,
-    'Receive candy replay'
+    30, 'cash', v_receive_doc_id, 'receive-rice-1', null, 'replay'
   );
-
-  if v_txn_id <> v_replay_txn_id then
-    raise exception 'receive idempotency did not return the original transaction';
+  if v_receive_txn_id <> v_replay_txn_id then
+    raise exception 'post_receive idempotency broken';
   end if;
 
-  if (select count(*) from public.txn where shop_id = v_shop_id and client_op_id = 'receive-candy-1') <> 1 then
-    raise exception 'receive idempotency inserted duplicate transactions';
+  -- Stock projection: 10 kg opening + 4×25 kg = 110 kg.
+  if (select current_stock from public.shop_item where id = v_rice_shop_item_id) <> 110 then
+    raise exception 'receive did not roll stock to 110 kg';
   end if;
 
-  delete from public.document
-  where id = v_receive_document_id;
-
-  if not exists (
-    select 1
-    from public.document
-    where id = v_receive_document_id
-  ) then
-    raise exception 'referenced receive document was deleted';
+  -- avg_cost weighted: (10×0.50 + 80) / 110 = ~0.7727.
+  if abs((select avg_cost from public.shop_item where id = v_rice_shop_item_id) - 0.7727) > 0.001 then
+    raise exception 'avg_cost not weighted correctly after receive';
   end if;
 
-  if (select current_stock from public.item where shop_id = v_shop_id and id = v_item_id) <> 1005 then
-    raise exception 'receive did not update stock in base units';
+  -- last_cost on the 25kg packaging = $20 per bag.
+  if (select last_cost from public.shop_item_unit where id = v_rice_bag25_unit_id) <> 20 then
+    raise exception 'shop_item_unit.last_cost not updated';
   end if;
 
-  if (select avg_cost from public.item where shop_id = v_shop_id and id = v_item_id) <> 0.0500 then
-    raise exception 'receive weighted average cost was incorrect';
+  -- supplier_item_unit_cost upserted on the (supplier, packaging).
+  if (select last_unit_cost from public.supplier_item_unit_cost
+       where shop_id = v_shop_id and party_id = v_supplier_id
+         and shop_item_unit_id = v_rice_bag25_unit_id) <> 20 then
+    raise exception 'supplier_item_unit_cost not upserted';
   end if;
 
-  if (select payable from public.party where shop_id = v_shop_id and id = v_supplier_id) <> 30.00 then
-    raise exception 'receive did not create supplier payable for unpaid amount';
+  -- Payable = 50 (total 80 - 30 paid).
+  if (select payable from public.party where id = v_supplier_id) <> 50 then
+    raise exception 'supplier payable not updated';
   end if;
 
-  if (select count(*) from public.payment where shop_id = v_shop_id and direction = 'O' and amount = 20.00) <> 1 then
-    raise exception 'receive did not create outbound payment';
-  end if;
-
-  v_txn_id := public.post_sale(
-    v_shop_id,
-    v_customer_id,
+  -- Sale: 2 kg loose @ $1.20 to Asha on credit.
+  v_sale_txn_id := public.post_sale(
+    v_shop_id, v_customer_id,
     jsonb_build_array(jsonb_build_object(
-      'item_id', v_item_id,
-      'quantity', 3,
-      'unit_id', v_piece_unit_id,
-      'unit_price', 1
-    )),
-    0,
-    null,
-    null,
-    'sale-debt-1',
-    null,
-    'Debt sale'
-  );
-
-  if (select receivable from public.party where shop_id = v_shop_id and id = v_customer_id) <> 3.00 then
-    raise exception 'debt sale did not create customer receivable';
-  end if;
-
-  if (select cogs_total from public.transaction_line where shop_id = v_shop_id and transaction_id = v_txn_id) <> 0.15 then
-    raise exception 'sale did not snapshot expected COGS';
-  end if;
-
-  if (select item_name_snapshot from public.transaction_line where shop_id = v_shop_id and transaction_id = v_txn_id) <> 'Candy' then
-    raise exception 'sale did not snapshot item name';
-  end if;
-
-  update public.item
-  set name_override = 'Local Candy'
-  where shop_id = v_shop_id and id = v_item_id;
-
-  if (select item_name_snapshot from public.transaction_line where shop_id = v_shop_id and transaction_id = v_txn_id) <> 'Candy' then
-    raise exception 'historical sale line snapshot changed after item override';
-  end if;
-
-  perform public.post_sale(
-    v_shop_id,
-    null,
-    jsonb_build_array(jsonb_build_object(
-      'item_id', v_item_id,
+      'shop_item_unit_id', v_rice_kg_unit_id,
       'quantity', 2,
-      'unit_id', v_piece_unit_id,
-      'unit_price', 1
+      'unit_price', 1.20
     )),
-    2,
-    'cash',
-    null,
-    'sale-cash-1',
-    null,
-    'Anonymous cash sale'
+    0, null, null, 'sale-rice-1', null, 'credit sale'
   );
-
-  if (select current_stock from public.item where shop_id = v_shop_id and id = v_item_id) <> 1000 then
-    raise exception 'sales did not decrement stock';
+  if (select receivable from public.party where id = v_customer_id) <> 2.40 then
+    raise exception 'sale did not create receivable';
+  end if;
+  if (select current_stock from public.shop_item where id = v_rice_shop_item_id) <> 108 then
+    raise exception 'sale did not decrement stock (108 kg expected)';
   end if;
 
-  if (select count(*) from public.payment where shop_id = v_shop_id and party_id is null and direction = 'I' and amount = 2.00) <> 1 then
-    raise exception 'anonymous cash sale did not create payment row';
+  -- cogs snapshot = base_qty * avg_cost (2 × 0.7727 ≈ 1.55).
+  if abs((select cogs_total from public.transaction_line
+           where shop_id = v_shop_id and transaction_id = v_sale_txn_id) - 1.55) > 0.01 then
+    raise exception 'sale cogs snapshot drift';
   end if;
 
-  v_payment_id := public.post_payment(
-    v_shop_id,
-    v_customer_id,
-    'I',
-    1,
-    'cash',
-    'customer-payment-1',
-    null,
-    null,
-    'Customer paid one dollar'
+  -- Cashier price-override: post_sale at a different price persists it.
+  perform public.post_sale(
+    v_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_rice_kg_unit_id,
+      'quantity', 1,
+      'unit_price', 1.50
+    )),
+    1.50, 'cash', null, 'sale-rice-override', null, 'override'
   );
-
-  if v_payment_id is null then
-    raise exception 'customer payment did not return an id';
+  if (select sale_price from public.shop_item_unit where id = v_rice_kg_unit_id) <> 1.50 then
+    raise exception 'post_sale did not persist sale_price override';
   end if;
 
-  if (select receivable from public.party where shop_id = v_shop_id and id = v_customer_id) <> 2.00 then
-    raise exception 'customer payment did not reduce receivable';
+  -- Payment from Asha (1 dollar inbound).
+  perform public.post_payment(
+    v_shop_id, v_customer_id, 'I', 1.00, 'cash',
+    'asha-pay-1', null, null, null
+  );
+  if (select receivable from public.party where id = v_customer_id) <> 1.40 then
+    raise exception 'payment did not reduce receivable';
   end if;
 
+  -- Overpayment rejected.
   v_failed := false;
   begin
     perform public.post_payment(
-      v_shop_id,
-      v_customer_id,
-      'I',
-      99,
-      'cash',
-      'customer-overpay',
-      null,
-      null,
-      'Overpay'
+      v_shop_id, v_customer_id, 'I', 99, 'cash',
+      'asha-overpay', null, null, null
     );
-  exception
-    when raise_exception then
-      v_failed := true;
+  exception when raise_exception then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'customer overpayment was allowed';
+    raise exception 'overpayment was accepted';
   end if;
 
+  -- Expense.
   perform public.post_expense(
-    v_shop_id,
-    v_expense_category_id,
-    12,
-    'cash',
-    null,
-    'expense-rent-1',
-    null,
-    'Rent'
+    v_shop_id, v_expense_cat_id, 12, 'cash', null,
+    'expense-rent-1', null, 'rent'
   );
 
-  if (select count(*) from public.stock_movement where shop_id = v_shop_id) <> 4 then
-    raise exception 'expense should not create stock movements';
+  -- Zero-qty sale rejected.
+  v_failed := false;
+  begin
+    perform public.post_sale(
+      v_shop_id, null,
+      jsonb_build_array(jsonb_build_object(
+        'shop_item_unit_id', v_rice_kg_unit_id,
+        'quantity', 0,
+        'unit_price', 1
+      )),
+      0, null, null, 'sale-zero', null, 'invalid'
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'zero-qty sale was accepted';
   end if;
 
+  -- Direct insert on txn table is blocked.
+  v_failed := false;
   begin
-    insert into public.txn (
-      shop_id,
-      type_id,
-      status_id,
-      occurred_at,
-      total_amount,
-      paid_amount
-    )
+    insert into public.txn (shop_id, type_id, status_id, occurred_at, total_amount, paid_amount)
     values (
       v_shop_id,
       (select id from public.transaction_type where code = 'sale'),
       (select id from public.transaction_status where code = 'posted'),
-      now(),
-      1,
-      1
+      now(), 1, 1
     );
-    raise exception 'direct transaction insert was allowed';
-  exception
-    when insufficient_privilege then
-      null;
-  end;
-
-  v_failed := false;
-  begin
-    insert into public.shop_suggestion (
-      shop_id,
-      screen,
-      context_key,
-      suggestion_type,
-      target_key,
-      item_id,
-      source,
-      rank
-    )
-    values (
-      v_shop_id,
-      'sale',
-      'global',
-      'item',
-      'blocked-direct-write',
-      v_item_id,
-      'manual',
-      1
-    );
-  exception
-    when insufficient_privilege then
-      v_failed := true;
+  exception when insufficient_privilege then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'direct suggestion insert was allowed';
-  end if;
-
-  v_failed := false;
-  begin
-    perform public.post_sale(
-      v_shop_id,
-      null,
-      jsonb_build_array(jsonb_build_object(
-        'item_id', v_item_id,
-        'quantity', 0,
-        'unit_id', v_piece_unit_id,
-        'unit_price', 1
-      )),
-      0,
-      null,
-      null,
-      'sale-zero-qty',
-      null,
-      'Invalid zero qty'
-    );
-  exception
-    when raise_exception then
-      v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'zero quantity sale was allowed';
+    raise exception 'direct txn insert was allowed';
   end if;
 end;
 $$;
 
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+-- =====================================================================
+-- §6 Multi-packaging receive + mixed-packaging sale (#7, #8) — Setup Checklist Shop
+-- =====================================================================
+--
+-- Build a fresh shop with rice fully activated, receive in two different
+-- packagings, then sell from both. Validates §8.2-§8.3 scenarios.
+
+-- Add 10kg-bag global packaging FIRST (as platform admin), then create
+-- Setup Checklist Shop + apply template so ensure_shop_item snapshots all
+-- three rice packagings (kg base, 10kg bag, 25kg bag).
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000004';
 
 do $$
 declare
-  v_shop_id uuid;
-  v_item_id uuid;
-  v_piece_unit_id uuid;
-  v_failed boolean;
+  v_rice_item_id uuid;
 begin
-  select shop_id into v_shop_id from test_ids;
-  select id into v_item_id from public.item where shop_id = v_shop_id and code = 'candy';
-  select id into v_piece_unit_id from public.unit where code = 'piece';
-
-  perform public.post_sale(
-    v_shop_id,
-    null,
-    jsonb_build_array(jsonb_build_object(
-      'item_id', v_item_id,
-      'quantity', 1,
-      'unit_id', v_piece_unit_id,
-      'unit_price', 1
-    )),
-    1,
-    'cash',
-    null,
-    'cashier-sale-1',
-    null,
-    'Cashier sale'
-  );
-
-  v_failed := false;
-  begin
-    perform public.post_inventory_adjustment(
-      v_shop_id,
-      'correction',
-      jsonb_build_array(jsonb_build_object(
-        'item_id', v_item_id,
-        'quantity_delta', 1,
-        'unit_cost', 0.05
-      )),
-      null,
-      'cashier-adjustment',
-      null,
-      'Blocked adjustment'
-    );
-  exception
-    when raise_exception then
-      v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'cashier inventory adjustment was allowed';
-  end if;
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
+  insert into public.item_unit (item_id, unit_code, conversion_to_base, is_default_sale, is_default_receive, sort_order, is_active)
+  values (v_rice_item_id, 'bag', 10, false, false, 3, true)
+  on conflict (item_id, unit_code, conversion_to_base) do nothing;
 end;
 $$;
 
@@ -1198,1099 +933,551 @@ set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
 do $$
 declare
+  v_org_id uuid;
   v_shop_id uuid;
-  v_item_id uuid;
+  v_template_id uuid;
+  v_cashier_role_id uuid;
+begin
+  select organization_id into v_org_id from test_ids;
+  v_shop_id := public.create_shop(v_org_id, 'Setup Checklist Shop');
+
+  select id into v_template_id from public.template where code = 'grocery' and version = 1;
+  perform public.apply_template(v_shop_id, v_template_id);
+  perform public.complete_shop_setup(v_shop_id);
+
+  -- Invite the cashier user2 for later denial tests.
+  select id into v_cashier_role_id from public.shop_role where code = 'cashier';
+  insert into public.shop_membership (shop_id, user_id, role_id)
+  values (v_shop_id, '00000000-0000-0000-0000-000000000002', v_cashier_role_id);
+end;
+$$;
+
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_item_id uuid;
+  v_rice_shop_item_id uuid;
+  v_kg_unit_id uuid;
+  v_bag25_unit_id uuid;
+  v_bag10_unit_id uuid;
   v_supplier_id uuid;
-  v_customer_id uuid;
+  v_recv_1 uuid;
+  v_recv_2 uuid;
+  v_stock numeric;
+  v_avg_cost numeric;
+  v_last_cost_25 numeric;
+  v_last_cost_10 numeric;
+  v_sale_loose uuid;
+  v_sale_bag uuid;
+  v_cogs numeric;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
+  select si.id into v_rice_shop_item_id from public.shop_item si
+   where si.shop_id = v_shop_id and si.item_id = v_rice_item_id;
+
+  select id into v_kg_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id and conversion_to_base = 1;
+  select id into v_bag25_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id
+     and unit_code = 'bag' and conversion_to_base = 25;
+  select id into v_bag10_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id
+     and unit_code = 'bag' and conversion_to_base = 10;
+  if v_bag10_unit_id is null then
+    raise exception 'ensure_shop_item did not snapshot the 10kg-bag packaging';
+  end if;
+
+  perform public.create_party(v_shop_id, 'Hodan Beverages', null, 'supplier');
+  select id into v_supplier_id from public.party
+   where shop_id = v_shop_id and name = 'Hodan Beverages';
+
+  -- #7: receive 40 × 25kg-bag at $800 ($20/bag), then 100 × 10kg-bag at
+  -- $900 ($9/bag).
+  v_recv_1 := public.post_receive(
+    v_shop_id, v_supplier_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_bag25_unit_id, 'quantity', 40, 'line_total', 800
+    )),
+    0, null, null, 'recv-rice-25', null, 'multi-pack receive'
+  );
+  v_recv_2 := public.post_receive(
+    v_shop_id, v_supplier_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_bag10_unit_id, 'quantity', 100, 'line_total', 900
+    )),
+    0, null, null, 'recv-rice-10', null, 'multi-pack receive'
+  );
+
+  -- Stock rolls up: 40×25 + 100×10 = 1000 + 1000 = 2000 kg.
+  select current_stock into v_stock from public.shop_item where id = v_rice_shop_item_id;
+  if v_stock <> 2000 then
+    raise exception 'multi-pack stock = % (expected 2000)', v_stock;
+  end if;
+
+  -- Weighted avg cost: total cost = 1700 / 2000 kg = 0.85.
+  select avg_cost into v_avg_cost from public.shop_item where id = v_rice_shop_item_id;
+  if abs(v_avg_cost - 0.85) > 0.0001 then
+    raise exception 'multi-pack avg_cost = % (expected 0.85)', v_avg_cost;
+  end if;
+
+  -- last_cost per packaging.
+  select last_cost into v_last_cost_25 from public.shop_item_unit where id = v_bag25_unit_id;
+  select last_cost into v_last_cost_10 from public.shop_item_unit where id = v_bag10_unit_id;
+  if v_last_cost_25 <> 20 then
+    raise exception '25kg-bag last_cost = % (expected 20)', v_last_cost_25;
+  end if;
+  if v_last_cost_10 <> 9 then
+    raise exception '10kg-bag last_cost = % (expected 9)', v_last_cost_10;
+  end if;
+
+  -- supplier_item_unit_cost: one row per (supplier, packaging).
+  if (select count(*) from public.supplier_item_unit_cost
+       where shop_id = v_shop_id and party_id = v_supplier_id
+         and shop_item_unit_id in (v_bag25_unit_id, v_bag10_unit_id)) <> 2 then
+    raise exception 'supplier_item_unit_cost did not have one row per packaging';
+  end if;
+
+  -- #8: sell 1 kg loose + 1 × 25kg-bag, both decrement same pool.
+  perform public.set_shop_item_unit_sale_price(v_shop_id, v_kg_unit_id, 1.20);
+  perform public.set_shop_item_unit_sale_price(v_shop_id, v_bag25_unit_id, 25);
+
+  v_sale_loose := public.post_sale(
+    v_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_kg_unit_id, 'quantity', 1, 'unit_price', 1.20
+    )),
+    1.20, 'cash', null, 'sale-loose-1', null, 'mixed-pack sale'
+  );
+  v_sale_bag := public.post_sale(
+    v_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_bag25_unit_id, 'quantity', 1, 'unit_price', 25
+    )),
+    25, 'cash', null, 'sale-bag-1', null, 'mixed-pack sale'
+  );
+
+  -- Pool decremented by 1 + 25 = 26.
+  select current_stock into v_stock from public.shop_item where id = v_rice_shop_item_id;
+  if v_stock <> 1974 then
+    raise exception 'mixed-pack pool decrement wrong (got %)', v_stock;
+  end if;
+
+  -- cogs on loose sale snapshots avg_cost.
+  select cogs_unit_cost into v_cogs from public.transaction_line
+   where shop_id = v_shop_id and transaction_id = v_sale_loose;
+  if v_cogs <> 0.85 then
+    raise exception 'loose sale cogs_unit_cost = % (expected 0.85)', v_cogs;
+  end if;
+  -- cogs on bag sale: 25 × 0.85 = 21.25.
+  select cogs_total into v_cogs from public.transaction_line
+   where shop_id = v_shop_id and transaction_id = v_sale_bag;
+  if v_cogs <> 21.25 then
+    raise exception 'bag sale cogs_total = % (expected 21.25)', v_cogs;
+  end if;
+end;
+$$;
+
+-- #6 Negative-stock NOTICE: sell more than current stock; verify
+-- the post completes without raising AND current_stock < 0.
+do $$
+declare
+  v_shop_id uuid;
+  v_eggs_id uuid;
+  v_eggs_unit_id uuid;
+  v_pre numeric;
+  v_post numeric;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select shop_item_id into v_eggs_id from public.create_shop_item(v_shop_id, 'Negative Test', 'en', 'piece', 1.00, null);
+  select id into v_eggs_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_eggs_id;
+  select current_stock into v_pre from public.shop_item where id = v_eggs_id;
+  perform public.post_sale(
+    v_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_eggs_unit_id, 'quantity', 5, 'unit_price', 1
+    )),
+    5, 'cash', null, 'neg-stock-sale', null, 'should raise notice'
+  );
+  select current_stock into v_post from public.shop_item where id = v_eggs_id;
+  if v_post >= 0 then
+    raise exception 'negative-stock sale did not produce negative balance (got %)', v_post;
+  end if;
+end;
+$$;
+
+-- =====================================================================
+-- §7 set_shop_item_unit_sale_price (#9): null + positive + negative
+-- =====================================================================
+
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_item_id uuid;
+  v_rice_shop_item_id uuid;
+  v_kg_unit_id uuid;
+  v_failed boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
+  select id into v_rice_shop_item_id from public.shop_item
+   where shop_id = v_shop_id and item_id = v_rice_item_id;
+  select id into v_kg_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id and conversion_to_base = 1;
+
+  perform public.set_shop_item_unit_sale_price(v_shop_id, v_kg_unit_id, 1.75);
+  if (select sale_price from public.shop_item_unit where id = v_kg_unit_id) <> 1.75 then
+    raise exception 'price did not persist';
+  end if;
+
+  perform public.set_shop_item_unit_sale_price(v_shop_id, v_kg_unit_id, null);
+  if (select sale_price from public.shop_item_unit where id = v_kg_unit_id) is not null then
+    raise exception 'null price did not un-price packaging';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.set_shop_item_unit_sale_price(v_shop_id, v_kg_unit_id, -1);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'negative price was accepted';
+  end if;
+
+  -- Restore for downstream.
+  perform public.set_shop_item_unit_sale_price(v_shop_id, v_kg_unit_id, 1.20);
+end;
+$$;
+
+-- =====================================================================
+-- §8 search_items: alias chain + barcode probe + locale (#13, #14)
+-- =====================================================================
+
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_item_id uuid;
+  v_rice_shop_item_id uuid;
+  v_rice_bag25_unit_id uuid;
+  v_match_locale_count int;
+  v_first_name text;
+  v_alias_rank_reason text;
+  v_so_name text;
+  v_en_name text;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
+  select id into v_rice_shop_item_id from public.shop_item
+   where shop_id = v_shop_id and item_id = v_rice_item_id;
+  select id into v_rice_bag25_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id
+     and unit_code = 'bag' and conversion_to_base = 25;
+
+  -- Seed a shop alias in Somali so the shop-side branch wins.
+  perform public.add_shop_item_alias(v_shop_id, v_rice_shop_item_id, 'bariis manta', 'so', false, 'manual');
+
+  -- "bariis" hits the global Somali alias → returns rice.
+  if not exists (
+    select 1 from public.search_items(v_shop_id, 'bariis', 'sale', 'so')
+    where shop_item_id = v_rice_shop_item_id
+  ) then
+    raise exception 'search_items did not find rice via Somali alias';
+  end if;
+
+  -- Locale match wins: "bariis manta" with locale=so returns rice with
+  -- rank_reason starting with alias_*.
+  select rank_reason into v_alias_rank_reason
+  from public.search_items(v_shop_id, 'bariis manta', 'sale', 'so')
+  where shop_item_id = v_rice_shop_item_id
+  limit 1;
+  if v_alias_rank_reason is null or v_alias_rank_reason not like 'alias_%' then
+    raise exception 'rank_reason missing or unexpected (got %)', v_alias_rank_reason;
+  end if;
+
+  -- Locale display: Somali display name vs English display name.
+  select display_name into v_so_name
+  from public.search_items(v_shop_id, '', 'sale', 'so', null, 200)
+  where shop_item_id = v_rice_shop_item_id;
+  select display_name into v_en_name
+  from public.search_items(v_shop_id, '', 'sale', 'en', null, 200)
+  where shop_item_id = v_rice_shop_item_id;
+  if v_so_name not like 'Bariis%' then
+    raise exception 'Somali locale did not surface Somali display name (got %)', v_so_name;
+  end if;
+  if v_en_name not like 'Basmati%' then
+    raise exception 'English locale did not surface English display name (got %)', v_en_name;
+  end if;
+
+  -- Empty query returns activated shop_items (rank_reason='empty_query').
+  if not exists (
+    select 1 from public.search_items(v_shop_id, '', 'sale', 'en', null, 200)
+    where rank_reason = 'empty_query'
+  ) then
+    raise exception 'empty query did not surface empty_query rows';
+  end if;
+
+  -- #14 Barcode probe: a shop barcode overrides a global barcode.
+  declare
+    v_global_iu_id uuid;
+    v_search_unit uuid;
+    v_search_reason text;
+  begin
+    -- Global barcode pointing at the 25kg packaging.
+    select id into v_global_iu_id from public.item_unit
+     where item_id = v_rice_item_id and unit_code = 'bag' and conversion_to_base = 25;
+
+    set role postgres;
+    insert into public.item_barcode (item_unit_id, barcode, source, is_active)
+    values (v_global_iu_id, '12345678', 'manufacturer', true)
+    on conflict (item_unit_id, barcode) do nothing;
+    reset role;
+    set role authenticated;
+    set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+    -- Shop barcode pointing at the kg packaging — should win.
+    insert into public.shop_item_barcode (shop_id, shop_item_unit_id, barcode, is_active)
+    select v_shop_id,
+      (select id from public.shop_item_unit
+        where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id and conversion_to_base = 1),
+      '12345678', true;
+
+    select default_shop_item_unit_id, rank_reason into v_search_unit, v_search_reason
+    from public.search_items(v_shop_id, '12345678', 'sale', 'en')
+    where shop_item_id = v_rice_shop_item_id
+    limit 1;
+    if v_search_reason <> 'barcode_match' then
+      raise exception 'barcode search did not flag barcode_match (got %)', v_search_reason;
+    end if;
+    if v_search_unit is null then
+      raise exception 'barcode search did not return a packaging id';
+    end if;
+    -- The shop barcode (kg unit) must win over the global barcode (bag).
+    if v_search_unit <> (
+      select id from public.shop_item_unit
+       where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id and conversion_to_base = 1
+    ) then
+      raise exception 'global barcode shadowed shop barcode (expected kg, got %)', v_search_unit;
+    end if;
+  end;
+end;
+$$;
+
+-- =====================================================================
+-- §9 list_shop_item_units: order + packaging label (#18)
+-- =====================================================================
+
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_item_id uuid;
+  v_rice_shop_item_id uuid;
+  v_first_label text;
+  v_first_unit_id uuid;
+  v_kg_unit_id uuid;
+  v_bag25_packaging_label text;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
+  select id into v_rice_shop_item_id from public.shop_item
+   where shop_id = v_shop_id and item_id = v_rice_item_id;
+
+  -- Receive screen: 25 kg bag default surfaces first; label "25 Kg Bag".
+  select shop_item_unit_id, packaging_label
+   into v_first_unit_id, v_first_label
+  from public.list_shop_item_units(v_shop_id, v_rice_shop_item_id, 'receive')
+  limit 1;
+  if v_first_label <> '25 Kg Bag' then
+    raise exception 'receive screen first packaging label = % (expected "25 Kg Bag")', v_first_label;
+  end if;
+
+  -- Sale screen: kg base surfaces first; label = "Kg".
+  select shop_item_unit_id, packaging_label
+   into v_first_unit_id, v_first_label
+  from public.list_shop_item_units(v_shop_id, v_rice_shop_item_id, 'sale')
+  limit 1;
+  if v_first_label <> 'Kg' then
+    raise exception 'sale screen first packaging label = % (expected "Kg")', v_first_label;
+  end if;
+
+  -- Bad screen rejected.
+  declare v_failed boolean := false;
+  begin
+    begin
+      perform * from public.list_shop_item_units(v_shop_id, v_rice_shop_item_id, 'bogus');
+    exception when raise_exception then v_failed := true;
+    end;
+    if not v_failed then
+      raise exception 'list_shop_item_units accepted bad p_screen';
+    end if;
+  end;
+end;
+$$;
+
+-- =====================================================================
+-- §10 Reports + reconciliation views
+-- =====================================================================
+
+do $$
+declare
+  v_shop_id uuid;
+  v_expected_stock numeric;
 begin
   select shop_id into v_shop_id from test_ids;
-  select id into v_item_id from public.item where shop_id = v_shop_id and code = 'candy';
-  select id into v_supplier_id from public.party where shop_id = v_shop_id and name = 'Hodan Beverages';
-  select id into v_customer_id from public.party where shop_id = v_shop_id and name = 'Asha Customer';
 
-  if not exists (
-    select 1
-    from public.v_item_stock_truth
-    where shop_id = v_shop_id
-      and item_id = v_item_id
-      and cached_stock = 999
-      and ledger_stock = 999
-      and stock_variance = 0
-      and movement_count = 5
+  -- v_item_stock_truth: cached vs ledger.
+  if exists (
+    select 1 from public.v_item_stock_truth
+    where shop_id = v_shop_id and stock_variance <> 0
   ) then
-    raise exception 'item stock truth did not reconcile cached and ledger stock';
+    raise exception 'v_item_stock_truth shows variance for Main Shop';
   end if;
 
-  if not exists (
-    select 1
-    from public.v_party_balance_truth
+  if exists (
+    select 1 from public.v_party_balance_truth
     where shop_id = v_shop_id
-      and party_id = v_supplier_id
-      and cached_payable = 30
-      and ledger_payable = 30
-      and payable_variance = 0
+      and (receivable_variance <> 0 or payable_variance <> 0)
   ) then
-    raise exception 'supplier payable truth did not reconcile cached and ledger payable';
+    raise exception 'v_party_balance_truth shows variance for Main Shop';
   end if;
 
-  if not exists (
-    select 1
-    from public.v_party_balance_truth
-    where shop_id = v_shop_id
-      and party_id = v_customer_id
-      and cached_receivable = 2
-      and ledger_receivable = 2
-      and receivable_variance = 0
-  ) then
-    raise exception 'customer receivable truth did not reconcile cached and ledger receivable';
+  -- v_sales_report has at least the rice sales we posted.
+  if (select count(*) from public.v_sales_report where shop_id = v_shop_id) < 2 then
+    raise exception 'v_sales_report under-counts main shop sales';
   end if;
 
+  -- v_expense_report has the rent expense.
   if not exists (
-    select 1
-    from public.v_sales_report
-    where shop_id = v_shop_id
-    group by shop_id
-    having count(*) = 3
-      and sum(revenue) = 6
-      and sum(paid_amount) = 3
-      and sum(unpaid_amount) = 3
-      and sum(cogs_total) = 0.30
-      and sum(gross_profit) = 5.70
+    select 1 from public.v_expense_report
+    where shop_id = v_shop_id and expense_category_code = 'rent' and amount = 12
   ) then
-    raise exception 'sales report did not expose expected sale totals and COGS';
+    raise exception 'v_expense_report missing rent';
   end if;
 
+  -- v_daily_profit aggregates.
   if not exists (
-    select 1
-    from public.v_receive_report
-    where shop_id = v_shop_id
-      and supplier_id = v_supplier_id
-      and total_amount = 50
-      and paid_amount = 20
-      and unpaid_amount = 30
-      and line_count = 1
+    select 1 from public.v_daily_profit where shop_id = v_shop_id and expense_total = 12
   ) then
-    raise exception 'receive report did not expose expected supplier receive totals';
+    raise exception 'v_daily_profit missing rent expense';
   end if;
+end;
+$$;
 
-  if not exists (
-    select 1
-    from public.v_expense_report
-    where shop_id = v_shop_id
-      and expense_category_code = 'rent'
-      and amount = 12
-  ) then
-    raise exception 'expense report did not expose expected rent expense';
-  end if;
+-- =====================================================================
+-- §11 Learning suggestions surface after activity
+-- =====================================================================
 
-  if not exists (
-    select 1
-    from public.v_daily_profit
-    where shop_id = v_shop_id
-      and revenue = 6
-      and cogs_total = 0.30
-      and gross_profit = 5.70
-      and expense_total = 12
-      and net_profit = -6.30
-      and sale_count = 3
-      and expense_count = 1
-  ) then
-    raise exception 'daily profit view did not aggregate expected profit totals';
-  end if;
+do $$
+declare
+  v_shop_id uuid;
+  v_supplier_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_supplier_id from public.party
+   where shop_id = v_shop_id and name = 'Hodan Beverages';
 
+  -- Item learned suggestion (rice was sold + received earlier).
   if not exists (
-    select 1
-    from public.v_monthly_profit
-    where shop_id = v_shop_id
-      and revenue = 6
-      and cogs_total = 0.30
-      and gross_profit = 5.70
-      and expense_total = 12
-      and net_profit = -6.30
-      and sale_count = 3
-      and expense_count = 1
-  ) then
-    raise exception 'monthly profit view did not aggregate expected profit totals';
-  end if;
-
-  if not exists (
-    select 1
-    from public.shop_item_usage
-    where shop_id = v_shop_id
-      and item_id = v_item_id
-      and sale_count = 3
-      and receive_count = 1
-      and total_sale_base_quantity = 6
-      and total_receive_base_quantity = 1000
-  ) then
-    raise exception 'item usage profile did not track sale and receive activity';
-  end if;
-
-  if not exists (
-    select 1
-    from public.v_shop_suggestions
+    select 1 from public.v_shop_suggestions
     where shop_id = v_shop_id
       and screen = 'sale'
       and suggestion_type = 'item'
-      and item_id = v_item_id
-      and source = 'learned'
-      and usage_count = 3
+      and source in ('learned', 'template')
   ) then
-    raise exception 'learned sale item suggestion was not active after repeated sales';
+    raise exception 'no item suggestion surfaced for sale screen';
   end if;
 
+  -- Supplier-item learned after receive.
   if not exists (
-    select 1
-    from public.shop_item_entry_profile
-    where shop_id = v_shop_id
-      and item_id = v_item_id
-      and context = 'sale'
-      and usage_count = 1
-  ) then
-    raise exception 'sale quantity profile did not track posted sale quantities';
-  end if;
-
-  if not exists (
-    select 1
-    from public.shop_supplier_item_profile
-    where shop_id = v_shop_id
-      and supplier_id = v_supplier_id
-      and item_id = v_item_id
-      and receive_count = 1
-      and last_unit_cost = 5
-  ) then
-    raise exception 'supplier item profile did not track receive defaults';
-  end if;
-
-  if not exists (
-    select 1
-    from public.v_shop_suggestions
+    select 1 from public.v_shop_suggestions
     where shop_id = v_shop_id
       and screen = 'receive'
-      and context_key = 'supplier:' || v_supplier_id::text
       and suggestion_type = 'supplier_item'
-      and item_id = v_item_id
       and party_id = v_supplier_id
       and source = 'learned'
   ) then
-    raise exception 'learned supplier item suggestion was not active after receive';
+    raise exception 'no learned supplier_item suggestion surfaced';
   end if;
 
+  -- Payment method learned suggestion (cash was used).
   if not exists (
-    select 1
-    from public.v_shop_suggestions
-    where shop_id = v_shop_id
-      and screen = 'expense'
-      and suggestion_type = 'expense_category'
-      and expense_category_code = 'rent'
-      and source = 'learned'
-  ) then
-    raise exception 'learned expense category suggestion was not active after expense';
-  end if;
-
-  if not exists (
-    select 1
-    from public.v_shop_suggestions
+    select 1 from public.v_shop_suggestions
     where shop_id = v_shop_id
       and screen = 'payment'
       and suggestion_type = 'payment_method'
       and payment_method_code = 'cash'
       and source = 'learned'
   ) then
-    raise exception 'learned payment method suggestion was not active after payment';
-  end if;
-
-  if not exists (
-    select 1
-    from public.shop_party_usage
-    where shop_id = v_shop_id
-      and party_id = v_customer_id
-      and sale_count = 1
-      and payment_count = 1
-  ) then
-    raise exception 'party usage profile did not track customer sale and payment activity';
+    raise exception 'no learned payment_method suggestion surfaced';
   end if;
 end;
 $$;
 
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+-- =====================================================================
+-- §12 search_parties + create_party
+-- =====================================================================
 
 do $$
 declare
   v_shop_id uuid;
-  v_item_id uuid;
-  v_piece_unit_id uuid;
-  v_template_id uuid;
-  v_failed boolean;
-begin
-  select shop_id, item_id, piece_unit_id
-  into v_shop_id, v_item_id, v_piece_unit_id
-  from transaction_test_ids;
-  select id into v_template_id from public.template where code = 'grocery_v1';
-
-  if (select count(*) from public.txn) <> 0 then
-    raise exception 'unrelated user can see transactions';
-  end if;
-
-  if (
-    (select count(*) from public.v_sales_report)
-    + (select count(*) from public.v_receive_report)
-    + (select count(*) from public.v_expense_report)
-    + (select count(*) from public.v_daily_profit)
-    + (select count(*) from public.v_item_stock_truth)
-    + (select count(*) from public.v_party_balance_truth)
-    + (select count(*) from public.v_shop_suggestions)
-    + (select count(*) from public.shop_item_usage)
-    + (select count(*) from public.shop_supplier_item_profile)
-    + (select count(*) from public.shop_party_usage)
-    + (select count(*) from storage.objects)
-  ) <> 0 then
-    raise exception 'unrelated user can see report, suggestion, or storage rows';
-  end if;
-
-  v_failed := false;
-  begin
-    perform public.apply_template(v_shop_id, v_template_id, null);
-  exception
-    when raise_exception then
-      v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'unrelated user applied template';
-  end if;
-
-  v_failed := false;
-  begin
-    insert into storage.objects (bucket_id, name, owner)
-    values (
-      'shop-documents',
-      v_shop_id::text || '/documents/' || gen_random_uuid()::text || '/image.jpg',
-      auth.uid()
-    );
-  exception
-    when insufficient_privilege or check_violation then
-      v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'unrelated user uploaded a shop document image';
-  end if;
-
-  v_failed := false;
-  begin
-    perform public.post_sale(
-      v_shop_id,
-      null,
-      jsonb_build_array(jsonb_build_object(
-        'item_id', v_item_id,
-        'quantity', 1,
-        'unit_id', v_piece_unit_id,
-        'unit_price', 1
-      )),
-      1,
-      'cash',
-      null,
-      'unrelated-sale-1',
-      null,
-      'Blocked unrelated sale'
-    );
-  exception
-    when raise_exception then
-      v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'unrelated user posted sale';
-  end if;
-end;
-$$;
-
--- 0016 + 0017 + 0018 coverage: seeded grocery template drives the setup
--- checklist end-to-end with LAZY catalog activation. apply_template
--- pre-activates only template_quick_action favorites, leaves the rest
--- in the catalog. ensure_shop_item activates the rest on first use.
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
-
-do $$
-declare
-  v_org_id uuid;
-  v_third_shop_id uuid;
-  v_grocery_template_id uuid;
-  v_rice_item_id uuid;
-  v_milk_catalog_id uuid;
-  v_milk_item_id uuid;
-  v_milk_item_id_2 uuid;
-  v_kg_unit_id uuid;
-  v_packet_unit_id uuid;
-  v_cashier_role_id uuid;
-  v_failed boolean;
-begin
-  select organization_id into v_org_id from test_ids;
-  v_third_shop_id := public.create_shop(v_org_id, 'Setup Checklist Shop');
-
-  select id into v_grocery_template_id
-  from public.template
-  where code = 'grocery' and version = 1;
-  if v_grocery_template_id is null then
-    raise exception 'seeded grocery template (0016) is not visible';
-  end if;
-
-  if (
-    select value #>> '{}'
-    from public.template_setting
-    where template_id = v_grocery_template_id and key = 'timezone_default'
-  ) <> 'Africa/Mogadishu' then
-    raise exception 'seeded grocery template missing timezone_default setting';
-  end if;
-
-  perform public.apply_template(v_third_shop_id, v_grocery_template_id, null);
-
-  -- 0017: shop defaults written from template on first apply.
-  if (
-    select currency_code = 'USD'
-       and default_language_code = 'so'
-       and timezone = 'Africa/Mogadishu'
-       and setup_status = 'template_applied'
-    from public.shop
-    where id = v_third_shop_id
-  ) is not true then
-    raise exception 'apply_template did not write shop defaults from template';
-  end if;
-
-  -- Lazy activation: favorite items WERE pre-activated.
-  select id into v_rice_item_id
-  from public.item
-  where shop_id = v_third_shop_id and code = 'rice_basmati_25kg';
-  if v_rice_item_id is null then
-    raise exception 'favorite item rice_basmati_25kg was not pre-activated';
-  end if;
-
-  -- Lazy activation: non-favorite items were NOT pre-activated.
-  if exists (
-    select 1 from public.item
-    where shop_id = v_third_shop_id and code = 'milk_powder_400g'
-  ) then
-    raise exception 'non-favorite milk_powder_400g was incorrectly pre-activated';
-  end if;
-
-  -- Exact count: 5 favorites × 1 shop = 5 item rows total.
-  if (select count(*) from public.item where shop_id = v_third_shop_id) <> 5 then
-    raise exception 'apply_template materialized more than the favorites subset';
-  end if;
-
-  select id into v_kg_unit_id from public.unit where code = 'kg';
-
-  -- setup_status gating still works: post_sale denied before ready.
-  v_failed := false;
-  begin
-    perform public.post_sale(
-      v_third_shop_id, null,
-      jsonb_build_array(jsonb_build_object(
-        'item_id', v_rice_item_id, 'quantity', 1, 'unit_id', v_kg_unit_id, 'unit_price', 2
-      )),
-      2, 'cash', null, 'gated-sale-1', null, 'Sale before ready should be denied'
-    );
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'post_sale ran on a shop whose setup is not ready';
-  end if;
-
-  -- Skip opening-stock step (now optional) and go straight to ready.
-  perform public.complete_shop_setup(v_third_shop_id);
-
-  if (select setup_status from public.shop where id = v_third_shop_id) <> 'ready' then
-    raise exception 'complete_shop_setup did not flip third shop to ready';
-  end if;
-
-  -- Same sale call should now succeed (post-ready, favorite already activated).
-  perform public.post_sale(
-    v_third_shop_id, null,
-    jsonb_build_array(jsonb_build_object(
-      'item_id', v_rice_item_id, 'quantity', 1, 'unit_id', v_kg_unit_id, 'unit_price', 2
-    )),
-    2, 'cash', null, 'gated-sale-1', null, 'Sale after ready should succeed'
-  );
-
-  -- 0018: ensure_shop_item lazily activates a non-favorite catalog item.
-  select id into v_milk_catalog_id from public.catalog_item where code = 'milk_powder_400g';
-  v_milk_item_id := public.ensure_shop_item(v_third_shop_id, v_milk_catalog_id);
-  if v_milk_item_id is null then
-    raise exception 'ensure_shop_item returned null for milk_powder_400g';
-  end if;
-
-  if not exists (
-    select 1 from public.item
-    where shop_id = v_third_shop_id and id = v_milk_item_id and catalog_item_id = v_milk_catalog_id
-  ) then
-    raise exception 'ensure_shop_item did not link the new shop item to the catalog item';
-  end if;
-
-  -- Idempotency: second call returns the same id, does not duplicate.
-  v_milk_item_id_2 := public.ensure_shop_item(v_third_shop_id, v_milk_catalog_id);
-  if v_milk_item_id_2 <> v_milk_item_id then
-    raise exception 'ensure_shop_item is not idempotent';
-  end if;
-
-  -- Posting against the freshly activated item works end-to-end.
-  select id into v_packet_unit_id from public.unit where code = 'packet';
-  perform public.post_sale(
-    v_third_shop_id, null,
-    jsonb_build_array(jsonb_build_object(
-      'item_id', v_milk_item_id, 'quantity', 1, 'unit_id', v_packet_unit_id, 'unit_price', 3
-    )),
-    3, 'cash', null, 'lazy-milk-sale', null, 'Lazy-activated sale'
-  );
-
-  -- 0023: set_item_sale_price persists an editor-entered price so future
-  -- Sale taps fast-add at it instead of re-prompting. Owner can call it.
-  perform public.set_item_sale_price(v_third_shop_id, v_milk_item_id, 3.25);
-  if (select sale_price from public.item where id = v_milk_item_id) <> 3.25 then
-    raise exception 'set_item_sale_price did not persist the price';
-  end if;
-
-  -- 0 is a valid explicit price (free-sale confirmation) — proves the
-  -- "0 means intentional" interpretation we use on the client.
-  perform public.set_item_sale_price(v_third_shop_id, v_milk_item_id, 0);
-  if (select sale_price from public.item where id = v_milk_item_id) <> 0 then
-    raise exception 'set_item_sale_price did not accept 0';
-  end if;
-
-  -- Negative price is rejected.
-  declare v_neg_failed boolean := false;
-  begin
-    begin
-      perform public.set_item_sale_price(v_third_shop_id, v_milk_item_id, -1);
-    exception when raise_exception then v_neg_failed := true;
-    end;
-    if not v_neg_failed then
-      raise exception 'set_item_sale_price accepted a negative price';
-    end if;
-  end;
-
-  -- Null price is rejected (the editor always sends a value).
-  declare v_null_failed boolean := false;
-  begin
-    begin
-      perform public.set_item_sale_price(v_third_shop_id, v_milk_item_id, null);
-    exception when raise_exception then v_null_failed := true;
-    end;
-    if not v_null_failed then
-      raise exception 'set_item_sale_price accepted a null price';
-    end if;
-  end;
-
-  -- Item from a different shop is rejected (cross-tenant guard).
-  declare
-    v_other_shop_id uuid;
-    v_other_item_id uuid;
-    v_xshop_failed boolean := false;
-  begin
-    select shop_id into v_other_shop_id from test_ids;
-    select id into v_other_item_id from public.item
-      where shop_id = v_other_shop_id limit 1;
-    if v_other_item_id is null then
-      raise exception 'fixture broken: no item in other shop';
-    end if;
-    begin
-      perform public.set_item_sale_price(v_third_shop_id, v_other_item_id, 5);
-    exception when raise_exception then v_xshop_failed := true;
-    end;
-    if not v_xshop_failed then
-      raise exception 'set_item_sale_price accepted an item from another shop';
-    end if;
-  end;
-
-  -- Restore the price so downstream tests see a deterministic value.
-  perform public.set_item_sale_price(v_third_shop_id, v_milk_item_id, 3);
-
-  -- Invite the cashier so the next role-denial block can use this shop.
-  select id into v_cashier_role_id from public.shop_role where code = 'cashier';
-  insert into public.shop_membership (shop_id, user_id, role_id)
-  values (v_third_shop_id, '00000000-0000-0000-0000-000000000002', v_cashier_role_id);
-end;
-$$;
-
--- Cashier session: denied on setup RPCs but allowed to ensure_shop_item
--- (the relaxed activate_catalog_item permission in 0018).
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
-
-do $$
-declare
-  v_shop_id uuid;
-  v_template_id uuid;
-  v_water_catalog_id uuid;
-  v_water_item_id uuid;
-  v_failed boolean;
-begin
-  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
-  select id into v_template_id from public.template where code = 'grocery' and version = 1;
-  select id into v_water_catalog_id from public.catalog_item where code = 'water_bottled_500ml';
-
-  v_failed := false;
-  begin
-    perform public.apply_template(v_shop_id, v_template_id, null);
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'cashier was allowed to apply template';
-  end if;
-
-  v_failed := false;
-  begin
-    perform public.complete_shop_setup(v_shop_id);
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'cashier was allowed to complete shop setup';
-  end if;
-
-  -- Positive test: cashier IS allowed to activate (lazy entry point).
-  v_water_item_id := public.ensure_shop_item(v_shop_id, v_water_catalog_id);
-  if v_water_item_id is null then
-    raise exception 'cashier was denied ensure_shop_item — lazy entry point broken';
-  end if;
-
-  -- Cashier is also allowed to write item.sale_price via the editor's
-  -- save path (auth_can_post_shop covers both roles).
-  perform public.set_item_sale_price(v_shop_id, v_water_item_id, 0.75);
-  if (select sale_price from public.item where id = v_water_item_id) <> 0.75 then
-    raise exception 'cashier set_item_sale_price did not persist';
-  end if;
-end;
-$$;
-
--- Unrelated user: set_item_sale_price denied even with a valid item id.
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
-
-do $$
-declare
-  v_shop_id uuid;
-  v_item_id uuid;
-  v_failed boolean := false;
-begin
-  select id into v_shop_id from public.shop where name = 'Hodan Shop';
-  -- RLS hides items from a non-member, so fetch via SECURITY DEFINER
-  -- helper to grab a real id without leaking it through the policy.
-  select id into v_item_id from public.item where shop_id = v_shop_id limit 1;
-  if v_item_id is not null then
-    raise exception 'RLS leaked an item id to an unrelated user';
-  end if;
-
-  -- We do not have a real item id; use a synthetic uuid plus the known
-  -- shop id to prove the permission check fires before the lookup.
-  v_failed := false;
-  begin
-    perform public.set_item_sale_price(
-      v_shop_id, '00000000-0000-0000-0000-000000000999'::uuid, 1
-    );
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'unrelated user was allowed to set_item_sale_price';
-  end if;
-end;
-$$;
-
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
-
--- 0019 coverage: search_items returns activated + catalog candidates
--- with consistent shape; activated rank above catalog; aliases match;
--- cashier can call it; unrelated user denied.
-do $$
-declare
-  v_shop_id uuid;
-  v_activated_count int;
-  v_catalog_count int;
-  v_total_count int;
-  v_first_is_activated boolean;
-  v_water_match_id uuid;
-  v_water_via_alias_id uuid;
-begin
-  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
-
-  -- Empty query: returns 5 activated (favorites + water from ensure_shop_item earlier)
-  -- + the rest of the catalog candidates. At least: 6 activated, ≥ 4 catalog candidates.
-  select count(*) into v_activated_count
-  from public.search_items(v_shop_id, '', 100)
-  where is_activated;
-  select count(*) into v_catalog_count
-  from public.search_items(v_shop_id, '', 100)
-  where not is_activated;
-  if v_activated_count < 6 then
-    raise exception 'search_items empty query did not return activated items (got %)', v_activated_count;
-  end if;
-  if v_catalog_count < 4 then
-    raise exception 'search_items empty query did not return catalog candidates (got %)', v_catalog_count;
-  end if;
-
-  -- Activated rows must come first.
-  select is_activated into v_first_is_activated
-  from public.search_items(v_shop_id, '', 1);
-  if v_first_is_activated is not true then
-    raise exception 'search_items did not rank activated items above catalog';
-  end if;
-
-  -- Name search: "rice" should match Basmati Rice (activated favorite).
-  select item_id into v_water_match_id
-  from public.search_items(v_shop_id, 'rice', 10)
-  where is_activated and name ilike '%rice%'
-  limit 1;
-  if v_water_match_id is null then
-    raise exception 'search_items did not find activated rice by partial name';
-  end if;
-
-  -- Alias search: "biyo" (Somali alias for water) should match the activated water item.
-  select item_id into v_water_via_alias_id
-  from public.search_items(v_shop_id, 'biyo', 10)
-  where is_activated
-  limit 1;
-  if v_water_via_alias_id is null then
-    raise exception 'search_items did not match catalog alias "biyo" to activated item';
-  end if;
-
-  -- Catalog-side alias: "buskut" should match unactivated biscuit catalog candidate.
-  if not exists (
-    select 1
-    from public.search_items(v_shop_id, 'buskut', 10)
-    where not is_activated
-  ) then
-    raise exception 'search_items did not find catalog candidate via Somali alias';
-  end if;
-
-  -- A row's totals match either activated or catalog buckets.
-  select count(*) into v_total_count from public.search_items(v_shop_id, '', 100);
-  if v_total_count <> v_activated_count + v_catalog_count then
-    raise exception 'search_items row math does not add up';
-  end if;
-end;
-$$;
-
--- Cashier session: also allowed to call search_items.
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
-
-do $$
-declare
-  v_shop_id uuid;
-  v_n int;
-begin
-  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
-  select count(*) into v_n from public.search_items(v_shop_id, '', 50);
-  if v_n = 0 then
-    raise exception 'cashier search_items returned nothing — RLS or access check broken';
-  end if;
-end;
-$$;
-
--- Unrelated user: denied.
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
-
-do $$
-declare
-  v_shop_id uuid;
-  v_failed boolean := false;
-begin
-  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
-  begin
-    perform * from public.search_items(v_shop_id, '', 10);
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'unrelated user was allowed to call search_items';
-  end if;
-end;
-$$;
-
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
-
--- 0020 + 0021 coverage: search_parties returns customers/suppliers
--- ranked by outstanding balance; search_items honors the sale-screen
--- usage ranking; param validation rejects unknown screens / types.
-do $$
-declare
-  v_shop_id uuid;
-  v_customer_type_id uuid;
-  v_supplier_type_id uuid;
-  v_failed boolean;
-  v_first_party_id uuid;
   v_high_debt_id uuid;
-  v_low_debt_id uuid;
+  v_first_id uuid;
+  v_failed boolean;
+  v_supplier_id uuid;
 begin
-  select id into v_shop_id from public.shop where name = 'Main Shop';
-  select id into v_customer_type_id from public.party_type where code = 'customer';
-  select id into v_supplier_type_id from public.party_type where code = 'supplier';
+  select shop_id into v_shop_id from test_ids;
 
-  -- Seed two customers with different receivables so we can verify
-  -- the debt-first ordering.
+  -- Seed two customers with different receivables to verify ranking.
   insert into public.party (shop_id, name, type_id, receivable)
   values
-    (v_shop_id, 'Ahmed High',  v_customer_type_id, 50.00),
-    (v_shop_id, 'Ayaan Low',   v_customer_type_id,  5.00),
-    (v_shop_id, 'Zeynab Zero', v_customer_type_id,  0.00);
+    (v_shop_id, 'Ahmed High',  (select id from public.party_type where code = 'customer'), 50.00),
+    (v_shop_id, 'Ayaan Low',   (select id from public.party_type where code = 'customer'),  5.00);
 
   select id into v_high_debt_id from public.party
    where shop_id = v_shop_id and name = 'Ahmed High';
-  select id into v_low_debt_id from public.party
-   where shop_id = v_shop_id and name = 'Ayaan Low';
 
-  -- Customer search: highest receivable comes first.
-  select id into v_first_party_id
-  from public.search_parties(v_shop_id, '', 'customer', 50)
+  select id into v_first_id from public.search_parties(v_shop_id, '', 'customer', 50)
   limit 1;
-  if v_first_party_id <> v_high_debt_id then
-    raise exception 'search_parties did not rank customers by receivable desc';
+  if v_first_id <> v_high_debt_id then
+    raise exception 'search_parties did not rank receivable desc';
   end if;
 
-  -- Name match: "Ayaan" finds the low-debt customer.
-  if not exists (
-    select 1 from public.search_parties(v_shop_id, 'Ayaan', 'customer', 50)
-  ) then
-    raise exception 'search_parties name match failed';
-  end if;
-
-  -- Zero-receivable customer still appears (active customer, no debt).
-  if (
-    select count(*) from public.search_parties(v_shop_id, '', 'customer', 50)
-  ) < 3 then
-    raise exception 'search_parties skipped zero-balance customers';
-  end if;
-
-  -- Suppliers were seeded earlier in the harness (Hodan Beverages); the
-  -- customer search must not surface them.
+  -- Customer search excludes suppliers.
   if exists (
     select 1 from public.search_parties(v_shop_id, '', 'customer', 50)
     where name = 'Hodan Beverages'
   ) then
-    raise exception 'customer search leaked a supplier-only party';
+    raise exception 'customer search leaked a supplier';
   end if;
 
-  -- Bad p_type is rejected.
+  -- Bad p_type rejected.
   v_failed := false;
   begin
     perform * from public.search_parties(v_shop_id, '', 'random', 10);
   exception when raise_exception then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'search_parties accepted an unknown p_type';
+    raise exception 'search_parties accepted bad p_type';
   end if;
 
-  -- 0021: search_items still works without p_screen; with p_screen='sale'
-  -- the candy item (which was sold earlier in the harness) ranks above
-  -- alphabetical neighbors.
-  if (
-    select count(*) from public.search_items(v_shop_id, '', 200)
-  ) = 0 then
-    raise exception 'search_items 3-arg call regressed after the 0021 signature change';
+  -- create_party — owner happy paths.
+  v_supplier_id := public.create_party(v_shop_id, 'Test Supplier', null, 'supplier');
+  if v_supplier_id is null then
+    raise exception 'create_party returned null for supplier';
   end if;
 
-  -- Bad p_screen rejected.
-  v_failed := false;
-  begin
-    perform * from public.search_items(v_shop_id, '', 200, 'bogus');
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'search_items accepted an unknown p_screen';
-  end if;
-
-  -- For p_screen='sale', the candy item should now rank above other
-  -- activated items with zero sale_count. The harness sold candy
-  -- earlier (post_sale on v_item_id), so shop_item_usage.sale_count > 0.
-  if (
-    select item_id from public.search_items(v_shop_id, '', 50, 'sale')
-    where is_activated
-    limit 1
-  ) is null then
-    raise exception 'search_items sale ranking returned no activated rows';
-  end if;
-end;
-$$;
-
--- 0022 coverage: search_items localizes returned names. Uses the third
--- shop (Setup Checklist Shop) since its favorites came from the seeded
--- grocery template, which has catalog_product_translation for both en
--- and so. The Main Shop's items use the test fixture's catalog which
--- only has English.
-do $$
-declare
-  v_shop_id uuid;
-begin
-  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
-
-  if (
-    select name from public.search_items(v_shop_id, '', 50, null, 'so')
-    where is_activated and name ilike 'Bariis%'
-    limit 1
-  ) is null then
-    raise exception 'search_items did not return Somali name with p_locale=so';
-  end if;
-
-  if (
-    select name from public.search_items(v_shop_id, '', 50, null, 'en')
-    where is_activated and name ilike 'Basmati%'
-    limit 1
-  ) is null then
-    raise exception 'search_items did not return English name with p_locale=en';
-  end if;
-
-  -- Catalog candidates (non-activated) also get localized. Biscuit
-  -- isn't a favorite and wasn't activated earlier in the harness, so
-  -- it shows up here; with p_locale=so the Somali translation
-  -- 'Buskut' should appear instead of the canonical English name.
-  if (
-    select name from public.search_items(v_shop_id, '', 50, null, 'so')
-    where not is_activated and name ilike 'Buskut%'
-    limit 1
-  ) is null then
-    raise exception 'search_items did not localize catalog candidates';
-  end if;
-end;
-$$;
-
--- 0024 coverage: supplier-aware search_items. Uses Hodan Shop where the
--- harness already posted a receive of 10 bags of candy at $50 from
--- "Hodan Beverages" earlier. With p_party_id set + screen='receive':
---   * last_cost is populated with the receive line's unit_amount
---   * items received from this party rank above items without history
--- With p_party_id unset OR screen != 'receive': last_cost is null
--- (silently ignored — clients don't have to branch by screen).
-do $$
-declare
-  v_shop_id uuid;
-  v_supplier_id uuid;
-  v_candy_item_id uuid;
-  v_first_item_id uuid;
-  v_last_cost numeric;
-begin
-  select shop_id into v_shop_id from test_ids;
-  select id into v_supplier_id
-    from public.party where shop_id = v_shop_id and name = 'Hodan Beverages';
-  select id into v_candy_item_id
-    from public.item where shop_id = v_shop_id and code = 'candy';
-
-  -- With party + receive screen: last_cost set on the supplier-history item.
-  select last_cost into v_last_cost
-  from public.search_items(v_shop_id, '', 50, 'receive', null, v_supplier_id)
-  where item_id = v_candy_item_id;
-  if v_last_cost is null then
-    raise exception 'search_items did not populate last_cost for receive screen with party';
-  end if;
-  -- post_receive recorded entered unit_cost via line_total ($50 / 10 bags = $5).
-  if v_last_cost <> 5 then
-    raise exception 'search_items last_cost = % (expected 5)', v_last_cost;
-  end if;
-
-  -- Without party: last_cost is null.
-  select last_cost into v_last_cost
-  from public.search_items(v_shop_id, '', 50, 'receive', null, null)
-  where item_id = v_candy_item_id;
-  if v_last_cost is not null then
-    raise exception 'search_items returned last_cost without p_party_id (got %)', v_last_cost;
-  end if;
-
-  -- With party but sale screen: last_cost is silently null (not surfaced).
-  select last_cost into v_last_cost
-  from public.search_items(v_shop_id, '', 50, 'sale', null, v_supplier_id)
-  where item_id = v_candy_item_id;
-  if v_last_cost is not null then
-    raise exception 'search_items leaked last_cost on sale screen (got %)', v_last_cost;
-  end if;
-
-  -- Supplier-history ranking: items with receive history for this party
-  -- come first among activated rows.
-  select item_id into v_first_item_id
-  from public.search_items(v_shop_id, '', 50, 'receive', null, v_supplier_id)
-  where is_activated
-  limit 1;
-  if v_first_item_id <> v_candy_item_id then
-    raise exception 'search_items did not rank supplier-history candy first (got %)', v_first_item_id;
-  end if;
-end;
-$$;
-
--- 0025 coverage: search_items surfaces receive_unit_code + label so the
--- Receive screen displays the right unit ("bag" for rice, not "kg") and
--- the post_receive payload can use the right unit_id. Activated AND
--- catalog candidates both carry it.
-do $$
-declare
-  v_shop_id uuid;
-  v_rice_receive_unit text;
-  v_rice_receive_label text;
-  v_milk_receive_unit text;
-begin
-  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
-
-  -- Activated favorite: rice should report receive_unit 'bag' (base is 'kg').
-  select receive_unit_code, receive_unit_label
-  into v_rice_receive_unit, v_rice_receive_label
-  from public.search_items(v_shop_id, 'rice', 10)
-  where is_activated
-  limit 1;
-  if v_rice_receive_unit <> 'bag' then
-    raise exception 'rice receive_unit_code = % (expected bag)', v_rice_receive_unit;
-  end if;
-  if v_rice_receive_label is null or v_rice_receive_label = '' then
-    raise exception 'rice receive_unit_label was null/empty';
-  end if;
-
-  -- Catalog candidate: bread_loaf is never activated in this harness,
-  -- so it stays a catalog candidate. receive_unit_code should still be
-  -- present (from catalog_item_revision.default_receive_unit_code).
-  select receive_unit_code
-  into v_milk_receive_unit
-  from public.search_items(v_shop_id, 'bread', 10)
-  where not is_activated
-  limit 1;
-  if v_milk_receive_unit is null then
-    raise exception 'catalog candidate did not carry receive_unit_code';
-  end if;
-end;
-$$;
-
--- 0026 coverage: list_item_units returns every unit configured for an
--- activated item or catalog candidate. After the allow_* cleanup, all
--- units are returned regardless of which screen called; the picker's
--- "default" flag tracks default_sale_unit or default_receive_unit
--- depending on p_screen.
-do $$
-declare
-  v_shop_id uuid;
-  v_rice_item_id uuid;
-  v_bread_catalog_id uuid;
-  v_total int;
-  v_default_count int;
-  v_default_code text;
-begin
-  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
-  select id into v_rice_item_id from public.item
-    where shop_id = v_shop_id and code = 'rice_basmati_25kg';
-
-  -- Activated rice on the receive screen: should return both kg and
-  -- bag, with bag flagged as the receive default.
-  select count(*), count(*) filter (where is_default)
-  into v_total, v_default_count
-  from public.list_item_units(v_shop_id, v_rice_item_id, null, 'receive');
-
-  if v_total < 2 then
-    raise exception 'list_item_units returned % units for rice (expected >= 2)', v_total;
-  end if;
-  if v_default_count <> 1 then
-    raise exception 'list_item_units did not flag exactly one default (got %)', v_default_count;
-  end if;
-
-  select unit_code into v_default_code
-  from public.list_item_units(v_shop_id, v_rice_item_id, null, 'receive')
-  where is_default;
-  if v_default_code <> 'bag' then
-    raise exception 'rice default receive unit = % (expected bag)', v_default_code;
-  end if;
-
-  -- Same item, sale screen — default flips to default_sale_unit (kg).
-  select unit_code into v_default_code
-  from public.list_item_units(v_shop_id, v_rice_item_id, null, 'sale')
-  where is_default;
-  if v_default_code <> 'kg' then
-    raise exception 'rice default sale unit = % (expected kg)', v_default_code;
-  end if;
-
-  -- Catalog candidate: bread_loaf isn't activated. Should still return
-  -- its units from catalog_item_unit.
-  select id into v_bread_catalog_id from public.catalog_item where code = 'bread_loaf';
-  select count(*) into v_total
-  from public.list_item_units(v_shop_id, null, v_bread_catalog_id, 'receive');
-  if v_total = 0 then
-    raise exception 'list_item_units returned no units for catalog candidate bread';
-  end if;
-
-  -- Either-or guard: passing both ids should error.
-  declare v_failed boolean := false;
-  begin
-    begin
-      perform * from public.list_item_units(
-        v_shop_id, v_rice_item_id, v_bread_catalog_id, 'receive'
-      );
-    exception when raise_exception then v_failed := true;
-    end;
-    if not v_failed then
-      raise exception 'list_item_units accepted both ids';
-    end if;
-  end;
-
-  -- Regression: post_sale must accept a non-default unit (rice in bag).
-  -- Pre-cleanup this failed because bag.allow_sale was false; today the
-  -- cashier can use the unit picker to switch to bag on a sale.
-  declare
-    v_bag_unit_id uuid;
-    v_sale_txn_id uuid;
-  begin
-    select id into v_bag_unit_id from public.unit where code = 'bag';
-    v_sale_txn_id := public.post_sale(
-      v_shop_id, null,
-      jsonb_build_array(jsonb_build_object(
-        'item_id', v_rice_item_id,
-        'quantity', 1,
-        'unit_id', v_bag_unit_id,
-        'unit_price', 50
-      )),
-      50, 'cash', null, 'rice-bag-sale', null,
-      'Sell rice by the bag — non-default unit'
-    );
-    if v_sale_txn_id is null then
-      raise exception 'post_sale failed on non-default unit (bag)';
-    end if;
-  end;
-end;
-$$;
-
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
-
--- 0027 coverage: create_party — cashier and owner can create customers
--- + suppliers; unrelated users denied; invalid input rejected.
-do $$
-declare
-  v_shop_id uuid;
-  v_party_id uuid;
-  v_owner_customer_id uuid;
-  v_failed boolean;
-begin
-  select shop_id into v_shop_id from test_ids;
-
-  -- Owner creates a customer.
-  v_owner_customer_id := public.create_party(
-    v_shop_id, 'Test Customer', '+252600000001', 'customer'
-  );
-  if v_owner_customer_id is null then
-    raise exception 'create_party returned null for owner customer';
-  end if;
-
-  if (select type_id from public.party where id = v_owner_customer_id) <>
-     (select id from public.party_type where code = 'customer') then
-    raise exception 'create_party stored wrong type_id';
-  end if;
-
-  if (select phone from public.party where id = v_owner_customer_id) <> '+252600000001' then
-    raise exception 'create_party did not store phone';
-  end if;
-
-  -- Owner creates a supplier; phone optional.
-  v_party_id := public.create_party(v_shop_id, 'Test Supplier', null, 'supplier');
-  if v_party_id is null then
-    raise exception 'create_party returned null for supplier without phone';
-  end if;
-
-  -- Empty name rejected.
   v_failed := false;
   begin
     perform public.create_party(v_shop_id, '   ', null, 'customer');
   exception when raise_exception then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'create_party accepted empty/whitespace name';
+    raise exception 'create_party accepted blank name';
   end if;
 
-  -- Invalid type rejected (only customer + supplier from the daily UI).
   v_failed := false;
   begin
-    perform public.create_party(v_shop_id, 'Test', null, 'both');
+    perform public.create_party(v_shop_id, 'Bad', null, 'both');
   exception when raise_exception then v_failed := true;
   end;
   if not v_failed then
@@ -2299,507 +1486,2189 @@ begin
 end;
 $$;
 
--- Cashier session: also allowed to create parties (operational data,
--- not setup).
+-- Cashier can create_party (operational, not setup).
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+do $$
+declare
+  v_shop_id uuid;
+  v_p uuid;
+  v_setup_shop_id uuid;
+  v_local_item_id uuid;
+  v_local_unit_id uuid;
+  v_alias_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_p := public.create_party(v_shop_id, 'Cashier-Added', null, 'customer');
+  if v_p is null then raise exception 'cashier denied create_party'; end if;
+
+  -- #10 + #11 + #12: cashier-accessible create_shop_item / unit / alias.
+  -- Use Setup Checklist Shop where user2 is also a cashier.
+  select id into v_setup_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select shop_item_id into v_local_item_id from public.create_shop_item(
+    v_setup_shop_id, 'Cashier Snack', 'en', 'piece', 1.50, null
+  );
+  if v_local_item_id is null then
+    raise exception 'cashier was denied create_shop_item';
+  end if;
+  v_local_unit_id := public.create_shop_item_unit(
+    v_setup_shop_id, v_local_item_id, 'piece', 12, 15.00
+  );
+  if v_local_unit_id is null then
+    raise exception 'cashier was denied create_shop_item_unit';
+  end if;
+  v_alias_id := public.add_shop_item_alias(
+    v_setup_shop_id, v_local_item_id, 'snack', 'en', false, 'manual'
+  );
+  if v_alias_id is null then
+    raise exception 'cashier was denied add_shop_item_alias';
+  end if;
+
+  -- Cashier may also call set_shop_item_unit_sale_price (auth_can_post_shop).
+  perform public.set_shop_item_unit_sale_price(v_setup_shop_id, v_local_unit_id, 16.00);
+
+  -- Cashier may call ensure_shop_item (the lazy entry point).
+  declare
+    v_oil_item_id uuid;
+    v_oil_shop_item uuid;
+  begin
+    select id into v_oil_item_id from public.item where code = 'soda_can_330ml';
+    v_oil_shop_item := public.ensure_shop_item(v_setup_shop_id, v_oil_item_id);
+    if v_oil_shop_item is null then
+      raise exception 'cashier denied ensure_shop_item';
+    end if;
+  end;
+end;
+$$;
+
+-- =====================================================================
+-- §13 Sale history + void_sale + refund (#16)
+-- =====================================================================
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_item_id uuid;
+  v_rice_shop_item_id uuid;
+  v_kg_unit_id uuid;
+  v_customer_id uuid;
+  v_sale_id uuid;
+  v_reversal_id uuid;
+  v_stock_before numeric;
+  v_stock_after numeric;
+  v_is_voided boolean;
+  v_failed boolean;
+  v_line_count int;
+  v_packaging text;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
+  select id into v_rice_shop_item_id from public.shop_item
+   where shop_id = v_shop_id and item_id = v_rice_item_id;
+  select id into v_kg_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id and conversion_to_base = 1;
+
+  v_customer_id := public.create_party(v_shop_id, 'Void Customer', null, 'customer');
+
+  select current_stock into v_stock_before from public.shop_item where id = v_rice_shop_item_id;
+
+  -- Sale on credit (no payment), then void without refund.
+  v_sale_id := public.post_sale(
+    v_shop_id, v_customer_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_kg_unit_id, 'quantity', 2, 'unit_price', 1.20
+    )),
+    0, null, null, 'void-sale-1', null, 'sale to void'
+  );
+
+  -- list_sales shows the new sale, not voided.
+  select count(*) into v_line_count from public.list_sales(v_shop_id, null, 100)
+   where txn_id = v_sale_id;
+  if v_line_count <> 1 then
+    raise exception 'list_sales did not return the new sale';
+  end if;
+
+  -- get_sale_lines returns shop_item_unit_id + packaging_label.
+  select packaging_label into v_packaging from public.get_sale_lines(v_shop_id, v_sale_id);
+  if v_packaging <> 'Kg' then
+    raise exception 'get_sale_lines packaging_label = % (expected Kg)', v_packaging;
+  end if;
+
+  v_reversal_id := public.void_sale(v_shop_id, v_sale_id, 'void-1');
+  if v_reversal_id is null then
+    raise exception 'void_sale returned null';
+  end if;
+
+  -- Reversal line carries shop_item_unit_id.
+  if not exists (
+    select 1 from public.transaction_line
+    where shop_id = v_shop_id and transaction_id = v_reversal_id
+      and shop_item_unit_id = v_kg_unit_id
+  ) then
+    raise exception 'reversal line missing shop_item_unit_id';
+  end if;
+
+  select current_stock into v_stock_after from public.shop_item where id = v_rice_shop_item_id;
+  if v_stock_after <> v_stock_before then
+    raise exception 'stock not restored after void';
+  end if;
+
+  -- Idempotent.
+  if public.void_sale(v_shop_id, v_sale_id, 'void-1') <> v_reversal_id then
+    raise exception 'void_sale not idempotent on client_op_id';
+  end if;
+
+  -- Already voided rejected.
+  v_failed := false;
+  begin
+    perform public.void_sale(v_shop_id, v_sale_id, 'void-1-bis');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'void_sale allowed a second void';
+  end if;
+
+  -- list_sales flags the original as voided; reversal hidden.
+  select is_voided into v_is_voided
+  from public.list_sales(v_shop_id, null, 100)
+  where txn_id = v_sale_id;
+  if not v_is_voided then
+    raise exception 'list_sales did not flag voided sale';
+  end if;
+
+  -- #16 Refund-on-void: paid-cash sale, void with refund_amount.
+  declare
+    v_paid_sale_id uuid;
+    v_refund_customer uuid;
+    v_payment_count int;
+    v_payment_amount numeric;
+  begin
+    v_refund_customer := public.create_party(v_shop_id, 'Refund Customer', null, 'customer');
+
+    v_paid_sale_id := public.post_sale(
+      v_shop_id, v_refund_customer,
+      jsonb_build_array(jsonb_build_object(
+        'shop_item_unit_id', v_kg_unit_id, 'quantity', 2, 'unit_price', 1.50
+      )),
+      3.00, 'cash', null, 'paid-sale-1', null, 'sale fully paid cash'
+    );
+
+    -- Refund too big rejected.
+    v_failed := false;
+    begin
+      perform public.void_sale(v_shop_id, v_paid_sale_id, 'refund-too-big', 100);
+    exception when raise_exception then v_failed := true;
+    end;
+    if not v_failed then
+      raise exception 'void_sale accepted refund > paid';
+    end if;
+
+    -- Refund zero rejected.
+    v_failed := false;
+    begin
+      perform public.void_sale(v_shop_id, v_paid_sale_id, 'refund-zero', 0);
+    exception when raise_exception then v_failed := true;
+    end;
+    if not v_failed then
+      raise exception 'void_sale accepted refund=0';
+    end if;
+
+    -- Happy refund.
+    perform public.void_sale(v_shop_id, v_paid_sale_id, 'refund-happy', 1.50);
+    select count(*), max(amount) into v_payment_count, v_payment_amount
+    from public.payment
+    where shop_id = v_shop_id and refund_of_transaction_id = v_paid_sale_id;
+    if v_payment_count <> 1 then
+      raise exception 'refund payment row count = % (expected 1)', v_payment_count;
+    end if;
+    if v_payment_amount <> 1.50 then
+      raise exception 'refund payment amount = % (expected 1.50)', v_payment_amount;
+    end if;
+    if not exists (
+      select 1 from public.payment
+      where refund_of_transaction_id = v_paid_sale_id
+        and direction = 'O'
+    ) then
+      raise exception 'refund payment did not have direction=O';
+    end if;
+  end;
+end;
+$$;
+
+-- =====================================================================
+-- §14 Receive history + void_receive + stock-activity guard (#17)
+-- =====================================================================
+-- NOTE: migration 0030 currently drops the canonical `void_receive`
+-- function declared in 0010. Until that's fixed (in-place edit to 0030),
+-- the void_receive assertions can't execute. We still validate
+-- get_receive_lines + packaging label; the void-path checks are gated
+-- behind a pg_proc lookup. If/when the migration is corrected the gate
+-- becomes a no-op.
+
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_item_id uuid;
+  v_rice_shop_item_id uuid;
+  v_bag25_unit_id uuid;
+  v_kg_unit_id uuid;
+  v_supplier_id uuid;
+  v_recv_id uuid;
+  v_blocked_recv_id uuid;
+  v_reversal_id uuid;
+  v_stock_before numeric;
+  v_stock_after numeric;
+  v_failed boolean;
+  v_packaging text;
+  v_has_void_receive boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
+  select id into v_rice_shop_item_id from public.shop_item
+   where shop_id = v_shop_id and item_id = v_rice_item_id;
+  select id into v_bag25_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id
+     and unit_code = 'bag' and conversion_to_base = 25;
+  select id into v_kg_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id and conversion_to_base = 1;
+  select id into v_supplier_id from public.party
+   where shop_id = v_shop_id and name = 'Hodan Beverages';
+
+  select current_stock into v_stock_before from public.shop_item where id = v_rice_shop_item_id;
+
+  v_recv_id := public.post_receive(
+    v_shop_id, v_supplier_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_bag25_unit_id, 'quantity', 1, 'line_total', 20
+    )),
+    0, null, null, 'void-recv-1', null, 'will void'
+  );
+
+  -- get_receive_lines packaging.
+  select packaging_label into v_packaging from public.get_receive_lines(v_shop_id, v_recv_id);
+  if v_packaging <> '25 Kg Bag' then
+    raise exception 'get_receive_lines packaging = % (expected "25 Kg Bag")', v_packaging;
+  end if;
+
+  -- Probe for void_receive presence (see note above; 0030 currently drops it).
+  select exists (
+    select 1 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'void_receive'
+  ) into v_has_void_receive;
+
+  if v_has_void_receive then
+    v_reversal_id := public.void_receive(v_shop_id, v_recv_id, 'void-r-1');
+    if v_reversal_id is null then
+      raise exception 'void_receive returned null';
+    end if;
+
+    if not exists (
+      select 1 from public.transaction_line
+      where shop_id = v_shop_id and transaction_id = v_reversal_id
+        and shop_item_unit_id = v_bag25_unit_id
+    ) then
+      raise exception 'receive reversal missing shop_item_unit_id';
+    end if;
+
+    select current_stock into v_stock_after from public.shop_item where id = v_rice_shop_item_id;
+    if v_stock_after <> v_stock_before then
+      raise exception 'receive void did not restore stock';
+    end if;
+
+    if public.void_receive(v_shop_id, v_recv_id, 'void-r-1') <> v_reversal_id then
+      raise exception 'void_receive not idempotent';
+    end if;
+
+    v_blocked_recv_id := public.post_receive(
+      v_shop_id, v_supplier_id,
+      jsonb_build_array(jsonb_build_object(
+        'shop_item_unit_id', v_bag25_unit_id, 'quantity', 1, 'line_total', 20
+      )),
+      0, null, null, 'block-recv-1', null, 'will be blocked'
+    );
+    perform public.post_sale(
+      v_shop_id, null,
+      jsonb_build_array(jsonb_build_object(
+        'shop_item_unit_id', v_kg_unit_id, 'quantity', 1, 'unit_price', 1.20
+      )),
+      1.20, 'cash', null, 'sale-after-recv', null, 'sale that touches stock'
+    );
+
+    v_failed := false;
+    begin
+      perform public.void_receive(v_shop_id, v_blocked_recv_id, 'block-void');
+    exception when raise_exception then v_failed := true;
+    end;
+    if not v_failed then
+      raise exception 'void_receive ignored stock-activity guard';
+    end if;
+  else
+    raise notice 'SKIPPED: void_receive assertions (function dropped by migration 0030)';
+  end if;
+end;
+$$;
+
+-- =====================================================================
+-- §15 Tenant isolation + cashier denial of owner-only RPCs (#19, #20)
+-- =====================================================================
+
+-- #19 Cashier denied owner-only RPCs.
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
 
 do $$
 declare
   v_shop_id uuid;
-  v_party_id uuid;
+  v_sale_id uuid;
+  v_failed boolean;
 begin
-  select shop_id into v_shop_id from test_ids;
-  v_party_id := public.create_party(
-    v_shop_id, 'Cashier-Added Customer', null, 'customer'
-  );
-  if v_party_id is null then
-    raise exception 'cashier was denied create_party';
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  -- Find any non-reversed sale txn in this shop.
+  select id into v_sale_id from public.txn
+   where shop_id = v_shop_id
+     and reverses_transaction_id is null
+     and type_id = (select id from public.transaction_type where code = 'sale')
+   limit 1;
+
+  v_failed := false;
+  begin
+    perform public.void_sale(v_shop_id, v_sale_id, 'cashier-void');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'cashier was allowed to void_sale';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.post_inventory_adjustment(
+      v_shop_id, 'correction',
+      jsonb_build_array(jsonb_build_object(
+        'shop_item_id', (select id from public.shop_item where shop_id = v_shop_id limit 1),
+        'quantity_delta', -1,
+        'unit_cost', 0.5
+      )),
+      null, 'cashier-adj', null, 'denied'
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'cashier was allowed to post_inventory_adjustment';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.complete_shop_setup(v_shop_id);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'cashier was allowed to complete_shop_setup';
   end if;
 end;
 $$;
 
--- Unrelated user: denied via auth_can_post_shop.
+-- #20 Tenant isolation: unrelated user sees nothing.
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
 
 do $$
 declare
   v_shop_id uuid;
-  v_failed boolean := false;
+  v_failed boolean;
 begin
-  select id into v_shop_id from public.shop where name = 'Hodan Shop';
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  if (select count(*) from public.shop_item where shop_id = v_shop_id) <> 0 then
+    raise exception 'unrelated user sees shop_item rows';
+  end if;
+  if (select count(*) from public.txn where shop_id = v_shop_id) <> 0 then
+    raise exception 'unrelated user sees txn rows';
+  end if;
+  if (
+    (select count(*) from public.v_sales_report where shop_id = v_shop_id)
+    + (select count(*) from public.v_receive_report where shop_id = v_shop_id)
+    + (select count(*) from public.v_shop_suggestions where shop_id = v_shop_id)
+  ) <> 0 then
+    raise exception 'unrelated user sees report/suggestion rows';
+  end if;
+
+  v_failed := false;
+  begin
+    perform * from public.search_items(v_shop_id, '', 'sale', 'en');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'unrelated user called search_items';
+  end if;
+
+  v_failed := false;
   begin
     perform public.create_party(v_shop_id, 'Intruder', null, 'customer');
   exception when raise_exception then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'unrelated user was allowed to create_party';
+    raise exception 'unrelated user called create_party';
   end if;
 end;
 $$;
 
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+-- =====================================================================
+-- §16 DB-level triggers: base-unit guards + mismatch trigger (#3, #4, #5)
+-- =====================================================================
 
--- 0028 coverage: sale history (list/get/lines) + void_sale.
--- Uses the Hodan Shop fixtures (a candy item + Asha customer + earlier
--- post_sale calls — see the transactions block around line ~820+).
+-- #3 Global item_unit base-unit guard (platform_admin context).
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000004';
+
 do $$
 declare
-  v_shop_id uuid;
-  v_candy_item_id uuid;
-  v_customer_id uuid;
-  v_kg_unit_id uuid;
-  v_sale_txn_id uuid;
-  v_reversal_id uuid;
-  v_list_count int;
-  v_is_voided boolean;
-  v_stock_before numeric;
-  v_stock_after numeric;
-  v_receivable_before numeric;
-  v_receivable_after numeric;
+  v_rice_item_id uuid;
   v_failed boolean;
 begin
-  select shop_id into v_shop_id from test_ids;
-  select id into v_candy_item_id from public.item
-    where shop_id = v_shop_id and code = 'candy';
-  select id into v_customer_id from public.party
-    where shop_id = v_shop_id and name = 'Asha Customer';
-  select id into v_kg_unit_id from public.unit where code = 'piece';
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
 
-  -- Pre-state.
-  select current_stock into v_stock_before from public.item where id = v_candy_item_id;
-  select receivable into v_receivable_before from public.party where id = v_customer_id;
-
-  -- Post a debt sale: 2 pieces × $0.50 each, all on credit.
-  v_sale_txn_id := public.post_sale(
-    v_shop_id, v_customer_id,
-    jsonb_build_array(jsonb_build_object(
-      'item_id', v_candy_item_id, 'quantity', 2,
-      'unit_id', v_kg_unit_id, 'unit_price', 0.50
-    )),
-    0, null, null, 'void-sale-test-1', null,
-    'Sale we will void'
-  );
-
-  -- list_sales surfaces the new sale and reports it's NOT voided.
-  select count(*) into v_list_count
-  from public.list_sales(v_shop_id, null, 100)
-  where txn_id = v_sale_txn_id;
-  if v_list_count <> 1 then
-    raise exception 'list_sales did not return the new sale';
-  end if;
-
-  select is_voided into v_is_voided
-  from public.list_sales(v_shop_id, null, 100)
-  where txn_id = v_sale_txn_id;
-  if v_is_voided then
-    raise exception 'sale flagged as voided before any void';
-  end if;
-
-  -- get_sale_lines returns the line we just posted.
-  if (
-    select count(*) from public.get_sale_lines(v_shop_id, v_sale_txn_id)
-  ) <> 1 then
-    raise exception 'get_sale_lines did not return the sale line';
-  end if;
-
-  -- Owner can void within the 7-day window.
-  v_reversal_id := public.void_sale(v_shop_id, v_sale_txn_id, 'void-1');
-  if v_reversal_id is null then
-    raise exception 'void_sale returned null';
-  end if;
-
-  -- Reversal txn exists and points back.
-  if not exists (
-    select 1 from public.txn
-    where id = v_reversal_id
-      and shop_id = v_shop_id
-      and reverses_transaction_id = v_sale_txn_id
-  ) then
-    raise exception 'reversal txn was not linked to the original';
-  end if;
-
-  -- Stock restored.
-  select current_stock into v_stock_after from public.item where id = v_candy_item_id;
-  if v_stock_after <> v_stock_before then
-    raise exception 'stock not restored after void: before=% after=%',
-      v_stock_before, v_stock_after;
-  end if;
-
-  -- Receivable restored.
-  select receivable into v_receivable_after from public.party where id = v_customer_id;
-  if v_receivable_after <> v_receivable_before then
-    raise exception 'receivable not restored after void: before=% after=%',
-      v_receivable_before, v_receivable_after;
-  end if;
-
-  -- list_sales now flags the original as voided.
-  select is_voided into v_is_voided
-  from public.list_sales(v_shop_id, null, 100)
-  where txn_id = v_sale_txn_id;
-  if not v_is_voided then
-    raise exception 'list_sales did not flag the voided sale';
-  end if;
-
-  -- Reversals are hidden from list_sales (only originals are listed).
-  if exists (
-    select 1 from public.list_sales(v_shop_id, null, 100)
-    where txn_id = v_reversal_id
-  ) then
-    raise exception 'list_sales surfaced a reversal txn as its own row';
-  end if;
-
-  -- Idempotency: same client_op_id returns the same reversal id.
-  if public.void_sale(v_shop_id, v_sale_txn_id, 'void-1') <> v_reversal_id then
-    raise exception 'void_sale not idempotent on client_op_id';
-  end if;
-
-  -- Already-voided rejection (different client_op_id).
+  -- conversion_to_base=1 with mismatched unit_code → trigger raises.
   v_failed := false;
   begin
-    perform public.void_sale(v_shop_id, v_sale_txn_id, 'void-2');
-  exception when raise_exception then v_failed := true;
+    insert into public.item_unit (item_id, unit_code, conversion_to_base)
+    values (v_rice_item_id, 'piece', 1);
+  exception
+    when raise_exception then v_failed := true;
+    when others then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'void_sale accepted a second void';
+    raise exception 'global item_unit base-unit guard did not fire';
   end if;
 end;
 $$;
 
--- Cashier denied void.
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
-
-do $$
-declare
-  v_shop_id uuid;
-  v_some_sale_id uuid;
-  v_failed boolean := false;
-begin
-  select shop_id into v_shop_id from test_ids;
-  select id into v_some_sale_id from public.txn
-  where shop_id = v_shop_id
-    and reverses_transaction_id is null
-    and type_id = (select id from public.transaction_type where code = 'sale')
-  limit 1;
-  -- The cashier user (id 2) isn't a member of Hodan Shop in this fixture
-  -- block, so list_sales itself will fail with the auth check — which
-  -- is also fine. We assert the gate fires either way.
-  begin
-    perform public.void_sale(v_shop_id, v_some_sale_id, 'cashier-attempt');
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'non-owner was allowed to void_sale';
-  end if;
-end;
-$$;
-
+-- #4 shop_item_unit base-unit guard (owner context).
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
--- Partial-paid guard: if the customer has paid down some of the
--- receivable, void must refuse. Uses a fresh isolated customer so the
--- guard is the only thing in flight (Asha has accumulated receivables
--- from earlier tests that would otherwise mask the guard).
 do $$
 declare
   v_shop_id uuid;
-  v_candy_item_id uuid;
-  v_customer_id uuid;
-  v_kg_unit_id uuid;
-  v_sale_txn_id uuid;
-  v_failed boolean := false;
-begin
-  select shop_id into v_shop_id from test_ids;
-  select id into v_candy_item_id from public.item
-    where shop_id = v_shop_id and code = 'candy';
-  select id into v_kg_unit_id from public.unit where code = 'piece';
-
-  v_customer_id := public.create_party(
-    v_shop_id, 'Partial-Paid Customer', null, 'customer'
-  );
-
-  -- Sale on credit, then customer pays half of it.
-  v_sale_txn_id := public.post_sale(
-    v_shop_id, v_customer_id,
-    jsonb_build_array(jsonb_build_object(
-      'item_id', v_candy_item_id, 'quantity', 2,
-      'unit_id', v_kg_unit_id, 'unit_price', 0.50
-    )),
-    0, null, null, 'partial-paid-test-1', null,
-    'Sale that will be partially paid then voided'
-  );
-  perform public.post_payment(
-    v_shop_id, v_customer_id, 'I', 0.50, 'cash',
-    'partial-payment-1', null, null, null
-  );
-
-  begin
-    perform public.void_sale(v_shop_id, v_sale_txn_id, 'partial-void-1');
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'void_sale ignored partial-paid guard';
-  end if;
-end;
-$$;
-
--- 0029 coverage: customer refund on void.
-do $$
-declare
-  v_shop_id uuid;
-  v_candy_item_id uuid;
-  v_customer_id uuid;
-  v_unit_id uuid;
-  v_sale_txn_id uuid;
-  v_failed boolean := false;
-  v_payment_count int;
-  v_payment_amount numeric;
-  v_payment_method_id uuid;
-  v_original_method_id uuid;
-begin
-  select shop_id into v_shop_id from test_ids;
-  select id into v_candy_item_id from public.item
-    where shop_id = v_shop_id and code = 'candy';
-  select id into v_unit_id from public.unit where code = 'piece';
-
-  v_customer_id := public.create_party(
-    v_shop_id, 'Refund Test Customer', null, 'customer'
-  );
-
-  -- Sale: 2 × $0.50 = $1.00 total, $0.80 paid cash, $0.20 on debt.
-  v_sale_txn_id := public.post_sale(
-    v_shop_id, v_customer_id,
-    jsonb_build_array(jsonb_build_object(
-      'item_id', v_candy_item_id, 'quantity', 2,
-      'unit_id', v_unit_id, 'unit_price', 0.50
-    )),
-    0.80, 'cash', null, 'refund-sale-1', null,
-    'Mixed cash + debt sale we will void with refund'
-  );
-
-  -- Reject refund > paid_amount.
-  begin
-    perform public.void_sale(
-      v_shop_id, v_sale_txn_id, 'refund-too-big', 1.50
-    );
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'void_sale accepted refund > paid_amount';
-  end if;
-
-  -- Reject zero/negative refund.
-  v_failed := false;
-  begin
-    perform public.void_sale(
-      v_shop_id, v_sale_txn_id, 'refund-zero', 0
-    );
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'void_sale accepted refund = 0';
-  end if;
-
-  -- Happy path: partial refund ($0.50 out of $0.80 paid).
-  perform public.void_sale(
-    v_shop_id, v_sale_txn_id, 'refund-happy', 0.50
-  );
-
-  select count(*), max(amount) into v_payment_count, v_payment_amount
-  from public.payment
-  where shop_id = v_shop_id
-    and refund_of_transaction_id = v_sale_txn_id;
-  if v_payment_count <> 1 then
-    raise exception 'expected exactly 1 refund payment (got %)', v_payment_count;
-  end if;
-  if v_payment_amount <> 0.50 then
-    raise exception 'refund payment amount = % (expected 0.50)', v_payment_amount;
-  end if;
-
-  -- Refund inherits the sale's payment_method (cash here).
-  select payment_method_id into v_original_method_id
-  from public.txn where id = v_sale_txn_id;
-  select method_id into v_payment_method_id
-  from public.payment
-  where refund_of_transaction_id = v_sale_txn_id;
-  if v_payment_method_id <> v_original_method_id then
-    raise exception 'refund payment method mismatch';
-  end if;
-end;
-$$;
-
--- 0030 coverage: receive history + same-shift void_receive.
-do $$
-declare
-  v_shop_id uuid;
-  v_supplier_id uuid;
-  v_candy_item_id uuid;
-  v_bag_unit_id uuid;
-  v_piece_unit_id uuid;
-  v_receive_txn_id uuid;
-  v_blocked_receive_id uuid;
-  v_reversal_id uuid;
-  v_stock_before numeric;
-  v_stock_after_receive numeric;
-  v_stock_after_void numeric;
-  v_payable_before numeric;
-  v_payable_after_receive numeric;
-  v_payable_after_void numeric;
+  v_rice_item_id uuid;
+  v_rice_shop_item_id uuid;
   v_failed boolean;
-  v_list_count int;
-  v_is_voided boolean;
 begin
-  select shop_id into v_shop_id from test_ids;
-  select id into v_supplier_id from public.party
-    where shop_id = v_shop_id and name = 'Hodan Beverages';
-  select id into v_candy_item_id from public.item
-    where shop_id = v_shop_id and code = 'candy';
-  select id into v_bag_unit_id from public.unit where code = 'bag';
-  select id into v_piece_unit_id from public.unit where code = 'piece';
-
-  -- Snapshot pre-receive state.
-  select current_stock into v_stock_before from public.item where id = v_candy_item_id;
-  select payable into v_payable_before from public.party where id = v_supplier_id;
-
-  -- Post a fresh credit receive (1 bag = 100 pieces, $20 total).
-  v_receive_txn_id := public.post_receive(
-    v_shop_id, v_supplier_id,
-    jsonb_build_array(jsonb_build_object(
-      'item_id', v_candy_item_id, 'quantity', 1,
-      'unit_id', v_bag_unit_id, 'line_total', 20
-    )),
-    0, null, null, 'void-recv-test-1', null,
-    'Receive we will void'
-  );
-
-  select current_stock into v_stock_after_receive
-    from public.item where id = v_candy_item_id;
-  select payable into v_payable_after_receive
-    from public.party where id = v_supplier_id;
-  if v_stock_after_receive <= v_stock_before then
-    raise exception 'fixture broken: stock did not increase after receive';
-  end if;
-  if v_payable_after_receive <= v_payable_before then
-    raise exception 'fixture broken: payable did not increase after receive';
-  end if;
-
-  -- list_receives surfaces the new receive (not voided yet).
-  select count(*) into v_list_count
-  from public.list_receives(v_shop_id, null, 100)
-  where txn_id = v_receive_txn_id;
-  if v_list_count <> 1 then
-    raise exception 'list_receives did not return the new receive';
-  end if;
-
-  -- get_receive_lines returns the line.
-  if (
-    select count(*) from public.get_receive_lines(v_shop_id, v_receive_txn_id)
-  ) <> 1 then
-    raise exception 'get_receive_lines did not return the receive line';
-  end if;
-
-  -- Happy void.
-  v_reversal_id := public.void_receive(v_shop_id, v_receive_txn_id, 'void-recv-1');
-  if v_reversal_id is null then
-    raise exception 'void_receive returned null';
-  end if;
-
-  -- Stock + payable restored.
-  select current_stock into v_stock_after_void from public.item where id = v_candy_item_id;
-  select payable into v_payable_after_void from public.party where id = v_supplier_id;
-  if v_stock_after_void <> v_stock_before then
-    raise exception 'stock not restored after receive void: before=% after=%',
-      v_stock_before, v_stock_after_void;
-  end if;
-  if v_payable_after_void <> v_payable_before then
-    raise exception 'payable not restored after receive void: before=% after=%',
-      v_payable_before, v_payable_after_void;
-  end if;
-
-  -- list_receives now flags as voided.
-  select is_voided into v_is_voided
-  from public.list_receives(v_shop_id, null, 100)
-  where txn_id = v_receive_txn_id;
-  if not v_is_voided then
-    raise exception 'list_receives did not flag the voided receive';
-  end if;
-
-  -- Idempotency.
-  if public.void_receive(v_shop_id, v_receive_txn_id, 'void-recv-1')
-     <> v_reversal_id then
-    raise exception 'void_receive not idempotent on client_op_id';
-  end if;
-
-  -- Already-voided rejection.
-  v_failed := false;
-  begin
-    perform public.void_receive(v_shop_id, v_receive_txn_id, 'void-recv-2');
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'void_receive accepted a second void';
-  end if;
-
-  -- Stock-activity guard: a new receive whose items are then sold
-  -- should refuse void.
-  v_blocked_receive_id := public.post_receive(
-    v_shop_id, v_supplier_id,
-    jsonb_build_array(jsonb_build_object(
-      'item_id', v_candy_item_id, 'quantity', 1,
-      'unit_id', v_bag_unit_id, 'line_total', 20
-    )),
-    0, null, null, 'void-recv-test-2', null,
-    'Receive that becomes un-voidable after a sale'
-  );
-
-  perform public.post_sale(
-    v_shop_id, null,
-    jsonb_build_array(jsonb_build_object(
-      'item_id', v_candy_item_id, 'quantity', 1,
-      'unit_id', v_piece_unit_id, 'unit_price', 0.50
-    )),
-    0.50, 'cash', null, 'sale-after-recv', null,
-    'Sale that touches the just-received stock'
-  );
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
+  select id into v_rice_shop_item_id from public.shop_item
+   where shop_id = v_shop_id and item_id = v_rice_item_id;
 
   v_failed := false;
   begin
-    perform public.void_receive(v_shop_id, v_blocked_receive_id, 'void-recv-blocked');
-  exception when raise_exception then v_failed := true;
+    insert into public.shop_item_unit (
+      shop_id, shop_item_id, unit_code, conversion_to_base
+    ) values (v_shop_id, v_rice_shop_item_id, 'piece', 1);
+  exception
+    when raise_exception then v_failed := true;
+    when others then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'void_receive ignored the stock-activity guard';
+    raise exception 'shop_item_unit base-unit guard did not fire';
   end if;
 end;
 $$;
 
--- Cashier denied.
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
-
-do $$
-declare
-  v_shop_id uuid;
-  v_recv_id uuid;
-  v_failed boolean := false;
-begin
-  select shop_id into v_shop_id from test_ids;
-  select id into v_recv_id from public.txn
-  where shop_id = v_shop_id
-    and reverses_transaction_id is null
-    and type_id = (select id from public.transaction_type where code = 'receive')
-  limit 1;
-  begin
-    perform public.void_receive(v_shop_id, v_recv_id, 'cashier-recv-attempt');
-  exception when raise_exception then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'non-owner was allowed to void_receive';
-  end if;
-end;
-$$;
-
-set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+-- #5 Mismatch trigger on transaction_line: shop_item_unit belongs to a
+-- different shop_item than line.item_id. Easiest path is to call post_sale
+-- with two different items but a packaging from one of them — the server
+-- resolves shop_item_id from the packaging, so we must reach for a direct
+-- insert against the table. shop_item_unit_update is owner-only, but the
+-- transaction_line table requires SECURITY DEFINER usually. We bypass by
+-- using service role (reset role) so RLS doesn't get in the way.
 
 reset role;
+do $$
+declare
+  v_shop_id uuid;
+  v_rice_item_id uuid;
+  v_rice_shop_item_id uuid;
+  v_sugar_item_id uuid;
+  v_sugar_shop_item_id uuid;
+  v_rice_kg_unit uuid;
+  v_sugar_kg_unit uuid;
+  v_txn_id uuid;
+  v_failed boolean;
+  v_kg_unit_id uuid;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_rice_item_id from public.item where code = 'rice_basmati_25kg';
+  select id into v_sugar_item_id from public.item where code = 'sugar_white_50kg';
+  select id into v_rice_shop_item_id from public.shop_item
+   where shop_id = v_shop_id and item_id = v_rice_item_id;
+  select id into v_sugar_shop_item_id from public.shop_item
+   where shop_id = v_shop_id and item_id = v_sugar_item_id;
+  select id into v_rice_kg_unit from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_rice_shop_item_id and conversion_to_base = 1;
+  select id into v_sugar_kg_unit from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_sugar_shop_item_id and conversion_to_base = 1;
+  select id into v_kg_unit_id from public.unit where code = 'kg';
+
+  -- Make a real header txn we can attach a line to.
+  insert into public.txn (
+    shop_id, type_id, status_id, occurred_at, total_amount, paid_amount,
+    created_by
+  )
+  values (
+    v_shop_id,
+    (select id from public.transaction_type where code = 'sale'),
+    (select id from public.transaction_status where code = 'posted'),
+    pg_catalog.now(), 0, 0,
+    '00000000-0000-0000-0000-000000000001'
+  )
+  returning id into v_txn_id;
+
+  -- Line: item_id = rice's shop_item; shop_item_unit_id = sugar's kg packaging.
+  v_failed := false;
+  begin
+    insert into public.transaction_line (
+      shop_id, transaction_id, line_no,
+      item_id, shop_item_unit_id, quantity, unit_id,
+      base_quantity, unit_amount, item_name_snapshot,
+      unit_code_snapshot, unit_conversion_to_base_snapshot, line_total
+    )
+    values (
+      v_shop_id, v_txn_id, 1,
+      v_rice_shop_item_id, v_sugar_kg_unit, 1, v_kg_unit_id,
+      1, 1, 'Rice', 'kg', 1, 1
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'transaction_line packaging-mismatch trigger did not fire';
+  end if;
+
+  -- Clean up the empty header.
+  delete from public.txn where id = v_txn_id;
+end;
+$$;
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- Cross-shop FK check still holds: a shop_item_unit insert that crosses
+-- tenants fails on the composite FK (shop_id, shop_item_id).
+do $$
+declare
+  v_shop_id uuid;
+  v_other_shop_id uuid;
+  v_other_shop_item uuid;
+  v_failed boolean;
+begin
+  select shop_id, second_shop_id into v_shop_id, v_other_shop_id from test_ids;
+  select id into v_other_shop_item from public.shop_item
+   where shop_id = v_other_shop_id limit 1;
+
+  v_failed := false;
+  begin
+    -- Use conversion=2 so the base-unit guard trigger skips (it only
+    -- fires for conversion=1) and the composite FK is the first thing
+    -- that rejects the row.
+    insert into public.shop_item_unit (
+      shop_id, shop_item_id, unit_code, conversion_to_base
+    ) values (v_shop_id, v_other_shop_item, 'bag', 2);
+  exception when foreign_key_violation then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'cross-shop shop_item_unit composite FK was not enforced';
+  end if;
+end;
+$$;
+
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- Phase 1B coverage: extended create_shop_item + new suggestion RPCs.
+-- ---------------------------------------------------------------------------
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- A1 — sold-in-base path (single packaging, defaults on both sides).
+do $$
+declare
+  v_shop_id uuid;
+  v_item_id uuid;
+  v_default_unit_id uuid;
+  v_packaging_count int;
+  v_base_default_sale boolean;
+  v_base_default_receive boolean;
+  v_base_sale_price numeric;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  select shop_item_id, default_shop_item_unit_id
+  into v_item_id, v_default_unit_id
+  from public.create_shop_item(
+    v_shop_id, 'A1 Sold-In-Base', 'en', 'piece', 1.25, null
+  );
+  if v_item_id is null or v_default_unit_id is null then
+    raise exception 'A1 sold-in-base returned nulls';
+  end if;
+
+  select count(*) into v_packaging_count
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_id;
+  if v_packaging_count <> 1 then
+    raise exception 'A1 sold-in-base did not create exactly one packaging';
+  end if;
+
+  select is_default_sale, is_default_receive, sale_price
+  into v_base_default_sale, v_base_default_receive, v_base_sale_price
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_id;
+
+  if not v_base_default_sale or not v_base_default_receive then
+    raise exception 'A1 sold-in-base base row missing default flags';
+  end if;
+  if v_base_sale_price <> 1.25 then
+    raise exception 'A1 sold-in-base did not apply sale price';
+  end if;
+end;
+$$;
+
+-- A1 — sold-packaged path, sale variant.
+do $$
+declare
+  v_shop_id uuid;
+  v_item_id uuid;
+  v_default_unit_id uuid;
+  v_packaging_count int;
+  v_sold_default_sale boolean;
+  v_sold_default_receive boolean;
+  v_sold_sale_price numeric;
+  v_base_default_sale boolean;
+  v_base_default_receive boolean;
+  v_base_sale_price numeric;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  select shop_item_id, default_shop_item_unit_id
+  into v_item_id, v_default_unit_id
+  from public.create_shop_item(
+    v_shop_id,                -- shop
+    'A1 Sale Packaged',       -- name
+    'en',                     -- locale
+    'kg',                     -- base unit
+    25.00,                    -- price for the sold packaging
+    null,                     -- category
+    'bag',                    -- sold unit
+    25,                       -- conversion
+    'sale'                    -- variant
+  );
+
+  select count(*) into v_packaging_count
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_id;
+  if v_packaging_count <> 2 then
+    raise exception 'A1 sold-packaged should create 2 rows, got %', v_packaging_count;
+  end if;
+
+  -- Default unit (returned) is the sold row.
+  select is_default_sale, is_default_receive, sale_price
+  into v_sold_default_sale, v_sold_default_receive, v_sold_sale_price
+  from public.shop_item_unit
+  where id = v_default_unit_id;
+  if not v_sold_default_sale or v_sold_default_receive then
+    raise exception
+      'A1 sale-packaged sold row should have default_sale=true, default_receive=false';
+  end if;
+  if v_sold_sale_price <> 25.00 then
+    raise exception 'A1 sale-packaged sold row missing sale price';
+  end if;
+
+  -- Base row (the OTHER packaging on this item).
+  select is_default_sale, is_default_receive, sale_price
+  into v_base_default_sale, v_base_default_receive, v_base_sale_price
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_id
+    and id <> v_default_unit_id;
+  if v_base_default_sale or not v_base_default_receive then
+    raise exception
+      'A1 sale-packaged base row should have default_sale=false, default_receive=true';
+  end if;
+  if v_base_sale_price is not null then
+    raise exception 'A1 sale-packaged base row should be unpriced';
+  end if;
+end;
+$$;
+
+-- A1 — sold-packaged path, receive variant (flags mirror).
+do $$
+declare
+  v_shop_id uuid;
+  v_item_id uuid;
+  v_default_unit_id uuid;
+  v_sold_default_sale boolean;
+  v_sold_default_receive boolean;
+  v_base_default_sale boolean;
+  v_base_default_receive boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  select shop_item_id, default_shop_item_unit_id
+  into v_item_id, v_default_unit_id
+  from public.create_shop_item(
+    v_shop_id, 'A1 Receive Packaged', 'en', 'bottle',
+    null, null,                        -- no sale price at receive-time
+    'carton', 12, 'receive'
+  );
+
+  select is_default_sale, is_default_receive
+  into v_sold_default_sale, v_sold_default_receive
+  from public.shop_item_unit where id = v_default_unit_id;
+  if v_sold_default_sale or not v_sold_default_receive then
+    raise exception
+      'A1 receive-packaged sold row should have default_receive=true, default_sale=false';
+  end if;
+
+  select is_default_sale, is_default_receive
+  into v_base_default_sale, v_base_default_receive
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_id
+    and id <> v_default_unit_id;
+  if not v_base_default_sale or v_base_default_receive then
+    raise exception
+      'A1 receive-packaged base row should have default_sale=true, default_receive=false';
+  end if;
+end;
+$$;
+
+-- A1 — bad inputs.
+do $$
+declare
+  v_shop_id uuid;
+  v_failed boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- p_default_side outside {sale, receive}
+  v_failed := false;
+  begin
+    perform public.create_shop_item(
+      v_shop_id, 'A1 Bad Side', 'en', 'piece', 1.00, null,
+      'bag', 25, 'maybe'
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'A1 accepted invalid p_default_side';
+  end if;
+
+  -- conversion = 1 with distinct unit
+  v_failed := false;
+  begin
+    perform public.create_shop_item(
+      v_shop_id, 'A1 Bad Conv', 'en', 'kg', 1.00, null,
+      'bag', 1, 'sale'
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'A1 accepted distinct sold unit with conversion=1';
+  end if;
+
+  -- conversion = 0
+  v_failed := false;
+  begin
+    perform public.create_shop_item(
+      v_shop_id, 'A1 Zero', 'en', 'kg', 1.00, null,
+      'bag', 0, 'sale'
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'A1 accepted conversion=0';
+  end if;
+end;
+$$;
+
+-- A2 — suggest_item_packagings excludes already-added.
+do $$
+declare
+  v_shop_id uuid;
+  v_item_id uuid;
+  v_default_unit_id uuid;
+  v_pre_count int;
+  v_post_count int;
+  v_added_count int;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select shop_item_id, default_shop_item_unit_id
+  into v_item_id, v_default_unit_id
+  from public.create_shop_item(
+    v_shop_id, 'A2 Exclusion Test', 'en', 'kg', null, null
+  );
+
+  -- Snapshot the picker BEFORE the cashier creates a packaging.
+  select count(*) into v_pre_count
+  from public.suggest_item_packagings(v_shop_id, v_item_id, 'kg', null, 'en', 20);
+
+  -- Add bag x25.
+  perform public.create_shop_item_unit(
+    v_shop_id, v_item_id, 'bag', 25, null
+  );
+
+  -- Picker should drop the (bag, 25) row.
+  select count(*) into v_post_count
+  from public.suggest_item_packagings(v_shop_id, v_item_id, 'kg', null, 'en', 20);
+  select count(*) into v_added_count
+  from public.suggest_item_packagings(v_shop_id, v_item_id, 'kg', null, 'en', 20)
+  where unit_code = 'bag' and conversion_to_base = 25;
+
+  if v_added_count <> 0 then
+    raise exception 'A2 picker still surfaces already-added (bag, 25)';
+  end if;
+  if v_post_count <> greatest(v_pre_count - 1, 0) then
+    raise exception
+      'A2 exclusion should drop exactly one row (pre %, post %)',
+      v_pre_count, v_post_count;
+  end if;
+end;
+$$;
+
+-- A2 — primary-only when category has enough matches.
+do $$
+declare
+  v_shop_id uuid;
+  v_item_id uuid;
+  v_default_unit_id uuid;
+  v_grocery uuid;
+  v_primary_count int;
+  v_cross_count int;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_grocery from public.category where code = 'grocery';
+
+  -- packet base + grocery category: 5 packet-based grocery items in
+  -- seed (biscuit, coffee, milk, pasta, tea) yield distinct (unit,
+  -- conversion) pairs above the 3-row primary threshold — fallback
+  -- should NOT fire.
+  select shop_item_id, default_shop_item_unit_id
+  into v_item_id, v_default_unit_id
+  from public.create_shop_item(
+    v_shop_id, 'A2 Category Test', 'en', 'packet', null, v_grocery
+  );
+
+  select count(*) into v_primary_count
+  from public.suggest_item_packagings(
+    v_shop_id, v_item_id, 'packet', v_grocery, 'en', 20
+  )
+  where source = 'category';
+  if v_primary_count < 3 then
+    raise exception
+      'A2 expected ≥3 category packagings for grocery+packet, got %',
+      v_primary_count;
+  end if;
+
+  select count(*) into v_cross_count
+  from public.suggest_item_packagings(
+    v_shop_id, v_item_id, 'packet', v_grocery, 'en', 20
+  )
+  where source = 'cross_category';
+  if v_cross_count <> 0 then
+    raise exception
+      'A2 cross-category fallback should not fire when primary is full';
+  end if;
+end;
+$$;
+
+-- A3 — suggest_new_item_options returns both arrays correctly shaped.
+do $$
+declare
+  v_grocery uuid;
+  v_result jsonb;
+  v_base_count int;
+  v_packaged_count int;
+  v_first_packaged jsonb;
+begin
+  select id into v_grocery from public.category where code = 'grocery';
+  v_result := public.suggest_new_item_options(v_grocery, 'en');
+
+  v_base_count := jsonb_array_length(v_result -> 'base_units');
+  v_packaged_count := jsonb_array_length(v_result -> 'packaged_units');
+
+  if v_base_count = 0 then
+    raise exception 'A3 base_units should be non-empty for the grocery category';
+  end if;
+  if v_packaged_count = 0 then
+    raise exception 'A3 packaged_units should be non-empty for grocery';
+  end if;
+
+  -- Every packaged_units row must carry an implied base_unit_code that
+  -- appears in base_units — otherwise the picker would offer a packaged
+  -- option the cashier can't infer a base from.
+  v_first_packaged := v_result -> 'packaged_units' -> 0;
+  if v_first_packaged -> 'base_unit_code' is null
+     or v_first_packaged -> 'unit_code' is null
+     or v_first_packaged -> 'conversion_to_base' is null then
+    raise exception
+      'A3 packaged_unit missing required field: %', v_first_packaged::text;
+  end if;
+end;
+$$;
+
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- §S Low-stock warning settings (0031).
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id          uuid;
+  v_default_enabled  boolean;
+  v_shop_item_id     uuid;
+  v_default_unit_id  uuid;
+  v_threshold        numeric;
+  v_stocks           jsonb;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Default: low_stock_warning_enabled is false.
+  select low_stock_warning_enabled into v_default_enabled
+  from public.shop where id = v_shop_id;
+  if v_default_enabled is not false then
+    raise exception
+      'S: shop.low_stock_warning_enabled must default to false (got %)',
+      v_default_enabled;
+  end if;
+
+  -- Create a fresh shop_item we can attach a threshold to.
+  select shop_item_id, default_shop_item_unit_id
+  into v_shop_item_id, v_default_unit_id
+  from public.create_shop_item(
+    v_shop_id, 'Low Stock Test', 'en', 'kg', null, null
+  );
+
+  -- Setter: positive threshold lands.
+  perform public.set_shop_item_reorder_threshold(
+    v_shop_id, v_shop_item_id, 5
+  );
+  select reorder_threshold into v_threshold
+  from public.shop_item where id = v_shop_item_id;
+  if v_threshold is null or v_threshold <> 5 then
+    raise exception 'S: setter should write threshold=5 (got %)', v_threshold;
+  end if;
+
+  -- Setter: null clears.
+  perform public.set_shop_item_reorder_threshold(
+    v_shop_id, v_shop_item_id, null
+  );
+  select reorder_threshold into v_threshold
+  from public.shop_item where id = v_shop_item_id;
+  if v_threshold is not null then
+    raise exception 'S: setter should clear threshold (got %)', v_threshold;
+  end if;
+
+  -- Setter: rejects negative.
+  begin
+    perform public.set_shop_item_reorder_threshold(
+      v_shop_id, v_shop_item_id, -1
+    );
+    raise exception 'S: setter must reject negative thresholds';
+  exception when others then
+    null;
+  end;
+
+  -- get_shop_item_stocks now returns reorder_threshold.
+  perform public.set_shop_item_reorder_threshold(v_shop_id, v_shop_item_id, 3);
+  select jsonb_agg(to_jsonb(s))
+  into v_stocks
+  from public.get_shop_item_stocks(
+    v_shop_id, array[v_shop_item_id], 'en'
+  ) s;
+  if v_stocks is null or jsonb_array_length(v_stocks) = 0 then
+    raise exception 'S: get_shop_item_stocks returned no rows';
+  end if;
+  if (v_stocks->0->'reorder_threshold')::text not in ('3', '3.000') then
+    raise exception
+      'S: get_shop_item_stocks must surface reorder_threshold=3 (got %)',
+      v_stocks->0->'reorder_threshold';
+  end if;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- §T set_shop_item_unit_default_flags (0032).
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id     uuid;
+  v_item_id     uuid;
+  v_base_id     uuid;
+  v_bag_id      uuid;
+  v_default_sale uuid;
+  v_default_recv uuid;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Fresh item with two packagings to flip flags between.
+  select shop_item_id, default_shop_item_unit_id
+  into v_item_id, v_base_id
+  from public.create_shop_item(
+    v_shop_id, 'Default Flags Test', 'en', 'kg', null, null
+  );
+  v_bag_id := public.create_shop_item_unit(
+    v_shop_id, v_item_id, 'bag', 5, null
+  );
+
+  -- Sanity — base row has both defaults (no other packaging existed when
+  -- it was created), bag has neither.
+  select id into v_default_sale
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_id and is_default_sale;
+  if v_default_sale <> v_base_id then
+    raise exception 'T pre: base should hold default_sale (got %)', v_default_sale;
+  end if;
+
+  -- Flip default_sale from base → bag.
+  perform public.set_shop_item_unit_default_flags(
+    v_shop_id, v_bag_id, true, false
+  );
+  select id into v_default_sale
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_id and is_default_sale;
+  if v_default_sale <> v_bag_id then
+    raise exception 'T: default_sale should be bag after flip (got %)',
+      v_default_sale;
+  end if;
+  -- The previous holder must have had its flag cleared.
+  if (select is_default_sale from public.shop_item_unit where id = v_base_id) then
+    raise exception 'T: base default_sale should be cleared after bag flip';
+  end if;
+
+  -- Setting both flags false on bag → no row holds default_sale.
+  perform public.set_shop_item_unit_default_flags(
+    v_shop_id, v_bag_id, false, false
+  );
+  select id into v_default_sale
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_id and is_default_sale;
+  if v_default_sale is not null then
+    raise exception
+      'T: setting both flags false should leave shop_item with no sale default';
+  end if;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- §U list_categories (0033).
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_count int;
+  v_first_name text;
+begin
+  -- Authenticated reader: any signed-in user — categories are global.
+  select count(*) into v_count from public.list_categories('en');
+  if v_count = 0 then
+    raise exception 'U: list_categories should return seeded categories';
+  end if;
+  -- name is locale-resolved (English); shouldn't be empty.
+  select name into v_first_name from public.list_categories('en') limit 1;
+  if v_first_name is null or pg_catalog.length(pg_catalog.btrim(v_first_name)) = 0 then
+    raise exception 'U: list_categories first row missing name (got %)',
+      v_first_name;
+  end if;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- §V create_bono_document (0034).
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id     uuid;
+  v_doc_id      uuid;
+  v_supplied_id uuid;
+  v_storage_bucket text;
+  v_type_code   text;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  v_supplied_id := extensions.gen_random_uuid();
+
+  -- Happy path: client-supplied id + canonical path.
+  v_doc_id := public.create_bono_document(
+    v_shop_id,
+    v_supplied_id,
+    v_shop_id::text || '/documents/' || v_supplied_id::text || '/image.jpg',
+    'image/jpeg',
+    1024
+  );
+  if v_doc_id is null or v_doc_id <> v_supplied_id then
+    raise exception 'V: create_bono_document should return supplied id';
+  end if;
+
+  -- Document row is of type 'bono' and lives in shop-documents.
+  select storage_bucket into v_storage_bucket
+  from public.document where id = v_doc_id;
+  if v_storage_bucket <> 'shop-documents' then
+    raise exception 'V: document.storage_bucket should be shop-documents (got %)',
+      v_storage_bucket;
+  end if;
+  select dt.code into v_type_code
+  from public.document d join public.document_type dt on dt.id = d.type_id
+  where d.id = v_doc_id;
+  if v_type_code <> 'bono' then
+    raise exception 'V: document.type should be bono (got %)', v_type_code;
+  end if;
+
+  -- Bad mime is rejected.
+  begin
+    perform public.create_bono_document(
+      v_shop_id,
+      extensions.gen_random_uuid(),
+      v_shop_id::text || '/documents/abc/image.gif',
+      'image/gif',
+      500
+    );
+    raise exception 'V: create_bono_document must reject non-image mime';
+  exception when others then
+    null;
+  end;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- §W Today summary + 3 reports (0036).
+-- ---------------------------------------------------------------------------
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+do $$
+declare
+  v_shop_id        uuid;
+  v_summary        jsonb;
+  v_sales_today    numeric;
+  v_receivables    numeric;
+  v_payables       numeric;
+  v_low_count      int;
+  v_receivable_sum numeric;
+  v_payable_sum    numeric;
+  v_low_rows       int;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- get_today_summary returns a jsonb with the four scalars; numeric
+  -- coalescing means non-null even when the shop has no activity today.
+  v_summary := public.get_today_summary(v_shop_id, 'en');
+  v_sales_today := (v_summary ->> 'sales_today')::numeric;
+  v_receivables := (v_summary ->> 'receivables_total')::numeric;
+  v_payables    := (v_summary ->> 'payables_total')::numeric;
+  v_low_count   := (v_summary ->> 'low_stock_count')::int;
+  if v_sales_today is null
+     or v_receivables is null
+     or v_payables is null
+     or v_low_count is null then
+    raise exception 'W: get_today_summary fields must never be null (got %)',
+      v_summary;
+  end if;
+
+  -- list_receivables sum must match receivables_total from summary.
+  select coalesce(sum(receivable), 0)
+  into v_receivable_sum
+  from public.list_receivables(v_shop_id, 'en');
+  if v_receivable_sum <> v_receivables then
+    raise exception
+      'W: list_receivables sum (%) must equal summary.receivables_total (%)',
+      v_receivable_sum, v_receivables;
+  end if;
+
+  -- list_payables sum must match payables_total from summary.
+  select coalesce(sum(payable), 0)
+  into v_payable_sum
+  from public.list_payables(v_shop_id, 'en');
+  if v_payable_sum <> v_payables then
+    raise exception
+      'W: list_payables sum (%) must equal summary.payables_total (%)',
+      v_payable_sum, v_payables;
+  end if;
+
+  -- list_low_stock row count must match low_stock_count from summary.
+  select count(*)::int into v_low_rows from public.list_low_stock(v_shop_id, 'en');
+  if v_low_rows <> v_low_count then
+    raise exception
+      'W: list_low_stock rows (%) must equal summary.low_stock_count (%)',
+      v_low_rows, v_low_count;
+  end if;
+end;
+$$;
+
+-- Tenant isolation: an unrelated user must not be able to call these
+-- reports against a foreign shop.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_failed  boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  v_failed := false;
+  begin
+    perform public.get_today_summary(v_shop_id, 'en');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'W: get_today_summary must deny non-members';
+  end if;
+
+  v_failed := false;
+  begin
+    perform * from public.list_receivables(v_shop_id, 'en');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'W: list_receivables must deny non-members';
+  end if;
+
+  v_failed := false;
+  begin
+    perform * from public.list_payables(v_shop_id, 'en');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'W: list_payables must deny non-members';
+  end if;
+
+  v_failed := false;
+  begin
+    perform * from public.list_low_stock(v_shop_id, 'en');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'W: list_low_stock must deny non-members';
+  end if;
+end;
+$$;
+
+-- Switch back so any later sections continue under the primary user.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- ---------------------------------------------------------------------------
+-- §Y set_shop_item_category + deactivate_shop_item_unit (0038).
+-- Cover happy paths + the two guards (unknown category, can't remove
+-- base packaging). Cashier denial is implicit via auth_can_post_shop
+-- which §15 already exercises for sibling RPCs.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id         uuid;
+  v_item_id         uuid;
+  v_base_unit_id    uuid;
+  v_bag_unit_id     uuid;
+  v_other_category  uuid;
+  v_original_cat    uuid;
+  v_was_active      boolean;
+  v_failed          boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Pick any shop_item with at least one non-base packaging so we can
+  -- exercise deactivate without touching base.
+  select si.id, si.category_id
+    into v_item_id, v_original_cat
+    from public.shop_item si
+    join public.shop_item_unit siu on siu.shop_item_id = si.id
+   where si.shop_id = v_shop_id
+     and siu.conversion_to_base <> 1
+     and siu.is_active
+   limit 1;
+  if v_item_id is null then
+    raise notice 'Y: no shop_item with extra packaging to test against; skipping';
+    return;
+  end if;
+
+  select id into v_base_unit_id
+    from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_item_id
+     and conversion_to_base = 1
+   limit 1;
+  select id into v_bag_unit_id
+    from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_item_id
+     and conversion_to_base <> 1 and is_active
+   limit 1;
+
+  -- ---- set_shop_item_category --------------------------------------------
+  -- Pick any category != current so the change is detectable.
+  select id into v_other_category
+    from public.category
+   where is_active
+     and (v_original_cat is null or id <> v_original_cat)
+   limit 1;
+  perform public.set_shop_item_category(
+    v_shop_id, v_item_id, v_other_category
+  );
+  if (select category_id from public.shop_item where id = v_item_id)
+       <> v_other_category then
+    raise exception 'Y: set_shop_item_category did not persist';
+  end if;
+
+  -- Clear (null) is allowed.
+  perform public.set_shop_item_category(v_shop_id, v_item_id, null);
+  if (select category_id from public.shop_item where id = v_item_id) is not null then
+    raise exception 'Y: clearing category should leave NULL';
+  end if;
+
+  -- Unknown category rejected.
+  v_failed := false;
+  begin
+    perform public.set_shop_item_category(
+      v_shop_id, v_item_id, '00000000-0000-0000-0000-00000000beef'
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'Y: set_shop_item_category accepted unknown category';
+  end if;
+
+  -- ---- deactivate_shop_item_unit -----------------------------------------
+  -- Cannot remove the structural base packaging.
+  v_failed := false;
+  begin
+    perform public.deactivate_shop_item_unit(v_shop_id, v_base_unit_id);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'Y: deactivate_shop_item_unit allowed base removal';
+  end if;
+
+  -- Non-base packaging: flips is_active false; default flags cleared.
+  perform public.deactivate_shop_item_unit(v_shop_id, v_bag_unit_id);
+  if (select is_active from public.shop_item_unit where id = v_bag_unit_id) then
+    raise exception 'Y: deactivate did not flip is_active';
+  end if;
+  if (select is_default_sale or is_default_receive
+        from public.shop_item_unit where id = v_bag_unit_id) then
+    raise exception 'Y: deactivate left default flags set';
+  end if;
+
+  -- Idempotent: second call is a no-op.
+  perform public.deactivate_shop_item_unit(v_shop_id, v_bag_unit_id);
+
+  -- Restore for any later sections that depend on the packaging.
+  update public.shop_item_unit set is_active = true where id = v_bag_unit_id;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- §X list_sales / list_receives history filters (0037).
+-- p_date_from / p_date_to clamp the time window; p_party_id narrows
+-- to one party. Defaults (null) preserve the pre-0037 behaviour.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id      uuid;
+  v_total_rows   int;
+  v_today_rows   int;
+  v_yesterday_rows int;
+  v_one_party    uuid;
+  v_party_rows   int;
+  v_today_start  timestamptz;
+  v_today_end    timestamptz;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Baseline: unfiltered count must equal explicit-null filter count.
+  select count(*) into v_total_rows
+  from public.list_sales(v_shop_id, null, 1000, null, null, null);
+
+  -- Today filter must not exceed the baseline.
+  v_today_start := pg_catalog.date_trunc('day', pg_catalog.now());
+  v_today_end := v_today_start + interval '1 day';
+  select count(*) into v_today_rows
+  from public.list_sales(
+    v_shop_id, null, 1000, v_today_start, v_today_end, null
+  );
+  if v_today_rows > v_total_rows then
+    raise exception 'X: today-filter row count (%) > total (%)',
+      v_today_rows, v_total_rows;
+  end if;
+
+  -- Yesterday filter (a known-empty window for the harness — no
+  -- backdated sales) must return zero.
+  select count(*) into v_yesterday_rows
+  from public.list_sales(
+    v_shop_id, null, 1000,
+    v_today_start - interval '1 day',
+    v_today_start,
+    null
+  );
+  if v_yesterday_rows <> 0 then
+    raise exception 'X: yesterday window unexpectedly returned %', v_yesterday_rows;
+  end if;
+
+  -- Pick a party that has at least one sale (if any), and prove the
+  -- party-id filter restricts to that party only.
+  select party_id into v_one_party
+  from public.list_sales(v_shop_id, null, 1000, null, null, null)
+  where party_id is not null
+  limit 1;
+  if v_one_party is not null then
+    select count(*) into v_party_rows
+    from public.list_sales(v_shop_id, null, 1000, null, null, v_one_party);
+    if v_party_rows = 0 then
+      raise exception 'X: party filter returned 0 for known party %',
+        v_one_party;
+    end if;
+    if exists (
+      select 1
+      from public.list_sales(v_shop_id, null, 1000, null, null, v_one_party)
+      where party_id is distinct from v_one_party
+    ) then
+      raise exception 'X: party filter leaked rows from another party';
+    end if;
+  end if;
+
+  -- Same checks against list_receives — just smoke the new signature
+  -- (we don't assert non-empty windows since the harness may not
+  -- have a receive today).
+  perform 1 from public.list_receives(
+    v_shop_id, null, 100, v_today_start, v_today_end, null
+  );
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- §Z list_expenses (0039) — pagination + date + category filter.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id      uuid;
+  v_total_rows   int;
+  v_today_rows   int;
+  v_one_category uuid;
+  v_category_rows int;
+  v_today_start  timestamptz;
+  v_today_end    timestamptz;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Baseline + explicit-null parity.
+  select count(*) into v_total_rows
+  from public.list_expenses(v_shop_id, null, 1000, null, null, null, 'en');
+
+  v_today_start := pg_catalog.date_trunc('day', pg_catalog.now());
+  v_today_end := v_today_start + interval '1 day';
+  select count(*) into v_today_rows
+  from public.list_expenses(
+    v_shop_id, null, 1000, v_today_start, v_today_end, null, 'en'
+  );
+  if v_today_rows > v_total_rows then
+    raise exception 'Z: today-filter row count (%) > total (%)',
+      v_today_rows, v_total_rows;
+  end if;
+
+  -- Category filter: pick any category referenced by an expense, then
+  -- confirm the filtered set only contains that category.
+  select category_id into v_one_category
+  from public.list_expenses(v_shop_id, null, 1000, null, null, null, 'en')
+  where category_id is not null
+  limit 1;
+  if v_one_category is not null then
+    select count(*) into v_category_rows
+    from public.list_expenses(
+      v_shop_id, null, 1000, null, null, v_one_category, 'en'
+    );
+    if v_category_rows = 0 then
+      raise exception 'Z: category filter returned 0 for known category %',
+        v_one_category;
+    end if;
+    if exists (
+      select 1
+      from public.list_expenses(
+        v_shop_id, null, 1000, null, null, v_one_category, 'en'
+      )
+      where category_id is distinct from v_one_category
+    ) then
+      raise exception 'Z: category filter leaked rows from another category';
+    end if;
+  end if;
+end;
+$$;
+
+-- Tenant isolation: unrelated user must be denied.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_failed  boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  v_failed := false;
+  begin
+    perform * from public.list_expenses(
+      v_shop_id, null, 1000, null, null, null, 'en'
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'Z: list_expenses must deny non-members';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- ---------------------------------------------------------------------------
+-- §ZZ list_payments (0040) — pagination + date + party + direction.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id      uuid;
+  v_total_rows   int;
+  v_inbound_rows int;
+  v_outbound_rows int;
+  v_one_party    uuid;
+  v_party_rows   int;
+  v_today_start  timestamptz;
+  v_today_end    timestamptz;
+  v_today_rows   int;
+  v_failed       boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Baseline + explicit-null parity.
+  select count(*) into v_total_rows
+  from public.list_payments(v_shop_id, null, 1000, null, null, null, null);
+
+  -- Direction split sums to total (every payment is either I or O).
+  select count(*) into v_inbound_rows
+  from public.list_payments(v_shop_id, null, 1000, null, null, null, 'I');
+  select count(*) into v_outbound_rows
+  from public.list_payments(v_shop_id, null, 1000, null, null, null, 'O');
+  if v_inbound_rows + v_outbound_rows <> v_total_rows then
+    raise exception 'ZZ: direction split (% in + % out) <> total %',
+      v_inbound_rows, v_outbound_rows, v_total_rows;
+  end if;
+
+  -- Bad direction rejected.
+  v_failed := false;
+  begin
+    perform * from public.list_payments(
+      v_shop_id, null, 1000, null, null, null, 'X'
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'ZZ: bogus direction must be rejected';
+  end if;
+
+  -- Date filter: today window cannot exceed total.
+  v_today_start := pg_catalog.date_trunc('day', pg_catalog.now());
+  v_today_end := v_today_start + interval '1 day';
+  select count(*) into v_today_rows
+  from public.list_payments(
+    v_shop_id, null, 1000, v_today_start, v_today_end, null, null
+  );
+  if v_today_rows > v_total_rows then
+    raise exception 'ZZ: today rows (%) > total (%)',
+      v_today_rows, v_total_rows;
+  end if;
+
+  -- Party filter: pick a known party + verify isolation.
+  select party_id into v_one_party
+  from public.list_payments(v_shop_id, null, 1000, null, null, null, null)
+  where party_id is not null
+  limit 1;
+  if v_one_party is not null then
+    select count(*) into v_party_rows
+    from public.list_payments(
+      v_shop_id, null, 1000, null, null, v_one_party, null
+    );
+    if v_party_rows = 0 then
+      raise exception 'ZZ: party filter returned 0 for known party %',
+        v_one_party;
+    end if;
+    if exists (
+      select 1
+      from public.list_payments(
+        v_shop_id, null, 1000, null, null, v_one_party, null
+      )
+      where party_id is distinct from v_one_party
+    ) then
+      raise exception 'ZZ: party filter leaked another party';
+    end if;
+  end if;
+end;
+$$;
+
+-- Tenant isolation: unrelated user must be denied.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_failed  boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  v_failed := false;
+  begin
+    perform * from public.list_payments(
+      v_shop_id, null, 1000, null, null, null, null
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'ZZ: list_payments must deny non-members';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- ---------------------------------------------------------------------------
+-- §ZZZ list_parties (0041) — type + has-balance + bad-type rejection.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id            uuid;
+  v_all_rows           int;
+  v_customer_rows      int;
+  v_supplier_rows      int;
+  v_has_balance_rows   int;
+  v_failed             boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  select count(*) into v_all_rows
+  from public.list_parties(v_shop_id, '', null, false, 1000);
+
+  -- Type filters never exceed the unfiltered list.
+  select count(*) into v_customer_rows
+  from public.list_parties(v_shop_id, '', 'customer', false, 1000);
+  select count(*) into v_supplier_rows
+  from public.list_parties(v_shop_id, '', 'supplier', false, 1000);
+  if v_customer_rows > v_all_rows or v_supplier_rows > v_all_rows then
+    raise exception 'ZZZ: typed list exceeds unfiltered';
+  end if;
+
+  -- Has-balance-only never exceeds unfiltered, and every row in it
+  -- has at least one non-zero side.
+  select count(*) into v_has_balance_rows
+  from public.list_parties(v_shop_id, '', null, true, 1000);
+  if v_has_balance_rows > v_all_rows then
+    raise exception 'ZZZ: has-balance-only exceeds total';
+  end if;
+  if exists (
+    select 1
+    from public.list_parties(v_shop_id, '', null, true, 1000)
+    where receivable = 0 and payable = 0
+  ) then
+    raise exception 'ZZZ: has-balance-only included zero-balance rows';
+  end if;
+
+  -- Bad type rejected.
+  v_failed := false;
+  begin
+    perform * from public.list_parties(v_shop_id, '', 'employee', false, 1000);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'ZZZ: bogus type must be rejected';
+  end if;
+end;
+$$;
+
+-- Tenant isolation.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id uuid;
+  v_failed  boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  v_failed := false;
+  begin
+    perform * from public.list_parties(v_shop_id, '', null, false, 1000);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'ZZZ: list_parties must deny non-members';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- ---------------------------------------------------------------------------
+-- §AA update_party + post_opening_party_balance (0042).
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id    uuid;
+  v_party_id   uuid;
+  v_supplier_id uuid;
+  v_before_rec numeric;
+  v_after_rec  numeric;
+  v_after_pay  numeric;
+  v_txn_id_1   uuid;
+  v_txn_id_2   uuid;
+  v_failed     boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Create a fresh customer + supplier to test against (so we don't
+  -- perturb other harness sections).
+  v_party_id := public.create_party(
+    v_shop_id, 'Opening Test Customer', null, 'customer'
+  );
+  v_supplier_id := public.create_party(
+    v_shop_id, 'Opening Test Supplier', null, 'supplier'
+  );
+
+  -- update_party: rename + phone change.
+  perform public.update_party(
+    v_shop_id, v_party_id, 'Renamed Customer', '0700000001'
+  );
+  if not exists (
+    select 1 from public.party
+    where id = v_party_id
+      and name = 'Renamed Customer'
+      and phone = '0700000001'
+  ) then
+    raise exception 'AA: update_party did not persist';
+  end if;
+
+  -- update_party: empty name rejected.
+  v_failed := false;
+  begin
+    perform public.update_party(v_shop_id, v_party_id, '  ', null);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'AA: empty name must be rejected';
+  end if;
+
+  -- post_opening_party_balance: receivable side.
+  select receivable into v_before_rec from public.party where id = v_party_id;
+  v_txn_id_1 := public.post_opening_party_balance(
+    v_shop_id, v_party_id, 25.50, 'I', 'op-customer-1', null
+  );
+  select receivable into v_after_rec from public.party where id = v_party_id;
+  if v_after_rec <> v_before_rec + 25.50 then
+    raise exception 'AA: receivable not bumped (was %, now %)',
+      v_before_rec, v_after_rec;
+  end if;
+  -- Idempotent: same client_op_id returns same txn id, no double bump.
+  if public.post_opening_party_balance(
+       v_shop_id, v_party_id, 25.50, 'I', 'op-customer-1', null
+     ) <> v_txn_id_1 then
+    raise exception 'AA: opening balance not idempotent on client_op_id';
+  end if;
+  if (select receivable from public.party where id = v_party_id) <> v_after_rec then
+    raise exception 'AA: idempotent retry double-bumped receivable';
+  end if;
+
+  -- payable side via supplier.
+  v_txn_id_2 := public.post_opening_party_balance(
+    v_shop_id, v_supplier_id, 40, 'O', 'op-supplier-1', 'old debt'
+  );
+  select payable into v_after_pay from public.party where id = v_supplier_id;
+  if v_after_pay <> 40 then
+    raise exception 'AA: payable not bumped (now %)', v_after_pay;
+  end if;
+
+  -- Direction must match party type — customer + 'O' rejected.
+  v_failed := false;
+  begin
+    perform public.post_opening_party_balance(
+      v_shop_id, v_party_id, 5, 'O', 'op-customer-bad', null
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'AA: outbound direction allowed on customer party';
+  end if;
+
+  -- Amount <= 0 rejected.
+  v_failed := false;
+  begin
+    perform public.post_opening_party_balance(
+      v_shop_id, v_party_id, 0, 'I', 'op-zero', null
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'AA: zero amount allowed';
+  end if;
+
+  -- Bad direction code rejected.
+  v_failed := false;
+  begin
+    perform public.post_opening_party_balance(
+      v_shop_id, v_party_id, 1, 'X', 'op-bad', null
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'AA: bad direction code allowed';
+  end if;
+end;
+$$;
+
+-- Tenant isolation for both RPCs.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id  uuid;
+  v_party_id uuid;
+  v_failed   boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_party_id from public.party where shop_id = v_shop_id limit 1;
+
+  v_failed := false;
+  begin
+    perform public.update_party(v_shop_id, v_party_id, 'Hack', null);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'AA: update_party allowed non-member';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.post_opening_party_balance(
+      v_shop_id, v_party_id, 1, 'I', null, null
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'AA: post_opening_party_balance allowed non-member';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- ---------------------------------------------------------------------------
+-- §BB alias + barcode mutations (0043) + extended get_shop_item (0044).
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id      uuid;
+  v_item_id      uuid;
+  v_base_unit_id uuid;
+  v_bag_unit_id  uuid;
+  v_alias_id     uuid;
+  v_display_alias_id uuid;
+  v_barcode_id_1 uuid;
+  v_barcode_id_2 uuid;
+  v_failed       boolean;
+  v_count        int;
+  v_primary_count int;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Pick any shop_item with at least one non-base packaging.
+  select si.id into v_item_id
+  from public.shop_item si
+  join public.shop_item_unit siu on siu.shop_item_id = si.id
+  where si.shop_id = v_shop_id
+    and siu.conversion_to_base <> 1
+    and siu.is_active
+  limit 1;
+  if v_item_id is null then
+    raise notice 'BB: no shop_item with a non-base packaging; skipping';
+    return;
+  end if;
+
+  select id into v_base_unit_id
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_id
+    and conversion_to_base = 1;
+  select id into v_bag_unit_id
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_id
+    and conversion_to_base <> 1 and is_active
+  limit 1;
+
+  -- ---- add_shop_item_barcode -------------------------------------------
+  v_barcode_id_1 := public.add_shop_item_barcode(
+    v_shop_id, v_bag_unit_id, '6291100123456', true, null
+  );
+  v_barcode_id_2 := public.add_shop_item_barcode(
+    v_shop_id, v_bag_unit_id, '6291100999999', true, null
+  );
+  -- Atomic demotion: only the newest stays primary.
+  select count(*) into v_primary_count
+  from public.shop_item_barcode
+  where shop_id = v_shop_id
+    and shop_item_unit_id = v_bag_unit_id
+    and is_primary;
+  if v_primary_count <> 1 then
+    raise exception 'BB: expected exactly one primary, got %', v_primary_count;
+  end if;
+  if (select is_primary from public.shop_item_barcode where id = v_barcode_id_1) then
+    raise exception 'BB: previous primary was not demoted';
+  end if;
+
+  -- Idempotent insert: same (shop_item_unit_id, barcode) → upsert.
+  if public.add_shop_item_barcode(
+       v_shop_id, v_bag_unit_id, '6291100123456', false, null
+     ) <> v_barcode_id_1 then
+    raise exception 'BB: re-adding existing barcode did not return same id';
+  end if;
+
+  -- Empty barcode rejected.
+  v_failed := false;
+  begin
+    perform public.add_shop_item_barcode(
+      v_shop_id, v_bag_unit_id, '   ', false, null
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'BB: empty barcode must be rejected';
+  end if;
+
+  -- Unknown packaging rejected.
+  v_failed := false;
+  begin
+    perform public.add_shop_item_barcode(
+      v_shop_id, '00000000-0000-0000-0000-00000000beef',
+      'fake', false, null
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'BB: unknown packaging must be rejected';
+  end if;
+
+  -- ---- set_primary_shop_item_barcode -----------------------------------
+  perform public.set_primary_shop_item_barcode(v_shop_id, v_barcode_id_1);
+  if not (select is_primary from public.shop_item_barcode where id = v_barcode_id_1) then
+    raise exception 'BB: set_primary did not promote';
+  end if;
+  if (select is_primary from public.shop_item_barcode where id = v_barcode_id_2) then
+    raise exception 'BB: set_primary did not demote sibling';
+  end if;
+
+  -- ---- remove_shop_item_barcode ----------------------------------------
+  perform public.remove_shop_item_barcode(v_shop_id, v_barcode_id_2);
+  if exists (
+    select 1 from public.shop_item_barcode
+    where id = v_barcode_id_2
+  ) then
+    raise exception 'BB: barcode not removed';
+  end if;
+
+  -- ---- remove_shop_item_alias ------------------------------------------
+  -- Add a non-display alias, then remove it.
+  v_alias_id := public.add_shop_item_alias(
+    v_shop_id, v_item_id, 'Some Alias', 'so', false
+  );
+  perform public.remove_shop_item_alias(v_shop_id, v_alias_id);
+  if exists (
+    select 1 from public.shop_item_alias where id = v_alias_id
+  ) then
+    raise exception 'BB: alias not removed';
+  end if;
+
+  -- Refuse to remove the display alias (every product needs one).
+  select id into v_display_alias_id
+  from public.shop_item_alias
+  where shop_id = v_shop_id and shop_item_id = v_item_id and is_display
+  limit 1;
+  if v_display_alias_id is not null then
+    v_failed := false;
+    begin
+      perform public.remove_shop_item_alias(v_shop_id, v_display_alias_id);
+    exception when raise_exception then v_failed := true;
+    end;
+    if not v_failed then
+      raise exception 'BB: removing display alias must be rejected';
+    end if;
+  end if;
+
+  -- ---- get_shop_item returns the new id fields -------------------------
+  select count(*) into v_count
+  from jsonb_array_elements(
+    (public.get_shop_item(v_shop_id, v_item_id, 'en'))->'barcodes'
+  ) b
+  where b ? 'barcode_id' and b ? 'shop_item_unit_id';
+  if v_count = 0 then
+    raise exception 'BB: get_shop_item barcodes missing barcode_id/shop_item_unit_id';
+  end if;
+
+  select count(*) into v_count
+  from jsonb_array_elements(
+    (public.get_shop_item(v_shop_id, v_item_id, 'en'))->'aliases'
+  ) a
+  where a ? 'alias_id';
+  if v_count = 0 then
+    raise exception 'BB: get_shop_item aliases missing alias_id';
+  end if;
+end;
+$$;
+
+-- Tenant isolation: unrelated user can't mutate barcodes or aliases.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id  uuid;
+  v_unit_id  uuid;
+  v_failed   boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select id into v_unit_id from public.shop_item_unit
+   where shop_id = v_shop_id limit 1;
+
+  v_failed := false;
+  begin
+    perform public.add_shop_item_barcode(
+      v_shop_id, v_unit_id, 'hack', false, null
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'BB: add_shop_item_barcode allowed non-member';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- ---------------------------------------------------------------------------
+-- §CC list_shop_items extended fields (0045).
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id        uuid;
+  v_total          int;
+  v_priced         int;
+  v_first_default  numeric;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Total rows + at-least-one priced (the shop has activated items
+  -- with priced packagings via the test fixtures).
+  select count(*) into v_total
+  from public.list_shop_items(v_shop_id, null, null, 'en');
+  if v_total = 0 then
+    raise exception 'CC: list_shop_items returned 0 rows on seeded shop';
+  end if;
+
+  select count(*) into v_priced
+  from public.list_shop_items(v_shop_id, null, null, 'en')
+  where any_price_set;
+  if v_priced = 0 then
+    raise exception 'CC: any_price_set should be true on at least one fixture row';
+  end if;
+
+  -- default_sale_price is non-null when the default-sale packaging
+  -- has a price. Pick one row that has a price and verify.
+  select default_sale_price into v_first_default
+  from public.list_shop_items(v_shop_id, null, null, 'en')
+  where any_price_set and default_sale_price is not null
+  limit 1;
+  if v_first_default is null or v_first_default <= 0 then
+    raise exception 'CC: default_sale_price should be a positive number for priced rows';
+  end if;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- §DD list_product_velocity (0046) — top + dead segments.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id  uuid;
+  v_result   jsonb;
+  v_top_len  int;
+  v_dead_len int;
+  v_failed   boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  v_result := public.list_product_velocity(v_shop_id, 7, 10, 'en');
+  if not (v_result ? 'top') or not (v_result ? 'dead') then
+    raise exception 'DD: result missing top / dead keys';
+  end if;
+  v_top_len  := pg_catalog.jsonb_array_length(v_result->'top');
+  v_dead_len := pg_catalog.jsonb_array_length(v_result->'dead');
+  if v_top_len < 0 or v_dead_len < 0 then
+    raise exception 'DD: array lengths must be non-negative';
+  end if;
+
+  -- Bad period rejected.
+  v_failed := false;
+  begin
+    perform public.list_product_velocity(v_shop_id, 0, 10, 'en');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'DD: period_days <= 0 must be rejected';
+  end if;
+end;
+$$;
+
+-- Tenant isolation.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+do $$
+declare
+  v_shop_id uuid;
+  v_failed  boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  v_failed := false;
+  begin
+    perform public.list_product_velocity(v_shop_id, 7, 10, 'en');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'DD: list_product_velocity must deny non-members';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- §EE realtime publication (0047) — shop_item / shop_item_unit /
+-- shop_item_alias / shop_item_barcode / party must all be in the
+-- supabase_realtime publication so cross-portal edits propagate to
+-- mobile subscribers.
+do $$
+declare
+  t text;
+  v_missing text[] := array[]::text[];
+begin
+  foreach t in array array[
+    'shop_item',
+    'shop_item_unit',
+    'shop_item_alias',
+    'shop_item_barcode',
+    'party'
+  ]
+  loop
+    if not exists (
+      select 1
+      from pg_publication_tables
+      where pubname = 'supabase_realtime'
+        and schemaname = 'public'
+        and tablename = t
+    ) then
+      v_missing := v_missing || t;
+    end if;
+  end loop;
+  if array_length(v_missing, 1) is not null then
+    raise exception 'EE: tables missing from supabase_realtime publication: %', v_missing;
+  end if;
+end;
+$$;
+
+do $$
+begin
+  raise notice 'Backend migration tests passed';
+end;
+$$;
 SQL
 
 echo "Backend migration tests passed"

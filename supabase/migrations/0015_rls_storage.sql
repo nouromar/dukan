@@ -1,3 +1,20 @@
+-- Storage policies + document RLS extensions.
+--
+-- This file does NOT touch any item/shop_item table — those policies
+-- live in 0007. supplier_item_unit_cost and shop_item_barcode are
+-- covered there too.
+--
+-- IMPORTANT: We intentionally do NOT run
+--   alter table storage.objects enable row level security;
+-- Supabase owns and manages that table in both local and hosted
+-- projects; project migrations cannot alter it. The standalone Docker
+-- migration test harness enables RLS on its mock storage.objects only
+-- because it creates that mock table itself.
+
+-- ---------------------------------------------------------------------------
+-- Bucket: shop-documents
+-- ---------------------------------------------------------------------------
+
 insert into storage.buckets (
   id,
   name,
@@ -20,10 +37,10 @@ set
   allowed_mime_types = excluded.allowed_mime_types,
   updated_at = now();
 
--- Do not enable RLS on storage.objects here. Supabase owns and manages this
--- Storage table in local and hosted projects, and project migrations may not
--- be allowed to alter the table itself. The standalone Docker migration test
--- harness enables RLS when it creates its mock storage.objects table.
+-- ---------------------------------------------------------------------------
+-- document.storage_path shape constraint
+-- ---------------------------------------------------------------------------
+-- Path layout: <shop_id>/documents/<document_id>/image.<ext>
 
 alter table public.document
   add constraint document_storage_path_shape
@@ -37,6 +54,10 @@ alter table public.document
     )
   )
   not valid;
+
+-- ---------------------------------------------------------------------------
+-- Helper functions for storage.objects policies
+-- ---------------------------------------------------------------------------
 
 create or replace function public.storage_object_shop_id(p_name text)
 returns uuid
@@ -158,6 +179,13 @@ as $$
     );
 $$;
 
+-- ---------------------------------------------------------------------------
+-- Document delete eligibility
+-- ---------------------------------------------------------------------------
+--
+-- Only owners may delete; only if the document is not attached to any
+-- posted transaction / payment / inventory adjustment.
+
 create or replace function public.document_is_unattached(
   p_shop_id uuid,
   p_document_id uuid
@@ -202,6 +230,9 @@ as $$
     and public.document_is_unattached(p_shop_id, p_document_id);
 $$;
 
+-- When a document row is deleted, also evict the underlying storage
+-- object. Idempotent — the storage row may already be gone.
+
 create or replace function public.delete_storage_object_for_document()
 returns trigger
 language plpgsql
@@ -221,6 +252,10 @@ drop trigger if exists delete_storage_object_after_document_delete on public.doc
 create trigger delete_storage_object_after_document_delete
 after delete on public.document
 for each row execute function public.delete_storage_object_for_document();
+
+-- ---------------------------------------------------------------------------
+-- Grants + storage policies
+-- ---------------------------------------------------------------------------
 
 grant usage on schema storage to authenticated;
 grant select on storage.buckets to authenticated;

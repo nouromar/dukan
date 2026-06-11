@@ -1,32 +1,42 @@
--- list_item_units returns every unit configured for an item (or its
--- catalog candidate when the shop has not yet activated it). Powers
--- the unit pickers on both Receive and Sale.
+-- ---------------------------------------------------------------------------
+-- list_shop_item_units — list every packaging the shop has on a shop_item.
+-- ---------------------------------------------------------------------------
 --
--- After the allow_sale / allow_receive cleanup (pre-pilot), all units
--- are valid for either flow; which one is the "default" per screen is
--- decided by the item's default_sale_unit_code / default_receive_unit_code.
+-- Powers the unit pickers on Receive and Sale. Under the v2 schema there
+-- is no "catalog candidate" branch — by the time a packaging is being
+-- shown in a picker, the shop_item has been activated (or created
+-- locally) by ensure_shop_item / create_shop_item. The picker therefore
+-- only ever needs to walk shop_item_unit.
 --
--- Either p_item_id or p_catalog_item_id must be set, not both:
---   * Activated item: query item_unit + unit for shop-specific units.
---   * Catalog candidate: query catalog_item_unit + unit + revision for
---     the unactivated catalog product's unit list.
+-- p_screen ('sale' | 'receive') controls only the sort order: the
+-- screen's default packaging floats to the top so the cashier can
+-- confirm-without-looking. Same rows either way.
 --
--- p_screen ('sale' or 'receive') decides which default flag the picker
--- highlights. Defaults to 'receive' since Receive is the screen that
--- ships with a picker today.
+-- Returns one row per packaging:
+--   packaging_label is the same derived label search_items emits
+--   ("25 kg bag" / "kg"), so picker tiles and search tiles stay
+--   visually consistent.
+--   is_base_unit is derived from (conversion_to_base = 1), which the
+--   partial-unique index in 0007 guarantees is unique per shop_item.
 
-create or replace function public.list_item_units(
-  p_shop_id uuid,
-  p_item_id uuid default null,
-  p_catalog_item_id uuid default null,
-  p_screen text default 'receive'
+drop function if exists public.list_item_units(uuid, uuid, uuid, text);
+
+create or replace function public.list_shop_item_units(
+  p_shop_id      uuid,
+  p_shop_item_id uuid,
+  p_screen       text default 'sale'
 )
 returns table (
-  unit_id uuid,
-  unit_code text,
-  unit_label text,
-  conversion_to_base numeric,
-  is_default boolean
+  shop_item_unit_id   uuid,
+  unit_code           text,
+  unit_label          text,
+  conversion_to_base  numeric,
+  packaging_label     text,
+  sale_price          numeric,
+  last_cost           numeric,
+  is_default_sale     boolean,
+  is_default_receive  boolean,
+  is_base_unit        boolean
 )
 language plpgsql
 security definer
@@ -34,85 +44,68 @@ set search_path = ''
 stable
 as $$
 declare
-  v_screen text := coalesce(nullif(pg_catalog.btrim(p_screen), ''), 'receive');
-  v_default_unit_code text;
+  v_screen         text := pg_catalog.lower(pg_catalog.btrim(coalesce(p_screen, 'sale')));
+  v_locale         text := 'en';
+  v_base_unit_code text;
 begin
   if not public.auth_can_access_shop(p_shop_id) then
-    raise exception 'Not allowed to list item units for this shop';
+    raise exception 'Not allowed to list packagings for this shop';
   end if;
 
   if v_screen not in ('sale', 'receive') then
     raise exception 'p_screen must be sale or receive (got %)', v_screen;
   end if;
 
-  if (p_item_id is null and p_catalog_item_id is null)
-    or (p_item_id is not null and p_catalog_item_id is not null) then
-    raise exception 'Pass exactly one of p_item_id or p_catalog_item_id';
+  select si.base_unit_code into v_base_unit_code
+  from public.shop_item si
+  where si.id = p_shop_item_id and si.shop_id = p_shop_id;
+  if v_base_unit_code is null then
+    raise exception 'shop_item % not found in shop %', p_shop_item_id, p_shop_id;
   end if;
 
-  if p_item_id is not null then
-    if v_screen = 'sale' then
-      select u.code into v_default_unit_code
-      from public.item i
-      join public.unit u on u.id = i.default_sale_unit_id
-      where i.id = p_item_id and i.shop_id = p_shop_id;
-    else
-      select u.code into v_default_unit_code
-      from public.item i
-      join public.unit u on u.id = i.default_receive_unit_id
-      where i.id = p_item_id and i.shop_id = p_shop_id;
-    end if;
-
-    if v_default_unit_code is null then
-      raise exception 'Item not found in this shop';
-    end if;
-
-    return query
-    select
-      u.id as unit_id,
-      u.code as unit_code,
-      u.default_label as unit_label,
-      iu.conversion_to_base,
-      (u.code = v_default_unit_code) as is_default
-    from public.item_unit iu
-    join public.unit u on u.id = iu.unit_id and u.is_active
-    where iu.shop_id = p_shop_id
-      and iu.item_id = p_item_id
-    order by iu.sort_order, u.code;
-  else
-    if v_screen = 'sale' then
-      select cir.default_sale_unit_code into v_default_unit_code
-      from public.catalog_item ci
-      join public.catalog_item_revision cir on cir.id = ci.current_revision_id
-      where ci.id = p_catalog_item_id and ci.is_active;
-    else
-      select cir.default_receive_unit_code into v_default_unit_code
-      from public.catalog_item ci
-      join public.catalog_item_revision cir on cir.id = ci.current_revision_id
-      where ci.id = p_catalog_item_id and ci.is_active;
-    end if;
-
-    if v_default_unit_code is null then
-      raise exception 'Catalog item is not available';
-    end if;
-
-    return query
-    select
-      u.id as unit_id,
-      u.code as unit_code,
-      u.default_label as unit_label,
-      ciu.conversion_to_base,
-      (u.code = v_default_unit_code) as is_default
-    from public.catalog_item ci
-    join public.catalog_item_revision cir on cir.id = ci.current_revision_id
-    join public.catalog_item_unit ciu
-      on ciu.catalog_item_id = ci.id and ciu.revision_id = cir.id
-    join public.unit u on u.code = ciu.unit_code and u.is_active
-    where ci.id = p_catalog_item_id
-    order by ciu.sort_order, u.code;
-  end if;
+  return query
+  select
+    siu.id as shop_item_unit_id,
+    siu.unit_code,
+    public.tr(u.default_label, u.label_translations, v_locale) as unit_label,
+    siu.conversion_to_base,
+    case
+      when siu.conversion_to_base = 1 then
+        public.tr(u.default_label, u.label_translations, v_locale)
+      else
+        pg_catalog.rtrim(pg_catalog.rtrim(siu.conversion_to_base::text, '0'), '.')
+        || ' '
+        || coalesce(
+          (
+            select public.tr(bu.default_label, bu.label_translations, v_locale)
+            from public.unit bu where bu.code = v_base_unit_code
+          ),
+          v_base_unit_code
+        )
+        || ' '
+        || public.tr(u.default_label, u.label_translations, v_locale)
+    end as packaging_label,
+    siu.sale_price,
+    siu.last_cost,
+    siu.is_default_sale,
+    siu.is_default_receive,
+    (siu.conversion_to_base = 1) as is_base_unit
+  from public.shop_item_unit siu
+  join public.unit u on u.code = siu.unit_code
+  where siu.shop_id = p_shop_id
+    and siu.shop_item_id = p_shop_item_id
+    and siu.is_active
+  order by
+    case
+      when v_screen = 'sale'    and siu.is_default_sale    then 0
+      when v_screen = 'receive' and siu.is_default_receive then 0
+      else 1
+    end,
+    siu.sort_order asc,
+    siu.conversion_to_base asc,
+    siu.unit_code asc;
 end;
 $$;
 
-revoke all on function public.list_item_units(uuid, uuid, uuid, text) from public;
-grant execute on function public.list_item_units(uuid, uuid, uuid, text) to authenticated;
+revoke all on function public.list_shop_item_units(uuid, uuid, text) from public;
+grant execute on function public.list_shop_item_units(uuid, uuid, text) to authenticated;

@@ -9,15 +9,13 @@
 
 import 'package:dukan/api/types.dart';
 
-/// Format a monetary value with the shop's currency symbol. Drops the
-/// decimal portion when the value is a whole number. Single-character
+/// Format a monetary value with the shop's currency symbol. Always
+/// renders to 2 decimal places ("$1.00", "$0.50") so cart rows stack
+/// vertically aligned and don't read as "sloppy math". Single-character
 /// glyphs ($, £, €) print adjacent — "$1.50". Multi-character codes
-/// (SLSH, KES) print with a space — "SLSH 5000".
+/// (SLSH, KES) print with a space — "SLSH 5000.00".
 String formatMoney(num value, ShopSummary shop) {
-  final v = value.toDouble();
-  final formatted = v == v.roundToDouble()
-      ? v.toStringAsFixed(0)
-      : v.toStringAsFixed(2);
+  final formatted = value.toDouble().toStringAsFixed(2);
   final symbol = shop.currencySymbol;
   final sep = symbol.length == 1 ? '' : ' ';
   return '$symbol$sep$formatted';

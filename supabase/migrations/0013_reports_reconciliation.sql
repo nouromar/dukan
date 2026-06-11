@@ -1,20 +1,113 @@
+-- Reports + reconciliation views.
+--
+-- v2 schema notes:
+--   - `item` (per-shop) was renamed to `shop_item`. Display name no
+--     longer lives on the row — it's resolved via the alias chain
+--     (shop_item_alias > item_alias), so views call
+--     `shop_item_display_name(shop_item_id, locale)`.
+--   - `shop_item` lost name / sale_price / last_cost / default_*_unit_id /
+--     barcode columns. Pricing is per-packaging on `shop_item_unit`;
+--     barcodes live in `item_barcode` / `shop_item_barcode`.
+--   - `transaction_line.catalog_revision_id` was dropped with revisions.
+--
+-- All views use `security_invoker = true` so RLS on the underlying
+-- tables continues to gate visibility.
+
+-- ---------------------------------------------------------------------------
+-- shop_item_display_name(shop_item_id, locale)
+-- ---------------------------------------------------------------------------
+--
+-- Walks the alias chain to resolve the display name:
+--   1. shop_item_alias  is_display, locale match
+--   2. shop_item_alias  is_display, any language
+--   3. item_alias       is_display, locale match (via shop_item.item_id)
+--   4. item_alias       is_display, any language
+--   5. fallback: shop_item.id::text (rare; means no aliases yet)
+--
+-- Marked immutable + parallel safe so it composes inside views.
+
+create or replace function public.shop_item_display_name(
+  p_shop_item_id uuid,
+  p_locale text default 'en'
+)
+returns text
+language sql
+stable
+parallel safe
+set search_path = ''
+as $$
+  select coalesce(
+    (
+      select sia.alias_text
+      from public.shop_item_alias sia
+      where sia.shop_item_id = p_shop_item_id
+        and sia.is_display
+        and sia.is_active
+        and sia.language_code = p_locale
+      limit 1
+    ),
+    (
+      select sia.alias_text
+      from public.shop_item_alias sia
+      where sia.shop_item_id = p_shop_item_id
+        and sia.is_display
+        and sia.is_active
+      order by sia.language_code nulls last
+      limit 1
+    ),
+    (
+      select ia.alias_text
+      from public.shop_item si
+      join public.item_alias ia on ia.item_id = si.item_id
+      where si.id = p_shop_item_id
+        and ia.is_display
+        and ia.is_active
+        and ia.language_code = p_locale
+      limit 1
+    ),
+    (
+      select ia.alias_text
+      from public.shop_item si
+      join public.item_alias ia on ia.item_id = si.item_id
+      where si.id = p_shop_item_id
+        and ia.is_display
+        and ia.is_active
+      order by ia.language_code nulls last
+      limit 1
+    ),
+    p_shop_item_id::text
+  );
+$$;
+
+grant execute on function public.shop_item_display_name(uuid, text) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- v_item_stock_truth
+-- ---------------------------------------------------------------------------
+--
+-- Reconciliation: cached shop_item.current_stock vs sum of
+-- stock_movement.quantity_delta. Variance should always be 0.
+
 create view public.v_item_stock_truth
 with (security_invoker = true)
 as
 select
-  i.shop_id,
-  i.id as item_id,
-  i.code as item_code,
-  coalesce(i.name_override, i.name) as item_name,
-  i.current_stock as cached_stock,
+  si.shop_id,
+  si.id as item_id,
+  public.shop_item_display_name(si.id, 'en') as item_name,
+  si.current_stock as cached_stock,
   coalesce(sum(sm.quantity_delta), 0)::numeric(14, 3) as ledger_stock,
-  (i.current_stock - coalesce(sum(sm.quantity_delta), 0))::numeric(14, 3) as stock_variance,
+  (si.current_stock - coalesce(sum(sm.quantity_delta), 0))::numeric(14, 3) as stock_variance,
   count(sm.id) as movement_count
-from public.item i
+from public.shop_item si
 left join public.stock_movement sm
-  on sm.shop_id = i.shop_id
-  and sm.item_id = i.id
-group by i.shop_id, i.id, i.code, i.name, i.name_override, i.current_stock;
+  on sm.shop_id = si.shop_id
+  and sm.item_id = si.id
+group by si.shop_id, si.id, si.current_stock;
+
+-- ---------------------------------------------------------------------------
+-- v_party_balance_truth
+-- ---------------------------------------------------------------------------
 
 create view public.v_party_balance_truth
 with (security_invoker = true)
@@ -87,6 +180,10 @@ left join standalone_payments sp
   on sp.shop_id = p.shop_id
   and sp.party_id = p.id;
 
+-- ---------------------------------------------------------------------------
+-- v_sales_report
+-- ---------------------------------------------------------------------------
+
 create view public.v_sales_report
 with (security_invoker = true)
 as
@@ -141,6 +238,10 @@ group by
   t.created_by,
   t.created_at;
 
+-- ---------------------------------------------------------------------------
+-- v_receive_report
+-- ---------------------------------------------------------------------------
+
 create view public.v_receive_report
 with (security_invoker = true)
 as
@@ -193,6 +294,10 @@ group by
   t.created_by,
   t.created_at;
 
+-- ---------------------------------------------------------------------------
+-- v_expense_report
+-- ---------------------------------------------------------------------------
+
 create view public.v_expense_report
 with (security_invoker = true)
 as
@@ -228,6 +333,10 @@ left join public.payment_method pm on pm.id = t.payment_method_id
 where tt.code = 'expense'
   and ts.code = 'posted';
 
+-- ---------------------------------------------------------------------------
+-- v_payment_report
+-- ---------------------------------------------------------------------------
+
 create view public.v_payment_report
 with (security_invoker = true)
 as
@@ -254,6 +363,10 @@ join public.payment_method pm on pm.id = p.method_id
 left join public.party party
   on party.shop_id = p.shop_id
   and party.id = p.party_id;
+
+-- ---------------------------------------------------------------------------
+-- v_daily_profit / v_monthly_profit / v_monthly_sales / v_monthly_expenses
+-- ---------------------------------------------------------------------------
 
 create view public.v_daily_profit
 with (security_invoker = true)

@@ -7,6 +7,12 @@
 //
 // Pops back with `true` after a successful void so the history list
 // refreshes the strikethrough + voided badge.
+//
+// v2 model: each line carries a `packagingLabel` snapshot from the
+// transaction line (e.g., "25 kg bag"). The receipt reads that
+// snapshot rather than the live shop_item_unit so it stays consistent
+// even if the packaging was later renamed or had its conversion
+// changed.
 
 import 'dart:math' as math;
 
@@ -235,6 +241,11 @@ class _ReceiveDetailBody extends StatelessWidget {
                 final qtyText = line.quantity == line.quantity.roundToDouble()
                     ? line.quantity.toInt().toString()
                     : line.quantity.toString();
+                // The v2 packaging snapshot lives on the line as
+                // `packagingLabel` (e.g., "25 kg bag"). Fall back to
+                // the bare unit label for legacy/expense rows that
+                // don't carry a packaging.
+                final unitText = line.packagingLabel ?? line.unitLabel;
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                   title: Text(
@@ -247,7 +258,7 @@ class _ReceiveDetailBody extends StatelessWidget {
                     l.receiveDetailLineSubtotal(
                       qtyText,
                       formatMoney(line.lineTotal, shop),
-                      line.unitLabel,
+                      unitText,
                       unitCostText,
                     ),
                   ),
