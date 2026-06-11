@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/auth/capabilities.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/sale/sale_detail_screen.dart';
 
@@ -38,7 +39,12 @@ void main() {
   late AppLocalizations en;
 
   setUp(() {
-    auth = FakeAuthController();
+    // Default to an owner capability set so existing tests that
+    // expect the VOID action to render still pass. Cashier-mode
+    // tests below explicitly override.
+    auth = FakeAuthController(
+      capabilities: Capabilities.forTesting(const ['sales.void']),
+    );
     api = FakeShopApi();
     shop = fakeShop();
     en = lookupAppLocalizations(const Locale('en'));
@@ -152,6 +158,28 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets(
+    'cashier-role capabilities (no sales.void) hide the VOID button',
+    (tester) async {
+      // Within the 7-day window, not voided — the only thing that
+      // keeps VOID hidden is the missing capability.
+      auth.setCapabilities(Capabilities.empty());
+      api.onGetSale = (_, _) async => _header(
+        partyName: 'Ahmed',
+        postedAt: DateTime.now().subtract(const Duration(days: 1)),
+      );
+      api.onGetSaleLines = (_, _) async => const [];
+
+      await pumpDetail(tester);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.widgetWithText(TextButton, en.saleDetailVoidButton),
+        findsNothing,
+      );
+    },
+  );
 
   testWidgets(
     'refund checkbox + adjustable amount → voidSale called with refundAmount',

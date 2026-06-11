@@ -298,6 +298,22 @@ class ShopApi {
         .rpc('dismiss_shop_onboarding', params: {'p_shop_id': shopId});
   }
 
+  /// Returns the caller's effective capability codes for [shopId].
+  /// Backed by the auth_user_shop_capabilities RPC (migration 0048).
+  /// Empty list when the caller isn't a member.
+  Future<List<String>> listUserShopCapabilities({
+    required String shopId,
+  }) async {
+    final raw = await _client.rpc(
+      'auth_user_shop_capabilities',
+      params: {'p_shop_id': shopId},
+    );
+    if (raw is List) {
+      return raw.whereType<String>().toList(growable: false);
+    }
+    return const <String>[];
+  }
+
   // ----- Catalog / items ----------------------------------------------------
 
   /// Idempotent activation of a global catalog item for this shop.

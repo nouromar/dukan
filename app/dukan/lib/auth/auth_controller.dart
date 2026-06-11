@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/auth/capabilities.dart';
 
 class DukanOtpDelivery {
   const DukanOtpDelivery._();
@@ -37,6 +38,8 @@ class AuthController extends ChangeNotifier {
   List<ShopSummary> _shops = const [];
   ShopSummary? _selectedShop;
   String? _pendingPhone;
+  Capabilities _capabilities = Capabilities.empty();
+  String? _capabilitiesShopId;
 
   Session? get session => _session;
   bool get initialized => _initialized;
@@ -46,6 +49,11 @@ class AuthController extends ChangeNotifier {
   ShopSummary? get selectedShop =>
       _selectedShop ?? (_shops.length == 1 ? _shops.first : null);
   String? get pendingPhone => _pendingPhone;
+
+  /// Capability set for the currently-selected shop. Empty when no
+  /// shop is selected or while the first load is in flight — UI
+  /// gates default to "denied" in that state.
+  Capabilities get capabilities => _capabilities;
 
   Future<void> start() async {
     if (_initialized) return;
@@ -129,6 +137,7 @@ class AuthController extends ChangeNotifier {
         _selectedShop = null;
       }
       _shopLoadFailed = false;
+      unawaited(_syncCapabilities());
     } catch (error, stackTrace) {
       FlutterError.reportError(
         FlutterErrorDetails(
@@ -191,6 +200,7 @@ class AuthController extends ChangeNotifier {
   void selectShop(ShopSummary shop) {
     _selectedShop = shop;
     notifyListeners();
+    unawaited(_syncCapabilities());
   }
 
   Future<void> signOut() async {
@@ -198,7 +208,45 @@ class AuthController extends ChangeNotifier {
     _pendingPhone = null;
     _shops = const [];
     _selectedShop = null;
+    _capabilities = Capabilities.empty();
+    _capabilitiesShopId = null;
     notifyListeners();
+  }
+
+  /// Fetches the capability set for the currently-effective shop
+  /// (the resolved `selectedShop`) when it differs from what's
+  /// already cached. Diffs on shop id so this is cheap to call any
+  /// time the shop state might have changed; the RPC fires at most
+  /// once per shop selection.
+  Future<void> _syncCapabilities() async {
+    final shop = selectedShop;
+    if (shop == null) {
+      if (_capabilities.codes.isNotEmpty || _capabilitiesShopId != null) {
+        _capabilities = Capabilities.empty();
+        _capabilitiesShopId = null;
+        notifyListeners();
+      }
+      return;
+    }
+    if (_capabilitiesShopId == shop.id && _capabilities.codes.isNotEmpty) {
+      return;
+    }
+    try {
+      final codes = await _shopApi.listUserShopCapabilities(shopId: shop.id);
+      _capabilities = Capabilities(codes.toSet());
+      _capabilitiesShopId = shop.id;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan auth',
+          context: ErrorDescription('loading shop capabilities'),
+        ),
+      );
+      // Leave capabilities empty so UI gates fail closed.
+    }
   }
 
   @override

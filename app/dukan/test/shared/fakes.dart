@@ -14,6 +14,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/auth/capabilities.dart';
 
 // --- FakeAuthController ---------------------------------------------------
 
@@ -26,13 +27,15 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
     bool shopsLoading = false,
     bool shopLoadFailed = false,
     String? pendingPhone,
+    Capabilities? capabilities,
   }) : _shops = shops,
        _selectedShop = selectedShop,
        _session = session,
        _initialized = initialized,
        _shopsLoading = shopsLoading,
        _shopLoadFailed = shopLoadFailed,
-       _pendingPhone = pendingPhone;
+       _pendingPhone = pendingPhone,
+       _capabilities = capabilities ?? Capabilities.empty();
 
   List<ShopSummary> _shops;
   ShopSummary? _selectedShop;
@@ -41,6 +44,7 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
   bool _shopsLoading;
   bool _shopLoadFailed;
   String? _pendingPhone;
+  Capabilities _capabilities;
 
   Future<void> Function(String rawPhone)? onSendOtp;
   Future<void> Function(String token)? onVerifyOtp;
@@ -102,6 +106,14 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
       _selectedShop ?? (_shops.length == 1 ? _shops.first : null);
   @override
   String? get pendingPhone => _pendingPhone;
+  @override
+  Capabilities get capabilities => _capabilities;
+
+  /// Test helper for capability-gated widget tests.
+  void setCapabilities(Capabilities capabilities) {
+    _capabilities = capabilities;
+    notifyListeners();
+  }
 
   @override
   Future<void> start() async {
@@ -420,6 +432,15 @@ class FakeShopApi implements ShopApi {
   Future<void> dismissOnboarding({required String shopId}) async {
     dismissOnboardingCalls.add(shopId);
     if (onDismissOnboarding != null) return onDismissOnboarding!(shopId);
+  }
+
+  List<String> listUserShopCapabilitiesResult = const <String>[];
+
+  @override
+  Future<List<String>> listUserShopCapabilities({
+    required String shopId,
+  }) async {
+    return List<String>.from(listUserShopCapabilitiesResult);
   }
 
   @override

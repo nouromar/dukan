@@ -3631,6 +3631,83 @@ $$;
 
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
+-- §FF capability vocabulary (0048).
+--
+-- The owner user (000…01) should see the owner capability set
+-- including the owner-only entries (sales.void, receive.void,
+-- inventory.product.edit, inventory.adjustment.post). The cashier
+-- user (000…02) should see the cashier set WITHOUT those entries.
+-- Both must include sales.post (the minimum to count as posting-
+-- capable). The non-member (000…03) must see an empty set.
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id uuid;
+  v_caps jsonb;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_caps := public.auth_user_shop_capabilities(v_shop_id);
+  if not (v_caps ? 'sales.post') then
+    raise exception 'FF owner: missing sales.post in %', v_caps;
+  end if;
+  if not (v_caps ? 'sales.void') then
+    raise exception 'FF owner: missing sales.void in %', v_caps;
+  end if;
+  if not (v_caps ? 'inventory.product.edit') then
+    raise exception 'FF owner: missing inventory.product.edit in %', v_caps;
+  end if;
+  if not (v_caps ? 'inventory.adjustment.post') then
+    raise exception 'FF owner: missing inventory.adjustment.post in %', v_caps;
+  end if;
+  if not public.auth_user_has_capability('sales.void', v_shop_id) then
+    raise exception 'FF owner: auth_user_has_capability(sales.void) returned false';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+do $$
+declare
+  v_shop_id uuid;
+  v_caps jsonb;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_caps := public.auth_user_shop_capabilities(v_shop_id);
+  if not (v_caps ? 'sales.post') then
+    raise exception 'FF cashier: missing sales.post in %', v_caps;
+  end if;
+  if (v_caps ? 'sales.void') then
+    raise exception 'FF cashier: must NOT have sales.void in %', v_caps;
+  end if;
+  if (v_caps ? 'inventory.product.edit') then
+    raise exception 'FF cashier: must NOT have inventory.product.edit in %', v_caps;
+  end if;
+  if (v_caps ? 'inventory.adjustment.post') then
+    raise exception 'FF cashier: must NOT have inventory.adjustment.post in %', v_caps;
+  end if;
+  if public.auth_user_has_capability('sales.void', v_shop_id) then
+    raise exception 'FF cashier: auth_user_has_capability(sales.void) wrongly true';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+do $$
+declare
+  v_shop_id uuid;
+  v_caps jsonb;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_caps := public.auth_user_shop_capabilities(v_shop_id);
+  if jsonb_array_length(v_caps) <> 0 then
+    raise exception 'FF non-member: must see empty capability set, got %', v_caps;
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
 -- §EE realtime publication (0047) — shop_item / shop_item_unit /
 -- shop_item_alias / shop_item_barcode / party must all be in the
 -- supabase_realtime publication so cross-portal edits propagate to

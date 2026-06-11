@@ -18,6 +18,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -348,12 +349,17 @@ class _SaleReceiptBody extends StatelessWidget {
   final VoidCallback onVoid;
   final VoidCallback onShare;
 
-  bool get _canVoid {
+  bool _canVoid(BuildContext context) {
     if (!showVoidAffordance) return false;
     if (bundle.header.isVoided) return false;
     final posted = bundle.header.postedAt;
     if (posted == null) return false;
-    return DateTime.now().difference(posted).inDays < 7;
+    if (DateTime.now().difference(posted).inDays >= 7) return false;
+    // Capability gate — cashier role lacks sales.void. The receipt
+    // sheet (showVoidAffordance: false) skips this branch entirely
+    // since it's already gated above; we read capabilities on the
+    // history path only.
+    return context.watch<AuthController>().capabilities.canVoidSale;
   }
 
   @override
@@ -465,7 +471,7 @@ class _SaleReceiptBody extends StatelessWidget {
                 minimumSize: const Size.fromHeight(48),
               ),
             ),
-          if (_canVoid) ...[
+          if (_canVoid(context)) ...[
             const SizedBox(height: 4),
             // Destructive secondary action: red text, right-aligned,
             // no fill. Findable but not the screen's primary CTA.
