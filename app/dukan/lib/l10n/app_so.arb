@@ -676,5 +676,7 @@
   "multiScanAppliedSummary": "{count, plural, =1{1 saf la gallinay} other{{count} saf la galiyay}}",
   "@multiScanAppliedSummary": {
     "placeholders": {"count": {"type": "int"}}
-  }
+  },
+  "barcodeScanAndBindAction": "Akhri jeegga",
+  "barcodeBoundToPackagingMessage": "Jeegga waxa lagu xidhay shaandhada"
 }

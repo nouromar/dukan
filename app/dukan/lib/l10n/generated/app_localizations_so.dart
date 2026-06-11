@@ -2054,4 +2054,11 @@ class AppLocalizationsSo extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get barcodeScanAndBindAction => 'Akhri jeegga';
+
+  @override
+  String get barcodeBoundToPackagingMessage =>
+      'Jeegga waxa lagu xidhay shaandhada';
 }

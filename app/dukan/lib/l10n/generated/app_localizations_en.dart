@@ -2042,4 +2042,10 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get barcodeScanAndBindAction => 'Scan code';
+
+  @override
+  String get barcodeBoundToPackagingMessage => 'Code linked to this packaging';
 }

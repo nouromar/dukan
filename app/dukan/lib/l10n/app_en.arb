@@ -676,5 +676,7 @@
   "multiScanAppliedSummary": "{count, plural, =1{1 line staged} other{{count} lines staged}}",
   "@multiScanAppliedSummary": {
     "placeholders": {"count": {"type": "int"}}
-  }
+  },
+  "barcodeScanAndBindAction": "Scan code",
+  "barcodeBoundToPackagingMessage": "Code linked to this packaging"
 }

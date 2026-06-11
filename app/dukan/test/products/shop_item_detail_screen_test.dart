@@ -5,6 +5,8 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/products/shop_item_detail_screen.dart';
+import 'package:dukan/scanner/scan_event.dart';
+import 'package:dukan/scanner/scanner_sheet.dart';
 
 import '../shared/fakes.dart';
 import '../shared/wrap.dart';
@@ -296,6 +298,35 @@ void main() {
     expect(api.addShopItemBarcodeCalls, hasLength(1));
     expect(api.addShopItemBarcodeCalls.first.barcode, '6291100123456');
   });
+
+  testWidgets(
+    'Scan code on packaging tile → addShopItemBarcode with scanned value',
+    (tester) async {
+      api.onGetShopItem = (_, _, _) async => _detail();
+      final restore = Scanner.overrideOpener(
+        (_) async => const ScanEvent(
+          code: '5901234123457',
+          source: ScanSource.camera,
+          symbology: 'ean13',
+        ),
+      );
+      addTearDown(restore);
+
+      await pumpDetail(tester);
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.widgetWithText(ActionChip, en.barcodeScanAndBindAction).first,
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      expect(api.addShopItemBarcodeCalls, hasLength(1));
+      expect(api.addShopItemBarcodeCalls.first.barcode, '5901234123457');
+      expect(api.addShopItemBarcodeCalls.first.isPrimary, isFalse);
+    },
+  );
 
   testWidgets('+ Add alias on detail → addShopItemAlias fires (non-display)',
       (tester) async {

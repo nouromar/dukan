@@ -23,6 +23,7 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/products/stock_adjust_sheet.dart';
 import 'package:dukan/receive/add_packaging_sheet.dart';
+import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -281,6 +282,33 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       _showSaved();
     } catch (error, stackTrace) {
       _reportAndShow(error, stackTrace, 'adding barcode');
+    }
+  }
+
+  /// Scan-to-bind: opens the single-scan viewfinder; on a decode the
+  /// resulting code is bound to this packaging via the same
+  /// addShopItemBarcode RPC the manual-entry path uses. is_primary
+  /// stays false — the cashier can promote later via the existing
+  /// chip-action menu.
+  Future<void> _onScanBindBarcode(ShopItemUnitDetail unit) async {
+    final event = await Scanner.open(context);
+    if (event == null || !mounted) return;
+    try {
+      await context.read<ShopApi>().addShopItemBarcode(
+            shopId: widget.shop.id,
+            shopItemUnitId: unit.shopItemUnitId,
+            barcode: event.code,
+            isPrimary: false,
+          );
+      if (!mounted) return;
+      _reload();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(tr(context).barcodeBoundToPackagingMessage),
+        ),
+      );
+    } catch (error, stackTrace) {
+      _reportAndShow(error, stackTrace, 'scan-binding barcode');
     }
   }
 
@@ -569,6 +597,7 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
               onAddAlias: _onAddAlias,
               onRemoveAlias: _onRemoveAlias,
               onAddBarcode: _onAddBarcode,
+              onScanBindBarcode: _onScanBindBarcode,
               onBarcodeChipTap: _onBarcodeChipTap,
             );
           },
@@ -604,6 +633,7 @@ class _DetailBody extends StatelessWidget {
     required this.onAddAlias,
     required this.onRemoveAlias,
     required this.onAddBarcode,
+    required this.onScanBindBarcode,
     required this.onBarcodeChipTap,
   });
 
@@ -625,6 +655,7 @@ class _DetailBody extends StatelessWidget {
   final VoidCallback onAddAlias;
   final Future<void> Function(ShopItemAliasRow alias) onRemoveAlias;
   final Future<void> Function(ShopItemUnitDetail unit) onAddBarcode;
+  final Future<void> Function(ShopItemUnitDetail unit) onScanBindBarcode;
   final Future<void> Function(ShopItemBarcodeRow row) onBarcodeChipTap;
 
   @override
@@ -741,6 +772,7 @@ class _DetailBody extends StatelessWidget {
               ),
               onDelete: u.isBaseUnit ? null : () => onDeletePackaging(u),
               onAddBarcode: () => onAddBarcode(u),
+              onScanBindBarcode: () => onScanBindBarcode(u),
               onBarcodeChipTap: onBarcodeChipTap,
             ),
           ),
@@ -832,6 +864,7 @@ class _PackagingTile extends StatelessWidget {
     required this.onToggleDefault,
     required this.onDelete,
     required this.onAddBarcode,
+    required this.onScanBindBarcode,
     required this.onBarcodeChipTap,
   });
 
@@ -849,6 +882,7 @@ class _PackagingTile extends StatelessWidget {
   final VoidCallback? onDelete;
 
   final VoidCallback onAddBarcode;
+  final VoidCallback onScanBindBarcode;
   final Future<void> Function(ShopItemBarcodeRow row) onBarcodeChipTap;
 
   @override
@@ -980,6 +1014,11 @@ class _PackagingTile extends StatelessWidget {
                     avatar: const Icon(Icons.add, size: 14),
                     label: Text(l.barcodeAddTooltip),
                     onPressed: onAddBarcode,
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.qr_code_scanner, size: 14),
+                    label: Text(l.barcodeScanAndBindAction),
+                    onPressed: onScanBindBarcode,
                   ),
                 ],
               ),

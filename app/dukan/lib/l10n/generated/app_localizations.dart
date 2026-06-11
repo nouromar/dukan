@@ -3491,6 +3491,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 line staged} other{{count} lines staged}}'**
   String multiScanAppliedSummary(int count);
+
+  /// No description provided for @barcodeScanAndBindAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan code'**
+  String get barcodeScanAndBindAction;
+
+  /// No description provided for @barcodeBoundToPackagingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Code linked to this packaging'**
+  String get barcodeBoundToPackagingMessage;
 }
 
 class _AppLocalizationsDelegate
