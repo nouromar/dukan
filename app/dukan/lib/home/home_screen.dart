@@ -21,6 +21,7 @@ import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/favorites_cache.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/today_summary_cache.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, this.shop, this.onSignOut});
@@ -257,19 +258,54 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
     final current = Localizations.localeOf(context).languageCode;
     if (_locale != current || _future == null) {
       _locale = current;
-      _future = context.read<ShopApi>().getTodaySummary(
+      _future = _swrLoad();
+    }
+  }
+
+  /// Stale-while-revalidate: resolves the persisted cache for instant
+  /// render, then fires the network fetch and persists the fresh
+  /// summary. The FutureBuilder receives whichever lands first — in
+  /// practice the cached value lands within a frame and the network
+  /// value updates the persisted cache for the next mount.
+  Future<TodaySummary> _swrLoad() async {
+    final cached = await TodaySummaryCache.get(widget.shop.id);
+    // Fire-and-forget the fresh fetch. When it lands we replace
+    // _future so the FutureBuilder rebuilds with the new values, and
+    // persist for next mount.
+    unawaited(_refreshFromNetwork());
+    if (cached != null) return cached;
+    // Cold cache — fall through to the network as the primary read.
+    return _fetchFromNetwork();
+  }
+
+  Future<TodaySummary> _fetchFromNetwork() async {
+    final summary = await context.read<ShopApi>().getTodaySummary(
+          shopId: widget.shop.id,
+          locale: _locale ?? 'en',
+        );
+    unawaited(TodaySummaryCache.put(widget.shop.id, summary));
+    return summary;
+  }
+
+  Future<void> _refreshFromNetwork() async {
+    try {
+      final fresh = await context.read<ShopApi>().getTodaySummary(
             shopId: widget.shop.id,
-            locale: current,
+            locale: _locale ?? 'en',
           );
+      unawaited(TodaySummaryCache.put(widget.shop.id, fresh));
+      if (!mounted) return;
+      setState(() {
+        _future = Future.value(fresh);
+      });
+    } catch (_) {
+      // Background refresh failure leaves the cached value visible.
     }
   }
 
   void _reload() {
     setState(() {
-      _future = context.read<ShopApi>().getTodaySummary(
-            shopId: widget.shop.id,
-            locale: _locale ?? 'en',
-          );
+      _future = _fetchFromNetwork();
     });
   }
 

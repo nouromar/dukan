@@ -11,6 +11,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:dukan/shared/favorites_cache.dart';
 
@@ -18,6 +19,9 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   setUp(() {
     FavoritesCache.clear();
     FavoritesCache.nowForTesting = null;
+    // Reset SharedPreferences so the TodaySummaryCache (and any
+    // future persistent caches) start each test from a clean slate.
+    SharedPreferences.setMockInitialValues(<String, Object>{});
   });
   await testMain();
 }
