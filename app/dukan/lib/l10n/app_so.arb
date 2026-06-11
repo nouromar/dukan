@@ -661,5 +661,20 @@
   },
   "scanUnknownCreateAction": "Cusub abuur",
   "scanUnknownDismissAction": "Iska saar",
-  "scanLookupFailed": "Jeegga lama heli karo"
+  "scanLookupFailed": "Jeegga lama heli karo",
+  "multiScanSheetTitle": "Multi-akhri ({count})",
+  "@multiScanSheetTitle": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "multiScanUnknownCount": "{count, plural, =1{1 jeeg lama yaqaano — eeg ka dib} other{{count} jeeg lama yaqaano — eeg ka dib}}",
+  "@multiScanUnknownCount": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "multiScanEmptyHint": "Jeegga camera-da hor dhig. Akhrida guul leh waxay galayaan liiska hoose.",
+  "multiScanDoneAction": "DHAMAYE",
+  "multiScanLongPressHint": "Si dheer u taabo si aad u multi-akhrido",
+  "multiScanAppliedSummary": "{count, plural, =1{1 saf la gallinay} other{{count} saf la galiyay}}",
+  "@multiScanAppliedSummary": {
+    "placeholders": {"count": {"type": "int"}}
+  }
 }

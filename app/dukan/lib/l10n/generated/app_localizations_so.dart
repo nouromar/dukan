@@ -2016,4 +2016,42 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get scanLookupFailed => 'Jeegga lama heli karo';
+
+  @override
+  String multiScanSheetTitle(int count) {
+    return 'Multi-akhri ($count)';
+  }
+
+  @override
+  String multiScanUnknownCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jeeg lama yaqaano — eeg ka dib',
+      one: '1 jeeg lama yaqaano — eeg ka dib',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get multiScanEmptyHint =>
+      'Jeegga camera-da hor dhig. Akhrida guul leh waxay galayaan liiska hoose.';
+
+  @override
+  String get multiScanDoneAction => 'DHAMAYE';
+
+  @override
+  String get multiScanLongPressHint =>
+      'Si dheer u taabo si aad u multi-akhrido';
+
+  @override
+  String multiScanAppliedSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count saf la galiyay',
+      one: '1 saf la gallinay',
+    );
+    return '$_temp0';
+  }
 }

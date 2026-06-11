@@ -3455,6 +3455,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t look up that barcode'**
   String get scanLookupFailed;
+
+  /// No description provided for @multiScanSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-scan ({count})'**
+  String multiScanSheetTitle(int count);
+
+  /// No description provided for @multiScanUnknownCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 unknown code — review after} other{{count} unknown codes — review after}}'**
+  String multiScanUnknownCount(int count);
+
+  /// No description provided for @multiScanEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Aim at a barcode. Successful scans stage as lines below.'**
+  String get multiScanEmptyHint;
+
+  /// No description provided for @multiScanDoneAction.
+  ///
+  /// In en, this message translates to:
+  /// **'DONE'**
+  String get multiScanDoneAction;
+
+  /// No description provided for @multiScanLongPressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to multi-scan'**
+  String get multiScanLongPressHint;
+
+  /// No description provided for @multiScanAppliedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line staged} other{{count} lines staged}}'**
+  String multiScanAppliedSummary(int count);
 }
 
 class _AppLocalizationsDelegate

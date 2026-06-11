@@ -39,6 +39,7 @@ import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
 import 'package:dukan/scanner/hid_listener.dart';
+import 'package:dukan/scanner/multi_scan_sheet.dart';
 import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
@@ -120,6 +121,61 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final event = await Scanner.open(context);
     if (event == null || !mounted) return;
     await _handleScan(event);
+  }
+
+  Future<void> _onMultiScanTap() async {
+    // Capture state we'll need across the async gap before any await.
+    final shopId = widget.shop.id;
+    final api = context.read<ShopApi>();
+    final receiveCtrl = context.read<ReceiveController>();
+    final locale = Localizations.localeOf(context).languageCode;
+    final supplierId = receiveCtrl.supplier?.id;
+    final l = tr(context);
+
+    final result = await MultiScan.open(
+      context,
+      resolver: (code) async {
+        final rows = await api.searchItems(
+          shopId: shopId,
+          query: code,
+          screen: 'receive',
+          locale: locale,
+          partyId: supplierId,
+        );
+        if (rows.isEmpty) return null;
+        return rows.first;
+      },
+    );
+    if (result == null || !mounted) return;
+
+    for (final line in result.stagedLines) {
+      receiveCtrl.addOrReplaceLine(
+        shopItemUnitId: line.shopItemUnitId,
+        shopItemId: line.shopItemId,
+        itemId: line.itemId,
+        displayName: line.displayName,
+        packagingLabel: line.packagingLabel,
+        baseUnitLabel: line.baseUnitLabel,
+        quantity: line.quantity,
+        lineTotal: line.lineTotal,
+      );
+    }
+    setState(() {
+      _linesExpanded = receiveCtrl.isNotEmpty;
+      // Surface the first unknown code in the existing pill; subsequent
+      // unknowns are reachable after the cashier dismisses it. Cheap
+      // and consistent with the single-scan unknown UX.
+      if (result.unknownCodes.isNotEmpty) {
+        _unknownScan = result.unknownCodes.first;
+      }
+    });
+    if (result.stagedLines.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l.multiScanAppliedSummary(result.stagedLines.length)),
+        ),
+      );
+    }
   }
 
   Future<void> _handleScan(ScanEvent event) async {
@@ -626,10 +682,18 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search),
                   hintText: l.receiveSearchHint,
-                  suffixIcon: IconButton(
-                    tooltip: l.scanCameraTooltip,
-                    icon: const Icon(Icons.qr_code_scanner),
-                    onPressed: _onScanTap,
+                  suffixIcon: Tooltip(
+                    message:
+                        '${l.scanCameraTooltip} · ${l.multiScanLongPressHint}',
+                    child: InkResponse(
+                      onTap: _onScanTap,
+                      onLongPress: _onMultiScanTap,
+                      radius: 24,
+                      child: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Icon(Icons.qr_code_scanner),
+                      ),
+                    ),
                   ),
                 ),
               ),

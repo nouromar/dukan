@@ -661,5 +661,20 @@
   },
   "scanUnknownCreateAction": "Create new",
   "scanUnknownDismissAction": "Dismiss",
-  "scanLookupFailed": "Couldn't look up that barcode"
+  "scanLookupFailed": "Couldn't look up that barcode",
+  "multiScanSheetTitle": "Multi-scan ({count})",
+  "@multiScanSheetTitle": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "multiScanUnknownCount": "{count, plural, =1{1 unknown code — review after} other{{count} unknown codes — review after}}",
+  "@multiScanUnknownCount": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "multiScanEmptyHint": "Aim at a barcode. Successful scans stage as lines below.",
+  "multiScanDoneAction": "DONE",
+  "multiScanLongPressHint": "Hold to multi-scan",
+  "multiScanAppliedSummary": "{count, plural, =1{1 line staged} other{{count} lines staged}}",
+  "@multiScanAppliedSummary": {
+    "placeholders": {"count": {"type": "int"}}
+  }
 }

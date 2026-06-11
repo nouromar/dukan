@@ -5,6 +5,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
+import 'package:dukan/scanner/multi_scan_sheet.dart';
 import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 
@@ -27,6 +28,7 @@ void main() {
   late ShopSummary shop;
   late AppLocalizations en;
   late VoidCallback restoreScanner;
+  late VoidCallback restoreMultiScan;
 
   setUp(() {
     auth = FakeAuthController();
@@ -36,9 +38,15 @@ void main() {
     en = lookupAppLocalizations(const Locale('en'));
     // Default: cancelled scan unless overridden.
     restoreScanner = Scanner.overrideOpener((_) async => null);
+    restoreMultiScan = MultiScan.overrideOpener(
+      (_, {required resolver}) async => null,
+    );
   });
 
-  tearDown(() => restoreScanner());
+  tearDown(() {
+    restoreScanner();
+    restoreMultiScan();
+  });
 
   Future<void> pumpReceive(WidgetTester tester) async {
     await tester.pumpWidget(
@@ -55,7 +63,7 @@ void main() {
     api.onSearchItems = (_, _, _, _, _, _) async => const <ItemSearchResult>[];
     await pumpReceive(tester);
     await tester.pumpAndSettle();
-    expect(find.byTooltip(en.scanCameraTooltip), findsOneWidget);
+    expect(find.byIcon(Icons.qr_code_scanner), findsOneWidget);
   });
 
   testWidgets(
@@ -86,7 +94,7 @@ void main() {
 
       await pumpReceive(tester);
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip(en.scanCameraTooltip));
+      await tester.tap(find.byIcon(Icons.qr_code_scanner));
       await tester.pumpAndSettle();
 
       // The matched item should now be selected — its name renders in
@@ -110,7 +118,7 @@ void main() {
 
       await pumpReceive(tester);
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip(en.scanCameraTooltip));
+      await tester.tap(find.byIcon(Icons.qr_code_scanner));
       await tester.pumpAndSettle();
 
       expect(
@@ -124,6 +132,43 @@ void main() {
         find.text(en.scanUnknownPillLabel('0000000000000')),
         findsNothing,
       );
+    },
+  );
+
+  testWidgets(
+    'long-pressing the scan icon opens multi-scan and applies staged lines',
+    (tester) async {
+      restoreMultiScan();
+      restoreMultiScan = MultiScan.overrideOpener(
+        (_, {required resolver}) async => MultiScanResult(
+          stagedLines: [
+            StagedScanLine(
+              shopItemId: 'si-rice',
+              shopItemUnitId: 'siu-rice',
+              itemId: 'item-rice',
+              displayName: 'Bariis Basmati',
+              packagingLabel: '25 Kg Bag',
+              baseUnitLabel: 'Kg',
+              quantity: 3,
+              perUnitCost: 12,
+            ),
+          ],
+          unknownCodes: const [],
+        ),
+      );
+      api.onSearchItems = (_, _, _, _, _, _) async => const <ItemSearchResult>[];
+
+      await pumpReceive(tester);
+      await tester.pumpAndSettle();
+
+      await tester.longPress(find.byIcon(Icons.qr_code_scanner));
+      await tester.pumpAndSettle();
+
+      expect(receive.lines.length, 1);
+      final line = receive.lines.values.first;
+      expect(line.shopItemUnitId, 'siu-rice');
+      expect(line.quantity, 3);
+      expect(line.lineTotal, 36);
     },
   );
 }

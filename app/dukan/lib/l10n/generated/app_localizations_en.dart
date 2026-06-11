@@ -2005,4 +2005,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scanLookupFailed => 'Couldn\'t look up that barcode';
+
+  @override
+  String multiScanSheetTitle(int count) {
+    return 'Multi-scan ($count)';
+  }
+
+  @override
+  String multiScanUnknownCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count unknown codes — review after',
+      one: '1 unknown code — review after',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get multiScanEmptyHint =>
+      'Aim at a barcode. Successful scans stage as lines below.';
+
+  @override
+  String get multiScanDoneAction => 'DONE';
+
+  @override
+  String get multiScanLongPressHint => 'Hold to multi-scan';
+
+  @override
+  String multiScanAppliedSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines staged',
+      one: '1 line staged',
+    );
+    return '$_temp0';
+  }
 }
