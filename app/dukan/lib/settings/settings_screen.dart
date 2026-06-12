@@ -23,7 +23,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _timezoneController;
   late String _currencyCode;
   late String _languageCode;
-  late bool _lowStockWarningEnabled;
   late Future<_SettingsReferenceData> _refsFuture;
   bool _saving = false;
 
@@ -34,7 +33,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _timezoneController = TextEditingController(text: widget.shop.timezone);
     _currencyCode = widget.shop.currencyCode;
     _languageCode = widget.shop.defaultLanguageCode;
-    _lowStockWarningEnabled = widget.shop.lowStockWarningEnabled;
     final api = context.read<ShopApi>();
     _refsFuture = Future.wait([api.listCurrencies(), api.listLanguages()])
         .then(
@@ -64,7 +62,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         currencyCode: _currencyCode,
         defaultLanguageCode: _languageCode,
         timezone: _timezoneController.text,
-        lowStockWarningEnabled: _lowStockWarningEnabled,
       );
       await auth.refreshSelectedShop();
       if (!mounted) return;
@@ -146,17 +143,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   decoration: InputDecoration(
                     labelText: l.settingsTimezoneLabel,
                   ),
-                ),
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _lowStockWarningEnabled,
-                  onChanged: _saving
-                      ? null
-                      : (v) =>
-                          setState(() => _lowStockWarningEnabled = v),
-                  title: Text(l.settingsLowStockWarningLabel),
-                  subtitle: Text(l.settingsLowStockWarningHint),
                 ),
                 const SizedBox(height: 16),
                 FilledButton(

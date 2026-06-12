@@ -318,8 +318,6 @@
   "settingsCurrencyLabel": "Lacagta",
   "settingsLanguageLabel": "Luuqada caadiga ah",
   "settingsTimezoneLabel": "Saacadda goobta",
-  "settingsLowStockWarningLabel": "Digniinta kayd-yari",
-  "settingsLowStockWarningHint": "Muuji dhibic cas alaabta hooseysa, iyo digniin marka iib ka dhigo mid hooseeya.",
   "settingsSaveButton": "KEYDI",
   "settingsSavedToast": "Diyaarinta waa la keydiyay",
   "settingsSaveFailedMessage": "Diyaarinta lama keydin karin. Isku day mar kale.",
@@ -570,28 +568,6 @@
     "placeholders": {
       "cost": {
         "type": "String"
-      }
-    }
-  },
-  "lowStockToast": "{item} kayd-ka wuu hooseeyaa — kaliya {amount} {unit} ayaa hadhay. Soo qaado dhaqso.",
-  "@lowStockToast": {
-    "placeholders": {
-      "amount": {
-        "type": "String"
-      },
-      "item": {
-        "type": "String"
-      },
-      "unit": {
-        "type": "String"
-      }
-    }
-  },
-  "lowStockMoreItems": "+ {count, plural, =1{1 shay oo kale} other{{count} shay oo kale}} oo kayd hooseeya",
-  "@lowStockMoreItems": {
-    "placeholders": {
-      "count": {
-        "type": "int"
       }
     }
   },

@@ -1394,18 +1394,6 @@ abstract class AppLocalizations {
   /// **'Timezone'**
   String get settingsTimezoneLabel;
 
-  /// No description provided for @settingsLowStockWarningLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Low-stock warning'**
-  String get settingsLowStockWarningLabel;
-
-  /// No description provided for @settingsLowStockWarningHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Show a red dot on low items and a toast after a sale that runs them low.'**
-  String get settingsLowStockWarningHint;
-
   /// No description provided for @settingsSaveButton.
   ///
   /// In en, this message translates to:
@@ -2603,18 +2591,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your last cost: {cost}. Add your usual markup.'**
   String lineEditorCostHintLabel(String cost);
-
-  /// No description provided for @lowStockToast.
-  ///
-  /// In en, this message translates to:
-  /// **'{item} stock is low — only {amount} {unit} left. Receive soon.'**
-  String lowStockToast(String amount, String item, String unit);
-
-  /// No description provided for @lowStockMoreItems.
-  ///
-  /// In en, this message translates to:
-  /// **'+ {count, plural, =1{1 more item} other{{count} more items}} low'**
-  String lowStockMoreItems(int count);
 
   /// No description provided for @shopItemEditorTitleCreate.
   ///

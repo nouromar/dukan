@@ -1,26 +1,16 @@
 -- ---------------------------------------------------------------------------
--- Low-stock warning configuration.
+-- Per-item low-stock threshold setter.
 -- ---------------------------------------------------------------------------
 --
--- Two pieces:
---   1. `shop.low_stock_warning_enabled` — per-shop toggle (default off).
---      When false, the Sale screen skips its post-sale stock probe and
---      the cashier sees no "running low" toasts.
---   2. `set_shop_item_reorder_threshold(shop_id, shop_item_id, threshold)`
---      — sanctioned writer for `shop_item.reorder_threshold` (already a
---      column, see 0007). Threshold is in base units; null clears it.
+-- `shop_item.reorder_threshold` already exists (since 0007) and is surfaced
+-- by `search_items`, `list_shop_items`, and `get_shop_item` (extended in
+-- 0019). The mobile + portal product tiles render a color-coded warning
+-- whenever `current_stock <= reorder_threshold` (or < 1 when null) — no
+-- per-shop toggle, no per-sale toast.
 --
--- The shop_item.reorder_threshold column itself already exists since
--- 0007. The 4 read RPCs (search_items, list_shop_items, get_shop_item,
--- get_shop_item_stocks) were extended in-place in 0019 to surface it.
--- This migration adds the missing shop toggle and the per-item setter
--- so the Flutter side can drive both ends of the feature.
-
-alter table public.shop
-  add column if not exists low_stock_warning_enabled boolean not null default false;
-
-comment on column public.shop.low_stock_warning_enabled is
-  'Default off. When true, Sale screen probes post-sale stocks and toasts items at or below their reorder_threshold (or below 1 if no threshold set).';
+-- This migration provides the sanctioned writer so cashiers and owners
+-- can adjust thresholds without touching the column directly. Null
+-- clears the threshold; passing a negative value is rejected.
 
 -- ---------------------------------------------------------------------------
 -- set_shop_item_reorder_threshold — owner or cashier can adjust the

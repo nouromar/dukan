@@ -14,7 +14,6 @@ class ShopSummary {
     required this.defaultLanguageCode,
     required this.timezone,
     required this.onboardingDismissedAt,
-    this.lowStockWarningEnabled = false,
     this.scannerSettings = ScannerSettings.defaults,
   });
 
@@ -42,8 +41,6 @@ class ShopSummary {
       timezone: json['timezone'] as String,
       onboardingDismissedAt:
           dismissedRaw == null ? null : DateTime.parse(dismissedRaw),
-      lowStockWarningEnabled:
-          json['low_stock_warning_enabled'] as bool? ?? false,
       scannerSettings: scanner,
     );
   }
@@ -62,12 +59,6 @@ class ShopSummary {
   /// first sign-in after setup. Non-null = shopkeeper dismissed it and
   /// we go straight to Home from now on.
   final DateTime? onboardingDismissedAt;
-
-  /// When false (default), the Sale screen's post-sale stock probe
-  /// stays silent. When true, the probe fires toasts for items at or
-  /// below their per-item `reorder_threshold` (or below 1 if no
-  /// threshold set). Toggle lives in Settings.
-  final bool lowStockWarningEnabled;
 
   /// Per-shop scanner tuning. Defaults match the column DEFAULT in
   /// migration 0049 — multi-scan re-arm 800ms, HID burst 50/200ms,

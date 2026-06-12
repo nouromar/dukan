@@ -153,37 +153,6 @@ typedef CreateShopItemResult = ({
   String defaultShopItemUnitId,
 });
 
-/// One row from `get_shop_item_stocks` — the lightweight batched
-/// lookup used after `post_sale` to detect items that went negative.
-class ShopItemStock {
-  const ShopItemStock({
-    required this.shopItemId,
-    required this.displayName,
-    required this.baseUnitCode,
-    required this.baseUnitLabel,
-    required this.currentStock,
-    this.reorderThreshold,
-  });
-
-  factory ShopItemStock.fromJson(Map<String, dynamic> json) => ShopItemStock(
-        shopItemId: json['shop_item_id'] as String,
-        displayName: json['display_name'] as String,
-        baseUnitCode: json['base_unit_code'] as String,
-        baseUnitLabel: json['base_unit_label'] as String,
-        currentStock: (json['current_stock'] as num).toDouble(),
-        reorderThreshold: (json['reorder_threshold'] as num?)?.toDouble(),
-      );
-
-  final String shopItemId;
-  final String displayName;
-  final String baseUnitCode;
-  final String baseUnitLabel;
-  final double currentStock;
-  /// Per-item warning threshold in base units. Null when no per-item
-  /// threshold is configured.
-  final double? reorderThreshold;
-}
-
 /// jsonb object with four sections; we parse it here so callers get
 /// typed lists.
 class ShopItemDetail {
@@ -578,33 +547,6 @@ class ShopApi {
       return const NewItemOptions(baseUnits: [], packagedUnits: []);
     }
     return NewItemOptions.fromJson(Map<String, dynamic>.from(result as Map));
-  }
-
-  /// Lightweight batched stock lookup. One round trip returning
-  /// `{currentStock, baseUnitLabel, displayName}` per shop_item id.
-  /// Used by the Sale screen's negative-stock probe after a post — much
-  /// faster than calling `getShopItem` per item (which aggregates units
-  /// + aliases + barcodes).
-  Future<List<ShopItemStock>> fetchShopItemStocks({
-    required String shopId,
-    required List<String> shopItemIds,
-    String? locale,
-  }) async {
-    if (shopItemIds.isEmpty) return const [];
-    final rows = await _client.rpc(
-      'get_shop_item_stocks',
-      params: {
-        'p_shop_id': shopId,
-        'p_shop_item_ids': shopItemIds,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
-      },
-    );
-    if (rows is! List) return const [];
-    return rows
-        .map<ShopItemStock>(
-          (row) => ShopItemStock.fromJson(Map<String, dynamic>.from(row)),
-        )
-        .toList(growable: false);
   }
 
   /// Lists shop_items for the Products screen. Optional filters:
@@ -1409,7 +1351,6 @@ class ShopApi {
     String? currencyCode,
     String? defaultLanguageCode,
     String? timezone,
-    bool? lowStockWarningEnabled,
   }) async {
     final patch = <String, dynamic>{};
     if (name != null && name.trim().isNotEmpty) patch['name'] = name.trim();
@@ -1419,9 +1360,6 @@ class ShopApi {
     }
     if (timezone != null && timezone.trim().isNotEmpty) {
       patch['timezone'] = timezone.trim();
-    }
-    if (lowStockWarningEnabled != null) {
-      patch['low_stock_warning_enabled'] = lowStockWarningEnabled;
     }
     if (patch.isEmpty) return;
     await _client.from('shop').update(patch).eq('id', shopId);
@@ -1676,7 +1614,7 @@ class ShopApi {
     final row = await _client
         .from('shop')
         .select(
-          'id, name, setup_status, currency_code, default_language_code, timezone, onboarding_dismissed_at, low_stock_warning_enabled',
+          'id, name, setup_status, currency_code, default_language_code, timezone, onboarding_dismissed_at',
         )
         .eq('id', shopId)
         .maybeSingle();

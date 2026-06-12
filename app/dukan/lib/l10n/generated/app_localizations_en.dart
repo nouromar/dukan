@@ -745,13 +745,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTimezoneLabel => 'Timezone';
 
   @override
-  String get settingsLowStockWarningLabel => 'Low-stock warning';
-
-  @override
-  String get settingsLowStockWarningHint =>
-      'Show a red dot on low items and a toast after a sale that runs them low.';
-
-  @override
   String get settingsSaveButton => 'SAVE';
 
   @override
@@ -1490,22 +1483,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String lineEditorCostHintLabel(String cost) {
     return 'Your last cost: $cost. Add your usual markup.';
-  }
-
-  @override
-  String lowStockToast(String amount, String item, String unit) {
-    return '$item stock is low — only $amount $unit left. Receive soon.';
-  }
-
-  @override
-  String lowStockMoreItems(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count more items',
-      one: '1 more item',
-    );
-    return '+ $_temp0 low';
   }
 
   @override

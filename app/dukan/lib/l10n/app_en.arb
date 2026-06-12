@@ -319,8 +319,6 @@
   "settingsCurrencyLabel": "Currency",
   "settingsLanguageLabel": "Default language",
   "settingsTimezoneLabel": "Timezone",
-  "settingsLowStockWarningLabel": "Low-stock warning",
-  "settingsLowStockWarningHint": "Show a red dot on low items and a toast after a sale that runs them low.",
   "settingsSaveButton": "SAVE",
   "settingsSavedToast": "Settings saved",
   "settingsSaveFailedMessage": "Could not save settings. Try again.",
@@ -570,28 +568,6 @@
     "placeholders": {
       "cost": {
         "type": "String"
-      }
-    }
-  },
-  "lowStockToast": "{item} stock is low — only {amount} {unit} left. Receive soon.",
-  "@lowStockToast": {
-    "placeholders": {
-      "amount": {
-        "type": "String"
-      },
-      "item": {
-        "type": "String"
-      },
-      "unit": {
-        "type": "String"
-      }
-    }
-  },
-  "lowStockMoreItems": "+ {count, plural, =1{1 more item} other{{count} more items}} low",
-  "@lowStockMoreItems": {
-    "placeholders": {
-      "count": {
-        "type": "int"
       }
     }
   },

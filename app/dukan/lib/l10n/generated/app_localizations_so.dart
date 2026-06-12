@@ -747,13 +747,6 @@ class AppLocalizationsSo extends AppLocalizations {
   String get settingsTimezoneLabel => 'Saacadda goobta';
 
   @override
-  String get settingsLowStockWarningLabel => 'Digniinta kayd-yari';
-
-  @override
-  String get settingsLowStockWarningHint =>
-      'Muuji dhibic cas alaabta hooseysa, iyo digniin marka iib ka dhigo mid hooseeya.';
-
-  @override
   String get settingsSaveButton => 'KEYDI';
 
   @override
@@ -1499,22 +1492,6 @@ class AppLocalizationsSo extends AppLocalizations {
   @override
   String lineEditorCostHintLabel(String cost) {
     return 'Qiimaha aad ku iibsatay ugu dambeysay: $cost. Ku dar dheeraadkaaga caadi ah.';
-  }
-
-  @override
-  String lowStockToast(String amount, String item, String unit) {
-    return '$item kayd-ka wuu hooseeyaa — kaliya $amount $unit ayaa hadhay. Soo qaado dhaqso.';
-  }
-
-  @override
-  String lowStockMoreItems(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count shay oo kale',
-      one: '1 shay oo kale',
-    );
-    return '+ $_temp0 oo kayd hooseeya';
   }
 
   @override

@@ -259,14 +259,6 @@ class FakeShopApi implements ShopApi {
     String? locale,
   )?
   onGetShopItem;
-  Future<List<ShopItemStock>> Function(
-    String shopId,
-    List<String> shopItemIds,
-    String? locale,
-  )?
-  onFetchShopItemStocks;
-  final List<({String shopId, List<String> shopItemIds})>
-  fetchShopItemStocksCalls = [];
   Future<List<PackagingSuggestion>> Function(
     String shopId,
     String shopItemId,
@@ -402,7 +394,6 @@ class FakeShopApi implements ShopApi {
     String? currencyCode,
     String? defaultLanguageCode,
     String? timezone,
-    bool? lowStockWarningEnabled,
   })?
   onUpdateShopDefaults;
   Future<ShopSummary?> Function(String shopId)? onFetchShop;
@@ -715,20 +706,6 @@ class FakeShopApi implements ShopApi {
       return onFetchNewItemOptions!(categoryId, locale);
     }
     return const NewItemOptions(baseUnits: [], packagedUnits: []);
-  }
-
-  @override
-  Future<List<ShopItemStock>> fetchShopItemStocks({
-    required String shopId,
-    required List<String> shopItemIds,
-    String? locale,
-  }) async {
-    fetchShopItemStocksCalls
-        .add((shopId: shopId, shopItemIds: shopItemIds));
-    if (onFetchShopItemStocks != null) {
-      return onFetchShopItemStocks!(shopId, shopItemIds, locale);
-    }
-    return const [];
   }
 
   @override
@@ -1243,7 +1220,6 @@ class FakeShopApi implements ShopApi {
     String? currencyCode,
     String? defaultLanguageCode,
     String? timezone,
-    bool? lowStockWarningEnabled,
   }) async {
     if (onUpdateShopDefaults != null) {
       return onUpdateShopDefaults!(
@@ -1252,7 +1228,6 @@ class FakeShopApi implements ShopApi {
         currencyCode: currencyCode,
         defaultLanguageCode: defaultLanguageCode,
         timezone: timezone,
-        lowStockWarningEnabled: lowStockWarningEnabled,
       );
     }
   }
@@ -1503,7 +1478,6 @@ ShopSummary fakeShop({
   String defaultLanguageCode = 'so',
   String timezone = 'Africa/Mogadishu',
   DateTime? onboardingDismissedAt,
-  bool lowStockWarningEnabled = false,
 }) => ShopSummary(
   id: id,
   name: name,
@@ -1516,7 +1490,6 @@ ShopSummary fakeShop({
   // screen pass `onboardingDismissedAt: null` explicitly.
   onboardingDismissedAt:
       onboardingDismissedAt ?? DateTime.fromMillisecondsSinceEpoch(0),
-  lowStockWarningEnabled: lowStockWarningEnabled,
 );
 
 TemplateOption fakeTemplate({

@@ -55,7 +55,6 @@ void main() {
           currencyCode,
           defaultLanguageCode,
           timezone,
-          lowStockWarningEnabled,
         }) async {
           captured = {
             'shopId': shopId,
@@ -63,7 +62,6 @@ void main() {
             'currencyCode': currencyCode,
             'defaultLanguageCode': defaultLanguageCode,
             'timezone': timezone,
-            'lowStockWarningEnabled': lowStockWarningEnabled,
           };
         };
 

@@ -277,13 +277,20 @@ These items map cleanly to the target. Listed here so future contributors can co
 
 ---
 
-### 4.3 [P3] `low_stock_warning_enabled` per-shop toggle in Settings
-**Why (maybe):** the toggle exists on `shop`. The Today card always renders low-stock count; the low-stock toast was added before the dashboard tile existed. The toggle may be vestigial.
+### 4.3 [resolved] `low_stock_warning_enabled` per-shop toggle in Settings
+**Outcome:** removed pre-pilot. The warning is now expressed as color-coding
+on the product tile (driven by `shop_item.reorder_threshold` + the shared
+`isLowStock` helper) plus the Home Today card's "Low stock" count.
 
-**Work:**
-- Decide: do we still want the toggle, or is the dashboard tile enough?
-- If vestigial: delete the toggle + the per-toast logic + the column (migration).
-- If kept: document its purpose in `docs/decisions.md`.
+The Sale-screen post-sale toast was redundant with both surfaces, and the
+per-shop toggle conflicted with the decision-free daily-use principle.
+Dropped: `shop.low_stock_warning_enabled` column (migration 0031 edited
+in-place), the `get_shop_item_stocks` RPC (only caller was the dying
+toast probe), the Settings switch, `_checkLowStock` + `_showLowStockToasts`
+in Sale, and the `lowStockToast` / `lowStockMoreItems` /
+`settingsLowStockWarningLabel` / `settingsLowStockWarningHint` ARB keys.
+The per-item threshold setter (`set_shop_item_reorder_threshold`) stays —
+it backs the threshold input on Product detail.
 
 ---
 

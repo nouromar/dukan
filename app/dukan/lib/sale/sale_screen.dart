@@ -1,20 +1,5 @@
 // Sale screen — v2 picker on top of `search_items`, cart bottom strip,
 // optimistic SAVE → post_sale.
-//
-// Negative-stock toast (T#149): post_sale raises a Postgres NOTICE when
-// a line drives a shop_item.current_stock below zero. The Supabase Dart
-// client does not surface those notices, so we sample the post-decrement
-// stock client-side instead. After a successful post we call the
-// existing `getShopItem` RPC once per unique shop_item in the just-posted
-// cart, filter to rows with `current_stock < 0`, and queue an orange
-// SnackBar per negative row (capped at 3 with a "+ N more" tail).
-//
-// We deliberately chose the existing-RPC route over adding a new
-// `get_shop_item_stocks` SQL function: zero migration touch, zero
-// new ShopApi surface, and v1 carts are small (typical sale is 1–5
-// unique items). Once carts get larger or we start chasing extra
-// round-trips for telemetry, a dedicated stocks RPC is the obvious
-// next step — see data-model-v2 §8.5.
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -719,12 +704,8 @@ class _SaleScreenState extends State<SaleScreen> {
 
     if (!mounted) return;
 
-    // Low-stock probe (gated by the shop toggle) and per-packaging
-    // price write-backs run in the background — neither is allowed to
-    // roll back the receipt or surface a blocking error.
-    if (widget.shop.lowStockWarningEnabled) {
-      unawaited(_checkLowStock(api, snapshot));
-    }
+    // Per-packaging price write-backs run in the background — they are
+    // never allowed to roll back the receipt or surface a blocking error.
     for (final write in priceWriteBacks) {
       unawaited(
         api
@@ -782,118 +763,6 @@ class _SaleScreenState extends State<SaleScreen> {
     context.read<CartController>().restore(snapshot);
     setState(() => _cartExpanded = true);
     showError(context, message);
-  }
-
-  /// Sample post-decrement stock for every unique shop_item in the
-  /// just-posted cart and toast every one that came in at or below its
-  /// per-item reorder threshold (or below 1 if no threshold set). Best
-  /// effort: any failure is logged and swallowed so it can never roll
-  /// back a sale that the server already accepted. Caller already
-  /// gated on `widget.shop.lowStockWarningEnabled`.
-  Future<void> _checkLowStock(
-    ShopApi api,
-    CartSnapshot snapshot,
-  ) async {
-    // Build (shopItemId → displayName) from the snapshot so the toast
-    // can name each item. Snapshot keys are shopItemUnitIds; we dedupe
-    // on shopItemId because two cart lines on the same item with
-    // different packagings share a single stock row.
-    final shopItemIds = <String>{};
-    final displayNames = <String, String>{};
-    for (final line in snapshot.lines.values) {
-      shopItemIds.add(line.shopItemId);
-      displayNames.putIfAbsent(line.shopItemId, () => line.displayName);
-    }
-    if (shopItemIds.isEmpty) return;
-
-    final locale = Localizations.localeOf(context).languageCode;
-    final lows = <({String displayName, num stock, String baseUnit})>[];
-    try {
-      final stocks = await api.fetchShopItemStocks(
-        shopId: widget.shop.id,
-        shopItemIds: shopItemIds.toList(growable: false),
-        locale: locale,
-      );
-      for (final s in stocks) {
-        if (!isLowStock(
-          currentStock: s.currentStock,
-          reorderThreshold: s.reorderThreshold,
-        )) {
-          continue;
-        }
-        lows.add((
-          displayName: displayNames[s.shopItemId] ?? s.displayName,
-          stock: s.currentStock,
-          baseUnit: s.baseUnitLabel,
-        ));
-      }
-    } catch (error, stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'dukan sale',
-          context: ErrorDescription('low-stock probe'),
-        ),
-      );
-      return;
-    }
-
-    if (!mounted || lows.isEmpty) return;
-    _showLowStockToasts(lows);
-  }
-
-  void _showLowStockToasts(
-    List<({String displayName, num stock, String baseUnit})> lows,
-  ) {
-    final l = tr(context);
-    final theme = Theme.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    const maxToasts = 3;
-    final visible = lows.length <= maxToasts
-        ? lows
-        : lows.sublist(0, maxToasts);
-    for (final n in visible) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            // ICU placeholders are alphabetical → (amount, item, unit).
-            l.lowStockToast(
-              _trimStock(n.stock),
-              n.displayName,
-              n.baseUnit,
-            ),
-          ),
-          backgroundColor: theme.colorScheme.errorContainer,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-        ),
-      );
-    }
-    if (lows.length > maxToasts) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            l.lowStockMoreItems(lows.length - maxToasts),
-          ),
-          backgroundColor: theme.colorScheme.errorContainer,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-        ),
-      );
-    }
-  }
-
-  /// Trim trailing zeros on the stock value so a value of -3.000 reads
-  /// "-3" in the toast, while -3.500 stays "-3.5".
-  String _trimStock(num value) {
-    if (value == value.roundToDouble()) {
-      return value.toStringAsFixed(0);
-    }
-    return value
-        .toStringAsFixed(3)
-        .replaceFirst(RegExp(r'0+$'), '')
-        .replaceFirst(RegExp(r'\.$'), '');
   }
 
   String _generateClientOpId() {

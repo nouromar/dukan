@@ -2412,27 +2412,16 @@ $$;
 reset role;
 
 -- ---------------------------------------------------------------------------
--- §S Low-stock warning settings (0031).
+-- §S Per-item reorder-threshold setter (0031).
 -- ---------------------------------------------------------------------------
 do $$
 declare
   v_shop_id          uuid;
-  v_default_enabled  boolean;
   v_shop_item_id     uuid;
   v_default_unit_id  uuid;
   v_threshold        numeric;
-  v_stocks           jsonb;
 begin
   select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
-
-  -- Default: low_stock_warning_enabled is false.
-  select low_stock_warning_enabled into v_default_enabled
-  from public.shop where id = v_shop_id;
-  if v_default_enabled is not false then
-    raise exception
-      'S: shop.low_stock_warning_enabled must default to false (got %)',
-      v_default_enabled;
-  end if;
 
   -- Create a fresh shop_item we can attach a threshold to.
   select shop_item_id, default_shop_item_unit_id
@@ -2470,22 +2459,6 @@ begin
   exception when others then
     null;
   end;
-
-  -- get_shop_item_stocks now returns reorder_threshold.
-  perform public.set_shop_item_reorder_threshold(v_shop_id, v_shop_item_id, 3);
-  select jsonb_agg(to_jsonb(s))
-  into v_stocks
-  from public.get_shop_item_stocks(
-    v_shop_id, array[v_shop_item_id], 'en'
-  ) s;
-  if v_stocks is null or jsonb_array_length(v_stocks) = 0 then
-    raise exception 'S: get_shop_item_stocks returned no rows';
-  end if;
-  if (v_stocks->0->'reorder_threshold')::text not in ('3', '3.000') then
-    raise exception
-      'S: get_shop_item_stocks must surface reorder_threshold=3 (got %)',
-      v_stocks->0->'reorder_threshold';
-  end if;
 end;
 $$;
 
