@@ -207,12 +207,15 @@ These items map cleanly to the target. Listed here so future contributors can co
 ---
 
 ### 3.11 [P1] Per-invoice payment allocation
-**Target:** `mobile-app.md` § 6.3 ("Allocation: implicit in v1; explicit per-invoice deferred to v1.x"). **Current:** implicit oldest-first.
+**Target:** `mobile-app.md` § 6.3 ("Allocation: implicit in v1; explicit per-invoice deferred to v1.x"). **Current:** standalone `post_payment` writes ZERO `payment_allocation` rows; the running-balance is the only ledger. (See `docs/payment-allocation.md` § 3 for the honest accounting.)
 
-**Work:**
-- Add a `payment_allocation` editor: party detail surfaces unpaid sales/receives as line items; the Payment screen optionally drills into "Allocate this payment" with checkboxes.
-- Default behaviour stays oldest-first (don't slow down the common case).
-- Backend already supports `payment_allocation`.
+**Design:** `docs/payment-allocation.md` (#233 — drafted).
+
+**Work (#234):**
+- Backend: extend `post_payment` with optional `p_allocations jsonb`; default branch runs server-side FIFO (writes rows for every standalone payment going forward); explicit branch validates per § 6.3 and writes the supplied rows.
+- New RPCs: `list_unpaid_invoices`, `list_payment_allocations`. New view: `v_party_aging`.
+- Mobile: opt-in "Choose invoices" chip on the Payment screen; bottom-sheet editor pre-filled with FIFO defaults; "Open invoices" section on Party detail. Default flow keeps zero extra taps.
+- See § 13 of the design doc for the implementation checklist.
 
 ---
 
