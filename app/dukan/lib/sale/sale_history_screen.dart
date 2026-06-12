@@ -17,6 +17,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/sale/sale_detail_screen.dart';
 import 'package:dukan/sale/sale_history_filter_sheet.dart';
 import 'package:dukan/shared/date_range.dart';
+import 'package:dukan/shared/future_list_scaffold.dart';
 import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/config/business_rules.dart';
@@ -137,54 +138,19 @@ class _SaleHistoryScreenState extends State<SaleHistoryScreen> {
           children: [
             ActiveFiltersBar(chips: chips),
             Expanded(
-              child: FutureBuilder<List<SaleSummary>>(
+              child: FutureListScaffold<SaleSummary>(
                 future: _future,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          l.saleHistoryLoadFailedMessage,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    );
-                  }
-                  final all = snapshot.data ?? const <SaleSummary>[];
-                  final rows = _filters.hideVoided
-                      ? all.where((s) => !s.isVoided).toList(growable: false)
-                      : all;
-                  if (rows.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          l.saleHistoryEmptyMessage,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    );
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () async => _reload(),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: rows.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, i) => _SaleRow(
-                        shop: widget.shop,
-                        sale: rows[i],
-                        onTap: () => _openDetail(rows[i]),
-                      ),
-                    ),
-                  );
-                },
+                onRefresh: () async => _reload(),
+                emptyMessage: l.saleHistoryEmptyMessage,
+                errorMessage: l.saleHistoryLoadFailedMessage,
+                filter: _filters.hideVoided
+                    ? (sale) => !sale.isVoided
+                    : null,
+                itemBuilder: (_, sale, _) => _SaleRow(
+                  shop: widget.shop,
+                  sale: sale,
+                  onTap: () => _openDetail(sale),
+                ),
               ),
             ),
           ],

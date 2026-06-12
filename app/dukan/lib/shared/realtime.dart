@@ -97,11 +97,29 @@ class RealtimeWatcher {
     });
   }
 
-  Future<void> dispose() async {
+  /// Synchronous — matches `State.dispose()`'s contract so callers in
+  /// `dispose()` don't have to await. The server-side channel removal
+  /// is async, but firing it without await is safe: the local timer
+  /// + disposed flag are already cleared so no further `_onChange`
+  /// will fire, and an in-flight `removeChannel` cannot reattach.
+  /// Errors from the removal go to FlutterError instead of being
+  /// silently dropped.
+  void dispose() {
     if (_disposed) return;
     _disposed = true;
     _timer?.cancel();
-    await _client.removeChannel(_channel);
+    unawaited(_client.removeChannel(_channel).then<String>(
+      (s) => s,
+      onError: (Object error, StackTrace stack) {
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'dukan realtime',
+          context: ErrorDescription('removeChannel'),
+        ));
+        return 'ok';
+      },
+    ));
   }
 }
 

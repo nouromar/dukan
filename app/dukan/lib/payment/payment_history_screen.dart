@@ -11,6 +11,7 @@ import 'package:dukan/payment/payment_history_filter_sheet.dart';
 import 'package:dukan/shared/date_range.dart';
 import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/config/business_rules.dart';
+import 'package:dukan/shared/future_list_scaffold.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
@@ -127,50 +128,15 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           children: [
             ActiveFiltersBar(chips: chips),
             Expanded(
-              child: FutureBuilder<List<PaymentSummary>>(
+              child: FutureListScaffold<PaymentSummary>(
                 future: _future,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          l.paymentHistoryLoadFailedMessage,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    );
-                  }
-                  final rows = snapshot.data ?? const <PaymentSummary>[];
-                  if (rows.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          l.paymentHistoryEmptyMessage,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    );
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () async => _reload(),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: rows.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, i) => _PaymentRow(
-                        shop: widget.shop,
-                        row: rows[i],
-                      ),
-                    ),
-                  );
-                },
+                onRefresh: () async => _reload(),
+                emptyMessage: l.paymentHistoryEmptyMessage,
+                errorMessage: l.paymentHistoryLoadFailedMessage,
+                itemBuilder: (_, row, _) => _PaymentRow(
+                  shop: widget.shop,
+                  row: row,
+                ),
               ),
             ),
           ],

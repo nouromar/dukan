@@ -16,11 +16,11 @@ import 'package:provider/provider.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/expense/expense_controller.dart';
-import 'package:dukan/observability/timing.dart';
 import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/optimistic_save.dart';
 
 class ExpenseScreen extends StatefulWidget {
   const ExpenseScreen({required this.shop, super.key});
@@ -97,23 +97,20 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       return;
     }
 
-    Timing.mark('save.tapped');
-    // Optimistic SAVE per CLAUDE.md's speed contract. Snapshot the
-    // typed state + messenger reference before clearing so a rare
-    // post-pop failure can surface a top-level error toast.
     final api = context.read<ShopApi>();
-    final messenger = ScaffoldMessenger.of(context);
     final categoryId = category.id;
     final amount = controller.amount;
     final clientOpId = generateClientOpId('expense');
     final failureMessage = l.expensePostFailedMessage;
 
-    controller.clearAll();
-    _amountController.clear();
-    Timing.mark('cleared');
-    Timing.endFlow(context);
-    messenger.showSnackBar(SnackBar(content: Text(l.expenseSavedToast)));
-    Navigator.of(context).maybePop();
+    final messenger = runOptimisticSaveShell(
+      context: context,
+      savedToast: l.expenseSavedToast,
+      onClear: () {
+        controller.clearAll();
+        _amountController.clear();
+      },
+    );
 
     unawaited(
       _postExpenseInBackground(
@@ -144,15 +141,14 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         clientOpId: clientOpId,
       );
     } catch (error, stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'dukan expense',
-          context: ErrorDescription('post_expense'),
-        ),
+      reportBackgroundFailure(
+        error: error,
+        stackTrace: stackTrace,
+        messenger: messenger,
+        library: 'dukan expense',
+        context: 'post_expense',
+        failureMessage: failureMessage,
       );
-      messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
     }
   }
 

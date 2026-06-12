@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
-import 'package:dukan/observability/timing.dart';
 import 'package:dukan/payment/allocation_sheet.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/shared/client_op_id.dart';
@@ -19,6 +18,7 @@ import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/optimistic_save.dart';
 import 'package:dukan/shared/party_picker_sheet.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -120,12 +120,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
 
-    Timing.mark('save.tapped');
-    // Optimistic SAVE per CLAUDE.md's speed contract. Capture state +
-    // messenger reference before clearing so we can surface failures
-    // after the route pops.
     final api = context.read<ShopApi>();
-    final messenger = ScaffoldMessenger.of(context);
     final amount = controller.amount;
     final partyId = party.id;
     final direction = controller.type.direction;
@@ -133,12 +128,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final clientOpId = generateClientOpId('payment');
     final failureMessage = l.paymentPostFailedMessage;
 
-    controller.clearAll();
-    _amountController.clear();
-    Timing.mark('cleared');
-    Timing.endFlow(context);
-    messenger.showSnackBar(SnackBar(content: Text(l.paymentSavedToast)));
-    Navigator.of(context).maybePop();
+    final messenger = runOptimisticSaveShell(
+      context: context,
+      savedToast: l.paymentSavedToast,
+      onClear: () {
+        controller.clearAll();
+        _amountController.clear();
+      },
+    );
 
     unawaited(
       _postPaymentInBackground(
@@ -175,15 +172,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
         allocations: allocations,
       );
     } catch (error, stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'dukan payment',
-          context: ErrorDescription('post_payment'),
-        ),
+      reportBackgroundFailure(
+        error: error,
+        stackTrace: stackTrace,
+        messenger: messenger,
+        library: 'dukan payment',
+        context: 'post_payment',
+        failureMessage: failureMessage,
       );
-      messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
     }
   }
 

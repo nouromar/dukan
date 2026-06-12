@@ -10,6 +10,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/receive/receive_detail_screen.dart';
 import 'package:dukan/receive/receive_history_filter_sheet.dart';
 import 'package:dukan/shared/date_range.dart';
+import 'package:dukan/shared/future_list_scaffold.dart';
 import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -128,54 +129,19 @@ class _ReceiveHistoryScreenState extends State<ReceiveHistoryScreen> {
           children: [
             ActiveFiltersBar(chips: chips),
             Expanded(
-              child: FutureBuilder<List<ReceiveSummary>>(
+              child: FutureListScaffold<ReceiveSummary>(
                 future: _future,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          l.receiveHistoryLoadFailedMessage,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    );
-                  }
-                  final all = snapshot.data ?? const <ReceiveSummary>[];
-                  final rows = _filters.hideVoided
-                      ? all.where((r) => !r.isVoided).toList(growable: false)
-                      : all;
-                  if (rows.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          l.receiveHistoryEmptyMessage,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    );
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () async => _reload(),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: rows.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, i) => _ReceiveRow(
-                        shop: widget.shop,
-                        receive: rows[i],
-                        onTap: () => _openDetail(rows[i]),
-                      ),
-                    ),
-                  );
-                },
+                onRefresh: () async => _reload(),
+                emptyMessage: l.receiveHistoryEmptyMessage,
+                errorMessage: l.receiveHistoryLoadFailedMessage,
+                filter: _filters.hideVoided
+                    ? (r) => !r.isVoided
+                    : null,
+                itemBuilder: (_, receive, _) => _ReceiveRow(
+                  shop: widget.shop,
+                  receive: receive,
+                  onTap: () => _openDetail(receive),
+                ),
               ),
             ),
           ],
