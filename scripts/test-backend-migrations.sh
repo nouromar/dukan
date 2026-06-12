@@ -4756,6 +4756,140 @@ end;
 $$;
 reset role;
 
+-- ---------------------------------------------------------------------------
+-- §LL audit_log wiring across the 6 transaction RPCs (0010 + 0053).
+-- Verify each posts an audit row with the expected action_code and the
+-- right entity_id. The shop_admin_portal activity feed reads these.
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id    uuid;
+  v_unit_id    uuid;
+  v_cust_id    uuid;
+  v_sup_id     uuid;
+  v_sale_id    uuid;
+  v_recv_id    uuid;
+  v_pay_id     uuid;
+  v_exp_id     uuid;
+  v_void_id    uuid;
+  v_cat_id     uuid;
+  v_count      integer;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select siu.id into v_unit_id
+  from public.shop_item_unit siu
+  where siu.shop_id = v_shop_id and siu.conversion_to_base = 1
+  limit 1;
+
+  v_cust_id := public.create_party(v_shop_id, 'LL Audit Customer', null, 'customer');
+  v_sup_id  := public.create_party(v_shop_id, 'LL Audit Supplier', null, 'supplier');
+  select id into v_cat_id from public.expense_category
+   where shop_id = v_shop_id limit 1;
+
+  -- post_sale → audit_log row with action_code='sale.post'.
+  v_sale_id := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 1, 'unit_price', 5
+    )),
+    0, null, null, 'LL-sale', null, 'LL sale'
+  );
+  select pg_catalog.count(*) into v_count
+  from public.audit_log
+  where action_code = 'sale.post' and entity_id = v_sale_id;
+  if v_count <> 1 then
+    raise exception 'LL: post_sale did not emit audit_log (got %)', v_count;
+  end if;
+
+  -- post_receive → 'receive.post'. Use an ISOLATED shop_item so the
+  -- void_receive guard later doesn't see other activity sharing
+  -- transaction_timestamp() (the same hazard §JJ navigated).
+  declare
+    v_iso_item_id  uuid;
+    v_iso_unit_id  uuid;
+  begin
+    select shop_item_id, default_shop_item_unit_id
+    into v_iso_item_id, v_iso_unit_id
+    from public.create_shop_item(
+      v_shop_id, 'LL Receive Isolated', 'en', 'kg', null, null
+    );
+    v_recv_id := public.post_receive(
+      v_shop_id, v_sup_id,
+      jsonb_build_array(jsonb_build_object(
+        'shop_item_unit_id', v_iso_unit_id, 'quantity', 1, 'line_total', 3
+      )),
+      0, null, null, 'LL-recv', null, 'LL receive'
+    );
+  end;
+  select pg_catalog.count(*) into v_count
+  from public.audit_log
+  where action_code = 'receive.post' and entity_id = v_recv_id;
+  if v_count <> 1 then
+    raise exception 'LL: post_receive did not emit audit_log';
+  end if;
+
+  -- post_payment → 'payment.post' (entity is the payment, not the txn).
+  v_pay_id := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 5, 'cash',
+    'LL-pay', null, null, null, null
+  );
+  select pg_catalog.count(*) into v_count
+  from public.audit_log
+  where action_code = 'payment.post' and entity_id = v_pay_id;
+  if v_count <> 1 then
+    raise exception 'LL: post_payment did not emit audit_log';
+  end if;
+
+  -- post_expense → 'expense.post'.
+  v_exp_id := public.post_expense(
+    v_shop_id, v_cat_id, 7, 'cash', null,
+    'LL-exp', null, 'LL expense'
+  );
+  select pg_catalog.count(*) into v_count
+  from public.audit_log
+  where action_code = 'expense.post' and entity_id = v_exp_id;
+  if v_count <> 1 then
+    raise exception 'LL: post_expense did not emit audit_log';
+  end if;
+
+  -- void_sale → 'sale.void'. Post a FRESH unpaid sale (the earlier
+  -- one was paid down by the LL-pay above, which would trip the
+  -- "paid down some of this" guard).
+  v_sale_id := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 1, 'unit_price', 4
+    )),
+    0, null, null, 'LL-sale-void', null, 'LL sale to void'
+  );
+  v_void_id := public.void_sale(
+    v_shop_id, v_sale_id, 'LL-void-sale', null,
+    'LL test default reason override (>10 chars)'
+  );
+  select pg_catalog.count(*) into v_count
+  from public.audit_log
+  where action_code = 'sale.void' and entity_id = v_sale_id;
+  if v_count <> 1 then
+    raise exception 'LL: void_sale did not emit audit_log';
+  end if;
+
+  -- void_receive (with no later activity, on the same fresh receive).
+  v_void_id := public.void_receive(
+    v_shop_id, v_recv_id, 'LL-void-recv',
+    'LL test default reason override (>10 chars)'
+  );
+  select pg_catalog.count(*) into v_count
+  from public.audit_log
+  where action_code = 'receive.void' and entity_id = v_recv_id;
+  if v_count <> 1 then
+    raise exception 'LL: void_receive did not emit audit_log';
+  end if;
+end;
+$$;
+reset role;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';

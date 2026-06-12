@@ -283,6 +283,21 @@ begin
     where shop_id = p_shop_id and id = p_party_id;
   end if;
 
+  perform public._audit_log(
+    p_shop_id      => p_shop_id,
+    p_action_code  => 'payment.post',
+    p_entity_type  => 'payment',
+    p_entity_id    => v_payment_id,
+    p_after        => pg_catalog.jsonb_build_object(
+      'party_id',      p_party_id,
+      'direction',     p_direction,
+      'amount',        p_amount,
+      'explicit',      v_explicit,
+      'client_op_id',  p_client_op_id
+    ),
+    p_client_op_id => p_client_op_id
+  );
+
   return v_payment_id;
 exception
   when unique_violation then

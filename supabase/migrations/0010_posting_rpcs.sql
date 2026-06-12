@@ -563,6 +563,20 @@ begin
     values (p_shop_id, v_payment_id, v_txn_id, v_paid);
   end if;
 
+  perform public._audit_log(
+    p_shop_id      => p_shop_id,
+    p_action_code  => 'receive.post',
+    p_entity_type  => 'txn',
+    p_entity_id    => v_txn_id,
+    p_after        => pg_catalog.jsonb_build_object(
+      'total_amount',  v_total,
+      'paid_amount',   v_paid,
+      'party_id',      p_party_id,
+      'client_op_id',  p_client_op_id
+    ),
+    p_client_op_id => p_client_op_id
+  );
+
   return v_txn_id;
 exception
   when unique_violation then
@@ -893,6 +907,20 @@ begin
     end if;
   end if;
 
+  perform public._audit_log(
+    p_shop_id      => p_shop_id,
+    p_action_code  => 'sale.post',
+    p_entity_type  => 'txn',
+    p_entity_id    => v_txn_id,
+    p_after        => pg_catalog.jsonb_build_object(
+      'total_amount',  v_total,
+      'paid_amount',   v_paid,
+      'party_id',      p_party_id,
+      'client_op_id',  p_client_op_id
+    ),
+    p_client_op_id => p_client_op_id
+  );
+
   return v_txn_id;
 exception
   when unique_violation then
@@ -1011,6 +1039,19 @@ begin
     p_expense_category_id,
     p_amount,
     p_amount
+  );
+
+  perform public._audit_log(
+    p_shop_id      => p_shop_id,
+    p_action_code  => 'expense.post',
+    p_entity_type  => 'txn',
+    p_entity_id    => v_txn_id,
+    p_after        => pg_catalog.jsonb_build_object(
+      'amount',               p_amount,
+      'expense_category_id',  p_expense_category_id,
+      'client_op_id',         p_client_op_id
+    ),
+    p_client_op_id => p_client_op_id
   );
 
   return v_txn_id;
@@ -1485,7 +1526,8 @@ create or replace function public.void_sale(
   p_shop_id uuid,
   p_txn_id uuid,
   p_client_op_id text default null,
-  p_refund_amount numeric default null
+  p_refund_amount numeric default null,
+  p_reason text default null
 )
 returns uuid
 language plpgsql
@@ -1674,6 +1716,30 @@ begin
     );
   end if;
 
+  -- Audit log requires a reason ≥10 chars. Mobile v1 doesn't prompt
+  -- for one yet (UX deferred to the shop admin portal); fall back to
+  -- a stable default that names the actor + window.
+  perform public._audit_log(
+    p_shop_id      => p_shop_id,
+    p_action_code  => 'sale.void',
+    p_entity_type  => 'txn',
+    p_entity_id    => p_txn_id,
+    p_before       => pg_catalog.jsonb_build_object(
+      'total_amount', v_original_total,
+      'paid_amount',  v_original_paid,
+      'party_id',     v_original_party_id
+    ),
+    p_after        => pg_catalog.jsonb_build_object(
+      'reversal_txn_id', v_reversal_txn_id,
+      'refund_amount',   p_refund_amount
+    ),
+    p_reason       => coalesce(
+      nullif(pg_catalog.btrim(p_reason), ''),
+      'Owner-initiated void within the 7-day correction window'
+    ),
+    p_client_op_id => p_client_op_id
+  );
+
   return v_reversal_txn_id;
 exception
   when unique_violation then
@@ -1700,7 +1766,8 @@ $$;
 create or replace function public.void_receive(
   p_shop_id uuid,
   p_txn_id uuid,
-  p_client_op_id text default null
+  p_client_op_id text default null,
+  p_reason text default null
 )
 returns uuid
 language plpgsql
@@ -1881,6 +1948,26 @@ begin
     where shop_id = p_shop_id and id = v_original_party_id;
   end if;
 
+  perform public._audit_log(
+    p_shop_id      => p_shop_id,
+    p_action_code  => 'receive.void',
+    p_entity_type  => 'txn',
+    p_entity_id    => p_txn_id,
+    p_before       => pg_catalog.jsonb_build_object(
+      'total_amount', v_original_total,
+      'paid_amount',  v_original_paid,
+      'party_id',     v_original_party_id
+    ),
+    p_after        => pg_catalog.jsonb_build_object(
+      'reversal_txn_id', v_reversal_txn_id
+    ),
+    p_reason       => coalesce(
+      nullif(pg_catalog.btrim(p_reason), ''),
+      'Owner-initiated void within the 24-hour same-shift window'
+    ),
+    p_client_op_id => p_client_op_id
+  );
+
   return v_reversal_txn_id;
 exception
   when unique_violation then
@@ -1913,8 +2000,8 @@ revoke all on function public.post_expense(uuid, uuid, numeric, text, uuid, text
 revoke all on function public.post_payment(uuid, uuid, char, numeric, text, text, uuid, timestamptz, text) from public;
 revoke all on function public.post_inventory_adjustment(uuid, text, jsonb, uuid, text, timestamptz, text) from public;
 revoke all on function public.complete_shop_setup(uuid) from public;
-revoke all on function public.void_sale(uuid, uuid, text, numeric) from public;
-revoke all on function public.void_receive(uuid, uuid, text) from public;
+revoke all on function public.void_sale(uuid, uuid, text, numeric, text) from public;
+revoke all on function public.void_receive(uuid, uuid, text, text) from public;
 
 grant execute on function public.auth_can_post_shop(uuid) to authenticated;
 grant execute on function public.post_receive(uuid, uuid, jsonb, numeric, text, uuid, text, timestamptz, text) to authenticated;
@@ -1923,5 +2010,5 @@ grant execute on function public.post_expense(uuid, uuid, numeric, text, uuid, t
 grant execute on function public.post_payment(uuid, uuid, char, numeric, text, text, uuid, timestamptz, text) to authenticated;
 grant execute on function public.post_inventory_adjustment(uuid, text, jsonb, uuid, text, timestamptz, text) to authenticated;
 grant execute on function public.complete_shop_setup(uuid) to authenticated;
-grant execute on function public.void_sale(uuid, uuid, text, numeric) to authenticated;
-grant execute on function public.void_receive(uuid, uuid, text) to authenticated;
+grant execute on function public.void_sale(uuid, uuid, text, numeric, text) to authenticated;
+grant execute on function public.void_receive(uuid, uuid, text, text) to authenticated;
