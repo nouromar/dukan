@@ -182,23 +182,11 @@ abstract class AppLocalizations {
   /// **'CART'**
   String get cart;
 
-  /// No description provided for @itemsCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =0{0 items} =1{1 item} other{{count} items}}'**
-  String itemsCount(num count);
-
   /// No description provided for @total.
   ///
   /// In en, this message translates to:
   /// **'Total'**
   String get total;
-
-  /// No description provided for @savedUndo.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved.'**
-  String get savedUndo;
 
   /// No description provided for @undo.
   ///
@@ -218,89 +206,17 @@ abstract class AppLocalizations {
   /// **'Price'**
   String get price;
 
-  /// No description provided for @optionalPrice.
-  ///
-  /// In en, this message translates to:
-  /// **'Price override'**
-  String get optionalPrice;
-
-  /// No description provided for @addToCart.
-  ///
-  /// In en, this message translates to:
-  /// **'ADD TO CART'**
-  String get addToCart;
-
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancel;
 
-  /// No description provided for @customerDebt.
-  ///
-  /// In en, this message translates to:
-  /// **'Customer for debt'**
-  String get customerDebt;
-
-  /// No description provided for @searchCustomers.
-  ///
-  /// In en, this message translates to:
-  /// **'Search customers'**
-  String get searchCustomers;
-
-  /// No description provided for @emptySaleHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap item tiles to add. Long-press for quantity or price.'**
-  String get emptySaleHint;
-
   /// No description provided for @receiveTitle.
   ///
   /// In en, this message translates to:
   /// **'Receive'**
   String get receiveTitle;
-
-  /// No description provided for @supplierFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick supplier first'**
-  String get supplierFirst;
-
-  /// No description provided for @recentSuppliers.
-  ///
-  /// In en, this message translates to:
-  /// **'Recent suppliers'**
-  String get recentSuppliers;
-
-  /// No description provided for @searchSuppliers.
-  ///
-  /// In en, this message translates to:
-  /// **'Search suppliers'**
-  String get searchSuppliers;
-
-  /// No description provided for @newSupplier.
-  ///
-  /// In en, this message translates to:
-  /// **'+ New supplier'**
-  String get newSupplier;
-
-  /// No description provided for @newSupplierStub.
-  ///
-  /// In en, this message translates to:
-  /// **'New supplier stub — name and phone in production.'**
-  String get newSupplierStub;
-
-  /// No description provided for @repeatLastBono.
-  ///
-  /// In en, this message translates to:
-  /// **'Repeat last receive'**
-  String get repeatLastBono;
-
-  /// No description provided for @bonoAttached.
-  ///
-  /// In en, this message translates to:
-  /// **'Bono attached'**
-  String get bonoAttached;
 
   /// No description provided for @bonoAttachTooltip.
   ///
@@ -422,30 +338,6 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{none} =1{1 item} other{{count} items}}'**
   String homeLowStockCount(int count);
 
-  /// No description provided for @receivablesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Customers owe you'**
-  String get receivablesTitle;
-
-  /// No description provided for @receivablesEmptyMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'No one owes you right now.'**
-  String get receivablesEmptyMessage;
-
-  /// No description provided for @payablesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'You owe suppliers'**
-  String get payablesTitle;
-
-  /// No description provided for @payablesEmptyMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'You don\'t owe anyone right now.'**
-  String get payablesEmptyMessage;
-
   /// No description provided for @lowStockReportTitle.
   ///
   /// In en, this message translates to:
@@ -518,35 +410,17 @@ abstract class AppLocalizations {
   /// **'Custom…'**
   String get dateRangeCustom;
 
-  /// No description provided for @filterPartyLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Party'**
-  String get filterPartyLabel;
-
   /// No description provided for @filterPartyAny.
   ///
   /// In en, this message translates to:
   /// **'Anyone'**
   String get filterPartyAny;
 
-  /// No description provided for @filterIncludeVoided.
-  ///
-  /// In en, this message translates to:
-  /// **'Include voided'**
-  String get filterIncludeVoided;
-
   /// No description provided for @filterHideVoided.
   ///
   /// In en, this message translates to:
   /// **'Hide voided'**
   String get filterHideVoided;
-
-  /// No description provided for @filterCategoryLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Category'**
-  String get filterCategoryLabel;
 
   /// No description provided for @filterCategoryAny.
   ///
@@ -566,53 +440,17 @@ abstract class AppLocalizations {
   /// **'No price yet'**
   String get filterNoPriceOnly;
 
-  /// No description provided for @saleHistorySearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search sales'**
-  String get saleHistorySearchHint;
-
-  /// No description provided for @receiveHistorySearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search receives'**
-  String get receiveHistorySearchHint;
-
-  /// No description provided for @receivablesSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search customer'**
-  String get receivablesSearchHint;
-
-  /// No description provided for @payablesSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search supplier'**
-  String get payablesSearchHint;
-
   /// No description provided for @lowStockSearchHint.
   ///
   /// In en, this message translates to:
   /// **'Search product'**
   String get lowStockSearchHint;
 
-  /// No description provided for @filterChipDateAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All time'**
-  String get filterChipDateAll;
-
   /// No description provided for @filterChipParty.
   ///
   /// In en, this message translates to:
   /// **'Party: {name}'**
   String filterChipParty(String name);
-
-  /// No description provided for @filterChipVoided.
-  ///
-  /// In en, this message translates to:
-  /// **'Including voided'**
-  String get filterChipVoided;
 
   /// No description provided for @filterChipHideVoided.
   ///
@@ -740,24 +578,6 @@ abstract class AppLocalizations {
   /// **'You paid supplier'**
   String get paymentDirectionOutbound;
 
-  /// No description provided for @drawerParties.
-  ///
-  /// In en, this message translates to:
-  /// **'Customers & suppliers'**
-  String get drawerParties;
-
-  /// No description provided for @partiesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Customers & suppliers'**
-  String get partiesTitle;
-
-  /// No description provided for @partiesSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search by name or phone'**
-  String get partiesSearchHint;
-
   /// No description provided for @partiesLoadFailedMessage.
   ///
   /// In en, this message translates to:
@@ -775,48 +595,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No matches for \"{query}\".'**
   String partiesEmptyForQuery(String query);
-
-  /// No description provided for @partiesHasBalanceChip.
-  ///
-  /// In en, this message translates to:
-  /// **'Has balance only'**
-  String get partiesHasBalanceChip;
-
-  /// No description provided for @partyTypeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Type'**
-  String get partyTypeLabel;
-
-  /// No description provided for @partyTypeAny.
-  ///
-  /// In en, this message translates to:
-  /// **'Anyone'**
-  String get partyTypeAny;
-
-  /// No description provided for @partyTypeCustomer.
-  ///
-  /// In en, this message translates to:
-  /// **'Customer'**
-  String get partyTypeCustomer;
-
-  /// No description provided for @partyTypeSupplier.
-  ///
-  /// In en, this message translates to:
-  /// **'Supplier'**
-  String get partyTypeSupplier;
-
-  /// No description provided for @partyTypeBoth.
-  ///
-  /// In en, this message translates to:
-  /// **'Customer + supplier'**
-  String get partyTypeBoth;
-
-  /// No description provided for @partiesAddButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Add'**
-  String get partiesAddButton;
 
   /// No description provided for @partyNewOpeningReceivableLabel.
   ///
@@ -1112,12 +890,6 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get aliasAddDialogLanguage;
 
-  /// No description provided for @aliasChipRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove'**
-  String get aliasChipRemove;
-
   /// No description provided for @aliasAddTooltip.
   ///
   /// In en, this message translates to:
@@ -1208,24 +980,6 @@ abstract class AppLocalizations {
   /// **'No sales in this period.'**
   String get topMoversEmptyMessage;
 
-  /// No description provided for @drawerReportsHeader.
-  ///
-  /// In en, this message translates to:
-  /// **'REPORTS'**
-  String get drawerReportsHeader;
-
-  /// No description provided for @drawerReceivables.
-  ///
-  /// In en, this message translates to:
-  /// **'Customers owe you'**
-  String get drawerReceivables;
-
-  /// No description provided for @drawerPayables.
-  ///
-  /// In en, this message translates to:
-  /// **'You owe suppliers'**
-  String get drawerPayables;
-
   /// No description provided for @drawerLowStock.
   ///
   /// In en, this message translates to:
@@ -1250,18 +1004,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get drawerSettings;
 
-  /// No description provided for @drawerOpenTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Menu'**
-  String get drawerOpenTooltip;
-
-  /// No description provided for @attachBono.
-  ///
-  /// In en, this message translates to:
-  /// **'Attach bono photo'**
-  String get attachBono;
-
   /// No description provided for @receiveFrom.
   ///
   /// In en, this message translates to:
@@ -1273,12 +1015,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Item'**
   String get item;
-
-  /// No description provided for @searchItem.
-  ///
-  /// In en, this message translates to:
-  /// **'Search item'**
-  String get searchItem;
 
   /// No description provided for @unit.
   ///
@@ -1310,29 +1046,11 @@ abstract class AppLocalizations {
   /// **'Line total'**
   String get lineTotal;
 
-  /// No description provided for @addLine.
-  ///
-  /// In en, this message translates to:
-  /// **'ADD LINE'**
-  String get addLine;
-
-  /// No description provided for @linesSoFar.
-  ///
-  /// In en, this message translates to:
-  /// **'Lines so far: {count}'**
-  String linesSoFar(Object count);
-
   /// No description provided for @bonoTotal.
   ///
   /// In en, this message translates to:
   /// **'Bono total'**
   String get bonoTotal;
-
-  /// No description provided for @paidNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Paid now'**
-  String get paidNow;
 
   /// No description provided for @credit.
   ///
@@ -1340,47 +1058,11 @@ abstract class AppLocalizations {
   /// **'Credit'**
   String get credit;
 
-  /// No description provided for @paidAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Paid all'**
-  String get paidAll;
-
-  /// No description provided for @mismatchWarning.
-  ///
-  /// In en, this message translates to:
-  /// **'Bono total differs from lines — OK to continue.'**
-  String get mismatchWarning;
-
-  /// No description provided for @chooseItemWarning.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose item, qty, and cost.'**
-  String get chooseItemWarning;
-
-  /// No description provided for @confirmReceive.
-  ///
-  /// In en, this message translates to:
-  /// **'CONFIRM RECEIVE'**
-  String get confirmReceive;
-
-  /// No description provided for @numberDone.
-  ///
-  /// In en, this message translates to:
-  /// **'DONE'**
-  String get numberDone;
-
   /// No description provided for @clear.
   ///
   /// In en, this message translates to:
   /// **'CLEAR'**
   String get clear;
-
-  /// No description provided for @backspace.
-  ///
-  /// In en, this message translates to:
-  /// **'DEL'**
-  String get backspace;
 
   /// No description provided for @paymentTitle.
   ///
@@ -1388,23 +1070,11 @@ abstract class AppLocalizations {
   /// **'Customer payment'**
   String get paymentTitle;
 
-  /// No description provided for @pickCustomer.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick customer'**
-  String get pickCustomer;
-
   /// No description provided for @amount.
   ///
   /// In en, this message translates to:
   /// **'Amount'**
   String get amount;
-
-  /// No description provided for @confirmPayment.
-  ///
-  /// In en, this message translates to:
-  /// **'CONFIRM PAYMENT'**
-  String get confirmPayment;
 
   /// No description provided for @expenseTitle.
   ///
@@ -1418,23 +1088,11 @@ abstract class AppLocalizations {
   /// **'Category'**
   String get category;
 
-  /// No description provided for @confirmExpense.
-  ///
-  /// In en, this message translates to:
-  /// **'CONFIRM EXPENSE'**
-  String get confirmExpense;
-
   /// No description provided for @rent.
   ///
   /// In en, this message translates to:
   /// **'Rent'**
   String get rent;
-
-  /// No description provided for @power.
-  ///
-  /// In en, this message translates to:
-  /// **'Power'**
-  String get power;
 
   /// No description provided for @salary.
   ///
@@ -1442,29 +1100,11 @@ abstract class AppLocalizations {
   /// **'Salary'**
   String get salary;
 
-  /// No description provided for @water.
-  ///
-  /// In en, this message translates to:
-  /// **'Water'**
-  String get water;
-
-  /// No description provided for @transport.
-  ///
-  /// In en, this message translates to:
-  /// **'Transport'**
-  String get transport;
-
   /// No description provided for @other.
   ///
   /// In en, this message translates to:
   /// **'Other'**
   String get other;
-
-  /// No description provided for @comingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Mock screen saved. Undo?'**
-  String get comingSoon;
 
   /// No description provided for @supabaseConfigTitle.
   ///
@@ -1688,12 +1328,6 @@ abstract class AppLocalizations {
   /// **'Type chosen: {name}'**
   String setupStepTemplateDone(Object name);
 
-  /// No description provided for @setupStepFinishTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Finish setup'**
-  String get setupStepFinishTitle;
-
   /// No description provided for @setupStepFinishBody.
   ///
   /// In en, this message translates to:
@@ -1705,12 +1339,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'FINISH SETUP'**
   String get setupStepFinishButton;
-
-  /// No description provided for @templatePickerTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose your shop type'**
-  String get templatePickerTitle;
 
   /// No description provided for @applyTemplateButton.
   ///
@@ -1741,12 +1369,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get settingsTitle;
-
-  /// No description provided for @openSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get openSettings;
 
   /// No description provided for @settingsShopNameLabel.
   ///
@@ -1814,65 +1436,11 @@ abstract class AppLocalizations {
   /// **'Search Somali or English'**
   String get productsSearchHint;
 
-  /// No description provided for @productsInYourShop.
-  ///
-  /// In en, this message translates to:
-  /// **'In your shop'**
-  String get productsInYourShop;
-
-  /// No description provided for @productsFromCatalog.
-  ///
-  /// In en, this message translates to:
-  /// **'From catalog'**
-  String get productsFromCatalog;
-
-  /// No description provided for @productsStockLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'{quantity} {unit} in stock'**
-  String productsStockLabel(Object quantity, Object unit);
-
-  /// No description provided for @productsNoStock.
-  ///
-  /// In en, this message translates to:
-  /// **'No stock yet'**
-  String get productsNoStock;
-
-  /// No description provided for @productsAddToShopButton.
-  ///
-  /// In en, this message translates to:
-  /// **'ADD'**
-  String get productsAddToShopButton;
-
-  /// No description provided for @productsAddingToShop.
-  ///
-  /// In en, this message translates to:
-  /// **'Adding…'**
-  String get productsAddingToShop;
-
-  /// No description provided for @productsAddedToShopToast.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} added to your shop'**
-  String productsAddedToShopToast(Object name);
-
-  /// No description provided for @productsAddToShopFailedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not add {name}. Try again.'**
-  String productsAddToShopFailedMessage(Object name);
-
   /// No description provided for @productsNewItemButton.
   ///
   /// In en, this message translates to:
   /// **'+ NEW ITEM'**
   String get productsNewItemButton;
-
-  /// No description provided for @productsNewItemUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Adding off-catalog items comes later.'**
-  String get productsNewItemUnavailable;
 
   /// No description provided for @productsEmptyMessage.
   ///
@@ -1958,12 +1526,6 @@ abstract class AppLocalizations {
   /// **'SAVE'**
   String get saleSaveButton;
 
-  /// No description provided for @saleSavedToast.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved'**
-  String get saleSavedToast;
-
   /// No description provided for @salePostFailedMessage.
   ///
   /// In en, this message translates to:
@@ -1981,18 +1543,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick the customer for this debt sale.'**
   String get saleNeedCustomerMessage;
-
-  /// No description provided for @saleAddedItemToast.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} added'**
-  String saleAddedItemToast(Object name);
-
-  /// No description provided for @saleAddItemFailedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not add {name}. Try again.'**
-  String saleAddItemFailedMessage(Object name);
 
   /// No description provided for @customerPickerTitle.
   ///
@@ -2431,24 +1981,6 @@ abstract class AppLocalizations {
   /// **'Could not void this sale. Check your internet and try again.'**
   String get saleVoidFailedMessage;
 
-  /// No description provided for @historyMenuSales.
-  ///
-  /// In en, this message translates to:
-  /// **'Sales history'**
-  String get historyMenuSales;
-
-  /// No description provided for @historyMenuReceives.
-  ///
-  /// In en, this message translates to:
-  /// **'Receive history'**
-  String get historyMenuReceives;
-
-  /// No description provided for @historyMenuTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'History'**
-  String get historyMenuTooltip;
-
   /// No description provided for @receiveHistoryTitle.
   ///
   /// In en, this message translates to:
@@ -2586,18 +2118,6 @@ abstract class AppLocalizations {
   /// **'Remove {name}'**
   String cartRemoveLineTooltip(Object name);
 
-  /// No description provided for @cartExpandHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Show items'**
-  String get cartExpandHint;
-
-  /// No description provided for @cartCollapseHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide items'**
-  String get cartCollapseHint;
-
   /// No description provided for @cartClearAllButton.
   ///
   /// In en, this message translates to:
@@ -2724,12 +2244,6 @@ abstract class AppLocalizations {
   /// **'Qty'**
   String get receiveLineQuantityLabel;
 
-  /// No description provided for @receiveLinePerUnitLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'{currency} per {unit}'**
-  String receiveLinePerUnitLabel(Object currency, Object unit);
-
   /// No description provided for @receiveLineTotalLabel.
   ///
   /// In en, this message translates to:
@@ -2826,12 +2340,6 @@ abstract class AppLocalizations {
   /// **'Add at least one line before saving.'**
   String get receiveNeedLinesMessage;
 
-  /// No description provided for @receiveInvalidNumberMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a positive number'**
-  String get receiveInvalidNumberMessage;
-
   /// No description provided for @unitPickerTitle.
   ///
   /// In en, this message translates to:
@@ -2849,12 +2357,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'base unit'**
   String get unitPickerBaseUnit;
-
-  /// No description provided for @unitPickerConversion.
-  ///
-  /// In en, this message translates to:
-  /// **'{multiplier} {base} per {unit}'**
-  String unitPickerConversion(Object base, Object multiplier, Object unit);
 
   /// No description provided for @unitPickerLoadFailedMessage.
   ///
@@ -2886,35 +2388,17 @@ abstract class AppLocalizations {
   /// **'Name'**
   String get addNewItemNameLabel;
 
-  /// No description provided for @addNewItemUnitLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Unit'**
-  String get addNewItemUnitLabel;
-
   /// No description provided for @addNewItemUnitChooseHint.
   ///
   /// In en, this message translates to:
   /// **'Choose'**
   String get addNewItemUnitChooseHint;
 
-  /// No description provided for @addNewItemPriceLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Sale price per {unit}'**
-  String addNewItemPriceLabel(Object unit);
-
   /// No description provided for @addNewItemCategoryLabel.
   ///
   /// In en, this message translates to:
   /// **'Category (optional)'**
   String get addNewItemCategoryLabel;
-
-  /// No description provided for @addNewItemCategoryChooseHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose'**
-  String get addNewItemCategoryChooseHint;
 
   /// No description provided for @addNewItemCancelButton.
   ///
@@ -3030,12 +2514,6 @@ abstract class AppLocalizations {
   /// **'Loose'**
   String get addNewItemLooseType;
 
-  /// No description provided for @addNewItemBackToTypes.
-  ///
-  /// In en, this message translates to:
-  /// **'← Back'**
-  String get addNewItemBackToTypes;
-
   /// No description provided for @addPackagingSheetTitle.
   ///
   /// In en, this message translates to:
@@ -3102,12 +2580,6 @@ abstract class AppLocalizations {
   /// **'1 {unit} holds {qty} {base}'**
   String packagingConversionPreview(String unit, String qty, String base);
 
-  /// No description provided for @addPackagingBackToSuggestions.
-  ///
-  /// In en, this message translates to:
-  /// **'← Back to suggestions'**
-  String get addPackagingBackToSuggestions;
-
   /// No description provided for @addPackagingPickedPriceLabel.
   ///
   /// In en, this message translates to:
@@ -3132,24 +2604,6 @@ abstract class AppLocalizations {
   /// **'Your last cost: {cost}. Add your usual markup.'**
   String lineEditorCostHintLabel(String cost);
 
-  /// No description provided for @lineEditorSiblingHintLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'{packaging} sells at {price}. Use that as a guide.'**
-  String lineEditorSiblingHintLabel(String packaging, String price);
-
-  /// No description provided for @negativeStockToast.
-  ///
-  /// In en, this message translates to:
-  /// **'{item} stock is now {amount} {unit}. Receive soon.'**
-  String negativeStockToast(Object amount, Object item, Object unit);
-
-  /// No description provided for @negativeStockMoreItems.
-  ///
-  /// In en, this message translates to:
-  /// **'+ {count, plural, =1{1 more item} other{{count} more items}} low'**
-  String negativeStockMoreItems(num count);
-
   /// No description provided for @lowStockToast.
   ///
   /// In en, this message translates to:
@@ -3168,29 +2622,11 @@ abstract class AppLocalizations {
   /// **'Add product'**
   String get shopItemEditorTitleCreate;
 
-  /// No description provided for @shopItemEditorTitleEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit product'**
-  String get shopItemEditorTitleEdit;
-
-  /// No description provided for @productEditorLoadFailedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load this product. Try again.'**
-  String get productEditorLoadFailedMessage;
-
   /// No description provided for @shopItemDetailAliasesHeader.
   ///
   /// In en, this message translates to:
   /// **'Other names'**
   String get shopItemDetailAliasesHeader;
-
-  /// No description provided for @shopItemDetailBarcodesHeader.
-  ///
-  /// In en, this message translates to:
-  /// **'Barcodes'**
-  String get shopItemDetailBarcodesHeader;
 
   /// No description provided for @shopItemEditorNameLabel.
   ///
@@ -3252,12 +2688,6 @@ abstract class AppLocalizations {
   /// **'Item'**
   String get shopItemEditorItemSectionHeader;
 
-  /// No description provided for @shopItemEditorEditHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit prices and defaults from the product detail screen.'**
-  String get shopItemEditorEditHint;
-
   /// No description provided for @removePackagingConfirmBody.
   ///
   /// In en, this message translates to:
@@ -3311,12 +2741,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'no price yet'**
   String get shopItemDetailNoPriceLabel;
-
-  /// No description provided for @shopItemDetailCurrentStockLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'{amount} {unit} in stock'**
-  String shopItemDetailCurrentStockLabel(Object amount, Object unit);
 
   /// No description provided for @shopItemDetailReorderBelowLabel.
   ///

@@ -51,22 +51,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cart => 'CART';
 
   @override
-  String itemsCount(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count items',
-      one: '1 item',
-      zero: '0 items',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get total => 'Total';
-
-  @override
-  String get savedUndo => 'Saved.';
 
   @override
   String get undo => 'Undo';
@@ -78,48 +63,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get price => 'Price';
 
   @override
-  String get optionalPrice => 'Price override';
-
-  @override
-  String get addToCart => 'ADD TO CART';
-
-  @override
   String get cancel => 'Cancel';
 
   @override
-  String get customerDebt => 'Customer for debt';
-
-  @override
-  String get searchCustomers => 'Search customers';
-
-  @override
-  String get emptySaleHint =>
-      'Tap item tiles to add. Long-press for quantity or price.';
-
-  @override
   String get receiveTitle => 'Receive';
-
-  @override
-  String get supplierFirst => 'Pick supplier first';
-
-  @override
-  String get recentSuppliers => 'Recent suppliers';
-
-  @override
-  String get searchSuppliers => 'Search suppliers';
-
-  @override
-  String get newSupplier => '+ New supplier';
-
-  @override
-  String get newSupplierStub =>
-      'New supplier stub — name and phone in production.';
-
-  @override
-  String get repeatLastBono => 'Repeat last receive';
-
-  @override
-  String get bonoAttached => 'Bono attached';
 
   @override
   String get bonoAttachTooltip => 'Attach bono photo';
@@ -191,18 +138,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get receivablesTitle => 'Customers owe you';
-
-  @override
-  String get receivablesEmptyMessage => 'No one owes you right now.';
-
-  @override
-  String get payablesTitle => 'You owe suppliers';
-
-  @override
-  String get payablesEmptyMessage => 'You don\'t owe anyone right now.';
-
-  @override
   String get lowStockReportTitle => 'Low stock';
 
   @override
@@ -240,19 +175,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dateRangeCustom => 'Custom…';
 
   @override
-  String get filterPartyLabel => 'Party';
-
-  @override
   String get filterPartyAny => 'Anyone';
 
   @override
-  String get filterIncludeVoided => 'Include voided';
-
-  @override
   String get filterHideVoided => 'Hide voided';
-
-  @override
-  String get filterCategoryLabel => 'Category';
 
   @override
   String get filterCategoryAny => 'All categories';
@@ -264,30 +190,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterNoPriceOnly => 'No price yet';
 
   @override
-  String get saleHistorySearchHint => 'Search sales';
-
-  @override
-  String get receiveHistorySearchHint => 'Search receives';
-
-  @override
-  String get receivablesSearchHint => 'Search customer';
-
-  @override
-  String get payablesSearchHint => 'Search supplier';
-
-  @override
   String get lowStockSearchHint => 'Search product';
-
-  @override
-  String get filterChipDateAll => 'All time';
 
   @override
   String filterChipParty(String name) {
     return 'Party: $name';
   }
-
-  @override
-  String get filterChipVoided => 'Including voided';
 
   @override
   String get filterChipHideVoided => 'Hiding voided';
@@ -357,15 +265,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentDirectionOutbound => 'You paid supplier';
 
   @override
-  String get drawerParties => 'Customers & suppliers';
-
-  @override
-  String get partiesTitle => 'Customers & suppliers';
-
-  @override
-  String get partiesSearchHint => 'Search by name or phone';
-
-  @override
   String get partiesLoadFailedMessage =>
       'Could not load. Pull down to try again.';
 
@@ -376,27 +275,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String partiesEmptyForQuery(String query) {
     return 'No matches for \"$query\".';
   }
-
-  @override
-  String get partiesHasBalanceChip => 'Has balance only';
-
-  @override
-  String get partyTypeLabel => 'Type';
-
-  @override
-  String get partyTypeAny => 'Anyone';
-
-  @override
-  String get partyTypeCustomer => 'Customer';
-
-  @override
-  String get partyTypeSupplier => 'Supplier';
-
-  @override
-  String get partyTypeBoth => 'Customer + supplier';
-
-  @override
-  String get partiesAddButton => 'Add';
 
   @override
   String get partyNewOpeningReceivableLabel => 'Opening balance (they owe you)';
@@ -578,9 +456,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aliasAddDialogLanguage => 'Language';
 
   @override
-  String get aliasChipRemove => 'Remove';
-
-  @override
   String get aliasAddTooltip => 'Add other name';
 
   @override
@@ -639,15 +514,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get topMoversEmptyMessage => 'No sales in this period.';
 
   @override
-  String get drawerReportsHeader => 'REPORTS';
-
-  @override
-  String get drawerReceivables => 'Customers owe you';
-
-  @override
-  String get drawerPayables => 'You owe suppliers';
-
-  @override
   String get drawerLowStock => 'Low stock';
 
   @override
@@ -660,21 +526,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get drawerSettings => 'Settings';
 
   @override
-  String get drawerOpenTooltip => 'Menu';
-
-  @override
-  String get attachBono => 'Attach bono photo';
-
-  @override
   String receiveFrom(Object supplier) {
     return 'Receive from $supplier';
   }
 
   @override
   String get item => 'Item';
-
-  @override
-  String get searchItem => 'Search item';
 
   @override
   String get unit => 'Unit';
@@ -692,55 +549,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lineTotal => 'Line total';
 
   @override
-  String get addLine => 'ADD LINE';
-
-  @override
-  String linesSoFar(Object count) {
-    return 'Lines so far: $count';
-  }
-
-  @override
   String get bonoTotal => 'Bono total';
-
-  @override
-  String get paidNow => 'Paid now';
 
   @override
   String get credit => 'Credit';
 
   @override
-  String get paidAll => 'Paid all';
-
-  @override
-  String get mismatchWarning =>
-      'Bono total differs from lines — OK to continue.';
-
-  @override
-  String get chooseItemWarning => 'Choose item, qty, and cost.';
-
-  @override
-  String get confirmReceive => 'CONFIRM RECEIVE';
-
-  @override
-  String get numberDone => 'DONE';
-
-  @override
   String get clear => 'CLEAR';
-
-  @override
-  String get backspace => 'DEL';
 
   @override
   String get paymentTitle => 'Customer payment';
 
   @override
-  String get pickCustomer => 'Pick customer';
-
-  @override
   String get amount => 'Amount';
-
-  @override
-  String get confirmPayment => 'CONFIRM PAYMENT';
 
   @override
   String get expenseTitle => 'Expense';
@@ -749,28 +570,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get category => 'Category';
 
   @override
-  String get confirmExpense => 'CONFIRM EXPENSE';
-
-  @override
   String get rent => 'Rent';
-
-  @override
-  String get power => 'Power';
 
   @override
   String get salary => 'Salary';
 
   @override
-  String get water => 'Water';
-
-  @override
-  String get transport => 'Transport';
-
-  @override
   String get other => 'Other';
-
-  @override
-  String get comingSoon => 'Mock screen saved. Undo?';
 
   @override
   String get supabaseConfigTitle => 'Connect Dukan to Supabase';
@@ -904,16 +710,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get setupStepFinishTitle => 'Finish setup';
-
-  @override
   String get setupStepFinishBody => 'Confirm and start using your shop.';
 
   @override
   String get setupStepFinishButton => 'FINISH SETUP';
-
-  @override
-  String get templatePickerTitle => 'Choose your shop type';
 
   @override
   String get applyTemplateButton => 'USE THIS';
@@ -931,9 +731,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsTitle => 'Settings';
-
-  @override
-  String get openSettings => 'Settings';
 
   @override
   String get settingsShopNameLabel => 'Shop name';
@@ -970,41 +767,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productsSearchHint => 'Search Somali or English';
 
   @override
-  String get productsInYourShop => 'In your shop';
-
-  @override
-  String get productsFromCatalog => 'From catalog';
-
-  @override
-  String productsStockLabel(Object quantity, Object unit) {
-    return '$quantity $unit in stock';
-  }
-
-  @override
-  String get productsNoStock => 'No stock yet';
-
-  @override
-  String get productsAddToShopButton => 'ADD';
-
-  @override
-  String get productsAddingToShop => 'Adding…';
-
-  @override
-  String productsAddedToShopToast(Object name) {
-    return '$name added to your shop';
-  }
-
-  @override
-  String productsAddToShopFailedMessage(Object name) {
-    return 'Could not add $name. Try again.';
-  }
-
-  @override
   String get productsNewItemButton => '+ NEW ITEM';
-
-  @override
-  String get productsNewItemUnavailable =>
-      'Adding off-catalog items comes later.';
 
   @override
   String get productsEmptyMessage =>
@@ -1068,9 +831,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleSaveButton => 'SAVE';
 
   @override
-  String get saleSavedToast => 'Saved';
-
-  @override
   String get salePostFailedMessage =>
       'Could not save the sale. Check your internet and try again.';
 
@@ -1079,16 +839,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saleNeedCustomerMessage => 'Pick the customer for this debt sale.';
-
-  @override
-  String saleAddedItemToast(Object name) {
-    return '$name added';
-  }
-
-  @override
-  String saleAddItemFailedMessage(Object name) {
-    return 'Could not add $name. Try again.';
-  }
 
   @override
   String get customerPickerTitle => 'Choose customer';
@@ -1348,15 +1098,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not void this sale. Check your internet and try again.';
 
   @override
-  String get historyMenuSales => 'Sales history';
-
-  @override
-  String get historyMenuReceives => 'Receive history';
-
-  @override
-  String get historyMenuTooltip => 'History';
-
-  @override
   String get receiveHistoryTitle => 'Receives';
 
   @override
@@ -1442,12 +1183,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get cartExpandHint => 'Show items';
-
-  @override
-  String get cartCollapseHint => 'Hide items';
-
-  @override
   String get cartClearAllButton => 'Clear all';
 
   @override
@@ -1527,11 +1262,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveLineQuantityLabel => 'Qty';
 
   @override
-  String receiveLinePerUnitLabel(Object currency, Object unit) {
-    return '$currency per $unit';
-  }
-
-  @override
   String receiveLineTotalLabel(Object currency) {
     return '$currency total';
   }
@@ -1607,9 +1337,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveNeedLinesMessage => 'Add at least one line before saving.';
 
   @override
-  String get receiveInvalidNumberMessage => 'Enter a positive number';
-
-  @override
   String get unitPickerTitle => 'Choose unit';
 
   @override
@@ -1617,11 +1344,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unitPickerBaseUnit => 'base unit';
-
-  @override
-  String unitPickerConversion(Object base, Object multiplier, Object unit) {
-    return '$multiplier $base per $unit';
-  }
 
   @override
   String get unitPickerLoadFailedMessage => 'Could not load units. Try again.';
@@ -1641,21 +1363,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewItemNameLabel => 'Name';
 
   @override
-  String get addNewItemUnitLabel => 'Unit';
-
-  @override
   String get addNewItemUnitChooseHint => 'Choose';
 
   @override
-  String addNewItemPriceLabel(Object unit) {
-    return 'Sale price per $unit';
-  }
-
-  @override
   String get addNewItemCategoryLabel => 'Category (optional)';
-
-  @override
-  String get addNewItemCategoryChooseHint => 'Choose';
 
   @override
   String get addNewItemCancelButton => 'CANCEL';
@@ -1722,9 +1433,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewItemLooseType => 'Loose';
 
   @override
-  String get addNewItemBackToTypes => '← Back';
-
-  @override
   String get addPackagingSheetTitle => 'Add packaging';
 
   @override
@@ -1767,9 +1475,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get addPackagingBackToSuggestions => '← Back to suggestions';
-
-  @override
   String addPackagingPickedPriceLabel(Object packaging) {
     return 'Sale price per $packaging (optional)';
   }
@@ -1785,27 +1490,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String lineEditorCostHintLabel(String cost) {
     return 'Your last cost: $cost. Add your usual markup.';
-  }
-
-  @override
-  String lineEditorSiblingHintLabel(String packaging, String price) {
-    return '$packaging sells at $price. Use that as a guide.';
-  }
-
-  @override
-  String negativeStockToast(Object amount, Object item, Object unit) {
-    return '$item stock is now $amount $unit. Receive soon.';
-  }
-
-  @override
-  String negativeStockMoreItems(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count more items',
-      one: '1 more item',
-    );
-    return '+ $_temp0 low';
   }
 
   @override
@@ -1828,17 +1512,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopItemEditorTitleCreate => 'Add product';
 
   @override
-  String get shopItemEditorTitleEdit => 'Edit product';
-
-  @override
-  String get productEditorLoadFailedMessage =>
-      'Could not load this product. Try again.';
-
-  @override
   String get shopItemDetailAliasesHeader => 'Other names';
-
-  @override
-  String get shopItemDetailBarcodesHeader => 'Barcodes';
 
   @override
   String get shopItemEditorNameLabel => 'Name';
@@ -1874,10 +1548,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopItemEditorItemSectionHeader => 'Item';
 
   @override
-  String get shopItemEditorEditHint =>
-      'Edit prices and defaults from the product detail screen.';
-
-  @override
   String get removePackagingConfirmBody =>
       'Remove this packaging? You can add it back later.';
 
@@ -1906,11 +1576,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shopItemDetailNoPriceLabel => 'no price yet';
-
-  @override
-  String shopItemDetailCurrentStockLabel(Object amount, Object unit) {
-    return '$amount $unit in stock';
-  }
 
   @override
   String shopItemDetailReorderBelowLabel(Object amount, Object unit) {

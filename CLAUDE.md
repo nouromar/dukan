@@ -84,7 +84,7 @@ Any new feature must include a check that it doesn't regress these numbers for t
 - Pilot currency: USD by default (one currency per shop; SLSH supported for Hargeisa).
 
 ## Repository layout
-- `app/dukan/` — Flutter shop app. Currently a clickable prototype against mock data; auth bootstrap against Supabase is wired but most flows still use in-memory mocks (`lib/mock/mock_data.dart`).
+- `app/dukan/` — Flutter shop app. Daily flows (Sale/Receive/Payment/Expense) are wired to Supabase via `ShopApi` posting RPCs and a durable offline write queue (`lib/queue/`).
 - `supabase/migrations/` — numbered SQL migrations (`0001_…` through `0015_…`). **Order is load-bearing.** New migrations append; never edit applied ones.
 - `supabase/config.toml` — Supabase CLI local stack config. Includes a fixed local phone OTP (`+252612345678` → `123456`) and placeholder Twilio values that are **local-only** (production uses Meta/WhatsApp).
 - `supabase/seed.sql` — local-only seed data loaded on `supabase db reset`.
@@ -140,7 +140,7 @@ for f in grocery/*.json; do python3 -m json.tool "$f" >/dev/null || exit 1; done
 - **Local phone OTP fixture:** `supabase/config.toml` pins `+252612345678` → `123456`. The Twilio credentials in that file are placeholders so Supabase Auth enables phone login; production must use the Meta/WhatsApp OTP path.
 
 ## Flutter architecture notes
-- **App is mid-migration** from clickable prototype to Supabase-backed app. Auth (phone OTP → shop list → `create_organization` RPC) is real; Sale/Receive/Payment/Expense flows are still in-memory mocks in `lib/mock/mock_data.dart`. When wiring a daily flow to Supabase, prototype it first against mocks and validate the speed contract before swapping in real calls.
+- **Posting flows go through the offline queue.** Sale/Receive/Payment/Expense screens call `ShopApi` directly on the network-happy path, and fall through to `OfflineQueueController.enqueue(PendingPost(...))` on transient failure (see `lib/queue/`). Structured server rejects (`PostgrestException`) snapshot/restore the in-memory controller state instead of queueing. The `QueueStatusPill` in screen app bars surfaces backlog + tap-to-drain. Idempotency is enforced server-side via `client_op_id`.
 - `lib/auth/auth_controller.dart` — `ChangeNotifier` that owns session + shop list + selected shop. `normalizePhoneNumber` defaults bare/leading-zero numbers to Somalia `+252` and enforces E.164.
 - `lib/config/app_config.dart` — reads `SUPABASE_URL` / `SUPABASE_ANON_KEY` from `--dart-define`. If either is missing, the app skips `Supabase.initialize()` entirely and runs in prototype mode (no Supabase calls).
 - `lib/l10n/` — ARB-based i18n. Add new strings to both `app_en.arb` and `app_so.arb`; missing Somali strings are a release blocker.

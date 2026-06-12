@@ -1,8 +1,8 @@
 {
   "@@locale": "so",
   "appTitle": "Dukaan",
-  "languageEnglish": "EN",
-  "languageSomali": "SO",
+  "languageEnglish": "Ingiriis",
+  "languageSomali": "Soomaali",
   "homeHint": "Dooro shaqada maanta",
   "sale": "Iibin",
   "receive": "Alaab dajin",
@@ -14,26 +14,12 @@
   "searchItems": "Raadi alaab",
   "favorites": "Kuwa la jecel yahay",
   "cart": "Danbiil",
-  "itemsCount": "{count, plural, =0{0 alaab} =1{1 alaab} other{{count} alaab}}",
   "total": "Wadar",
-  "savedUndo": "Waa la keydiyay.",
   "undo": "Ka noqo",
   "quantity": "Tiro",
   "price": "Qiime",
-  "optionalPrice": "Qiime beddel",
-  "addToCart": "KU DAR",
   "cancel": "Jooji",
-  "customerDebt": "Macmiilka deynta",
-  "searchCustomers": "Raadi macmiil",
-  "emptySaleHint": "riix gaaban: hal ku dar danbiisha. Riix dheer: shaashada tirada iyo qiimaha.",
   "receiveTitle": "Alaab dajin",
-  "supplierFirst": "Marka hore dooro alaab keenaha",
-  "recentSuppliers": "Keenayaal dhawaan",
-  "searchSuppliers": "Raadi alaab keenaha",
-  "newSupplier": "+ Alaab keene cusub",
-  "newSupplierStub": "Alaab keene cusub — magac iyo telefoon marka dambe.",
-  "repeatLastBono": "Ku celi alaab dajintii hore",
-  "bonoAttached": "Bono waa la raaciyay",
   "bonoAttachTooltip": "Sawir bonoga",
   "bonoAttachedTooltip": "Bono waa la sawiray — taabo si aad u beddesho",
   "bonoAttachCamera": "Sawir hadda",
@@ -55,12 +41,12 @@
   "homeLowStockLabel": "Alaab yaraatey",
   "homeLowStockCount": "{count, plural, =0{midna} =1{1 alaab} other{{count} alaab}}",
   "@homeLowStockCount": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
-  "receivablesTitle": "Deyn lagaa qabo",
-  "receivablesEmptyMessage": "Cidna kuu lahayn waqtigan.",
-  "payablesTitle": "Deyn Aaad Qabto",
-  "payablesEmptyMessage": "Cidna lahayn lacag waqtigan.",
   "lowStockReportTitle": "Alaabta yaraatey",
   "lowStockReportEmptyMessage": "Wax yaraatey ma jiraan.",
   "reportLoadFailedMessage": "Ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.",
@@ -73,29 +59,28 @@
   "dateRangeMonth": "Bishaan",
   "dateRangeAll": "Waqti kasta",
   "dateRangeCustom": "Doorasho…",
-  "filterPartyLabel": "Qof",
   "filterPartyAny": "Qof kasta",
-  "filterIncludeVoided": "Ku dar kuwa la tirtiray",
   "filterHideVoided": "Qari kuwa la tirtiray",
-  "filterCategoryLabel": "Qaybta",
   "filterCategoryAny": "Qayb kasta",
   "filterLowStockOnly": "Kaliya kuwa yaraatey",
   "filterNoPriceOnly": "Aan qiimo lahayn",
-  "saleHistorySearchHint": "Raadi iibka",
-  "receiveHistorySearchHint": "Raadi alaab la qaatey",
-  "receivablesSearchHint": "Raadi macmiil",
-  "payablesSearchHint": "Raadi bixiye",
   "lowStockSearchHint": "Raadi alaab",
-  "filterChipDateAll": "Waqti kasta",
   "filterChipParty": "Qof: {name}",
   "@filterChipParty": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
-  "filterChipVoided": "Iyo kuwa la tirtiray",
   "filterChipHideVoided": "La qariyay kuwa la tirtiray",
   "filterChipCategory": "{name}",
   "@filterChipCategory": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "filterChipLowStock": "Yaraatey",
   "filterChipNoPrice": "Aan qiimo lahayn",
@@ -116,22 +101,16 @@
   "paymentDirectionAny": "Jiho kasta",
   "paymentDirectionInbound": "Macmiil ku bixiyay",
   "paymentDirectionOutbound": "Bixiye aad bixisay",
-  "drawerParties": "Macaamiisha & bixiyayaasha",
-  "partiesTitle": "Macaamiisha & bixiyayaasha",
-  "partiesSearchHint": "Raadi magac ama telefoon",
   "partiesLoadFailedMessage": "Ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.",
   "partiesEmptyMessage": "Macaamiil ama bixiye weli ma jiro.",
   "partiesEmptyForQuery": "Wax la mid ah \"{query}\" lama helin.",
   "@partiesEmptyForQuery": {
-    "placeholders": { "query": { "type": "String" } }
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
   },
-  "partiesHasBalanceChip": "Oo qaba deyn kaliya",
-  "partyTypeLabel": "Nooca",
-  "partyTypeAny": "Qof kasta",
-  "partyTypeCustomer": "Macmiil",
-  "partyTypeSupplier": "Bixiye",
-  "partyTypeBoth": "Macmiil + Bixiye",
-  "partiesAddButton": "Ku dar",
   "partyNewOpeningReceivableLabel": "Deyn furitaan (kuugu leh)",
   "partyNewOpeningPayableLabel": "Deyn furitaan (aad u leh)",
   "partyNewOpeningBalanceHelper": "Ikhtiyaari — deynta hore ka horeysay app-kan.",
@@ -151,11 +130,19 @@
   "suppliersHeadlineLabel": "Deyn aad qabto",
   "customersHeadlineCount": "{count, plural, =0{Macmiil deyn leh ma jiro} =1{1 macmiil oo deyn leh} other{{count} macaamiil oo deyn leh}}",
   "@customersHeadlineCount": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "suppliersHeadlineCount": "{count, plural, =0{Bixiye deyn leh ma jiro} =1{1 bixiye oo deyn leh} other{{count} bixiye oo deyn leh}}",
   "@suppliersHeadlineCount": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "peopleSortLabel": "Habayn",
   "peopleSortByReceivable": "Deyn (kii ugu badnaa horta)",
@@ -163,13 +150,21 @@
   "peopleSortByName": "Magac (alifba)",
   "stockAdjustTitle": "Hagaaji kayd {name}",
   "@stockAdjustTitle": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "stockAdjustCurrentLabel": "Hadda: {amount} {unit}",
   "@stockAdjustCurrentLabel": {
     "placeholders": {
-      "amount": { "type": "String" },
-      "unit": { "type": "String" }
+      "amount": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
     }
   },
   "stockAdjustModeOpening": "Furitaan",
@@ -182,14 +177,22 @@
   "stockAdjustModeSetExactHelper": "Geli tirada saxda ah ee aad heshay.",
   "stockAdjustAmountLabel": "Tirada ({unit})",
   "@stockAdjustAmountLabel": {
-    "placeholders": { "unit": { "type": "String" } }
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
   },
   "stockAdjustNotesLabel": "Faallo (ikhtiyaari)",
   "stockAdjustPreview": "Kaydka cusub: {amount} {unit}",
   "@stockAdjustPreview": {
     "placeholders": {
-      "amount": { "type": "String" },
-      "unit": { "type": "String" }
+      "amount": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
     }
   },
   "stockAdjustSaveButton": "KEYDI",
@@ -205,17 +208,20 @@
   "aliasAddDialogTitle": "Ku dar magac kale",
   "aliasAddDialogHint": "tusaale: Rice (Ingiriis)",
   "aliasAddDialogLanguage": "Luqadda",
-  "aliasChipRemove": "Tirtir",
   "aliasAddTooltip": "Ku dar magac kale",
   "languageNone": "Mid kasta",
-  "languageEnglish": "Ingiriis",
-  "languageSomali": "Soomaali",
   "productsHeadline": "{total, plural, =0{Alaab weli ma jiro} =1{1 alaab} other{{total} alaab}} · {low} yaraatey · {noPrice} qiimo la'aan",
   "@productsHeadline": {
     "placeholders": {
-      "total": { "type": "int" },
-      "low": { "type": "int" },
-      "noPrice": { "type": "int" }
+      "total": {
+        "type": "int"
+      },
+      "low": {
+        "type": "int"
+      },
+      "noPrice": {
+        "type": "int"
+      }
     }
   },
   "productsSortLabel": "Habayn",
@@ -226,59 +232,45 @@
   "topMoversTitle": "Kuwa ugu badan iibka",
   "topMoversPeriodSubtitle": "{days}-dii maalmood",
   "@topMoversPeriodSubtitle": {
-    "placeholders": { "days": { "type": "int" } }
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   },
   "topMoversPeriodTooltip": "Muddo",
   "topMoversPeriodOption": "{days}-dii maalmood",
   "@topMoversPeriodOption": {
-    "placeholders": { "days": { "type": "int" } }
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   },
   "topMoversTopSegment": "Kuwa ugu badan iibka",
   "topMoversDeadSegment": "Kayd aan iib lahayn",
   "topMoversEmptyMessage": "Iib waqtigan ma jiro.",
-  "drawerReportsHeader": "WARBIXIN",
-  "drawerReceivables": "Deyn lagaa qabo",
-  "drawerPayables": "Deyn Aaad Qabto",
   "drawerLowStock": "Alaab yaraatey",
   "drawerSetupHeader": "DEJINTA",
   "drawerProducts": "Alaabta",
   "drawerSettings": "Habayn",
-  "drawerOpenTooltip": "Liiska",
-  "attachBono": "Ku dar sawir bono",
   "receiveFrom": "Ka qaado {supplier}",
   "item": "Alaab",
-  "searchItem": "Raadi alaab",
   "unit": "Halbeeg",
   "cost": "Qiimaha uu ku fadhiyo",
   "perUnit": "midkiiba",
   "line": "sadar",
   "lineTotal": "Wadarta sadar",
-  "addLine": "KU DAR SADAR",
-  "linesSoFar": "Sadar: {count}",
   "bonoTotal": "Wadarta bono",
-  "paidNow": "Hadda la bixiyay",
   "credit": "Deyn",
-  "paidAll": "Dhammaan bixi",
-  "mismatchWarning": "Wadarta bono way ka duwan tahay iskudarka sadarada — OK in la sii socdo.",
-  "chooseItemWarning": "Dooro alaab, tiro, iyo qiimo.",
-  "confirmReceive": "XAQIIJI QAADASHO",
-  "numberDone": "DHAMME",
   "clear": "TIRTIR",
-  "backspace": "DEL",
   "paymentTitle": "Lacag bixin",
-  "pickCustomer": "Dooro macmiil",
   "amount": "qadar Lacag",
-  "confirmPayment": "XAQIIJI LACAGBIXIN",
   "expenseTitle": "Qarashaad",
   "category": "Nooc",
-  "confirmExpense": "XAQIIJI QARASH",
   "rent": "Kiro",
-  "power": "Koronto",
   "salary": "Mushahar",
-  "water": "Biyo",
-  "transport": "Gaadiid",
   "other": "Kale",
-  "comingSoon": "Shaashad tijaabo waa la keydiyay. Ka noqo?",
   "supabaseConfigTitle": "Dukaan ku xir Supabase",
   "supabaseConfigMessage": "Ku dar Supabase URL iyo anon key si login loo isticmaalo. Weli waad furi kartaa shaashadaha tijaabada.",
   "supabaseConfigCommand": "flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...",
@@ -315,16 +307,13 @@
   "setupStepTemplateTitle": "Dooro nooca dukaankaaga",
   "setupStepTemplateBody": "Dooro xirmo bilow si waxyaalaha caadiga ah iyo goobaha loo diyaariyo.",
   "setupStepTemplateDone": "Nooca la doortay: {name}",
-  "setupStepFinishTitle": "Dhamee diyaarinta",
   "setupStepFinishBody": "Xaqiiji oo bilow isticmaalka dukaankaaga.",
   "setupStepFinishButton": "DHAMEE DIYAARINTA",
-  "templatePickerTitle": "Dooro nooca dukaankaaga",
   "applyTemplateButton": "ISTICMAAL TAN",
   "applyTemplateFailedMessage": "Xirmada lama dabaqi karin. Hubi internetka oo isku day mar kale.",
   "templatesEmptyMessage": "Weli ma jiraan noocyo dukaan. La xiriir support haddii ay sii socoto.",
   "completeSetupFailedMessage": "Diyaarinta lama dhamayn. Isku day mar kale.",
   "settingsTitle": "Diyaarinta",
-  "openSettings": "Diyaarinta",
   "settingsShopNameLabel": "Magaca dukaanka",
   "settingsCurrencyLabel": "Lacagta",
   "settingsLanguageLabel": "Luuqada caadiga ah",
@@ -336,16 +325,7 @@
   "settingsSaveFailedMessage": "Diyaarinta lama keydin karin. Isku day mar kale.",
   "productsTitle": "Alaabo",
   "productsSearchHint": "Ku Raadi Soomaali ama Ingiriis",
-  "productsInYourShop": "Dukaankaaga ku jira",
-  "productsFromCatalog": "Liiska guud",
-  "productsStockLabel": "{quantity} {unit} oo yaal",
-  "productsNoStock": "Dukaanka ma taal",
-  "productsAddToShopButton": "KU DAR",
-  "productsAddingToShop": "Lagu darayaa…",
-  "productsAddedToShopToast": "{name} ayaa lagu daray dukaankaaga",
-  "productsAddToShopFailedMessage": "{name} luguma darin. Isku day mar kale.",
   "productsNewItemButton": "+ Alaab CUSUB",
-  "productsNewItemUnavailable": "Alaabo aan liiska guud ku jirin waxaa lugu dari kari doonaa hadhow.",
   "productsEmptyMessage": "Alaabo maleh. Kudar hadda liiska guud.",
   "productsSearchEmptyMessage": "Wax la mid ah “{query}” maleh.",
   "productsLoadFailedMessage": "Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale.",
@@ -360,12 +340,9 @@
   "salePickCustomerButton": "Dooro macmiil",
   "saleCustomerChip": "{name} · wuxuu qabaa {amount}",
   "saleSaveButton": "KEYDI",
-  "saleSavedToast": "Waa la keydiyay",
   "salePostFailedMessage": "Iibka lama keydin karin. Hubi internetka oo isku day mar kale.",
   "saleNeedItemsMessage": "Marka hore ku dar ugu yaraan hal shay.",
   "saleNeedCustomerMessage": "Dooro macmiilka iibka deynta ah.",
-  "saleAddedItemToast": "{name} waa lugudaray",
-  "saleAddItemFailedMessage": "{name} luguma dari karin. Isku day mar kale.",
   "customerPickerTitle": "Dooro macmiil",
   "customerPickerSearchHint": "Raadi magaca ama telefoonka",
   "customerPickerOwesLabel": "wuxuu qabaa{amount}",
@@ -438,9 +415,6 @@
   "saleVoidRefundExceedsPaidMessage": "Lacagta la celiyay kama badnaan karto lacagta la bixiyay ({paid}).",
   "saleVoidedToast": "Iibka waa laga noqday",
   "saleVoidFailedMessage": "Iibka lagama noqo karin. Hubi internetka oo isku day mar kale.",
-  "historyMenuSales": "Sooyaalka iibka",
-  "historyMenuReceives": "Sooyaalka Alaab keenida",
-  "historyMenuTooltip": "Sooyaal",
   "receiveHistoryTitle": "Alaabtii La dajiyey",
   "receiveHistoryTooltip": "Sooyaalka Alaab keenida",
   "receiveHistoryEmptyMessage": "Wali Alaab Lama dejin. Marka hore alaab daji.",
@@ -463,8 +437,6 @@
   "receiveVoidBlockedStockMessage": "Alaabaha alaab dajintan qaarkood mar hore wuu dhaqaaqay. Ka noqoshada waa la joojiyay.",
   "cartLineSubtotal": "{quantity} × {unitPrice} = {subtotal}",
   "cartRemoveLineTooltip": "Ka saar {name}",
-  "cartExpandHint": "Muuji shayada",
-  "cartCollapseHint": "Qari shayada",
   "cartClearAllButton": "Tirtir dhammaan",
   "cartClearConfirmTitle": "Ka tirtir {count, plural, =1{1 shay} other{{count} shay}} danbiisha?",
   "cartClearConfirmBody": "Tan ma noqonayso iib hore loo keydiyay.",
@@ -487,13 +459,16 @@
   "receiveLoadFailedMessage": "Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale.",
   "receiveEmptyMessage": "Taabo alaab si aad u bilowdo alaab dajin. Ku raadi haddii aysan ku jirin shabakada.",
   "receiveLineQuantityLabel": "Tirada",
-  "receiveLinePerUnitLabel": "{currency} mid kasta {unit}",
   "receiveLineTotalLabel": "{currency} wadarta",
   "receiveLineDerivedPerUnit": "= {money} mid kasta {packaging}",
   "@receiveLineDerivedPerUnit": {
     "placeholders": {
-      "money": { "type": "String" },
-      "packaging": { "type": "String" }
+      "money": {
+        "type": "String"
+      },
+      "packaging": {
+        "type": "String"
+      }
     }
   },
   "receiveAddLineButton": "KU DAR SADAR",
@@ -510,21 +485,16 @@
   "receivePostFailedMessage": "Alaab dajinta lama keydin karin. Hubi internetka oo isku day mar kale.",
   "receiveNeedSupplierMessage": "Dooro alaab keene ka hor inta aadan keydin.",
   "receiveNeedLinesMessage": "Marka hore ku dar ugu yaraan hal sadar.",
-  "receiveInvalidNumberMessage": "Geli lambar wanaagsan",
   "unitPickerTitle": "Dooro halbeeg",
   "unitPickerDefaultBadge": "caadi",
   "unitPickerBaseUnit": "halbeeg aasaasi",
-  "unitPickerConversion": "{multiplier} {base} {unit} walba",
   "unitPickerLoadFailedMessage": "Halbeegyada lama soo dejin karin. Isku day mar kale.",
   "unitPickerAddPackagingButton": "+ Ku dar baakad",
   "addNewItemSearchResult": "+ Ku dar alaab cusub: “{query}”",
   "addNewItemSheetTitle": "Ku dar alaab cusub",
   "addNewItemNameLabel": "Magaca",
-  "addNewItemUnitLabel": "Halbeeg",
   "addNewItemUnitChooseHint": "Dooro",
-  "addNewItemPriceLabel": "Qiimaha iibka mid kasta {unit}",
   "addNewItemCategoryLabel": "Nooca (ikhtiyaari)",
-  "addNewItemCategoryChooseHint": "Dooro",
   "addNewItemCancelButton": "JOOJI",
   "addNewItemAddToSaleButton": "KU DAR IIBKA",
   "addNewItemAddToReceiveButton": "KU DAR ALAAB DAJINTA",
@@ -536,11 +506,19 @@
   "addNewItemHowDeliveredHeader": "Sidee bay alaabkeeneha u keenaan?",
   "addNewItemBaseOnlyTile": "{base} ku iibiya",
   "@addNewItemBaseOnlyTile": {
-    "placeholders": { "base": { "type": "String" } }
+    "placeholders": {
+      "base": {
+        "type": "String"
+      }
+    }
   },
   "addNewItemPickedPriceLabel": "Qiimaha iibka mid kasta {packaging}",
   "@addNewItemPickedPriceLabel": {
-    "placeholders": { "packaging": { "type": "String" } }
+    "placeholders": {
+      "packaging": {
+        "type": "String"
+      }
+    }
   },
   "addNewItemCustomPackagingEntry": "+ Baakad gaar ah",
   "addNewItemCustomBaseUnitLabel": "Halbeegga aasaasi",
@@ -548,15 +526,18 @@
   "addNewItemCustomConversionLabel": "Imisa {base} ayaa ku jira 1 {sold}?",
   "@addNewItemCustomConversionLabel": {
     "placeholders": {
-      "base": { "type": "String" },
-      "sold": { "type": "String" }
+      "base": {
+        "type": "String"
+      },
+      "sold": {
+        "type": "String"
+      }
     }
   },
   "addNewItemMissingPackagingMessage": "Dooro sida loo iibiyo",
   "addNewItemLoadOptionsFailedHint": "Soo jeedimaha lama soo dejin karin. Dooro baakad gaar ah.",
   "addNewItemUseCustomButton": "ISTICMAAL BAAKADAN",
   "addNewItemLooseType": "Furan",
-  "addNewItemBackToTypes": "← Dib u noqo",
   "addPackagingSheetTitle": "Ku dar baakad",
   "addPackagingUnitLabel": "Halbeeg",
   "addPackagingConversionLabel": "Imisa {base} ayaa ku jira 1 {unit}?",
@@ -570,72 +551,85 @@
   "packagingConversionPreview": "1 {unit} waxay qaaddaa {qty} {base}",
   "@packagingConversionPreview": {
     "placeholders": {
-      "unit": { "type": "String" },
-      "qty": { "type": "String" },
-      "base": { "type": "String" }
+      "unit": {
+        "type": "String"
+      },
+      "qty": {
+        "type": "String"
+      },
+      "base": {
+        "type": "String"
+      }
     }
   },
-  "addPackagingBackToSuggestions": "← Ku noqo soo jeedimaha",
   "addPackagingPickedPriceLabel": "Qiimaha iibka mid kasta {packaging} (ikhtiyaari)",
   "addPackagingNoSuggestionsHint": "Halbeegan wali baakado caadi ah uma jiraan — hoosta ka qor mid gaar ah.",
   "addPackagingLoadFailedHint": "Soo jeedimaha lama soo dejin karin. Hoosta ka qor mid gaar ah.",
   "lineEditorCostHintLabel": "Qiimaha aad ku iibsatay ugu dambeysay: {cost}. Ku dar dheeraadkaaga caadi ah.",
   "@lineEditorCostHintLabel": {
-    "placeholders": { "cost": { "type": "String" } }
-  },
-  "lineEditorSiblingHintLabel": "{packaging} waxay iibsataa {price}. Tan tixraac.",
-  "@lineEditorSiblingHintLabel": {
     "placeholders": {
-      "packaging": { "type": "String" },
-      "price": { "type": "String" }
+      "cost": {
+        "type": "String"
+      }
     }
   },
-  "negativeStockToast": "{item} kayd-ka hadda waa {amount} {unit}. Soo qaado dhaqso.",
-  "negativeStockMoreItems": "+ {count, plural, =1{1 shay oo kale} other{{count} shay oo kale}} oo kayd hooseeya",
   "lowStockToast": "{item} kayd-ka wuu hooseeyaa — kaliya {amount} {unit} ayaa hadhay. Soo qaado dhaqso.",
   "@lowStockToast": {
     "placeholders": {
-      "amount": { "type": "String" },
-      "item": { "type": "String" },
-      "unit": { "type": "String" }
+      "amount": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
     }
   },
   "lowStockMoreItems": "+ {count, plural, =1{1 shay oo kale} other{{count} shay oo kale}} oo kayd hooseeya",
   "@lowStockMoreItems": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "shopItemEditorTitleCreate": "Ku dar alaab cusub",
-  "shopItemEditorTitleEdit": "Bedel alaabta",
-  "productEditorLoadFailedMessage": "Lama soo dejin karin alaabtan. Isku day mar kale.",
   "shopItemDetailAliasesHeader": "Magacyo kale",
-  "shopItemDetailBarcodesHeader": "Bar codes",
   "shopItemEditorNameLabel": "Magaca",
   "shopItemEditorBaseUnitLabel": "Halbeeg aasaasi",
   "shopItemEditorCategoryLabel": "Nooca",
   "shopItemEditorReorderThresholdLabel": "Soo digi marka kayd-ku ka hooseeyo",
   "shopItemEditorReorderThresholdHelper": "{unit} ku qor. Ka tag bannaan haddii aadan rabin digniin.",
   "@shopItemEditorReorderThresholdHelper": {
-    "placeholders": { "unit": { "type": "String" } }
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
   },
   "shopItemEditorPackagingsHeader": "Baakado",
   "shopItemEditorAddPackagingButton": "Ku dar baakad",
   "shopItemEditorBaseBadge": "ASAAS",
   "removePackagingTooltip": "Tirtir baakadda",
   "shopItemEditorItemSectionHeader": "Alaab",
-  "shopItemEditorEditHint": "Bedel qiimaha iyo defaults-ka bogga alaabta.",
   "removePackagingConfirmBody": "Ma tirtirayaa baakaddan? Mar dambe wad ku celin kartaa.",
   "removePackagingConfirmAction": "TIRTIR",
   "shopItemEditorSaveButton": "KEYDI",
   "shopItemEditorSaveAndAddAnotherButton": "KEYDI OO KU DAR MID KALE",
   "shopItemEditorSavedAndContinueToast": "{name} waa la keydiyay — ku dar mid kale",
   "@shopItemEditorSavedAndContinueToast": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "shopItemDetailEditPrice": "Bedel qiimaha",
   "shopItemDetailDefaultSaleBadge": "iib caadi",
   "shopItemDetailDefaultReceiveBadge": "alaab caadi",
   "shopItemDetailNoPriceLabel": "qiimo maleh",
-  "shopItemDetailCurrentStockLabel": "{amount} {unit} ayaa yaal",
   "shopItemDetailReorderBelowLabel": "Soo qaado marka uu yaraado {amount} {unit}",
   "catalogPickerTitle": "Eeg liiska guud",
   "catalogPickerSearchHint": "Ku Raadi liiska guud",
@@ -657,59 +651,107 @@
   "scannerHoldSteady": "Si toosan u qabo — 15 ilaa 25 cm meel jeegga",
   "scanUnknownPillLabel": "Jeeg lama yaqaano: {code}",
   "@scanUnknownPillLabel": {
-    "placeholders": {"code": {"type": "String"}}
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
   },
   "scanUnknownCreateAction": "Cusub abuur",
   "scanUnknownDismissAction": "Iska saar",
   "scanLookupFailed": "Jeegga lama heli karo",
   "multiScanSheetTitle": "Multi-akhri ({count})",
   "@multiScanSheetTitle": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "multiScanUnknownCount": "{count, plural, =1{1 jeeg lama yaqaano — eeg ka dib} other{{count} jeeg lama yaqaano — eeg ka dib}}",
   "@multiScanUnknownCount": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "multiScanEmptyHint": "Jeegga camera-da hor dhig. Akhrida guul leh waxay galayaan liiska hoose.",
   "multiScanDoneAction": "DHAMAYE",
   "multiScanLongPressHint": "Si dheer u taabo si aad u multi-akhrido",
   "multiScanAppliedSummary": "{count, plural, =1{1 saf la gallinay} other{{count} saf la galiyay}}",
   "@multiScanAppliedSummary": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "barcodeScanAndBindAction": "Akhri jeegga",
   "barcodeBoundToPackagingMessage": "Jeegga waxa lagu xidhay shaandhada",
   "relativeTimeJustNow": "hadda",
   "relativeTimeMinutesAgo": "{minutes, plural, =1{1 daqiiqo ka hor} other{{minutes} daqiiqo ka hor}}",
   "@relativeTimeMinutesAgo": {
-    "placeholders": {"minutes": {"type": "int"}}
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
   },
   "relativeTimeHoursAgo": "{hours, plural, =1{1 saac ka hor} other{{hours} saac ka hor}}",
   "@relativeTimeHoursAgo": {
-    "placeholders": {"hours": {"type": "int"}}
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
   },
   "relativeTimeDaysAgo": "{days, plural, =1{1 maalin ka hor} other{{days} maalmood ka hor}}",
   "@relativeTimeDaysAgo": {
-    "placeholders": {"days": {"type": "int"}}
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   },
   "relativeTimeOn": "{date}-tii",
   "@relativeTimeOn": {
-    "placeholders": {"date": {"type": "String"}}
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
   },
   "saleHistoryVoidedSubtitle": "la baabi'iyay {when}",
   "@saleHistoryVoidedSubtitle": {
-    "placeholders": {"when": {"type": "String"}}
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
   },
   "shopItemDetailPriceEditedAt": "qiimaha la beddelay {when}",
   "@shopItemDetailPriceEditedAt": {
-    "placeholders": {"when": {"type": "String"}}
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
   },
   "partyDetailEditedAt": "xog xidhiidh la beddelay {when}",
   "@partyDetailEditedAt": {
-    "placeholders": {"when": {"type": "String"}}
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
   },
   "offlineQueuePillLabel": "{count, plural, =1{Hubinta 1} other{Hubinta {count}}}",
   "@offlineQueuePillLabel": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

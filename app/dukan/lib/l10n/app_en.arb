@@ -1,8 +1,8 @@
 {
   "@@locale": "en",
   "appTitle": "Dukan",
-  "languageEnglish": "EN",
-  "languageSomali": "SO",
+  "languageEnglish": "English",
+  "languageSomali": "Somali",
   "homeHint": "Choose today's job",
   "sale": "Sale",
   "receive": "Receive",
@@ -14,26 +14,12 @@
   "searchItems": "Search items",
   "favorites": "Favorites",
   "cart": "CART",
-  "itemsCount": "{count, plural, =0{0 items} =1{1 item} other{{count} items}}",
   "total": "Total",
-  "savedUndo": "Saved.",
   "undo": "Undo",
   "quantity": "Qty",
   "price": "Price",
-  "optionalPrice": "Price override",
-  "addToCart": "ADD TO CART",
   "cancel": "Cancel",
-  "customerDebt": "Customer for debt",
-  "searchCustomers": "Search customers",
-  "emptySaleHint": "Tap item tiles to add. Long-press for quantity or price.",
   "receiveTitle": "Receive",
-  "supplierFirst": "Pick supplier first",
-  "recentSuppliers": "Recent suppliers",
-  "searchSuppliers": "Search suppliers",
-  "newSupplier": "+ New supplier",
-  "newSupplierStub": "New supplier stub — name and phone in production.",
-  "repeatLastBono": "Repeat last receive",
-  "bonoAttached": "Bono attached",
   "bonoAttachTooltip": "Attach bono photo",
   "bonoAttachedTooltip": "Bono attached — tap to replace",
   "bonoAttachCamera": "Take photo",
@@ -55,12 +41,12 @@
   "homeLowStockLabel": "Low stock",
   "homeLowStockCount": "{count, plural, =0{none} =1{1 item} other{{count} items}}",
   "@homeLowStockCount": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
-  "receivablesTitle": "Customers owe you",
-  "receivablesEmptyMessage": "No one owes you right now.",
-  "payablesTitle": "You owe suppliers",
-  "payablesEmptyMessage": "You don't owe anyone right now.",
   "lowStockReportTitle": "Low stock",
   "lowStockReportEmptyMessage": "Nothing is running low.",
   "reportLoadFailedMessage": "Could not load. Pull down to try again.",
@@ -73,29 +59,28 @@
   "dateRangeMonth": "This month",
   "dateRangeAll": "All time",
   "dateRangeCustom": "Custom…",
-  "filterPartyLabel": "Party",
   "filterPartyAny": "Anyone",
-  "filterIncludeVoided": "Include voided",
   "filterHideVoided": "Hide voided",
-  "filterCategoryLabel": "Category",
   "filterCategoryAny": "All categories",
   "filterLowStockOnly": "Low stock only",
   "filterNoPriceOnly": "No price yet",
-  "saleHistorySearchHint": "Search sales",
-  "receiveHistorySearchHint": "Search receives",
-  "receivablesSearchHint": "Search customer",
-  "payablesSearchHint": "Search supplier",
   "lowStockSearchHint": "Search product",
-  "filterChipDateAll": "All time",
   "filterChipParty": "Party: {name}",
   "@filterChipParty": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
-  "filterChipVoided": "Including voided",
   "filterChipHideVoided": "Hiding voided",
   "filterChipCategory": "{name}",
   "@filterChipCategory": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "filterChipLowStock": "Low stock",
   "filterChipNoPrice": "No price",
@@ -116,22 +101,16 @@
   "paymentDirectionAny": "Any direction",
   "paymentDirectionInbound": "Customer paid you",
   "paymentDirectionOutbound": "You paid supplier",
-  "drawerParties": "Customers & suppliers",
-  "partiesTitle": "Customers & suppliers",
-  "partiesSearchHint": "Search by name or phone",
   "partiesLoadFailedMessage": "Could not load. Pull down to try again.",
   "partiesEmptyMessage": "No customers or suppliers yet.",
   "partiesEmptyForQuery": "No matches for \"{query}\".",
   "@partiesEmptyForQuery": {
-    "placeholders": { "query": { "type": "String" } }
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
   },
-  "partiesHasBalanceChip": "Has balance only",
-  "partyTypeLabel": "Type",
-  "partyTypeAny": "Anyone",
-  "partyTypeCustomer": "Customer",
-  "partyTypeSupplier": "Supplier",
-  "partyTypeBoth": "Customer + supplier",
-  "partiesAddButton": "Add",
   "partyNewOpeningReceivableLabel": "Opening balance (they owe you)",
   "partyNewOpeningPayableLabel": "Opening balance (you owe them)",
   "partyNewOpeningBalanceHelper": "Optional — for old debts from before this app.",
@@ -151,11 +130,19 @@
   "suppliersHeadlineLabel": "You owe suppliers",
   "customersHeadlineCount": "{count, plural, =0{No customers with balance} =1{1 customer with balance} other{{count} customers with balance}}",
   "@customersHeadlineCount": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "suppliersHeadlineCount": "{count, plural, =0{No suppliers with balance} =1{1 supplier with balance} other{{count} suppliers with balance}}",
   "@suppliersHeadlineCount": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "peopleSortLabel": "Sort",
   "peopleSortByReceivable": "By debt (most first)",
@@ -163,13 +150,21 @@
   "peopleSortByName": "Alphabetical",
   "stockAdjustTitle": "Adjust {name} stock",
   "@stockAdjustTitle": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "stockAdjustCurrentLabel": "Current: {amount} {unit}",
   "@stockAdjustCurrentLabel": {
     "placeholders": {
-      "amount": { "type": "String" },
-      "unit": { "type": "String" }
+      "amount": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
     }
   },
   "stockAdjustModeOpening": "Opening",
@@ -182,14 +177,22 @@
   "stockAdjustModeSetExactHelper": "Type the new total after a physical count.",
   "stockAdjustAmountLabel": "Amount ({unit})",
   "@stockAdjustAmountLabel": {
-    "placeholders": { "unit": { "type": "String" } }
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
   },
   "stockAdjustNotesLabel": "Note (optional)",
   "stockAdjustPreview": "New stock: {amount} {unit}",
   "@stockAdjustPreview": {
     "placeholders": {
-      "amount": { "type": "String" },
-      "unit": { "type": "String" }
+      "amount": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
     }
   },
   "stockAdjustSaveButton": "SAVE",
@@ -205,17 +208,20 @@
   "aliasAddDialogTitle": "Add another name",
   "aliasAddDialogHint": "e.g. Riis (Somali)",
   "aliasAddDialogLanguage": "Language",
-  "aliasChipRemove": "Remove",
   "aliasAddTooltip": "Add other name",
   "languageNone": "Any",
-  "languageEnglish": "English",
-  "languageSomali": "Somali",
   "productsHeadline": "{total, plural, =0{No products yet} =1{1 product} other{{total} products}} · {low} low · {noPrice} without price",
   "@productsHeadline": {
     "placeholders": {
-      "total": { "type": "int" },
-      "low": { "type": "int" },
-      "noPrice": { "type": "int" }
+      "total": {
+        "type": "int"
+      },
+      "low": {
+        "type": "int"
+      },
+      "noPrice": {
+        "type": "int"
+      }
     }
   },
   "productsSortLabel": "Sort",
@@ -226,59 +232,45 @@
   "topMoversTitle": "Top movers",
   "topMoversPeriodSubtitle": "Last {days} days",
   "@topMoversPeriodSubtitle": {
-    "placeholders": { "days": { "type": "int" } }
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   },
   "topMoversPeriodTooltip": "Period",
   "topMoversPeriodOption": "Last {days} days",
   "@topMoversPeriodOption": {
-    "placeholders": { "days": { "type": "int" } }
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   },
   "topMoversTopSegment": "Top sellers",
   "topMoversDeadSegment": "Dead stock (no sales)",
   "topMoversEmptyMessage": "No sales in this period.",
-  "drawerReportsHeader": "REPORTS",
-  "drawerReceivables": "Customers owe you",
-  "drawerPayables": "You owe suppliers",
   "drawerLowStock": "Low stock",
   "drawerSetupHeader": "SETUP",
   "drawerProducts": "Products",
   "drawerSettings": "Settings",
-  "drawerOpenTooltip": "Menu",
-  "attachBono": "Attach bono photo",
   "receiveFrom": "Receive from {supplier}",
   "item": "Item",
-  "searchItem": "Search item",
   "unit": "Unit",
   "cost": "Cost",
   "perUnit": "per unit",
   "line": "line",
   "lineTotal": "Line total",
-  "addLine": "ADD LINE",
-  "linesSoFar": "Lines so far: {count}",
   "bonoTotal": "Bono total",
-  "paidNow": "Paid now",
   "credit": "Credit",
-  "paidAll": "Paid all",
-  "mismatchWarning": "Bono total differs from lines — OK to continue.",
-  "chooseItemWarning": "Choose item, qty, and cost.",
-  "confirmReceive": "CONFIRM RECEIVE",
-  "numberDone": "DONE",
   "clear": "CLEAR",
-  "backspace": "DEL",
   "paymentTitle": "Customer payment",
-  "pickCustomer": "Pick customer",
   "amount": "Amount",
-  "confirmPayment": "CONFIRM PAYMENT",
   "expenseTitle": "Expense",
   "category": "Category",
-  "confirmExpense": "CONFIRM EXPENSE",
   "rent": "Rent",
-  "power": "Power",
   "salary": "Salary",
-  "water": "Water",
-  "transport": "Transport",
   "other": "Other",
-  "comingSoon": "Mock screen saved. Undo?",
   "supabaseConfigTitle": "Connect Dukan to Supabase",
   "supabaseConfigMessage": "Add Supabase URL and anon key to use login. You can still open the prototype screens.",
   "supabaseConfigCommand": "flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...",
@@ -316,16 +308,13 @@
   "setupStepTemplateTitle": "Choose your shop type",
   "setupStepTemplateBody": "Pick a starter pack so common items and settings are ready for you.",
   "setupStepTemplateDone": "Type chosen: {name}",
-  "setupStepFinishTitle": "Finish setup",
   "setupStepFinishBody": "Confirm and start using your shop.",
   "setupStepFinishButton": "FINISH SETUP",
-  "templatePickerTitle": "Choose your shop type",
   "applyTemplateButton": "USE THIS",
   "applyTemplateFailedMessage": "Could not apply the template. Check your internet and try again.",
   "templatesEmptyMessage": "No shop types are available yet. Contact support if this keeps happening.",
   "completeSetupFailedMessage": "Could not finish setup. Try again.",
   "settingsTitle": "Settings",
-  "openSettings": "Settings",
   "settingsShopNameLabel": "Shop name",
   "settingsCurrencyLabel": "Currency",
   "settingsLanguageLabel": "Default language",
@@ -337,16 +326,7 @@
   "settingsSaveFailedMessage": "Could not save settings. Try again.",
   "productsTitle": "Products",
   "productsSearchHint": "Search Somali or English",
-  "productsInYourShop": "In your shop",
-  "productsFromCatalog": "From catalog",
-  "productsStockLabel": "{quantity} {unit} in stock",
-  "productsNoStock": "No stock yet",
-  "productsAddToShopButton": "ADD",
-  "productsAddingToShop": "Adding…",
-  "productsAddedToShopToast": "{name} added to your shop",
-  "productsAddToShopFailedMessage": "Could not add {name}. Try again.",
   "productsNewItemButton": "+ NEW ITEM",
-  "productsNewItemUnavailable": "Adding off-catalog items comes later.",
   "productsEmptyMessage": "No items yet. Add one from the catalog below.",
   "productsSearchEmptyMessage": "Nothing matches “{query}”.",
   "productsLoadFailedMessage": "Could not load products. Check your internet and try again.",
@@ -361,12 +341,9 @@
   "salePickCustomerButton": "Pick customer",
   "saleCustomerChip": "{name} · owes {amount}",
   "saleSaveButton": "SAVE",
-  "saleSavedToast": "Saved",
   "salePostFailedMessage": "Could not save the sale. Check your internet and try again.",
   "saleNeedItemsMessage": "Add at least one item before saving.",
   "saleNeedCustomerMessage": "Pick the customer for this debt sale.",
-  "saleAddedItemToast": "{name} added",
-  "saleAddItemFailedMessage": "Could not add {name}. Try again.",
   "customerPickerTitle": "Choose customer",
   "customerPickerSearchHint": "Search name or phone",
   "customerPickerOwesLabel": "owes {amount}",
@@ -439,9 +416,6 @@
   "saleVoidRefundExceedsPaidMessage": "Refund cannot exceed the cash paid ({paid}).",
   "saleVoidedToast": "Sale voided",
   "saleVoidFailedMessage": "Could not void this sale. Check your internet and try again.",
-  "historyMenuSales": "Sales history",
-  "historyMenuReceives": "Receive history",
-  "historyMenuTooltip": "History",
   "receiveHistoryTitle": "Receives",
   "receiveHistoryTooltip": "Receive history",
   "receiveHistoryEmptyMessage": "No receives yet. The first SAVE on the Receive screen will land here.",
@@ -464,8 +438,6 @@
   "receiveVoidBlockedStockMessage": "Some items from this receive have already moved. Void blocked.",
   "cartLineSubtotal": "{quantity} × {unitPrice} = {subtotal}",
   "cartRemoveLineTooltip": "Remove {name}",
-  "cartExpandHint": "Show items",
-  "cartCollapseHint": "Hide items",
   "cartClearAllButton": "Clear all",
   "cartClearConfirmTitle": "Clear {count, plural, =1{1 item} other{{count} items}} from cart?",
   "cartClearConfirmBody": "This won't undo any saved sale.",
@@ -487,13 +459,16 @@
   "receiveLoadFailedMessage": "Could not load items. Check your internet and try again.",
   "receiveEmptyMessage": "Tap an item to start the receive. Search if it's not in the grid.",
   "receiveLineQuantityLabel": "Qty",
-  "receiveLinePerUnitLabel": "{currency} per {unit}",
   "receiveLineTotalLabel": "{currency} total",
   "receiveLineDerivedPerUnit": "= {money} per {packaging}",
   "@receiveLineDerivedPerUnit": {
     "placeholders": {
-      "money": { "type": "String" },
-      "packaging": { "type": "String" }
+      "money": {
+        "type": "String"
+      },
+      "packaging": {
+        "type": "String"
+      }
     }
   },
   "receiveAddLineButton": "ADD LINE",
@@ -510,21 +485,16 @@
   "receivePostFailedMessage": "Could not save the receive. Check your internet and try again.",
   "receiveNeedSupplierMessage": "Pick a supplier before saving.",
   "receiveNeedLinesMessage": "Add at least one line before saving.",
-  "receiveInvalidNumberMessage": "Enter a positive number",
   "unitPickerTitle": "Choose unit",
   "unitPickerDefaultBadge": "default",
   "unitPickerBaseUnit": "base unit",
-  "unitPickerConversion": "{multiplier} {base} per {unit}",
   "unitPickerLoadFailedMessage": "Could not load units. Try again.",
   "unitPickerAddPackagingButton": "+ Add packaging",
   "addNewItemSearchResult": "+ Add new item: “{query}”",
   "addNewItemSheetTitle": "Add new item",
   "addNewItemNameLabel": "Name",
-  "addNewItemUnitLabel": "Unit",
   "addNewItemUnitChooseHint": "Choose",
-  "addNewItemPriceLabel": "Sale price per {unit}",
   "addNewItemCategoryLabel": "Category (optional)",
-  "addNewItemCategoryChooseHint": "Choose",
   "addNewItemCancelButton": "CANCEL",
   "addNewItemAddToSaleButton": "ADD TO SALE",
   "addNewItemAddToReceiveButton": "ADD TO RECEIVE",
@@ -536,11 +506,19 @@
   "addNewItemHowDeliveredHeader": "How did the supplier deliver?",
   "addNewItemBaseOnlyTile": "By {base}",
   "@addNewItemBaseOnlyTile": {
-    "placeholders": { "base": { "type": "String" } }
+    "placeholders": {
+      "base": {
+        "type": "String"
+      }
+    }
   },
   "addNewItemPickedPriceLabel": "Sale price per {packaging}",
   "@addNewItemPickedPriceLabel": {
-    "placeholders": { "packaging": { "type": "String" } }
+    "placeholders": {
+      "packaging": {
+        "type": "String"
+      }
+    }
   },
   "addNewItemCustomPackagingEntry": "+ Custom packaging",
   "addNewItemCustomBaseUnitLabel": "Base unit",
@@ -548,15 +526,18 @@
   "addNewItemCustomConversionLabel": "How many {base} in 1 {sold}?",
   "@addNewItemCustomConversionLabel": {
     "placeholders": {
-      "base": { "type": "String" },
-      "sold": { "type": "String" }
+      "base": {
+        "type": "String"
+      },
+      "sold": {
+        "type": "String"
+      }
     }
   },
   "addNewItemMissingPackagingMessage": "Pick how it is sold",
   "addNewItemLoadOptionsFailedHint": "Could not load suggestions. Pick custom packaging.",
   "addNewItemUseCustomButton": "USE THIS PACKAGING",
   "addNewItemLooseType": "Loose",
-  "addNewItemBackToTypes": "← Back",
   "addPackagingSheetTitle": "Add packaging",
   "addPackagingUnitLabel": "Unit",
   "addPackagingConversionLabel": "How many {base} in 1 {unit}?",
@@ -570,72 +551,85 @@
   "packagingConversionPreview": "1 {unit} holds {qty} {base}",
   "@packagingConversionPreview": {
     "placeholders": {
-      "unit": { "type": "String" },
-      "qty": { "type": "String" },
-      "base": { "type": "String" }
+      "unit": {
+        "type": "String"
+      },
+      "qty": {
+        "type": "String"
+      },
+      "base": {
+        "type": "String"
+      }
     }
   },
-  "addPackagingBackToSuggestions": "← Back to suggestions",
   "addPackagingPickedPriceLabel": "Sale price per {packaging} (optional)",
   "addPackagingNoSuggestionsHint": "No common packagings yet for this base unit — define your own below.",
   "addPackagingLoadFailedHint": "Could not load suggestions. Define your own below.",
   "lineEditorCostHintLabel": "Your last cost: {cost}. Add your usual markup.",
   "@lineEditorCostHintLabel": {
-    "placeholders": { "cost": { "type": "String" } }
-  },
-  "lineEditorSiblingHintLabel": "{packaging} sells at {price}. Use that as a guide.",
-  "@lineEditorSiblingHintLabel": {
     "placeholders": {
-      "packaging": { "type": "String" },
-      "price": { "type": "String" }
+      "cost": {
+        "type": "String"
+      }
     }
   },
-  "negativeStockToast": "{item} stock is now {amount} {unit}. Receive soon.",
-  "negativeStockMoreItems": "+ {count, plural, =1{1 more item} other{{count} more items}} low",
   "lowStockToast": "{item} stock is low — only {amount} {unit} left. Receive soon.",
   "@lowStockToast": {
     "placeholders": {
-      "amount": { "type": "String" },
-      "item": { "type": "String" },
-      "unit": { "type": "String" }
+      "amount": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
     }
   },
   "lowStockMoreItems": "+ {count, plural, =1{1 more item} other{{count} more items}} low",
   "@lowStockMoreItems": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "shopItemEditorTitleCreate": "Add product",
-  "shopItemEditorTitleEdit": "Edit product",
-  "productEditorLoadFailedMessage": "Could not load this product. Try again.",
   "shopItemDetailAliasesHeader": "Other names",
-  "shopItemDetailBarcodesHeader": "Barcodes",
   "shopItemEditorNameLabel": "Name",
   "shopItemEditorBaseUnitLabel": "Base unit",
   "shopItemEditorCategoryLabel": "Category",
   "shopItemEditorReorderThresholdLabel": "Warn when stock drops below",
   "shopItemEditorReorderThresholdHelper": "In {unit}. Leave blank for no warning.",
   "@shopItemEditorReorderThresholdHelper": {
-    "placeholders": { "unit": { "type": "String" } }
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
   },
   "shopItemEditorPackagingsHeader": "Packagings",
   "shopItemEditorAddPackagingButton": "Add packaging",
   "shopItemEditorBaseBadge": "BASE",
   "removePackagingTooltip": "Remove packaging",
   "shopItemEditorItemSectionHeader": "Item",
-  "shopItemEditorEditHint": "Edit prices and defaults from the product detail screen.",
   "removePackagingConfirmBody": "Remove this packaging? You can add it back later.",
   "removePackagingConfirmAction": "REMOVE",
   "shopItemEditorSaveButton": "SAVE",
   "shopItemEditorSaveAndAddAnotherButton": "SAVE & ADD ANOTHER",
   "shopItemEditorSavedAndContinueToast": "{name} saved — add another",
   "@shopItemEditorSavedAndContinueToast": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "shopItemDetailEditPrice": "Edit price",
   "shopItemDetailDefaultSaleBadge": "default sale",
   "shopItemDetailDefaultReceiveBadge": "default receive",
   "shopItemDetailNoPriceLabel": "no price yet",
-  "shopItemDetailCurrentStockLabel": "{amount} {unit} in stock",
   "shopItemDetailReorderBelowLabel": "Reorder below {amount} {unit}",
   "catalogPickerTitle": "Browse catalog",
   "catalogPickerSearchHint": "Search global catalog",
@@ -657,59 +651,107 @@
   "scannerHoldSteady": "Hold steady — 15 to 25 cm from the code",
   "scanUnknownPillLabel": "Unknown barcode: {code}",
   "@scanUnknownPillLabel": {
-    "placeholders": {"code": {"type": "String"}}
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
   },
   "scanUnknownCreateAction": "Create new",
   "scanUnknownDismissAction": "Dismiss",
   "scanLookupFailed": "Couldn't look up that barcode",
   "multiScanSheetTitle": "Multi-scan ({count})",
   "@multiScanSheetTitle": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "multiScanUnknownCount": "{count, plural, =1{1 unknown code — review after} other{{count} unknown codes — review after}}",
   "@multiScanUnknownCount": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "multiScanEmptyHint": "Aim at a barcode. Successful scans stage as lines below.",
   "multiScanDoneAction": "DONE",
   "multiScanLongPressHint": "Hold to multi-scan",
   "multiScanAppliedSummary": "{count, plural, =1{1 line staged} other{{count} lines staged}}",
   "@multiScanAppliedSummary": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "barcodeScanAndBindAction": "Scan code",
   "barcodeBoundToPackagingMessage": "Code linked to this packaging",
   "relativeTimeJustNow": "just now",
   "relativeTimeMinutesAgo": "{minutes, plural, =1{1 min ago} other{{minutes} min ago}}",
   "@relativeTimeMinutesAgo": {
-    "placeholders": {"minutes": {"type": "int"}}
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
   },
   "relativeTimeHoursAgo": "{hours, plural, =1{1 hr ago} other{{hours} hr ago}}",
   "@relativeTimeHoursAgo": {
-    "placeholders": {"hours": {"type": "int"}}
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
   },
   "relativeTimeDaysAgo": "{days, plural, =1{1 day ago} other{{days} days ago}}",
   "@relativeTimeDaysAgo": {
-    "placeholders": {"days": {"type": "int"}}
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   },
   "relativeTimeOn": "on {date}",
   "@relativeTimeOn": {
-    "placeholders": {"date": {"type": "String"}}
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
   },
   "saleHistoryVoidedSubtitle": "voided {when}",
   "@saleHistoryVoidedSubtitle": {
-    "placeholders": {"when": {"type": "String"}}
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
   },
   "shopItemDetailPriceEditedAt": "price edited {when}",
   "@shopItemDetailPriceEditedAt": {
-    "placeholders": {"when": {"type": "String"}}
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
   },
   "partyDetailEditedAt": "contact info edited {when}",
   "@partyDetailEditedAt": {
-    "placeholders": {"when": {"type": "String"}}
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
   },
   "offlineQueuePillLabel": "{count, plural, =1{Syncing 1} other{Syncing {count}}}",
   "@offlineQueuePillLabel": {
-    "placeholders": {"count": {"type": "int"}}
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }
