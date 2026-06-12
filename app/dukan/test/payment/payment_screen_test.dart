@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/payment/payment_controller.dart';
@@ -66,12 +67,14 @@ void main() {
         methodCode,
         clientOpId,
         notes,
+        allocations,
       ) async {
         captured = {
           'partyId': partyId,
           'direction': direction,
           'amount': amount,
           'methodCode': methodCode,
+          'allocations': allocations,
         };
         return 'fake-payment';
       };
@@ -116,6 +119,7 @@ void main() {
         methodCode,
         clientOpId,
         notes,
+        allocations,
       ) async {
         captured = {'partyId': partyId, 'direction': direction, 'amount': amount};
         return 'fake-payment';
@@ -162,7 +166,7 @@ void main() {
     (tester) async {
       api.onSearchParties = (_, _, _, _) async => [_ahmed()];
       var postCalled = false;
-      api.onPostPayment = (_, _, _, _, _, _, _) async {
+      api.onPostPayment = (_, _, _, _, _, _, _, _) async {
         postCalled = true;
         return 'should-not-happen';
       };
@@ -184,6 +188,175 @@ void main() {
       );
       expect(saveButton.onPressed, isNull);
       expect(postCalled, isFalse);
+    },
+  );
+
+  testWidgets(
+    'chip hidden until a party with a balance is picked and an amount entered',
+    (tester) async {
+      api.onSearchParties = (_, _, _, _) async => [_ahmed()];
+      api.onListUnpaidInvoices = (_, _, _) async => [
+        UnpaidInvoice(
+          transactionId: 'tx-1',
+          occurredAt: DateTime(2026, 5, 1),
+          originalAmount: 40,
+          alreadyPaid: 0,
+          remaining: 40,
+        ),
+      ];
+
+      await pumpPayment(tester);
+      await tester.pumpAndSettle();
+      // Before party + amount: no chip.
+      expect(find.text(en.paymentChooseInvoicesChip), findsNothing);
+
+      await tester.tap(find.text(en.paymentPickCustomerButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ahmed'));
+      await tester.pumpAndSettle();
+      // Party picked but amount = 0 → still no chip.
+      expect(find.text(en.paymentChooseInvoicesChip), findsNothing);
+
+      await tester.enterText(find.byType(TextField), '20');
+      await tester.pump();
+      expect(find.text(en.paymentChooseInvoicesChip), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'tapping chip opens sheet, applying allocations posts with p_allocations',
+    (tester) async {
+      api.onSearchParties = (_, _, _, _) async => [_ahmed()];
+      api.onListUnpaidInvoices = (_, _, _) async => [
+        UnpaidInvoice(
+          transactionId: 'tx-1',
+          occurredAt: DateTime(2026, 5, 1),
+          originalAmount: 30,
+          alreadyPaid: 0,
+          remaining: 30,
+        ),
+      ];
+      List<PaymentAllocationInput>? capturedAllocations;
+      api.onPostPayment = (
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        allocations,
+      ) async {
+        capturedAllocations = allocations;
+        return 'fake-payment';
+      };
+
+      await pumpPayment(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.paymentPickCustomerButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ahmed'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, '20');
+      await tester.pump();
+
+      await tester.tap(find.text(en.paymentChooseInvoicesChip));
+      await tester.pumpAndSettle();
+
+      // Sheet open with FIFO pre-fill (\$20 against the only invoice).
+      expect(find.text(en.allocationBalanced), findsOneWidget);
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.allocationApplyButton),
+      );
+      await tester.pumpAndSettle();
+
+      // Chip should now show "1 invoice chosen" — and the payment
+      // controller knows it has explicit allocations.
+      expect(payment.hasExplicitAllocations, isTrue);
+
+      await tester.tap(find.widgetWithText(FilledButton, en.paymentSaveButton));
+      await tester.pumpAndSettle();
+
+      expect(capturedAllocations, isNotNull);
+      expect(capturedAllocations!.length, 1);
+      expect(capturedAllocations!.first.transactionId, 'tx-1');
+      expect(capturedAllocations!.first.amount, 20);
+    },
+  );
+
+  testWidgets(
+    'SAVE without opening the chip posts with allocations=null (FIFO path)',
+    (tester) async {
+      api.onSearchParties = (_, _, _, _) async => [_ahmed()];
+      List<PaymentAllocationInput>? capturedAllocations;
+      var posted = false;
+      api.onPostPayment = (
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        allocations,
+      ) async {
+        capturedAllocations = allocations;
+        posted = true;
+        return 'fake-payment';
+      };
+
+      await pumpPayment(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.paymentPickCustomerButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ahmed'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, '15');
+      await tester.pump();
+
+      await tester.tap(find.widgetWithText(FilledButton, en.paymentSaveButton));
+      await tester.pumpAndSettle();
+
+      expect(posted, isTrue);
+      expect(capturedAllocations, isNull);
+    },
+  );
+
+  testWidgets(
+    'changing amount after opening the sheet invalidates allocations',
+    (tester) async {
+      api.onSearchParties = (_, _, _, _) async => [_ahmed()];
+      api.onListUnpaidInvoices = (_, _, _) async => [
+        UnpaidInvoice(
+          transactionId: 'tx-1',
+          occurredAt: DateTime(2026, 5, 1),
+          originalAmount: 30,
+          alreadyPaid: 0,
+          remaining: 30,
+        ),
+      ];
+
+      await pumpPayment(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.paymentPickCustomerButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ahmed'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, '20');
+      await tester.pump();
+
+      await tester.tap(find.text(en.paymentChooseInvoicesChip));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.allocationApplyButton),
+      );
+      await tester.pumpAndSettle();
+      expect(payment.hasExplicitAllocations, isTrue);
+
+      // Bumping the amount invalidates allocations (sum no longer matches).
+      await tester.enterText(find.byType(TextField).first, '25');
+      await tester.pump();
+      expect(payment.hasExplicitAllocations, isFalse);
     },
   );
 

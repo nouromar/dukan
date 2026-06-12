@@ -946,6 +946,69 @@ class AppLocalizationsSo extends AppLocalizations {
       'Lacag bixinta lama keydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
+  String get paymentChooseInvoicesChip => 'Dooro biilasha';
+
+  @override
+  String paymentChooseInvoicesChipDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count biil ayaa la doortay',
+      one: '1 biil ayaa la doortay',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String allocationHeader(String party) {
+    return '$party · dooro biilasha';
+  }
+
+  @override
+  String allocationToAllocate(String amount) {
+    return '$amount ayaa la qaybinaayaa';
+  }
+
+  @override
+  String allocationRowOpen(String open, String original) {
+    return 'Furan $open ee $original';
+  }
+
+  @override
+  String allocationStillToAllocate(String amount) {
+    return 'Wali waxaa hadhay: $amount';
+  }
+
+  @override
+  String allocationOverAllocated(String amount) {
+    return 'Waad dheereysay: $amount';
+  }
+
+  @override
+  String get allocationBalanced => 'Saxan';
+
+  @override
+  String get allocationApplyButton => 'ADKEE';
+
+  @override
+  String get allocationNeedAtLeastOne =>
+      'Doorro biil ugu yaraan mid si aad u adkayso.';
+
+  @override
+  String get allocationLoadFailed => 'Biilasha furan lama soo qaadan karin.';
+
+  @override
+  String get allocationNoOpenInvoices => 'Biil furan oo qofkan ah ma jiraan.';
+
+  @override
+  String get partyDetailOpenInvoicesHeader => 'Biilasha furan';
+
+  @override
+  String partyDetailOpenInvoiceRow(String open, String original) {
+    return '$open furan oo $original';
+  }
+
+  @override
   String get expenseCategoryLabel => 'Nooca';
 
   @override

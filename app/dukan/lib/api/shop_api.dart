@@ -153,6 +153,72 @@ typedef CreateShopItemResult = ({
   String defaultShopItemUnitId,
 });
 
+/// One row from `list_unpaid_invoices` — a party's open sale or receive
+/// with the amount the cashier can still allocate against it.
+class UnpaidInvoice {
+  const UnpaidInvoice({
+    required this.transactionId,
+    required this.occurredAt,
+    required this.originalAmount,
+    required this.alreadyPaid,
+    required this.remaining,
+    this.documentId,
+  });
+
+  factory UnpaidInvoice.fromJson(Map<String, dynamic> json) => UnpaidInvoice(
+        transactionId: json['transaction_id'] as String,
+        occurredAt: DateTime.parse(json['occurred_at'] as String),
+        originalAmount: (json['original_amount'] as num).toDouble(),
+        alreadyPaid: (json['already_paid'] as num).toDouble(),
+        remaining: (json['remaining'] as num).toDouble(),
+        documentId: json['document_id'] as String?,
+      );
+
+  final String transactionId;
+  final DateTime occurredAt;
+  final double originalAmount;
+  final double alreadyPaid;
+  final double remaining;
+  final String? documentId;
+}
+
+/// One row from `list_payment_allocations` — what a posted payment
+/// settled, with the invoice's date so the history drilldown can
+/// label each row.
+class PostedAllocation {
+  const PostedAllocation({
+    required this.transactionId,
+    required this.amount,
+    required this.occurredAt,
+    required this.txnType,
+  });
+
+  factory PostedAllocation.fromJson(Map<String, dynamic> json) =>
+      PostedAllocation(
+        transactionId: json['transaction_id'] as String,
+        amount: (json['amount'] as num).toDouble(),
+        occurredAt: DateTime.parse(json['occurred_at'] as String),
+        txnType: json['txn_type'] as String,
+      );
+
+  final String transactionId;
+  final double amount;
+  final DateTime occurredAt;
+  /// 'sale' or 'receive' — used by the history drilldown to label the row.
+  final String txnType;
+}
+
+/// Cashier-supplied per-invoice allocation rider on `postPayment`.
+class PaymentAllocationInput {
+  const PaymentAllocationInput({
+    required this.transactionId,
+    required this.amount,
+  });
+
+  final String transactionId;
+  final num amount;
+}
+
 /// jsonb object with four sections; we parse it here so callers get
 /// typed lists.
 class ShopItemDetail {
@@ -1212,6 +1278,11 @@ class ShopApi {
   /// or 'O' for an outbound payment (shop pays down its payable to a
   /// supplier). The RPC validates the party matches the direction and
   /// that the amount doesn't exceed the outstanding balance.
+  ///
+  /// When `allocations` is non-empty, the server uses the cashier-chosen
+  /// per-invoice breakdown (see `docs/payment-allocation.md` § 6.3).
+  /// When null or empty, the server runs FIFO over the party's open
+  /// invoices, oldest first — the default for 95% of payments.
   Future<String> postPayment({
     required String shopId,
     required String partyId,
@@ -1220,6 +1291,7 @@ class ShopApi {
     required String paymentMethodCode,
     required String clientOpId,
     String? notes,
+    List<PaymentAllocationInput>? allocations,
   }) async {
     final result = await _client.rpc(
       'post_payment',
@@ -1231,9 +1303,61 @@ class ShopApi {
         'p_payment_method_code': paymentMethodCode,
         'p_client_op_id': clientOpId,
         'p_notes': notes,
+        if (allocations != null && allocations.isNotEmpty)
+          'p_allocations': allocations
+              .map((a) => {
+                    'transaction_id': a.transactionId,
+                    'amount': a.amount,
+                  })
+              .toList(growable: false),
       },
     );
     return result as String;
+  }
+
+  /// list_unpaid_invoices — open sales (for direction='I') or open
+  /// receives (for 'O') belonging to a party, oldest first. Backs both
+  /// the allocation editor and the Party detail "Open invoices" section.
+  Future<List<UnpaidInvoice>> listUnpaidInvoices({
+    required String shopId,
+    required String partyId,
+    required String direction,
+  }) async {
+    final rows = await _client.rpc(
+      'list_unpaid_invoices',
+      params: {
+        'p_shop_id': shopId,
+        'p_party_id': partyId,
+        'p_direction': direction,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<UnpaidInvoice>(
+          (row) => UnpaidInvoice.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// list_payment_allocations — the per-invoice breakdown of a posted
+  /// payment. Used by the Payment history detail screen.
+  Future<List<PostedAllocation>> listPaymentAllocations({
+    required String shopId,
+    required String paymentId,
+  }) async {
+    final rows = await _client.rpc(
+      'list_payment_allocations',
+      params: {
+        'p_shop_id': shopId,
+        'p_payment_id': paymentId,
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<PostedAllocation>(
+          (row) => PostedAllocation.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
   }
 
   /// post_receive — supplier-attributed inventory + payable updates.

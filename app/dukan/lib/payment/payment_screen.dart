@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/observability/timing.dart';
+import 'package:dukan/payment/allocation_sheet.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -77,6 +78,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
     context.read<PaymentController>().setAmount(parsed);
   }
 
+  Future<void> _onChooseInvoices() async {
+    final controller = context.read<PaymentController>();
+    final party = controller.party;
+    if (party == null || controller.amount <= 0) return;
+    final allocations = await showAllocationSheet(
+      context: context,
+      shop: widget.shop,
+      partyId: party.id,
+      partyName: party.name,
+      direction: controller.type.direction,
+      totalToAllocate: controller.amount,
+      initial: controller.allocations,
+    );
+    if (allocations != null && mounted) {
+      controller.setAllocations(allocations);
+    }
+  }
+
   Future<void> _save() async {
     final l = tr(context);
     final controller = context.read<PaymentController>();
@@ -111,6 +130,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final amount = controller.amount;
     final partyId = party.id;
     final direction = controller.type.direction;
+    final allocations = controller.allocations;
     final clientOpId = _generateClientOpId();
     final failureMessage = l.paymentPostFailedMessage;
 
@@ -128,6 +148,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         direction: direction,
         amount: amount,
         clientOpId: clientOpId,
+        allocations: allocations,
         messenger: messenger,
         failureMessage: failureMessage,
       ),
@@ -140,6 +161,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     required String direction,
     required num amount,
     required String clientOpId,
+    required List<PaymentAllocationInput>? allocations,
     required ScaffoldMessengerState messenger,
     required String failureMessage,
   }) async {
@@ -151,6 +173,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         amount: amount,
         paymentMethodCode: 'cash',
         clientOpId: clientOpId,
+        allocations: allocations,
       );
     } catch (error, stackTrace) {
       FlutterError.reportError(
@@ -271,6 +294,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       '${widget.shop.currencySymbol} ${l.paymentAmountLabel}',
                 ),
               ),
+              if (canSave && controller.outstandingBalance > 0) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.center,
+                  child: ActionChip(
+                    avatar: Icon(
+                      controller.hasExplicitAllocations
+                          ? Icons.check_circle
+                          : Icons.tune,
+                      size: 18,
+                    ),
+                    label: Text(
+                      controller.hasExplicitAllocations
+                          ? l.paymentChooseInvoicesChipDone(
+                              controller.allocations!.length,
+                            )
+                          : l.paymentChooseInvoicesChip,
+                    ),
+                    onPressed: _onChooseInvoices,
+                  ),
+                ),
+              ],
               const Spacer(),
               SizedBox(
                 width: double.infinity,

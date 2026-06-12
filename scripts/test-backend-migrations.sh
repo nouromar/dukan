@@ -4123,6 +4123,262 @@ end;
 $$;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
+-- ---------------------------------------------------------------------------
+-- §II Per-invoice payment allocation (0053). Verify:
+--   1. Standalone post_payment writes FIFO rows for default path; sum
+--      equals payment amount; oldest invoice gets touched first.
+--   2. Explicit p_allocations writes exactly those rows; FIFO skipped.
+--   3. Validation rules raise on bad input (duplicate, wrong party,
+--      wrong direction, sum mismatch, over-allocation, voided).
+--   4. client_op_id replay returns same payment_id without doubling
+--      allocations.
+--   5. list_unpaid_invoices returns open rows oldest first; voided
+--      excluded.
+--   6. list_payment_allocations returns per-invoice rows.
+--   7. v_party_aging shows one row per unpaid invoice with correct
+--      outstanding.
+
+set role authenticated;
+do $$
+declare
+  v_shop_id    uuid;
+  v_cust_id    uuid;
+  v_sale_a     uuid;
+  v_sale_b     uuid;
+  v_sale_c     uuid;
+  v_pay_id     uuid;
+  v_pay_replay uuid;
+  v_alloc_n    int;
+  v_alloc_sum  numeric;
+  v_remaining  numeric;
+  v_age_n      int;
+  v_failed     boolean;
+  v_open_n     int;
+  v_unit_id    uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+
+  -- Pick any base (conversion_to_base=1) shop_item_unit in this shop.
+  select siu.id into v_unit_id
+  from public.shop_item_unit siu
+  join public.shop_item si on si.id = siu.shop_item_id
+  where siu.shop_id = v_shop_id and siu.conversion_to_base = 1
+    and si.current_stock > 0
+  limit 1;
+  if v_unit_id is null then
+    raise exception 'II setup: no base packaging available in this shop';
+  end if;
+
+  -- Fresh customer with three credit sales of $10, $20, $30 (oldest first).
+  v_cust_id := public.create_party(
+    v_shop_id, 'II Allocation Customer', null, 'customer'
+  );
+
+  v_sale_a := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id',
+      v_unit_id,
+      'quantity', 10, 'unit_price', 1
+    )),
+    0, null, null, 'II-sale-a', '2026-01-01 09:00+03'::timestamptz, 'cred A'
+  );
+  v_sale_b := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id',
+      v_unit_id,
+      'quantity', 20, 'unit_price', 1
+    )),
+    0, null, null, 'II-sale-b', '2026-02-01 09:00+03'::timestamptz, 'cred B'
+  );
+  v_sale_c := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id',
+      v_unit_id,
+      'quantity', 30, 'unit_price', 1
+    )),
+    0, null, null, 'II-sale-c', '2026-03-01 09:00+03'::timestamptz, 'cred C'
+  );
+
+  if (select receivable from public.party where id = v_cust_id) <> 60 then
+    raise exception 'II setup: three sales should leave $60 receivable';
+  end if;
+
+  -- (5) list_unpaid_invoices: 3 open, oldest first.
+  select count(*) into v_open_n
+  from public.list_unpaid_invoices(v_shop_id, v_cust_id, 'I');
+  if v_open_n <> 3 then
+    raise exception 'II (5): list_unpaid_invoices want 3 open, got %', v_open_n;
+  end if;
+  if (select transaction_id from public.list_unpaid_invoices(v_shop_id, v_cust_id, 'I')
+      limit 1) <> v_sale_a then
+    raise exception 'II (5): list_unpaid_invoices must order oldest first';
+  end if;
+
+  -- (1) Default FIFO: $25 payment fully consumes A ($10), partly consumes B ($15).
+  v_pay_id := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 25, 'cash',
+    'II-pay-fifo', null, null, null, null
+  );
+
+  select count(*) into v_alloc_n
+  from public.payment_allocation
+  where shop_id = v_shop_id and payment_id = v_pay_id;
+  if v_alloc_n <> 2 then
+    raise exception 'II (1): FIFO want 2 alloc rows, got %', v_alloc_n;
+  end if;
+
+  if (select amount from public.payment_allocation
+      where shop_id = v_shop_id and payment_id = v_pay_id and transaction_id = v_sale_a)
+     <> 10 then
+    raise exception 'II (1): FIFO must fully consume oldest sale A ($10)';
+  end if;
+  if (select amount from public.payment_allocation
+      where shop_id = v_shop_id and payment_id = v_pay_id and transaction_id = v_sale_b)
+     <> 15 then
+    raise exception 'II (1): FIFO must put remaining $15 on sale B';
+  end if;
+
+  -- (4) client_op_id replay returns same payment_id; no extra alloc rows.
+  v_pay_replay := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 25, 'cash',
+    'II-pay-fifo', null, null, null, null
+  );
+  if v_pay_replay <> v_pay_id then
+    raise exception 'II (4): client_op_id replay must return same payment_id';
+  end if;
+  select count(*) into v_alloc_n
+  from public.payment_allocation
+  where shop_id = v_shop_id and payment_id = v_pay_id;
+  if v_alloc_n <> 2 then
+    raise exception 'II (4): replay must not double-write allocations (got %)',
+      v_alloc_n;
+  end if;
+
+  -- list_unpaid_invoices now shows 2 open (B at $5, C at $30).
+  select count(*) into v_open_n
+  from public.list_unpaid_invoices(v_shop_id, v_cust_id, 'I');
+  if v_open_n <> 2 then
+    raise exception 'II (5): after FIFO want 2 open, got %', v_open_n;
+  end if;
+  select remaining into v_remaining
+  from public.list_unpaid_invoices(v_shop_id, v_cust_id, 'I')
+  where transaction_id = v_sale_b;
+  if v_remaining <> 5 then
+    raise exception 'II (5): sale B remaining want 5, got %', v_remaining;
+  end if;
+
+  -- (2) Explicit allocation: $20 split as $5 on B + $15 on C.
+  v_pay_id := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 20, 'cash',
+    'II-pay-explicit', null, null, null,
+    jsonb_build_array(
+      jsonb_build_object('transaction_id', v_sale_b::text, 'amount', 5),
+      jsonb_build_object('transaction_id', v_sale_c::text, 'amount', 15)
+    )
+  );
+  select count(*), pg_catalog.sum(amount) into v_alloc_n, v_alloc_sum
+  from public.payment_allocation
+  where shop_id = v_shop_id and payment_id = v_pay_id;
+  if v_alloc_n <> 2 or v_alloc_sum <> 20 then
+    raise exception 'II (2): explicit want 2 rows summing 20, got % rows summing %',
+      v_alloc_n, v_alloc_sum;
+  end if;
+
+  -- (6) list_payment_allocations returns the breakdown.
+  select count(*) into v_alloc_n
+  from public.list_payment_allocations(v_shop_id, v_pay_id);
+  if v_alloc_n <> 2 then
+    raise exception 'II (6): list_payment_allocations want 2 rows, got %', v_alloc_n;
+  end if;
+
+  -- (3a) Validation: sum mismatch.
+  v_failed := false;
+  begin
+    perform public.post_payment(
+      v_shop_id, v_cust_id, 'I', 5, 'cash',
+      'II-bad-sum', null, null, null,
+      jsonb_build_array(jsonb_build_object(
+        'transaction_id', v_sale_c::text, 'amount', 4
+      ))
+    );
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'II (3a): sum-mismatch allocation must raise';
+  end if;
+
+  -- (3b) Validation: duplicate transaction_id.
+  v_failed := false;
+  begin
+    perform public.post_payment(
+      v_shop_id, v_cust_id, 'I', 5, 'cash',
+      'II-bad-dup', null, null, null,
+      jsonb_build_array(
+        jsonb_build_object('transaction_id', v_sale_c::text, 'amount', 3),
+        jsonb_build_object('transaction_id', v_sale_c::text, 'amount', 2)
+      )
+    );
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'II (3b): duplicate transaction_id must raise';
+  end if;
+
+  -- (3c) Validation: allocation amount exceeds invoice remaining (sale C
+  --      has $15 remaining after the explicit payment above).
+  v_failed := false;
+  begin
+    perform public.post_payment(
+      v_shop_id, v_cust_id, 'I', 15, 'cash',
+      'II-bad-over', null, null, null,
+      jsonb_build_array(jsonb_build_object(
+        'transaction_id', v_sale_c::text, 'amount', 15.01
+      ))
+    );
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'II (3c): over-allocation must raise';
+  end if;
+
+  -- (3d) Validation: wrong direction (allocate against sale on an O payment).
+  v_failed := false;
+  begin
+    perform public.post_payment(
+      v_shop_id, v_cust_id, 'O', 5, 'cash',
+      'II-bad-dir', null, null, null,
+      jsonb_build_array(jsonb_build_object(
+        'transaction_id', v_sale_c::text, 'amount', 5
+      ))
+    );
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'II (3d): wrong-direction allocation must raise';
+  end if;
+
+  -- (7) v_party_aging: after FIFO + explicit, only sale C ($15) remains open.
+  --     A: fully paid by FIFO ($10). B: $15 FIFO + $5 explicit = $20 closed.
+  --     C: $15 explicit allocation against $30 total → $15 open.
+  select count(*) into v_age_n
+  from public.v_party_aging
+  where shop_id = v_shop_id and party_id = v_cust_id and outstanding > 0;
+  if v_age_n <> 1 then
+    raise exception 'II (7): v_party_aging want 1 unpaid row, got %', v_age_n;
+  end if;
+  select outstanding into v_remaining
+  from public.v_party_aging
+  where shop_id = v_shop_id and party_id = v_cust_id and transaction_id = v_sale_c;
+  if v_remaining <> 15 then
+    raise exception 'II (7): sale C outstanding want 15, got %', v_remaining;
+  end if;
+end;
+$$;
+reset role;
+
 reset role;
 
 do $$

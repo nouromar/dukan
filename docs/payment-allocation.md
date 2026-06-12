@@ -416,7 +416,7 @@ Cold-cache RPC budget for the default path: **no change**. The editor opens with
 
 ## 10. Offline write queue compatibility
 
-The Payment screen already routes through the offline queue per `#232` Phase 1 of the queue rollout (Payment was wired alongside Sale in Phase 2 — confirm against the punch list when implementing #234).
+Payment is not yet wired to the offline queue (#232 Phase 1 covered Sale only; the remaining flows ship in Phase 2). When Payment is wired:
 
 When the queue drains a queued payment with explicit allocations:
 

@@ -372,6 +372,57 @@
   "paymentNeedAmountMessage": "Enter an amount greater than zero.",
   "paymentExceedsBalanceMessage": "Amount cannot exceed the outstanding balance ({amount}).",
   "paymentPostFailedMessage": "Could not save the payment. Check your internet and try again.",
+  "paymentChooseInvoicesChip": "Choose invoices",
+  "paymentChooseInvoicesChipDone": "{count, plural, =1{1 invoice chosen} other{{count} invoices chosen}}",
+  "@paymentChooseInvoicesChipDone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "allocationHeader": "{party} · choose invoices",
+  "@allocationHeader": {
+    "placeholders": {
+      "party": { "type": "String" }
+    }
+  },
+  "allocationToAllocate": "{amount} to allocate",
+  "@allocationToAllocate": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "allocationRowOpen": "Open {open} of {original}",
+  "@allocationRowOpen": {
+    "placeholders": {
+      "open": { "type": "String" },
+      "original": { "type": "String" }
+    }
+  },
+  "allocationStillToAllocate": "Still to allocate: {amount}",
+  "@allocationStillToAllocate": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "allocationOverAllocated": "Over by {amount}",
+  "@allocationOverAllocated": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "allocationBalanced": "Balanced",
+  "allocationApplyButton": "APPLY",
+  "allocationNeedAtLeastOne": "Choose at least one invoice to apply.",
+  "allocationLoadFailed": "Could not load open invoices.",
+  "allocationNoOpenInvoices": "No open invoices for this person.",
+  "partyDetailOpenInvoicesHeader": "Open invoices",
+  "partyDetailOpenInvoiceRow": "{open} open of {original}",
+  "@partyDetailOpenInvoiceRow": {
+    "placeholders": {
+      "open": { "type": "String" },
+      "original": { "type": "String" }
+    }
+  },
   "expenseCategoryLabel": "Category",
   "expenseAmountLabel": "Amount",
   "expenseSaveButton": "SAVE",

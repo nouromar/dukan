@@ -332,8 +332,17 @@ class FakeShopApi implements ShopApi {
     String paymentMethodCode,
     String clientOpId,
     String? notes,
+    List<PaymentAllocationInput>? allocations,
   )?
   onPostPayment;
+  Future<List<UnpaidInvoice>> Function(
+    String shopId,
+    String partyId,
+    String direction,
+  )?
+  onListUnpaidInvoices;
+  Future<List<PostedAllocation>> Function(String shopId, String paymentId)?
+  onListPaymentAllocations;
   Future<List<ExpenseCategoryOption>> Function(String shopId, String? locale)?
   onListExpenseCategories;
   Future<List<SaleSummary>> Function(
@@ -1148,6 +1157,7 @@ class FakeShopApi implements ShopApi {
     required String paymentMethodCode,
     required String clientOpId,
     String? notes,
+    List<PaymentAllocationInput>? allocations,
   }) async {
     if (onPostPayment != null) {
       return onPostPayment!(
@@ -1158,9 +1168,33 @@ class FakeShopApi implements ShopApi {
         paymentMethodCode,
         clientOpId,
         notes,
+        allocations,
       );
     }
     return 'fake-payment-${clientOpId.hashCode}';
+  }
+
+  @override
+  Future<List<UnpaidInvoice>> listUnpaidInvoices({
+    required String shopId,
+    required String partyId,
+    required String direction,
+  }) async {
+    if (onListUnpaidInvoices != null) {
+      return onListUnpaidInvoices!(shopId, partyId, direction);
+    }
+    return const [];
+  }
+
+  @override
+  Future<List<PostedAllocation>> listPaymentAllocations({
+    required String shopId,
+    required String paymentId,
+  }) async {
+    if (onListPaymentAllocations != null) {
+      return onListPaymentAllocations!(shopId, paymentId);
+    }
+    return const [];
   }
 
   @override

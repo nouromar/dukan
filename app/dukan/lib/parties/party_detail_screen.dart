@@ -34,8 +34,15 @@ class PartyDetailScreen extends StatefulWidget {
 }
 
 class _PartyBootstrap {
-  const _PartyBootstrap({required this.detail, this.editedAt});
+  const _PartyBootstrap({
+    required this.detail,
+    required this.openInvoices,
+    this.editedAt,
+  });
   final PartyDetail detail;
+  /// Open sales (for customers) or open receives (for suppliers).
+  /// Empty when nothing is unpaid. Drives the "Open invoices" section.
+  final List<UnpaidInvoice> openInvoices;
   /// Latest `people.party.edit` audit timestamp; null when nothing
   /// has been logged for this party yet.
   final DateTime? editedAt;
@@ -90,9 +97,25 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
         )
         .catchError((_) => const <AuditEntry>[]);
     final detail = await detailF;
+    // Direction is derived from the party type: customer → inbound,
+    // supplier → outbound. A `both` party defaults to customer view.
+    final direction =
+        detail.header.typeCode == 'supplier' ? 'O' : 'I';
+    final openInvoicesF = api
+        .listUnpaidInvoices(
+          shopId: widget.shop.id,
+          partyId: widget.partyId,
+          direction: direction,
+        )
+        .catchError((_) => const <UnpaidInvoice>[]);
     final audits = await auditF;
+    final openInvoices = await openInvoicesF;
     final editedAt = audits.isEmpty ? null : audits.first.occurredAt;
-    return _PartyBootstrap(detail: detail, editedAt: editedAt);
+    return _PartyBootstrap(
+      detail: detail,
+      openInvoices: openInvoices,
+      editedAt: editedAt,
+    );
   }
 
   /// Inline edit — opens a small dialog with name + phone fields,
@@ -189,6 +212,7 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
             return _Body(
               shop: widget.shop,
               detail: bootstrap.detail,
+              openInvoices: bootstrap.openInvoices,
               editedAt: bootstrap.editedAt,
               onPay: () => _onPay(bootstrap.detail),
               onEdit: () => _onEdit(bootstrap.detail),
@@ -204,6 +228,7 @@ class _Body extends StatelessWidget {
   const _Body({
     required this.shop,
     required this.detail,
+    required this.openInvoices,
     required this.onPay,
     required this.onEdit,
     this.editedAt,
@@ -211,6 +236,7 @@ class _Body extends StatelessWidget {
 
   final ShopSummary shop;
   final PartyDetail detail;
+  final List<UnpaidInvoice> openInvoices;
   final VoidCallback onPay;
   final VoidCallback onEdit;
   final DateTime? editedAt;
@@ -307,6 +333,12 @@ class _Body extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        if (openInvoices.isNotEmpty) ...[
+          _SectionHeader(label: l.partyDetailOpenInvoicesHeader),
+          for (final inv in openInvoices)
+            _OpenInvoiceTile(shop: shop, invoice: inv),
+          const SizedBox(height: 16),
+        ],
         if (detail.sales.isNotEmpty) ...[
           _SectionHeader(label: l.partyDetailSalesHeader),
           for (final s in detail.sales)
@@ -388,6 +420,37 @@ class _TxnTile extends StatelessWidget {
         formatMoney(amount, shop),
         style: theme.textTheme.titleMedium?.copyWith(
           decoration: voided ? TextDecoration.lineThrough : null,
+        ),
+      ),
+    );
+  }
+}
+
+class _OpenInvoiceTile extends StatelessWidget {
+  const _OpenInvoiceTile({required this.shop, required this.invoice});
+
+  final ShopSummary shop;
+  final UnpaidInvoice invoice;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+      dense: true,
+      title: Text(formatHistoryStamp(context, invoice.occurredAt)),
+      subtitle: Text(
+        l.partyDetailOpenInvoiceRow(
+          formatMoney(invoice.remaining, shop),
+          formatMoney(invoice.originalAmount, shop),
+        ),
+      ),
+      trailing: Text(
+        formatMoney(invoice.remaining, shop),
+        style: theme.textTheme.titleMedium?.copyWith(
+          color: theme.colorScheme.error,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

@@ -371,6 +371,57 @@
   "paymentNeedAmountMessage": "Geli lacag ka badan eber.",
   "paymentExceedsBalanceMessage": "Lacagtu kama badnaan karto wadarta deynta ({amount}).",
   "paymentPostFailedMessage": "Lacag bixinta lama keydin karin. Hubi internetka oo isku day mar kale.",
+  "paymentChooseInvoicesChip": "Dooro biilasha",
+  "paymentChooseInvoicesChipDone": "{count, plural, =1{1 biil ayaa la doortay} other{{count} biil ayaa la doortay}}",
+  "@paymentChooseInvoicesChipDone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "allocationHeader": "{party} · dooro biilasha",
+  "@allocationHeader": {
+    "placeholders": {
+      "party": { "type": "String" }
+    }
+  },
+  "allocationToAllocate": "{amount} ayaa la qaybinaayaa",
+  "@allocationToAllocate": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "allocationRowOpen": "Furan {open} ee {original}",
+  "@allocationRowOpen": {
+    "placeholders": {
+      "open": { "type": "String" },
+      "original": { "type": "String" }
+    }
+  },
+  "allocationStillToAllocate": "Wali waxaa hadhay: {amount}",
+  "@allocationStillToAllocate": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "allocationOverAllocated": "Waad dheereysay: {amount}",
+  "@allocationOverAllocated": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "allocationBalanced": "Saxan",
+  "allocationApplyButton": "ADKEE",
+  "allocationNeedAtLeastOne": "Doorro biil ugu yaraan mid si aad u adkayso.",
+  "allocationLoadFailed": "Biilasha furan lama soo qaadan karin.",
+  "allocationNoOpenInvoices": "Biil furan oo qofkan ah ma jiraan.",
+  "partyDetailOpenInvoicesHeader": "Biilasha furan",
+  "partyDetailOpenInvoiceRow": "{open} furan oo {original}",
+  "@partyDetailOpenInvoiceRow": {
+    "placeholders": {
+      "open": { "type": "String" },
+      "original": { "type": "String" }
+    }
+  },
   "expenseCategoryLabel": "Nooca",
   "expenseAmountLabel": "Lacagta",
   "expenseSaveButton": "KEYDI",

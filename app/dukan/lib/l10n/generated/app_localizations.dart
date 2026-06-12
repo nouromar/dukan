@@ -1712,6 +1712,90 @@ abstract class AppLocalizations {
   /// **'Could not save the payment. Check your internet and try again.'**
   String get paymentPostFailedMessage;
 
+  /// No description provided for @paymentChooseInvoicesChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose invoices'**
+  String get paymentChooseInvoicesChip;
+
+  /// No description provided for @paymentChooseInvoicesChipDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 invoice chosen} other{{count} invoices chosen}}'**
+  String paymentChooseInvoicesChipDone(int count);
+
+  /// No description provided for @allocationHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'{party} · choose invoices'**
+  String allocationHeader(String party);
+
+  /// No description provided for @allocationToAllocate.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} to allocate'**
+  String allocationToAllocate(String amount);
+
+  /// No description provided for @allocationRowOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open {open} of {original}'**
+  String allocationRowOpen(String open, String original);
+
+  /// No description provided for @allocationStillToAllocate.
+  ///
+  /// In en, this message translates to:
+  /// **'Still to allocate: {amount}'**
+  String allocationStillToAllocate(String amount);
+
+  /// No description provided for @allocationOverAllocated.
+  ///
+  /// In en, this message translates to:
+  /// **'Over by {amount}'**
+  String allocationOverAllocated(String amount);
+
+  /// No description provided for @allocationBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get allocationBalanced;
+
+  /// No description provided for @allocationApplyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'APPLY'**
+  String get allocationApplyButton;
+
+  /// No description provided for @allocationNeedAtLeastOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose at least one invoice to apply.'**
+  String get allocationNeedAtLeastOne;
+
+  /// No description provided for @allocationLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load open invoices.'**
+  String get allocationLoadFailed;
+
+  /// No description provided for @allocationNoOpenInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'No open invoices for this person.'**
+  String get allocationNoOpenInvoices;
+
+  /// No description provided for @partyDetailOpenInvoicesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Open invoices'**
+  String get partyDetailOpenInvoicesHeader;
+
+  /// No description provided for @partyDetailOpenInvoiceRow.
+  ///
+  /// In en, this message translates to:
+  /// **'{open} open of {original}'**
+  String partyDetailOpenInvoiceRow(String open, String original);
+
   /// No description provided for @expenseCategoryLabel.
   ///
   /// In en, this message translates to:

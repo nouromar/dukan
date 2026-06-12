@@ -944,6 +944,69 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not save the payment. Check your internet and try again.';
 
   @override
+  String get paymentChooseInvoicesChip => 'Choose invoices';
+
+  @override
+  String paymentChooseInvoicesChipDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count invoices chosen',
+      one: '1 invoice chosen',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String allocationHeader(String party) {
+    return '$party · choose invoices';
+  }
+
+  @override
+  String allocationToAllocate(String amount) {
+    return '$amount to allocate';
+  }
+
+  @override
+  String allocationRowOpen(String open, String original) {
+    return 'Open $open of $original';
+  }
+
+  @override
+  String allocationStillToAllocate(String amount) {
+    return 'Still to allocate: $amount';
+  }
+
+  @override
+  String allocationOverAllocated(String amount) {
+    return 'Over by $amount';
+  }
+
+  @override
+  String get allocationBalanced => 'Balanced';
+
+  @override
+  String get allocationApplyButton => 'APPLY';
+
+  @override
+  String get allocationNeedAtLeastOne =>
+      'Choose at least one invoice to apply.';
+
+  @override
+  String get allocationLoadFailed => 'Could not load open invoices.';
+
+  @override
+  String get allocationNoOpenInvoices => 'No open invoices for this person.';
+
+  @override
+  String get partyDetailOpenInvoicesHeader => 'Open invoices';
+
+  @override
+  String partyDetailOpenInvoiceRow(String open, String original) {
+    return '$open open of $original';
+  }
+
+  @override
   String get expenseCategoryLabel => 'Category';
 
   @override

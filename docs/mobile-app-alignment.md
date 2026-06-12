@@ -206,16 +206,14 @@ These items map cleanly to the target. Listed here so future contributors can co
 
 ---
 
-### 3.11 [P1] Per-invoice payment allocation
-**Target:** `mobile-app.md` § 6.3 ("Allocation: implicit in v1; explicit per-invoice deferred to v1.x"). **Current:** standalone `post_payment` writes ZERO `payment_allocation` rows; the running-balance is the only ledger. (See `docs/payment-allocation.md` § 3 for the honest accounting.)
+### 3.11 [resolved] Per-invoice payment allocation
+**Target:** `mobile-app.md` § 6.3 ("Allocation: implicit in v1; explicit per-invoice deferred to v1.x"). **Outcome:** shipped pre-pilot. See `docs/payment-allocation.md` for the contract.
 
-**Design:** `docs/payment-allocation.md` (#233 — drafted).
-
-**Work (#234):**
-- Backend: extend `post_payment` with optional `p_allocations jsonb`; default branch runs server-side FIFO (writes rows for every standalone payment going forward); explicit branch validates per § 6.3 and writes the supplied rows.
-- New RPCs: `list_unpaid_invoices`, `list_payment_allocations`. New view: `v_party_aging`.
-- Mobile: opt-in "Choose invoices" chip on the Payment screen; bottom-sheet editor pre-filled with FIFO defaults; "Open invoices" section on Party detail. Default flow keeps zero extra taps.
-- See § 13 of the design doc for the implementation checklist.
+**What landed in #234 (migration 0053):**
+- `post_payment` extended with optional `p_allocations jsonb`. Default branch runs server-side FIFO, writing `payment_allocation` rows for every standalone payment going forward. Explicit branch validates per design § 6.3 (duplicate invoice id, sum mismatch, over-allocation, wrong-direction, voided invoice) and writes the supplied rows.
+- New RPCs `list_unpaid_invoices` and `list_payment_allocations`; new `v_party_aging` view for the shop admin portal.
+- `v_party_balance_truth` rewritten — the 0013 definition treated standalone payments as "no allocations"; now every payment writes allocations, so the formula is just `total_amount - sum(payment_allocation.amount)` per posted, non-reversed sale/receive.
+- Mobile: "Choose invoices" chip appears only after party + amount; tapping opens a bottom sheet pre-filled with FIFO defaults; APPLY only enables when allocations sum to the payment amount. Default SAVE skips the chip — zero new taps. Party detail surfaces an "Open invoices" section.
 
 ---
 
