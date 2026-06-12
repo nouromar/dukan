@@ -23,6 +23,7 @@ import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/relative_time.dart';
 
 /// Outcome of the void confirmation dialog. `null` = cashier
 /// cancelled. A returned record means "go ahead and void"; the
@@ -379,13 +380,29 @@ class _SaleReceiptBody extends StatelessWidget {
                 color: theme.colorScheme.errorContainer,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Text(
-                l.saleDetailVoidedHeader,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.onErrorContainer,
-                  fontWeight: FontWeight.w800,
-                ),
-                textAlign: TextAlign.center,
+              child: Column(
+                children: [
+                  Text(
+                    l.saleDetailVoidedHeader,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (header.voidedAt != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      l.saleHistoryVoidedSubtitle(
+                        formatRelativeTime(context, header.voidedAt!),
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onErrorContainer,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ],
               ),
             ),
           if (header.isVoided) const SizedBox(height: 12),

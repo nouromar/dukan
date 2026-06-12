@@ -2061,4 +2061,60 @@ class AppLocalizationsSo extends AppLocalizations {
   @override
   String get barcodeBoundToPackagingMessage =>
       'Jeegga waxa lagu xidhay shaandhada';
+
+  @override
+  String get relativeTimeJustNow => 'hadda';
+
+  @override
+  String relativeTimeMinutesAgo(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes daqiiqo ka hor',
+      one: '1 daqiiqo ka hor',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeHoursAgo(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours saac ka hor',
+      one: '1 saac ka hor',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeDaysAgo(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days maalmood ka hor',
+      one: '1 maalin ka hor',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeOn(String date) {
+    return '$date-tii';
+  }
+
+  @override
+  String saleHistoryVoidedSubtitle(String when) {
+    return 'la baabi\'iyay $when';
+  }
+
+  @override
+  String shopItemDetailPriceEditedAt(String when) {
+    return 'qiimaha la beddelay $when';
+  }
+
+  @override
+  String partyDetailEditedAt(String when) {
+    return 'xog xidhiidh la beddelay $when';
+  }
 }

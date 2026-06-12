@@ -314,6 +314,34 @@ class ShopApi {
     return const <String>[];
   }
 
+  /// Latest audit entries for a specific entity. Used by the mobile
+  /// inline cues on Product detail (`shop_item_unit`) and Party
+  /// detail (`party`). Empty list when nothing's been logged for
+  /// that entity yet — the caller should render no cue in that case.
+  Future<List<AuditEntry>> listAuditEntriesForEntity({
+    required String shopId,
+    required String entityType,
+    required String entityId,
+    int limit = 5,
+  }) async {
+    final raw = await _client.rpc(
+      'list_audit_entries_for_entity',
+      params: {
+        'p_shop_id': shopId,
+        'p_entity_type': entityType,
+        'p_entity_id': entityId,
+        'p_limit': limit,
+      },
+    );
+    if (raw is List) {
+      return raw
+          .whereType<Map>()
+          .map((row) => AuditEntry.fromJson(Map<String, dynamic>.from(row)))
+          .toList(growable: false);
+    }
+    return const <AuditEntry>[];
+  }
+
   // ----- Catalog / items ----------------------------------------------------
 
   /// Idempotent activation of a global catalog item for this shop.

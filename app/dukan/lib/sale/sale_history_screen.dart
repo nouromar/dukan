@@ -21,6 +21,7 @@ import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/relative_time.dart';
 
 class SaleHistoryScreen extends StatefulWidget {
   const SaleHistoryScreen({required this.shop, super.key});
@@ -208,9 +209,18 @@ class _SaleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     final theme = Theme.of(context);
-    final subtitle = sale.partyName != null
+    final base = sale.partyName != null
         ? l.saleHistoryDebtLabel(sale.partyName!)
         : l.saleHistoryCashLabel;
+    // Tack on the void-time cue when this sale was voided. Uses the
+    // existing voidedAt field (set on get_sale / list_sales) -- no
+    // audit_log read needed for the void case (it's derivable from
+    // the txn.reverses_transaction_id chain already).
+    final subtitle = (sale.isVoided && sale.voidedAt != null)
+        ? '$base · ${l.saleHistoryVoidedSubtitle(
+            formatRelativeTime(context, sale.voidedAt!),
+          )}'
+        : base;
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.fromLTRB(16, 4, 8, 4),

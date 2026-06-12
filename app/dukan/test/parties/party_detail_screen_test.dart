@@ -151,4 +151,41 @@ void main() {
     expect(api.updatePartyCalls, hasLength(1));
     expect(api.updatePartyCalls.first.name, 'New Name');
   });
+
+  testWidgets(
+    'audit edit cue renders when list_audit_entries returns a recent entry',
+    (tester) async {
+      api.onGetPartyDetail = (_, _, _) async => PartyDetail(
+        header: const PartyDetailHeader(
+          id: 'p-1',
+          name: 'Cumar',
+          phone: null,
+          typeCode: 'customer',
+          receivable: 0,
+          payable: 0,
+          isActive: true,
+        ),
+        sales: const [],
+        receives: const [],
+        payments: const [],
+      );
+      api.onListAuditEntriesForEntity = (_, _, _, _) async => [
+        AuditEntry(
+          id: 'a-1',
+          actorUserId: null,
+          actionCode: 'people.party.edit',
+          occurredAt: DateTime.now().subtract(const Duration(minutes: 5)),
+          reason: null,
+          source: 'mobile',
+        ),
+      ];
+
+      await pump(tester);
+
+      expect(
+        find.textContaining(en.relativeTimeMinutesAgo(5)),
+        findsOneWidget,
+      );
+    },
+  );
 }

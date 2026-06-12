@@ -443,6 +443,26 @@ class FakeShopApi implements ShopApi {
     return List<String>.from(listUserShopCapabilitiesResult);
   }
 
+  Future<List<AuditEntry>> Function(
+    String shopId,
+    String entityType,
+    String entityId,
+    int limit,
+  )? onListAuditEntriesForEntity;
+
+  @override
+  Future<List<AuditEntry>> listAuditEntriesForEntity({
+    required String shopId,
+    required String entityType,
+    required String entityId,
+    int limit = 5,
+  }) async {
+    if (onListAuditEntriesForEntity != null) {
+      return onListAuditEntriesForEntity!(shopId, entityType, entityId, limit);
+    }
+    return const <AuditEntry>[];
+  }
+
   @override
   Future<String> ensureShopItem({
     required String shopId,

@@ -986,3 +986,36 @@ class ShopItemUnitDetail {
   final bool isBaseUnit;
   final bool isActive;
 }
+
+/// One row from `list_audit_entries_for_entity`. Mobile uses these to
+/// render the "edited {relative time} ago" inline cues on Product
+/// detail's price tile and Party detail's header. The actor's display
+/// name isn't resolved today (phone-OTP signup doesn't capture a
+/// name); we surface the actor_user_id so a future staff-profile
+/// feature can join without changing this type.
+class AuditEntry {
+  const AuditEntry({
+    required this.id,
+    this.actorUserId,
+    required this.actionCode,
+    required this.occurredAt,
+    this.reason,
+    required this.source,
+  });
+
+  factory AuditEntry.fromJson(Map<String, dynamic> json) => AuditEntry(
+        id: json['id'] as String,
+        actorUserId: json['actor_user_id'] as String?,
+        actionCode: json['action_code'] as String,
+        occurredAt: DateTime.parse(json['occurred_at'] as String),
+        reason: json['reason'] as String?,
+        source: json['source'] as String,
+      );
+
+  final String id;
+  final String? actorUserId;
+  final String actionCode;
+  final DateTime occurredAt;
+  final String? reason;
+  final String source;
+}

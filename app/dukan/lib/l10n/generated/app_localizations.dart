@@ -3503,6 +3503,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Code linked to this packaging'**
   String get barcodeBoundToPackagingMessage;
+
+  /// No description provided for @relativeTimeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get relativeTimeJustNow;
+
+  /// No description provided for @relativeTimeMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, =1{1 min ago} other{{minutes} min ago}}'**
+  String relativeTimeMinutesAgo(int minutes);
+
+  /// No description provided for @relativeTimeHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours, plural, =1{1 hr ago} other{{hours} hr ago}}'**
+  String relativeTimeHoursAgo(int hours);
+
+  /// No description provided for @relativeTimeDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{1 day ago} other{{days} days ago}}'**
+  String relativeTimeDaysAgo(int days);
+
+  /// No description provided for @relativeTimeOn.
+  ///
+  /// In en, this message translates to:
+  /// **'on {date}'**
+  String relativeTimeOn(String date);
+
+  /// No description provided for @saleHistoryVoidedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'voided {when}'**
+  String saleHistoryVoidedSubtitle(String when);
+
+  /// No description provided for @shopItemDetailPriceEditedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'price edited {when}'**
+  String shopItemDetailPriceEditedAt(String when);
+
+  /// No description provided for @partyDetailEditedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'contact info edited {when}'**
+  String partyDetailEditedAt(String when);
 }
 
 class _AppLocalizationsDelegate

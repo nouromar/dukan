@@ -678,5 +678,34 @@
     "placeholders": {"count": {"type": "int"}}
   },
   "barcodeScanAndBindAction": "Scan code",
-  "barcodeBoundToPackagingMessage": "Code linked to this packaging"
+  "barcodeBoundToPackagingMessage": "Code linked to this packaging",
+  "relativeTimeJustNow": "just now",
+  "relativeTimeMinutesAgo": "{minutes, plural, =1{1 min ago} other{{minutes} min ago}}",
+  "@relativeTimeMinutesAgo": {
+    "placeholders": {"minutes": {"type": "int"}}
+  },
+  "relativeTimeHoursAgo": "{hours, plural, =1{1 hr ago} other{{hours} hr ago}}",
+  "@relativeTimeHoursAgo": {
+    "placeholders": {"hours": {"type": "int"}}
+  },
+  "relativeTimeDaysAgo": "{days, plural, =1{1 day ago} other{{days} days ago}}",
+  "@relativeTimeDaysAgo": {
+    "placeholders": {"days": {"type": "int"}}
+  },
+  "relativeTimeOn": "on {date}",
+  "@relativeTimeOn": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "saleHistoryVoidedSubtitle": "voided {when}",
+  "@saleHistoryVoidedSubtitle": {
+    "placeholders": {"when": {"type": "String"}}
+  },
+  "shopItemDetailPriceEditedAt": "price edited {when}",
+  "@shopItemDetailPriceEditedAt": {
+    "placeholders": {"when": {"type": "String"}}
+  },
+  "partyDetailEditedAt": "contact info edited {when}",
+  "@partyDetailEditedAt": {
+    "placeholders": {"when": {"type": "String"}}
+  }
 }

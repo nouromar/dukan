@@ -17,6 +17,7 @@ import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/realtime.dart';
+import 'package:dukan/shared/relative_time.dart';
 
 class PartyDetailScreen extends StatefulWidget {
   const PartyDetailScreen({
@@ -32,8 +33,16 @@ class PartyDetailScreen extends StatefulWidget {
   State<PartyDetailScreen> createState() => _PartyDetailScreenState();
 }
 
+class _PartyBootstrap {
+  const _PartyBootstrap({required this.detail, this.editedAt});
+  final PartyDetail detail;
+  /// Latest `people.party.edit` audit timestamp; null when nothing
+  /// has been logged for this party yet.
+  final DateTime? editedAt;
+}
+
 class _PartyDetailScreenState extends State<PartyDetailScreen> {
-  late Future<PartyDetail> _future;
+  late Future<_PartyBootstrap> _future;
   RealtimeWatcher? _watcher;
 
   @override
@@ -66,10 +75,25 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
     super.dispose();
   }
 
-  Future<PartyDetail> _load() => context.read<ShopApi>().getPartyDetail(
-        shopId: widget.shop.id,
-        partyId: widget.partyId,
-      );
+  Future<_PartyBootstrap> _load() async {
+    final api = context.read<ShopApi>();
+    final detailF = api.getPartyDetail(
+      shopId: widget.shop.id,
+      partyId: widget.partyId,
+    );
+    final auditF = api
+        .listAuditEntriesForEntity(
+          shopId: widget.shop.id,
+          entityType: 'party',
+          entityId: widget.partyId,
+          limit: 1,
+        )
+        .catchError((_) => const <AuditEntry>[]);
+    final detail = await detailF;
+    final audits = await auditF;
+    final editedAt = audits.isEmpty ? null : audits.first.occurredAt;
+    return _PartyBootstrap(detail: detail, editedAt: editedAt);
+  }
 
   /// Inline edit — opens a small dialog with name + phone fields,
   /// commits via `update_party`, then reloads so the header shows
@@ -144,7 +168,7 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
     return Scaffold(
       appBar: dukanAppBar(context, l.partyDetailTitle),
       body: SafeArea(
-        child: FutureBuilder<PartyDetail>(
+        child: FutureBuilder<_PartyBootstrap>(
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
@@ -161,12 +185,13 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
                 ),
               );
             }
-            final detail = snapshot.data!;
+            final bootstrap = snapshot.data!;
             return _Body(
               shop: widget.shop,
-              detail: detail,
-              onPay: () => _onPay(detail),
-              onEdit: () => _onEdit(detail),
+              detail: bootstrap.detail,
+              editedAt: bootstrap.editedAt,
+              onPay: () => _onPay(bootstrap.detail),
+              onEdit: () => _onEdit(bootstrap.detail),
             );
           },
         ),
@@ -181,12 +206,14 @@ class _Body extends StatelessWidget {
     required this.detail,
     required this.onPay,
     required this.onEdit,
+    this.editedAt,
   });
 
   final ShopSummary shop;
   final PartyDetail detail;
   final VoidCallback onPay;
   final VoidCallback onEdit;
+  final DateTime? editedAt;
 
   @override
   Widget build(BuildContext context) {
@@ -233,6 +260,18 @@ class _Body extends StatelessWidget {
                     header.phone!,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                if (editedAt != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    l.partyDetailEditedAt(
+                      formatRelativeTime(context, editedAt!),
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
                 ],

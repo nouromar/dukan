@@ -678,5 +678,34 @@
     "placeholders": {"count": {"type": "int"}}
   },
   "barcodeScanAndBindAction": "Akhri jeegga",
-  "barcodeBoundToPackagingMessage": "Jeegga waxa lagu xidhay shaandhada"
+  "barcodeBoundToPackagingMessage": "Jeegga waxa lagu xidhay shaandhada",
+  "relativeTimeJustNow": "hadda",
+  "relativeTimeMinutesAgo": "{minutes, plural, =1{1 daqiiqo ka hor} other{{minutes} daqiiqo ka hor}}",
+  "@relativeTimeMinutesAgo": {
+    "placeholders": {"minutes": {"type": "int"}}
+  },
+  "relativeTimeHoursAgo": "{hours, plural, =1{1 saac ka hor} other{{hours} saac ka hor}}",
+  "@relativeTimeHoursAgo": {
+    "placeholders": {"hours": {"type": "int"}}
+  },
+  "relativeTimeDaysAgo": "{days, plural, =1{1 maalin ka hor} other{{days} maalmood ka hor}}",
+  "@relativeTimeDaysAgo": {
+    "placeholders": {"days": {"type": "int"}}
+  },
+  "relativeTimeOn": "{date}-tii",
+  "@relativeTimeOn": {
+    "placeholders": {"date": {"type": "String"}}
+  },
+  "saleHistoryVoidedSubtitle": "la baabi'iyay {when}",
+  "@saleHistoryVoidedSubtitle": {
+    "placeholders": {"when": {"type": "String"}}
+  },
+  "shopItemDetailPriceEditedAt": "qiimaha la beddelay {when}",
+  "@shopItemDetailPriceEditedAt": {
+    "placeholders": {"when": {"type": "String"}}
+  },
+  "partyDetailEditedAt": "xog xidhiidh la beddelay {when}",
+  "@partyDetailEditedAt": {
+    "placeholders": {"when": {"type": "String"}}
+  }
 }

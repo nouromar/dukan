@@ -2048,4 +2048,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get barcodeBoundToPackagingMessage => 'Code linked to this packaging';
+
+  @override
+  String get relativeTimeJustNow => 'just now';
+
+  @override
+  String relativeTimeMinutesAgo(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes min ago',
+      one: '1 min ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeHoursAgo(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours hr ago',
+      one: '1 hr ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeDaysAgo(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days ago',
+      one: '1 day ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String relativeTimeOn(String date) {
+    return 'on $date';
+  }
+
+  @override
+  String saleHistoryVoidedSubtitle(String when) {
+    return 'voided $when';
+  }
+
+  @override
+  String shopItemDetailPriceEditedAt(String when) {
+    return 'price edited $when';
+  }
+
+  @override
+  String partyDetailEditedAt(String when) {
+    return 'contact info edited $when';
+  }
 }
