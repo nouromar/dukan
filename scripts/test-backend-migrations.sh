@@ -4379,6 +4379,381 @@ end;
 $$;
 reset role;
 
+-- ---------------------------------------------------------------------------
+-- §JJ void_sale + void_receive (0010). Verify:
+--   1. Owner can void a fresh sale; reversal txn appears with matching
+--      total_amount and reverses_transaction_id.
+--   2. void_sale rejects a sale outside the 7-day window.
+--   3. void_sale rejects a sale whose customer has paid some of the
+--      receivable down between sale and void.
+--   4. Double-void on the same sale raises.
+--   5. void_sale denied for cashier role.
+--   6. Owner can void a fresh receive when no later stock activity
+--      touched the items.
+--   7. void_receive rejects a receive whose items had subsequent
+--      stock activity.
+--   8. void_receive denied for cashier role.
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id    uuid;
+  v_unit_id    uuid;
+  v_cust_id    uuid;
+  v_sup_id     uuid;
+  v_sale_id    uuid;
+  v_recv_id    uuid;
+  v_old_sale   uuid;
+  v_partial    uuid;
+  v_reversal   uuid;
+  v_void_back  uuid;
+  v_failed     boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+
+  select siu.id into v_unit_id
+  from public.shop_item_unit siu
+  where siu.shop_id = v_shop_id and siu.conversion_to_base = 1
+  limit 1;
+
+  v_cust_id := public.create_party(v_shop_id, 'JJ Void Customer', null, 'customer');
+  v_sup_id  := public.create_party(v_shop_id, 'JJ Void Supplier', null, 'supplier');
+
+  -- (1) Owner voids a fresh credit sale.
+  v_sale_id := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 5, 'unit_price', 2
+    )),
+    0, null, null, 'JJ-sale-1', null, 'JJ sale to void'
+  );
+  v_reversal := public.void_sale(
+    v_shop_id, v_sale_id, 'JJ-void-1'
+  );
+  if not exists (
+    select 1 from public.txn
+    where id = v_reversal and reverses_transaction_id = v_sale_id
+  ) then
+    raise exception 'JJ (1): reversal txn must point at the original sale';
+  end if;
+  if (select total_amount from public.txn where id = v_reversal) <> 10 then
+    raise exception 'JJ (1): reversal total_amount want 10';
+  end if;
+
+  -- (4) Double-void on the same sale raises.
+  v_failed := false;
+  begin
+    perform public.void_sale(v_shop_id, v_sale_id, 'JJ-void-1-dup');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'JJ (4): double-void must raise';
+  end if;
+
+  -- (2) Sale outside the 7-day window cannot be voided. Plant a sale
+  --     with a backdated posted_at via privileged role (we're testing
+  --     the guard, not how the date got there).
+  v_old_sale := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 1, 'unit_price', 2
+    )),
+    0, null, null, 'JJ-sale-old', null, 'old sale'
+  );
+  reset role;
+  update public.txn
+  set posted_at = pg_catalog.now() - interval '8 days',
+      occurred_at = pg_catalog.now() - interval '8 days'
+  where id = v_old_sale;
+  set role authenticated;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+  v_failed := false;
+  begin
+    perform public.void_sale(v_shop_id, v_old_sale, null);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'JJ (2): void_sale must reject outside 7-day window';
+  end if;
+
+  -- (3) Partial-paid sale cannot be voided.
+  v_partial := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 1, 'unit_price', 10
+    )),
+    0, null, null, 'JJ-sale-partial', null, 'credit'
+  );
+  -- Customer pays $5 down on this $10 credit sale.
+  perform public.post_payment(
+    v_shop_id, v_cust_id, 'I', 5, 'cash',
+    'JJ-partial-pay', null, null, null, null
+  );
+  v_failed := false;
+  begin
+    perform public.void_sale(v_shop_id, v_partial, null);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'JJ (3): void_sale must reject partial-paid sale';
+  end if;
+
+end;
+$$;
+reset role;
+
+-- (6) + (7) — exercise void_receive against ISOLATED shop_items so the
+-- transaction-shared now() doesn't make prior sales look "later than"
+-- the receive. Each test gets its own fresh item, then a fresh DO
+-- block so the second test's items can't see the first's movements.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id    uuid;
+  v_sup_id     uuid;
+  v_item_id    uuid;
+  v_unit_id    uuid;
+  v_recv_id    uuid;
+  v_void_back  uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_sup_id from public.party
+   where shop_id = v_shop_id and name = 'JJ Void Supplier';
+  select shop_item_id, default_shop_item_unit_id
+  into v_item_id, v_unit_id
+  from public.create_shop_item(
+    v_shop_id, 'JJ Void Receive Item 6', 'en', 'kg', null, null
+  );
+
+  v_recv_id := public.post_receive(
+    v_shop_id, v_sup_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 4, 'line_total', 12
+    )),
+    0, null, null, 'JJ-recv-1', null, 'fresh receive'
+  );
+  v_void_back := public.void_receive(v_shop_id, v_recv_id, 'JJ-void-recv-1');
+  if not exists (
+    select 1 from public.txn
+    where id = v_void_back and reverses_transaction_id = v_recv_id
+  ) then
+    raise exception 'JJ (6): receive reversal must reference original';
+  end if;
+end;
+$$;
+reset role;
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id    uuid;
+  v_sup_id     uuid;
+  v_item_id    uuid;
+  v_unit_id    uuid;
+  v_recv_id    uuid;
+  v_failed     boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_sup_id from public.party
+   where shop_id = v_shop_id and name = 'JJ Void Supplier';
+  select shop_item_id, default_shop_item_unit_id
+  into v_item_id, v_unit_id
+  from public.create_shop_item(
+    v_shop_id, 'JJ Void Receive Item 7', 'en', 'kg', null, null
+  );
+
+  v_recv_id := public.post_receive(
+    v_shop_id, v_sup_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 4, 'line_total', 12
+    )),
+    0, null, null, 'JJ-recv-2', null, 'will sell from'
+  );
+  -- Sell one unit AFTER the receive (same transaction timestamp is
+  -- treated as "later" by the guard's `>=` predicate — exactly the
+  -- racy back-to-back op the guard protects against).
+  perform public.post_sale(
+    v_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 1, 'unit_price', 4
+    )),
+    4, 'cash', null, 'JJ-sale-after-recv', null, 'cash'
+  );
+  v_failed := false;
+  begin
+    perform public.void_receive(v_shop_id, v_recv_id, null);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'JJ (7): void_receive must reject when items had later activity';
+  end if;
+end;
+$$;
+reset role;
+
+-- (5) + (8) Cashier denied void_sale and void_receive.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+do $$
+declare
+  v_shop_id  uuid;
+  v_txn_id   uuid;
+  v_failed   boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  -- Pick any owner-posted sale (we just made several in JJ above).
+  select id into v_txn_id from public.txn
+  where shop_id = v_shop_id and client_op_id = 'JJ-sale-old';
+
+  v_failed := false;
+  begin
+    perform public.void_sale(v_shop_id, v_txn_id, null);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'JJ (5): cashier must NOT be allowed to void a sale';
+  end if;
+
+  select id into v_txn_id from public.txn
+  where shop_id = v_shop_id and client_op_id = 'JJ-recv-2';
+  v_failed := false;
+  begin
+    perform public.void_receive(v_shop_id, v_txn_id, null);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'JJ (8): cashier must NOT be allowed to void a receive';
+  end if;
+end;
+$$;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- §KK post_inventory_adjustment correction-path coverage (0010). Verify:
+--   1. Increase adjustment writes a stock_movement row and updates
+--      both current_stock + avg_cost (weighted-average recompute).
+--   2. client_op_id replay returns the same adjustment_id WITHOUT
+--      doubling the stock_movement.
+--   3. Reason mismatch: a decrease-only reason rejects positive delta.
+--   4. Decrease without an explicit unit_cost defaults to avg_cost and
+--      leaves avg unchanged.
+-- §5 already covers the 'opening' path; §15 covers cashier denial.
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id           uuid;
+  v_item_id           uuid;
+  v_unit_id           uuid;
+  v_first_id          uuid;
+  v_replay_id         uuid;
+  v_movement_count    integer;
+  v_stock             numeric;
+  v_avg               numeric;
+  v_failed            boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select shop_item_id, default_shop_item_unit_id
+  into v_item_id, v_unit_id
+  from public.create_shop_item(
+    v_shop_id, 'KK Adjustment Item', 'en', 'kg', null, null
+  );
+
+  -- Seed: +10 @ $1 → stock 10, avg 1.
+  perform public.post_inventory_adjustment(
+    v_shop_id, 'correction',
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_id', v_item_id, 'quantity_delta', 10, 'unit_cost', 1
+    )),
+    null, 'KK-seed', null, null
+  );
+
+  -- (1) Increase: +5 @ $2 → stock 15, avg = (10*1 + 5*2)/15 ≈ 1.333.
+  v_first_id := public.post_inventory_adjustment(
+    v_shop_id, 'correction',
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_id', v_item_id, 'quantity_delta', 5, 'unit_cost', 2
+    )),
+    null, 'KK-inc-1', null, null
+  );
+  select current_stock, avg_cost
+  into v_stock, v_avg
+  from public.shop_item where id = v_item_id;
+  if v_stock <> 15 then
+    raise exception 'KK (1): stock want 15, got %', v_stock;
+  end if;
+  if pg_catalog.abs(v_avg - 1.3333) > 0.001 then
+    raise exception 'KK (1): avg_cost want ~1.333, got %', v_avg;
+  end if;
+  select pg_catalog.count(*) into v_movement_count
+  from public.stock_movement
+  where shop_id = v_shop_id and item_id = v_item_id;
+  if v_movement_count <> 2 then
+    raise exception 'KK (1): stock_movement count want 2 (seed + inc), got %',
+      v_movement_count;
+  end if;
+
+  -- (2) Idempotency replay returns the same adjustment_id and does
+  --     NOT add another stock_movement.
+  v_replay_id := public.post_inventory_adjustment(
+    v_shop_id, 'correction',
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_id', v_item_id, 'quantity_delta', 5, 'unit_cost', 2
+    )),
+    null, 'KK-inc-1', null, null
+  );
+  if v_replay_id <> v_first_id then
+    raise exception 'KK (2): replay must return same adjustment_id';
+  end if;
+  select pg_catalog.count(*) into v_movement_count
+  from public.stock_movement
+  where shop_id = v_shop_id and item_id = v_item_id;
+  if v_movement_count <> 2 then
+    raise exception 'KK (2): replay must not add stock_movement (got %)',
+      v_movement_count;
+  end if;
+
+  -- (3) Reason-mismatch: a decrease-only reason (theft) rejects
+  --     positive delta.
+  v_failed := false;
+  begin
+    perform public.post_inventory_adjustment(
+      v_shop_id, 'theft',
+      jsonb_build_array(jsonb_build_object(
+        'shop_item_id', v_item_id, 'quantity_delta', 1, 'unit_cost', 1
+      )),
+      null, 'KK-mismatch', null, null
+    );
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'KK (3): decrease-only reason must reject positive delta';
+  end if;
+
+  -- (4) Decrease without unit_cost falls back to avg_cost; avg stays.
+  perform public.post_inventory_adjustment(
+    v_shop_id, 'correction',
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_id', v_item_id, 'quantity_delta', -3
+    )),
+    null, 'KK-dec', null, null
+  );
+  select current_stock, avg_cost
+  into v_stock, v_avg
+  from public.shop_item where id = v_item_id;
+  if v_stock <> 12 then
+    raise exception 'KK (4): stock after -3 want 12, got %', v_stock;
+  end if;
+  if pg_catalog.abs(v_avg - 1.3333) > 0.001 then
+    raise exception 'KK (4): decrease should not change avg_cost (got %)', v_avg;
+  end if;
+end;
+$$;
 reset role;
 
 do $$
