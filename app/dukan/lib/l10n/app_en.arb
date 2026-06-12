@@ -707,5 +707,9 @@
   "partyDetailEditedAt": "contact info edited {when}",
   "@partyDetailEditedAt": {
     "placeholders": {"when": {"type": "String"}}
+  },
+  "offlineQueuePillLabel": "{count, plural, =1{Syncing 1} other{Syncing {count}}}",
+  "@offlineQueuePillLabel": {
+    "placeholders": {"count": {"type": "int"}}
   }
 }

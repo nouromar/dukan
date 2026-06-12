@@ -3551,6 +3551,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'contact info edited {when}'**
   String partyDetailEditedAt(String when);
+
+  /// No description provided for @offlineQueuePillLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Syncing 1} other{Syncing {count}}}'**
+  String offlineQueuePillLabel(int count);
 }
 
 class _AppLocalizationsDelegate

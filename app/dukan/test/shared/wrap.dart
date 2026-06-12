@@ -13,6 +13,8 @@ import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/payment/payment_controller.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post_store.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/shared/fallback_localizations.dart';
@@ -35,8 +37,25 @@ Widget wrapWithApp(
   PaymentController? paymentController,
   ExpenseController? expenseController,
   LocaleController? localeController,
+  OfflineQueueController? offlineQueueController,
   Locale locale = const Locale('en'),
 }) {
+  // Default no-op offline queue so the QueueStatusPill in app bars
+  // can render even when a specific test doesn't care about queue
+  // behaviour. Executor is a no-op (returns void) so any enqueued
+  // post drains successfully on the first attempt without timers
+  // piling up. Tests that want explicit failure semantics inject
+  // their own controller.
+  final queue = offlineQueueController ??
+      OfflineQueueController(
+        store: PendingPostStore(),
+        executor: (_) async {},
+        // Zero backoff so the retry timer is effectively synchronous
+        // and pumpAndSettle drains it without holding pending timers
+        // past the test.
+        backoff: (_) => Duration.zero,
+      );
+
   final providers = <SingleChildWidget>[
     ChangeNotifierProvider<LocaleController>.value(
       value: localeController ?? (LocaleController()..setLocale(locale)),
@@ -58,6 +77,7 @@ Widget wrapWithApp(
       ChangeNotifierProvider<ExpenseController>.value(
         value: expenseController,
       ),
+    ChangeNotifierProvider<OfflineQueueController>.value(value: queue),
   ];
 
   return MultiProvider(

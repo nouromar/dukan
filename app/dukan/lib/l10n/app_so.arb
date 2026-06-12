@@ -707,5 +707,9 @@
   "partyDetailEditedAt": "xog xidhiidh la beddelay {when}",
   "@partyDetailEditedAt": {
     "placeholders": {"when": {"type": "String"}}
+  },
+  "offlineQueuePillLabel": "{count, plural, =1{Hubinta 1} other{Hubinta {count}}}",
+  "@offlineQueuePillLabel": {
+    "placeholders": {"count": {"type": "int"}}
   }
 }

@@ -78,8 +78,12 @@ void main() {
   );
 
   testWidgets(
-    'failed postSale restores the snapshot to the cart',
+    'failed postSale (network) enqueues for retry — cart stays cleared',
     (tester) async {
+      // After the offline write queue landed (#232), network-shaped
+      // failures get queued for background retry instead of restoring
+      // the cart. Only structured server rejects (PostgrestException,
+      // covered by the next test) restore.
       final originalOnError = FlutterError.onError;
       FlutterError.onError = (_) {};
       addTearDown(() => FlutterError.onError = originalOnError);
@@ -105,10 +109,10 @@ void main() {
       await tester.tap(find.text(en.saleSaveButton));
       await tester.pumpAndSettle();
 
-      // Snapshot restored: the line is back in the cart.
-      expect(cart.lines, hasLength(1));
-      expect(cart.lines.values.first.shopItemUnitId, 'siu-rice');
-      expect(find.text(en.salePostFailedMessage), findsOneWidget);
+      // Cart cleared optimistically; the network failure was enqueued
+      // for retry, not surfaced to the cashier.
+      expect(cart.isEmpty, isTrue);
+      expect(find.text(en.salePostFailedMessage), findsNothing);
     },
   );
 }

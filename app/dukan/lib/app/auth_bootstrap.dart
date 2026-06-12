@@ -12,6 +12,9 @@ import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/home/home_screen.dart';
 import 'package:dukan/observability/crash_reporter.dart';
 import 'package:dukan/payment/payment_controller.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post_store.dart';
+import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/setup/setup_item_onboarding_screen.dart';
@@ -51,6 +54,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   late final ReceiveController _receiveController;
   late final PaymentController _paymentController;
   late final ExpenseController _expenseController;
+  late final OfflineQueueController _offlineQueueController;
   bool _hadSession = false;
   String? _crashReportedUserId;
   String? _crashReportedShopId;
@@ -66,6 +70,10 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     _receiveController = ReceiveController();
     _paymentController = PaymentController();
     _expenseController = ExpenseController();
+    _offlineQueueController = OfflineQueueController(
+      store: PendingPostStore(),
+      executor: PostExecutor(_shopApi).execute,
+    )..start();
     // Clear in-progress carts/bonos/payments/expenses whenever the
     // session transitions to null (sign-out or session expiry). Stops
     // state from leaking across users sharing the same device.
@@ -108,6 +116,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   @override
   void dispose() {
     _authController.removeListener(_onAuthChanged);
+    _offlineQueueController.dispose();
     _expenseController.dispose();
     _paymentController.dispose();
     _receiveController.dispose();
@@ -131,6 +140,9 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
         ),
         ChangeNotifierProvider<ExpenseController>.value(
           value: _expenseController,
+        ),
+        ChangeNotifierProvider<OfflineQueueController>.value(
+          value: _offlineQueueController,
         ),
       ],
       child: Builder(builder: widget.builder),

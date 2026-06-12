@@ -32,6 +32,10 @@ import 'package:dukan/sale/line_editor_sheet.dart';
 import 'package:dukan/sale/sale_detail_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/observability/timing.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/queue/queue_status_pill.dart';
 import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
@@ -675,12 +679,41 @@ class _SaleScreenState extends State<SaleScreen> {
         clientOpId: clientOpId,
       );
     } on PostgrestException catch (error, stackTrace) {
+      // 4xx-style server reject — won't succeed on retry. Restore the
+      // snapshot so the cashier sees their cart and can correct the
+      // underlying issue.
       _handleOptimisticSaveFailure(
         snapshot, error, stackTrace, l.salePostFailedMessage);
       return;
     } catch (error, stackTrace) {
-      _handleOptimisticSaveFailure(
-        snapshot, error, stackTrace, l.salePostFailedMessage);
+      // Network/transient — enqueue for the offline write queue to
+      // retry on backoff. Cart stays cleared; the pill in the app
+      // bar gives the cashier feedback that work is pending. No
+      // receipt sheet for queued sales (cashier checks history if
+      // they need the receipt).
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan sale',
+          context: ErrorDescription('post_sale (queuing for retry)'),
+        ),
+      );
+      if (!mounted) return;
+      final post = PendingPost(
+        id: _generateClientOpId(),
+        clientOpId: clientOpId,
+        shopId: widget.shop.id,
+        rpc: 'post_sale',
+        params: buildPostSaleParams(
+          lines: lines,
+          paidAmount: cashSale ? total : 0,
+          partyId: partyId,
+          paymentMethodCode: cashSale ? 'cash' : null,
+        ),
+        queuedAt: DateTime.now(),
+      );
+      await context.read<OfflineQueueController>().enqueue(post);
       return;
     }
 
@@ -882,6 +915,7 @@ class _SaleScreenState extends State<SaleScreen> {
         context,
         l.saleTitle,
         actions: [
+          const QueueStatusPill(),
           IconButton(
             tooltip: l.saleHistoryTooltip,
             icon: const Icon(Icons.history),

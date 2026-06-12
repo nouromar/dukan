@@ -2104,4 +2104,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String partyDetailEditedAt(String when) {
     return 'contact info edited $when';
   }
+
+  @override
+  String offlineQueuePillLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Syncing $count',
+      one: 'Syncing 1',
+    );
+    return '$_temp0';
+  }
 }

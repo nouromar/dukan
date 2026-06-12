@@ -13,11 +13,12 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:dukan/queue/pending_post_store.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/shared/favorites_cache.dart';
 
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
-  setUp(() {
+  setUp(() async {
     FavoritesCache.clear();
     FavoritesCache.nowForTesting = null;
     // Reset SharedPreferences so the TodaySummaryCache (and any
@@ -27,6 +28,10 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
     // tuning would leak into the next test's HID listener / multi-
     // scan rearm window.
     ScannerSettings.resetForTesting();
+    // Offline write queue is SharedPreferences-backed; the mock prefs
+    // reset above clears it, but call clear() explicitly so tests
+    // that don't reset prefs themselves still start clean.
+    await PendingPostStore().clear();
   });
   await testMain();
 }

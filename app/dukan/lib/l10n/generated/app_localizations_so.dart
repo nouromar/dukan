@@ -2117,4 +2117,15 @@ class AppLocalizationsSo extends AppLocalizations {
   String partyDetailEditedAt(String when) {
     return 'xog xidhiidh la beddelay $when';
   }
+
+  @override
+  String offlineQueuePillLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Hubinta $count',
+      one: 'Hubinta 1',
+    );
+    return '$_temp0';
+  }
 }
