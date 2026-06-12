@@ -3986,6 +3986,104 @@ begin
 end;
 $$;
 
+-- 10. set_shop_item_unit_sale_price writes an
+--     inventory.unit.price_edit audit row with after_state.
+set role authenticated;
+do $$
+declare
+  v_shop_id      uuid;
+  v_shop_item_id uuid;
+  v_unit_id      uuid;
+  v_count        int;
+  v_row          public.audit_log%rowtype;
+begin
+  select shop_id into v_shop_id from test_ids;
+  -- Need a shop_item_unit to touch. shop_item has no name column
+  -- (names live in aliases / global catalog); we just need the row.
+  insert into public.shop_item (shop_id, base_unit_code, created_by)
+  values (v_shop_id, 'kg',
+          '00000000-0000-0000-0000-000000000001')
+  returning id into v_shop_item_id;
+  insert into public.shop_item_unit (
+    shop_id, shop_item_id, unit_code, conversion_to_base, created_by
+  )
+  values (v_shop_id, v_shop_item_id, 'kg', 1,
+          '00000000-0000-0000-0000-000000000001')
+  returning id into v_unit_id;
+
+  perform public.set_shop_item_unit_sale_price(v_shop_id, v_unit_id, 7.5);
+
+  select count(*) into v_count
+  from public.audit_log
+  where shop_id = v_shop_id
+    and action_code = 'inventory.unit.price_edit'
+    and entity_id = v_unit_id;
+  if v_count <> 1 then
+    raise exception 'HH: set_shop_item_unit_sale_price audit row missing or duped (count=%)', v_count;
+  end if;
+
+  select * into v_row
+  from public.audit_log
+  where shop_id = v_shop_id
+    and action_code = 'inventory.unit.price_edit'
+    and entity_id = v_unit_id;
+  if v_row.after_state is null
+     or (v_row.after_state ->> 'sale_price')::numeric <> 7.5 then
+    raise exception 'HH: price_edit after_state wrong: %', v_row.after_state;
+  end if;
+  if v_row.before_state is not null then
+    raise exception 'HH: price_edit policy should drop before_state';
+  end if;
+end;
+$$;
+
+-- 11. update_party writes a people.party.edit audit row with
+--     before + after.
+do $$
+declare
+  v_shop_id   uuid;
+  v_party_id  uuid;
+  v_customer  uuid;
+  v_count     int;
+  v_row       public.audit_log%rowtype;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_customer := (
+    select id from public.party_type where code = 'customer'
+  );
+  insert into public.party (shop_id, name, phone, type_id, created_by)
+  values (v_shop_id, 'HH Test Customer', '+25212340000', v_customer,
+          '00000000-0000-0000-0000-000000000001')
+  returning id into v_party_id;
+
+  perform public.update_party(v_shop_id, v_party_id, 'HH Renamed', '+25299990000');
+
+  select count(*) into v_count
+  from public.audit_log
+  where shop_id = v_shop_id
+    and action_code = 'people.party.edit'
+    and entity_id = v_party_id;
+  if v_count <> 1 then
+    raise exception 'HH: update_party audit row missing or duped (count=%)', v_count;
+  end if;
+
+  select * into v_row
+  from public.audit_log
+  where shop_id = v_shop_id
+    and action_code = 'people.party.edit'
+    and entity_id = v_party_id;
+  if v_row.before_state ->> 'name' <> 'HH Test Customer' then
+    raise exception 'HH: party.edit before_state name lost: %', v_row.before_state;
+  end if;
+  if v_row.after_state ->> 'name' <> 'HH Renamed' then
+    raise exception 'HH: party.edit after_state name wrong: %', v_row.after_state;
+  end if;
+  if v_row.after_state ->> 'phone' <> '+25299990000' then
+    raise exception 'HH: party.edit after_state phone wrong: %', v_row.after_state;
+  end if;
+end;
+$$;
+
 reset role;
 
 do $$
