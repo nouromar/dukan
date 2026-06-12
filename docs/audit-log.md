@@ -166,9 +166,10 @@ Seed in the migration. Grouped by area. Naming: `area.action`. All cashier-facin
 | `setup.staff.invite` | setup | — | ✅ | — | Phone + role. |
 | `setup.staff.role_change` | setup | ✅ | ✅ | ✅ | Owner-only; reason required. |
 | `setup.staff.revoke` | setup | ✅ | — | ✅ | |
-| `auth.session.start` | auth | — | — | — | Sign-in. No snapshot. |
 | `auth.impersonation.start` | auth | — | ✅ | ✅ | Platform staff only; reason in subject. |
 | `auth.impersonation.end` | auth | — | — | — | |
+
+> **Sign-in events** (`auth.session.start`) are explicitly **not** logged here. They land in Sentry breadcrumbs instead — too high-volume for the audit log (~2 per cashier per shift = 60+/day per shop), and security investigations are better served by the Sentry session timeline than by a flat audit row.
 
 **Snapshot policy is enforced** — the `_audit_log` helper checks the registry and discards `before_state` / `after_state` arguments the action code doesn't allow. Caller passes everything; the writer drops what's not authorised. Keeps the call-site terse.
 
@@ -205,10 +206,14 @@ begin
   if not found then
     raise exception 'unknown audit action_code: %', p_action_code;
   end if;
-  if v_meta.requires_reason
-     and (p_reason is null or length(btrim(p_reason)) < 20) then
-    raise exception 'audit action % requires a reason of at least 20 chars',
-      p_action_code;
+  if v_meta.requires_reason then
+    if p_reason is null or length(btrim(p_reason)) < 10 then
+      raise exception 'audit action % requires a reason of at least 10 chars',
+        p_action_code;
+    end if;
+    if length(p_reason) > 300 then
+      raise exception 'audit reason capped at 300 chars (got %)', length(p_reason);
+    end if;
   end if;
   -- Source resolved from JWT custom claim populated by the client SDK;
   -- defaults to 'rpc' when no claim is present (server-internal writes).
@@ -472,9 +477,9 @@ These extend the catalog in `docs/roles-and-permissions.md` and ship with the mi
 
 ### 10.3 PII redaction
 
-`before_state` / `after_state` for `people.party.*` actions may carry phone numbers. The web admin portal's audit module redacts phone digits past the last 3 by default; the platform staff role gets the unredacted view with the read logged.
+**Write side stores full values; redaction happens on read.** Rationale: PII (phone, name) belongs in the snapshot for the platform-staff investigative path. The shop admin portal's audit module redacts phone digits past the last 3 by default; the platform staff role gets the unredacted view with the read logged. Mobile never sees snapshots, so no redaction logic is needed there.
 
-Mobile never sees snapshots, so no redaction logic needed there.
+Redaction is therefore a read-time concern in `list_audit_entries` (web admin RPC) plus a `reveal` capability check + audit-of-reveal — the system admin portal's contract, not this document's.
 
 ---
 
@@ -584,13 +589,13 @@ Pinned again at the end so scope creep gets caught a second time:
 
 ---
 
-## 16. Open questions
+## 16. Resolved decisions
 
-Three calls that need to be made before the migration lands:
+The three calls that gated implementation, settled before the migration was drafted:
 
-1. **Reason-required threshold.** I set ≥ 20 chars in § 5.1. Too short forces "ok" responses; too long is unfair to legit voids. Worth a pilot-shopkeeper check.
-2. **`auth.session.start` logging.** Useful for security investigations but ~2 rows per cashier per shift = 60+/day per shop. Drops volume estimates noticeably. Keep, or move to Sentry-only? My default: keep, drop the snapshot, ride the no-snapshot-policy.
-3. **PII in `after_state` for party.create / party.edit.** Phone numbers and names. The redaction discipline in § 10.3 is on the read side. Should the write side also strip? My default: write full, redact on read — gives platform staff the option with audit, but keeps PII out of standard reads.
+1. **Reason length** — `requires_reason` actions enforce a **floor of 10 chars** and a **ceiling of 300 chars**. Floor is permissive enough for "wrong total" but rules out "ok"; ceiling bounds storage and forces a real reason, not a wall of paste.
+2. **Sign-in events** (`auth.session.start`) — **moved to Sentry**, not in `audit_log`. Too high-volume (~60 rows/day/shop) and the session-timeline view in Sentry is the right tool for security investigation. The action code is **not** in the registry.
+3. **PII in party snapshots** — **redact on read**, not on write. The write side stores full `before_state` / `after_state`; the shop admin portal redacts phone digits past the last 3 on render, and the platform-staff "reveal" path is itself audit-logged (§ 10.3).
 
 ---
 
@@ -610,3 +615,4 @@ Three calls that need to be made before the migration lands:
 | Date | Change | Author |
 |---|---|---|
 | 2026-06-11 | Initial draft. | — |
+| 2026-06-12 | Resolved §16 decisions: reason 10–300 chars, drop `auth.session.start`, redact PII on read. | — |
