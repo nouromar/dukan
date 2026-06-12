@@ -22,6 +22,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -183,12 +184,15 @@ class _ReceiveDetailBody extends StatelessWidget {
 
   /// Same-shift window: 24 h from posted_at. Tighter than sale's 7
   /// days because real returns belong in v1.1 Returns, not in this
-  /// typo-correction tool.
-  bool get _canVoid {
+  /// typo-correction tool. Also gated by `canVoidReceive` — the
+  /// cashier role lacks that capability and would otherwise tap a
+  /// button only to hit the backend's owner-only check.
+  bool _canVoid(BuildContext context) {
     if (bundle.header.isVoided) return false;
     final posted = bundle.header.postedAt;
     if (posted == null) return false;
-    return DateTime.now().difference(posted) < receiveVoidWindow;
+    if (DateTime.now().difference(posted) >= receiveVoidWindow) return false;
+    return context.watch<AuthController>().capabilities.canVoidReceive;
   }
 
   @override
@@ -275,7 +279,7 @@ class _ReceiveDetailBody extends StatelessWidget {
             bold: true,
           ),
           const SizedBox(height: 8),
-          if (_canVoid)
+          if (_canVoid(context))
             // Destructive secondary action: red text, right-aligned,
             // no fill. Mirrors the sale-detail layout so cashiers see
             // the same pattern across both history surfaces.

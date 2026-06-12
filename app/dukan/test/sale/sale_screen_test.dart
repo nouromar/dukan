@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post_store.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/sale_screen.dart';
 
@@ -745,5 +748,123 @@ void main() {
       findsOneWidget,
     );
   });
+
+  // --- Server-reject branch (PostgrestException) -----------------------
+  //
+  // Sale.SAVE is optimistic: it clears the cart and posts in the
+  // background. The two failure modes must diverge:
+  //   - Network / transient → enqueue to OfflineQueueController.
+  //   - Server validation reject (PostgrestException) → restore the
+  //     cart snapshot, show an error, NEVER queue (retry would fail
+  //     the same way).
+  // The two tests below pin both halves of that contract.
+
+  testWidgets(
+    'PostgrestException restores the cart and does NOT enqueue',
+    (tester) async {
+      // Background-reported errors are part of the contract — the
+      // screen calls FlutterError.reportError on its own catches.
+      // Silence them here so the test asserts on observable state.
+      FlutterError.onError = (_) {};
+
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          shopItemId: 'si-rice',
+          itemId: 'item-rice',
+          defaultShopItemUnitId: 'siu-rice',
+          displayName: 'Bariis',
+          baseUnitCode: 'kg',
+          defaultUnitSalePrice: 1.5,
+        ),
+      ];
+      api.onPostSale = (_, _, _, _, _, _, _) async =>
+          throw const PostgrestException(
+            message: 'Negative stock',
+            code: '23514',
+          );
+
+      final queue = OfflineQueueController(
+        store: PendingPostStore(),
+        executor: (_) async {},
+        backoff: (_) => Duration.zero,
+      );
+
+      await tester.pumpWidget(
+        wrapWithApp(
+          SaleScreen(shop: shop),
+          authController: auth,
+          shopApi: api,
+          cartController: cart,
+          offlineQueueController: queue,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+      expect(cart.itemCount, 1);
+
+      await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
+      await tester.pumpAndSettle();
+
+      // Cart restored from snapshot.
+      expect(cart.itemCount, 1);
+      // Error message visible.
+      expect(find.text(en.salePostFailedMessage), findsOneWidget);
+      // Crucially: nothing was queued. Retrying a 23514 would fail again.
+      expect(queue.pendingCount, 0);
+    },
+  );
+
+  testWidgets(
+    'transient (non-Postgrest) exception clears the cart AND enqueues',
+    (tester) async {
+      FlutterError.onError = (_) {};
+
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          shopItemId: 'si-rice',
+          itemId: 'item-rice',
+          defaultShopItemUnitId: 'siu-rice',
+          displayName: 'Bariis',
+          baseUnitCode: 'kg',
+          defaultUnitSalePrice: 1.5,
+        ),
+      ];
+      api.onPostSale = (_, _, _, _, _, _, _) async =>
+          throw Exception('connection reset');
+
+      // Capture-and-succeed executor: the drain finishes cleanly (no
+      // leaked retry timer) and we observe that the post DID flow
+      // through the queue.
+      final drainedPosts = <Object>[];
+      final queue = OfflineQueueController(
+        store: PendingPostStore(),
+        executor: (post) async => drainedPosts.add(post),
+        backoff: (_) => Duration.zero,
+      );
+
+      await tester.pumpWidget(
+        wrapWithApp(
+          SaleScreen(shop: shop),
+          authController: auth,
+          shopApi: api,
+          cartController: cart,
+          offlineQueueController: queue,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
+      await tester.pumpAndSettle();
+
+      // Cart stayed cleared (the queue owns the work now).
+      expect(cart.itemCount, 0);
+      // Exactly one post flowed through the queue's executor.
+      expect(drainedPosts, hasLength(1));
+    },
+  );
 
 }

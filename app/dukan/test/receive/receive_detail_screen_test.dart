@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/auth/capabilities.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/receive/receive_detail_screen.dart';
 
@@ -37,7 +38,12 @@ void main() {
   late AppLocalizations en;
 
   setUp(() {
-    auth = FakeAuthController();
+    // Default to owner caps so the existing assertions (which expect
+    // VOID to be visible) still hold. The cashier-mode test below
+    // overrides this explicitly.
+    auth = FakeAuthController(
+      capabilities: Capabilities.forTesting(const ['receive.void']),
+    );
     api = FakeShopApi();
     shop = fakeShop();
     en = lookupAppLocalizations(const Locale('en'));
@@ -215,4 +221,22 @@ void main() {
 
     expect(api.voidReceiveCalls, isEmpty);
   });
+
+  testWidgets(
+    'cashier role hides VOID even when within the 24-hour window',
+    (tester) async {
+      auth.setCapabilities(Capabilities.empty());
+      api.onGetReceive = (_, _) async => _header();
+      api.onGetReceiveLines = (_, _) async => const [];
+
+      await pumpDetail(tester);
+      await tester.pumpAndSettle();
+
+      // Window says yes, capability says no → button stays hidden.
+      expect(
+        find.widgetWithText(TextButton, en.receiveDetailVoidButton),
+        findsNothing,
+      );
+    },
+  );
 }
