@@ -8,7 +8,6 @@
 // keypad from the prototype (which overflowed on smaller phones).
 
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,6 +17,7 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/observability/timing.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -33,7 +33,6 @@ class ExpenseScreen extends StatefulWidget {
 
 class _ExpenseScreenState extends State<ExpenseScreen> {
   final _amountController = TextEditingController();
-  final _random = math.Random();
   late Future<List<ExpenseCategoryOption>> _categoriesFuture;
   String? _locale;
 
@@ -106,7 +105,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final categoryId = category.id;
     final amount = controller.amount;
-    final clientOpId = _generateClientOpId();
+    final clientOpId = generateClientOpId('expense');
     final failureMessage = l.expensePostFailedMessage;
 
     controller.clearAll();
@@ -155,12 +154,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       );
       messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
     }
-  }
-
-  String _generateClientOpId() {
-    final ts = DateTime.now().millisecondsSinceEpoch;
-    final r = _random.nextInt(1 << 32);
-    return 'expense-$ts-$r';
   }
 
   @override

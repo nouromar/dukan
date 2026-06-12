@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/auth/capabilities.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 
@@ -268,9 +269,9 @@ String normalizePhoneNumber(String rawPhone) {
   if (phone.startsWith('00')) {
     phone = '+${phone.substring(2)}';
   } else if (phone.startsWith('0')) {
-    phone = '+252${phone.substring(1)}';
+    phone = '$defaultCountryCode${phone.substring(1)}';
   } else if (!phone.startsWith('+')) {
-    phone = '+252$phone';
+    phone = '$defaultCountryCode$phone';
   }
 
   final isValidE164 = RegExp(r'^\+[1-9]\d{7,14}$').hasMatch(phone);

@@ -19,6 +19,7 @@ import 'package:dukan/sale/sale_history_filter_sheet.dart';
 import 'package:dukan/shared/date_range.dart';
 import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/relative_time.dart';
@@ -33,7 +34,6 @@ class SaleHistoryScreen extends StatefulWidget {
 }
 
 class _SaleHistoryScreenState extends State<SaleHistoryScreen> {
-  static const int _pageLimit = 100;
   late SaleHistoryFilters _filters;
   late Future<List<SaleSummary>> _future;
 
@@ -47,7 +47,7 @@ class _SaleHistoryScreenState extends State<SaleHistoryScreen> {
   Future<List<SaleSummary>> _fetch() {
     return context.read<ShopApi>().listSales(
           shopId: widget.shop.id,
-          limit: _pageLimit,
+          limit: historyPageLimit,
           dateFrom: _filters.dateRange.from,
           dateTo: _filters.dateRange.to,
           partyId: _filters.partyId,

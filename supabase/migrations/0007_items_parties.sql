@@ -365,8 +365,12 @@ create index shop_item_shop_active_idx
   on public.shop_item (shop_id, is_active);
 create index shop_item_item_id_idx
   on public.shop_item (item_id) where item_id is not null;
+-- Not partial — the category filter is used by list_shop_items_with_price
+-- and search_items, neither of which filters on is_active. A partial
+-- `where is_active` made this index dead for both call sites. Kept on
+-- (shop_id, category_id) so the planner can still seek on shop alone.
 create index shop_item_category_idx
-  on public.shop_item (shop_id, category_id) where is_active;
+  on public.shop_item (shop_id, category_id);
 
 create index supplier_type_shop_id_active_idx
   on public.supplier_type (shop_id, is_active, sort_order);

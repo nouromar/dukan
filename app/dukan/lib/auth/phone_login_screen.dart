@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/digit_input.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -16,7 +17,7 @@ class PhoneLoginScreen extends StatefulWidget {
 }
 
 class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
-  final _phoneController = TextEditingController(text: '+252');
+  final _phoneController = TextEditingController(text: defaultCountryCode);
   bool _sending = false;
 
   @override

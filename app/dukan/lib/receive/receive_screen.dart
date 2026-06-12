@@ -24,7 +24,6 @@
 // last_cost values, distinct stock movements).
 
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -45,6 +44,7 @@ import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/favorites_cache.dart';
@@ -94,7 +94,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   // row. Used to render an inline "Activating..." indicator on the tile
   // so the cashier sees the screen is doing something.
   String? _activatingItemId;
-  final _random = math.Random();
   String? _locale;
   String? _unknownScan;
   late final HidScanListener _hidListener;
@@ -619,7 +618,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         paidAmount: 0,
         paymentMethodCode: null,
         documentId: _bonoDocumentId,
-        clientOpId: _generateClientOpId(),
+        clientOpId: generateClientOpId('receive'),
       );
 
       if (mounted) {
@@ -657,12 +656,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         context: ErrorDescription(op),
       ),
     );
-  }
-
-  String _generateClientOpId() {
-    final ts = DateTime.now().millisecondsSinceEpoch;
-    final r = _random.nextInt(1 << 32);
-    return 'receive-$ts-$r';
   }
 
   @override

@@ -11,6 +11,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/expense/expense_history_filter_sheet.dart';
 import 'package:dukan/shared/date_range.dart';
 import 'package:dukan/shared/history_date.dart';
+import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
@@ -24,7 +25,6 @@ class ExpenseHistoryScreen extends StatefulWidget {
 }
 
 class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
-  static const int _pageLimit = 100;
   late ExpenseHistoryFilters _filters;
   Future<List<ExpenseSummary>>? _future;
   String? _locale;
@@ -48,7 +48,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
   Future<List<ExpenseSummary>> _fetch() {
     return context.read<ShopApi>().listExpenses(
           shopId: widget.shop.id,
-          limit: _pageLimit,
+          limit: historyPageLimit,
           dateFrom: _filters.dateRange.from,
           dateTo: _filters.dateRange.to,
           categoryId: _filters.categoryId,

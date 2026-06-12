@@ -4,7 +4,6 @@
 // direction × party type and refuses to overpay the balance.
 
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +14,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/observability/timing.dart';
 import 'package:dukan/payment/allocation_sheet.dart';
 import 'package:dukan/payment/payment_controller.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -32,7 +32,6 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   final _amountController = TextEditingController();
-  final _random = math.Random();
 
   @override
   void initState() {
@@ -131,7 +130,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final partyId = party.id;
     final direction = controller.type.direction;
     final allocations = controller.allocations;
-    final clientOpId = _generateClientOpId();
+    final clientOpId = generateClientOpId('payment');
     final failureMessage = l.paymentPostFailedMessage;
 
     controller.clearAll();
@@ -186,12 +185,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
       messenger.showSnackBar(SnackBar(content: Text(failureMessage)));
     }
-  }
-
-  String _generateClientOpId() {
-    final ts = DateTime.now().millisecondsSinceEpoch;
-    final r = _random.nextInt(1 << 32);
-    return 'payment-$ts-$r';
   }
 
   @override

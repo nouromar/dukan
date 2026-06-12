@@ -23,6 +23,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
+import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
@@ -187,7 +188,7 @@ class _ReceiveDetailBody extends StatelessWidget {
     if (bundle.header.isVoided) return false;
     final posted = bundle.header.postedAt;
     if (posted == null) return false;
-    return DateTime.now().difference(posted).inHours < 24;
+    return DateTime.now().difference(posted) < receiveVoidWindow;
   }
 
   @override

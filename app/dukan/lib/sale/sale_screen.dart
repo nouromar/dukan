@@ -2,7 +2,6 @@
 // optimistic SAVE → post_sale.
 
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,6 +17,7 @@ import 'package:dukan/sale/sale_detail_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/observability/timing.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/queue/queue_status_pill.dart';
@@ -53,7 +53,6 @@ class _SaleScreenState extends State<SaleScreen> {
   bool _saving = false;
   bool _activating = false;
   bool _cartExpanded = false;
-  final _random = math.Random();
   String? _locale;
   String? _unknownScan;
   late final HidScanListener _hidListener;
@@ -614,7 +613,7 @@ class _SaleScreenState extends State<SaleScreen> {
         );
       }
     }
-    final clientOpId = _generateClientOpId();
+    final clientOpId = generateClientOpId('sale');
 
     cart.clearAll();
     setState(() {
@@ -686,7 +685,7 @@ class _SaleScreenState extends State<SaleScreen> {
       );
       if (!mounted) return;
       final post = PendingPost(
-        id: _generateClientOpId(),
+        id: generateClientOpId('sale'),
         clientOpId: clientOpId,
         shopId: widget.shop.id,
         rpc: 'post_sale',
@@ -765,11 +764,6 @@ class _SaleScreenState extends State<SaleScreen> {
     showError(context, message);
   }
 
-  String _generateClientOpId() {
-    final ts = DateTime.now().millisecondsSinceEpoch;
-    final r = _random.nextInt(1 << 32);
-    return 'sale-$ts-$r';
-  }
 
   @override
   Widget build(BuildContext context) {
