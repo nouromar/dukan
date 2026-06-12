@@ -3788,6 +3788,206 @@ begin
 end;
 $$;
 
+-- §HH audit_log subsystem (0050). Verify:
+--   1. Action-code registry seeded.
+--   2. _audit_log refuses unknown codes.
+--   3. _audit_log enforces reason floor (10 chars) and ceiling (300).
+--   4. _audit_log drops before_state on add-only actions (policy).
+--   5. _audit_log drops after_state on remove-only actions (policy).
+--   6. Direct INSERT to audit_log is refused by RLS.
+--   7. SELECT as shop member returns own shop's rows.
+--   8. SELECT as non-member returns zero rows for that shop.
+--   9. _audit_log_maintain_partitions creates next month's partition idempotently.
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- 1. Registry seeded (read as authenticated)
+do $$
+declare v_count int;
+begin
+  select count(*) into v_count from public.audit_action_code where is_active;
+  if v_count < 25 then
+    raise exception 'HH: action-code registry under-seeded: only % active codes', v_count;
+  end if;
+end;
+$$;
+
+-- 2 + 3 + 4 + 5: helper behaviour. _audit_log is the private write
+-- path called by security-definer posting RPCs (which run as
+-- postgres). Switch role to postgres for these direct calls; tests
+-- still set the JWT sub so auth.uid() resolves correctly.
+reset role;
+do $$
+declare
+  v_shop_id  uuid;
+  v_audit_id uuid;
+  v_failed   boolean;
+  v_row      public.audit_log%rowtype;
+begin
+  select shop_id into v_shop_id from test_ids;
+
+  -- (2) unknown code refused
+  v_failed := false;
+  begin
+    perform public._audit_log(v_shop_id, 'not.a.real.code', 'txn');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'HH: _audit_log accepted an unknown action_code';
+  end if;
+
+  -- (3a) reason too short
+  v_failed := false;
+  begin
+    perform public._audit_log(
+      v_shop_id, 'sale.void', 'txn',
+      p_entity_id := '00000000-0000-0000-0000-0000000000ff'::uuid,
+      p_reason    := 'ok'
+    );
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'HH: _audit_log accepted a too-short reason on sale.void';
+  end if;
+
+  -- (3b) reason too long
+  v_failed := false;
+  begin
+    perform public._audit_log(
+      v_shop_id, 'sale.void', 'txn',
+      p_entity_id := '00000000-0000-0000-0000-0000000000ff'::uuid,
+      p_reason    := repeat('x', 301)
+    );
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'HH: _audit_log accepted a too-long reason';
+  end if;
+
+  -- (3c) valid reason commits
+  v_audit_id := public._audit_log(
+    v_shop_id, 'sale.void', 'txn',
+    p_entity_id := '00000000-0000-0000-0000-0000000000ff'::uuid,
+    p_before    := jsonb_build_object('lines', 3, 'total', 12.5),
+    p_after     := jsonb_build_object('voided', true),
+    p_reason    := 'wrong total typed at counter'
+  );
+  select * into v_row from public.audit_log where id = v_audit_id;
+  if v_row.before_state is null or v_row.after_state is null then
+    raise exception 'HH: sale.void should keep both before and after, got before=% after=%',
+      v_row.before_state, v_row.after_state;
+  end if;
+  if v_row.reason is null or length(v_row.reason) < 10 then
+    raise exception 'HH: sale.void reason lost: %', v_row.reason;
+  end if;
+  if v_row.actor_user_id <> '00000000-0000-0000-0000-000000000001'::uuid then
+    raise exception 'HH: actor_user_id should be the JWT sub, got %', v_row.actor_user_id;
+  end if;
+
+  -- (4) Add-only action drops before_state.
+  v_audit_id := public._audit_log(
+    v_shop_id, 'inventory.alias.add', 'shop_item_alias',
+    p_entity_id := '00000000-0000-0000-0000-00000000aaaa'::uuid,
+    p_before    := jsonb_build_object('should', 'be dropped'),
+    p_after     := jsonb_build_object('alias', 'Tropi 25kg')
+  );
+  select * into v_row from public.audit_log where id = v_audit_id;
+  if v_row.before_state is not null then
+    raise exception 'HH: inventory.alias.add must drop before_state, got %', v_row.before_state;
+  end if;
+  if v_row.after_state is null then
+    raise exception 'HH: inventory.alias.add must keep after_state';
+  end if;
+
+  -- (5) Remove-only action drops after_state.
+  v_audit_id := public._audit_log(
+    v_shop_id, 'inventory.alias.remove', 'shop_item_alias',
+    p_entity_id := '00000000-0000-0000-0000-00000000aaaa'::uuid,
+    p_before    := jsonb_build_object('alias', 'Tropi 25kg'),
+    p_after     := jsonb_build_object('should', 'be dropped')
+  );
+  select * into v_row from public.audit_log where id = v_audit_id;
+  if v_row.after_state is not null then
+    raise exception 'HH: inventory.alias.remove must drop after_state';
+  end if;
+  if v_row.before_state is null then
+    raise exception 'HH: inventory.alias.remove must keep before_state';
+  end if;
+end;
+$$;
+
+-- 6. Direct INSERT refused by RLS / lack of grant.
+set role authenticated;
+do $$
+declare v_failed boolean := false;
+        v_shop_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  begin
+    insert into public.audit_log (shop_id, action_code, entity_type, source)
+      values (v_shop_id, 'sale.post', 'txn', 'mobile');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'HH: direct INSERT to audit_log must be refused (RLS / no grant)';
+  end if;
+end;
+$$;
+
+-- 7. Member SELECT works.
+do $$
+declare v_count int;
+        v_shop_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select count(*) into v_count from public.audit_log where shop_id = v_shop_id;
+  if v_count < 3 then
+    raise exception 'HH: owner should see at least 3 audit rows from prior subtests, got %', v_count;
+  end if;
+end;
+$$;
+
+-- 8. Non-member SELECT returns nothing.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+do $$
+declare v_count int;
+        v_shop_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select count(*) into v_count from public.audit_log where shop_id = v_shop_id;
+  if v_count <> 0 then
+    raise exception 'HH: non-member must see zero audit rows, got %', v_count;
+  end if;
+end;
+$$;
+
+-- 9. Maintain partitions idempotent. (postgres-only function.)
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+reset role;
+do $$
+declare
+  v_before int;
+  v_after  int;
+begin
+  select count(*) into v_before
+    from pg_catalog.pg_tables
+   where schemaname = 'public' and tablename ~ '^audit_log_\d{4}_\d{2}$';
+  perform public._audit_log_maintain_partitions();
+  select count(*) into v_after
+    from pg_catalog.pg_tables
+   where schemaname = 'public' and tablename ~ '^audit_log_\d{4}_\d{2}$';
+  if v_after <> v_before then
+    raise exception 'HH: maintain_partitions not idempotent (% -> %)', v_before, v_after;
+  end if;
+  if v_after < 3 then
+    raise exception 'HH: expected >=3 monthly partitions, got %', v_after;
+  end if;
+end;
+$$;
+
+reset role;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';
