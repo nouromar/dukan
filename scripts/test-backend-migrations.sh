@@ -4084,6 +4084,72 @@ begin
 end;
 $$;
 
+-- 12. list_audit_entries_for_entity returns the latest rows for an
+--     entity and respects the limit + ordering.
+do $$
+declare
+  v_shop_id   uuid;
+  v_party_id  uuid;
+  v_customer  uuid;
+  v_rows      int;
+  v_first     record;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_customer := (select id from public.party_type where code = 'customer');
+  insert into public.party (shop_id, name, phone, type_id, created_by)
+  values (v_shop_id, 'List Reader Test', '+25212340001', v_customer,
+          '00000000-0000-0000-0000-000000000001')
+  returning id into v_party_id;
+  perform public.update_party(v_shop_id, v_party_id, 'Rename one', '+1');
+  perform pg_catalog.pg_sleep(0.05);
+  perform public.update_party(v_shop_id, v_party_id, 'Rename two', '+2');
+  perform pg_catalog.pg_sleep(0.05);
+  perform public.update_party(v_shop_id, v_party_id, 'Rename three', '+3');
+
+  select count(*) into v_rows
+    from public.list_audit_entries_for_entity(v_shop_id, 'party', v_party_id, 10);
+  if v_rows <> 3 then
+    raise exception 'HH: list_audit returned wrong row count (%); want 3', v_rows;
+  end if;
+
+  -- Limit honored.
+  select count(*) into v_rows
+    from public.list_audit_entries_for_entity(v_shop_id, 'party', v_party_id, 2);
+  if v_rows <> 2 then
+    raise exception 'HH: list_audit limit not honored (%); want 2', v_rows;
+  end if;
+
+  -- Newest first.
+  select * into v_first
+    from public.list_audit_entries_for_entity(v_shop_id, 'party', v_party_id, 1);
+  if v_first.action_code <> 'people.party.edit' then
+    raise exception 'HH: latest entry action_code wrong: %', v_first.action_code;
+  end if;
+end;
+$$;
+
+-- 13. list_audit_entries_for_entity refuses non-members via the
+--     auth_can_access_shop guard.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+do $$
+declare
+  v_shop_id uuid;
+  v_failed boolean := false;
+begin
+  select shop_id into v_shop_id from test_ids;
+  begin
+    perform * from public.list_audit_entries_for_entity(
+      v_shop_id, 'party',
+      '00000000-0000-0000-0000-000000000abc'::uuid, 5);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'HH: list_audit_entries_for_entity must refuse non-members';
+  end if;
+end;
+$$;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
 reset role;
 
 do $$
