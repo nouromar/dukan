@@ -1,9 +1,10 @@
-// Top bar — shop switcher + search + user menu. All three are
-// placeholders until #269 (shop switcher), #271 (search), and #268
-// (user menu after auth lands).
+// Top bar — shop switcher (#269), search (#271 / global), user menu.
+// Server component so the user menu can read the session via
+// createSupabaseServerClient without shipping the SDK to the client.
 
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { UserMenu } from "@/components/shell/user-menu";
 
 export function TopBar() {
   return (
@@ -22,7 +23,7 @@ export function TopBar() {
           aria-label="Search"
         />
       </div>
-      <div className="text-sm text-muted-foreground">Signed out</div>
+      <UserMenu />
     </header>
   );
 }

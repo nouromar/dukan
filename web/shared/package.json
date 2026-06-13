@@ -12,7 +12,8 @@
     "./config": "./src/config.ts"
   },
   "scripts": {
-    "types:gen": "echo 'TODO: wire `supabase gen types typescript` in #268 after we have the project ref' && exit 0",
+    "types:gen:local": "supabase gen types typescript --local > src/database.types.ts",
+    "types:gen:remote": "test -n \"$SUPABASE_PROJECT_ID\" && supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/database.types.ts || (echo 'Set SUPABASE_PROJECT_ID=<your-ref> first' && exit 1)",
     "lint": "echo 'shared package has no lint yet' && exit 0",
     "typecheck": "tsc --noEmit"
   },

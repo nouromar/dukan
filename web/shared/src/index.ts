@@ -16,4 +16,4 @@
 //
 // Importable as `from 'shared'` from any web/* workspace member.
 
-export * from './config.js';
+export * from './config';
