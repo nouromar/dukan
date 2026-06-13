@@ -21,7 +21,7 @@ From the **monorepo root**:
 
 ```bash
 pnpm install                                    # once
-pnpm --filter shop-admin dev                    # http://localhost:3000
+pnpm --filter shop-admin dev                    # http://localhost:3010
 pnpm --filter shop-admin typecheck              # tsc --noEmit
 pnpm --filter shop-admin lint
 pnpm --filter shop-admin build                  # production build
