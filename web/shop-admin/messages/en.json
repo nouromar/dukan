@@ -46,6 +46,24 @@
     "errorGeneric": "Something went wrong. Try again.",
     "errorSend": "Could not send the code. Try again."
   },
+  "table": {
+    "empty": {
+      "title": "Nothing here yet",
+      "description": "Once there's data to show, it'll appear here."
+    },
+    "error": {
+      "title": "Couldn't load",
+      "description": "Something went wrong on our side.",
+      "retry": "Try again"
+    },
+    "loading": "Loading…",
+    "selection": {
+      "count": "{count, plural, one {# selected} other {# selected}}",
+      "clear": "Clear",
+      "selectAll": "Select all rows",
+      "selectRow": "Select row"
+    }
+  },
   "verify": {
     "title": "Enter your code",
     "codeLabel": "6-digit code",

@@ -46,6 +46,24 @@
     "errorGeneric": "Wax baa khaldamay. Mar kale isku day.",
     "errorSend": "Lama dirin karin koodhka. Mar kale isku day."
   },
+  "table": {
+    "empty": {
+      "title": "Wax weli halkan kuma jiro",
+      "description": "Marka xog la helo, halkan ayay ka muuqan doontaa."
+    },
+    "error": {
+      "title": "Lama soo dejin karin",
+      "description": "Wax baa khaldamay dhinaca dukaanka.",
+      "retry": "Isku day mar kale"
+    },
+    "loading": "Soo dejinta…",
+    "selection": {
+      "count": "{count, plural, one {# la doortay} other {# la doortay}}",
+      "clear": "Tirtir",
+      "selectAll": "Dooro dhammaan safafka",
+      "selectRow": "Dooro safka"
+    }
+  },
   "verify": {
     "title": "Geli koodhkaaga",
     "codeLabel": "Koodh 6 lambar ah",
