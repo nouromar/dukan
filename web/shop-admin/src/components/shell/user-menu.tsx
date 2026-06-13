@@ -3,6 +3,7 @@ import { getTranslations, getLocale } from "next-intl/server";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -33,40 +34,46 @@ export async function UserMenu() {
         <span className="max-w-[140px] truncate text-sm">{phone}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-          {t("signedInAs")}
-        </DropdownMenuLabel>
-        <DropdownMenuLabel className="pt-0 text-sm">{phone}</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+            {t("signedInAs")}
+          </DropdownMenuLabel>
+          <DropdownMenuLabel className="pt-0 text-sm">
+            {phone}
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-          {t("language")}
-        </DropdownMenuLabel>
-        {LOCALES.map((loc: Locale) => {
-          const active = loc === currentLocale;
-          return (
-            <DropdownMenuItem key={loc}>
-              <form
-                action="/auth/set-locale"
-                method="post"
-                className="w-full"
-              >
-                <input type="hidden" name="locale" value={loc} />
-                <button
-                  type="submit"
-                  className="flex w-full items-center justify-between text-left"
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+            {t("language")}
+          </DropdownMenuLabel>
+          {LOCALES.map((loc: Locale) => {
+            const active = loc === currentLocale;
+            return (
+              <DropdownMenuItem key={loc}>
+                <form
+                  action="/auth/set-locale"
+                  method="post"
+                  className="w-full"
                 >
-                  <span>{LOCALE_LABELS[loc]}</span>
-                  {active ? (
-                    <Check
-                      className="size-4 text-primary"
-                      aria-label="Selected"
-                    />
-                  ) : null}
-                </button>
-              </form>
-            </DropdownMenuItem>
-          );
-        })}
+                  <input type="hidden" name="locale" value={loc} />
+                  <button
+                    type="submit"
+                    className="flex w-full items-center justify-between text-left"
+                  >
+                    <span>{LOCALE_LABELS[loc]}</span>
+                    {active ? (
+                      <Check
+                        className="size-4 text-primary"
+                        aria-label="Selected"
+                      />
+                    ) : null}
+                  </button>
+                </form>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <form action="/auth/signout" method="post" className="w-full">

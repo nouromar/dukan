@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -58,36 +59,38 @@ export function ShopSwitcher() {
         <ChevronsUpDown className="size-3 text-muted-foreground" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-          {t("switch")}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {shops.map((shop) => {
-          const selected = shop.id === currentShop?.id;
-          return (
-            <DropdownMenuItem key={shop.id}>
-              <form
-                action="/auth/select-shop"
-                method="post"
-                className="w-full"
-              >
-                <input type="hidden" name="shopId" value={shop.id} />
-                <button
-                  type="submit"
-                  className="flex w-full items-center justify-between text-left"
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+            {t("switch")}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {shops.map((shop) => {
+            const selected = shop.id === currentShop?.id;
+            return (
+              <DropdownMenuItem key={shop.id}>
+                <form
+                  action="/auth/select-shop"
+                  method="post"
+                  className="w-full"
                 >
-                  <span className="truncate">{shop.name}</span>
-                  {selected ? (
-                    <Check
-                      className="size-4 text-primary"
-                      aria-label="Selected"
-                    />
-                  ) : null}
-                </button>
-              </form>
-            </DropdownMenuItem>
-          );
-        })}
+                  <input type="hidden" name="shopId" value={shop.id} />
+                  <button
+                    type="submit"
+                    className="flex w-full items-center justify-between text-left"
+                  >
+                    <span className="truncate">{shop.name}</span>
+                    {selected ? (
+                      <Check
+                        className="size-4 text-primary"
+                        aria-label="Selected"
+                      />
+                    ) : null}
+                  </button>
+                </form>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
