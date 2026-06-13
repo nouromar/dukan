@@ -1476,6 +1476,10 @@ class ShopApi {
     String? defaultLanguageCode,
     String? timezone,
   }) async {
+    // Routes through update_shop_settings (0054) instead of a direct
+    // PATCH so the edit is audit-logged via setup.shop.edit. The
+    // shop admin portal uses the same RPC; both surfaces share one
+    // audit path.
     final patch = <String, dynamic>{};
     if (name != null && name.trim().isNotEmpty) patch['name'] = name.trim();
     if (currencyCode != null) patch['currency_code'] = currencyCode;
@@ -1486,7 +1490,10 @@ class ShopApi {
       patch['timezone'] = timezone.trim();
     }
     if (patch.isEmpty) return;
-    await _client.from('shop').update(patch).eq('id', shopId);
+    await _client.rpc(
+      'update_shop_settings',
+      params: {'p_shop_id': shopId, 'p_settings': patch},
+    );
   }
 
   /// Persists the per-item low-stock warning threshold (in base units).

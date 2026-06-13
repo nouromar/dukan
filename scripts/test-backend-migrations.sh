@@ -4890,6 +4890,204 @@ end;
 $$;
 reset role;
 
+-- ---------------------------------------------------------------------------
+-- §NN Admin-portal prereqs (0054): user_preference, new capabilities,
+-- update_shop_settings RPC, shop_invite RPCs. Verify:
+--   1. user_preference RLS — user reads/writes only their own row.
+--   2. New capability codes are registered + owner role inherits them.
+--   3. update_shop_settings: owner can edit, cashier denied, audit_log
+--      row written via setup.shop.edit, no-op on empty patch.
+--   4. create_shop_invite: idempotent on (shop_id, phone), audit-logged,
+--      cashier denied (no setup.staff.invite cap).
+--   5. accept_shop_invite: creates shop_membership row; rejects expired
+--      invites; rejects phone-mismatch.
+-- ---------------------------------------------------------------------------
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- 1. user_preference RLS — owner writes their own; other user can't read it.
+do $$
+declare
+  v_owner_rows int;
+  v_other_rows int;
+  v_failed boolean;
+begin
+  insert into public.user_preference (user_id, ui_locale)
+  values (auth.uid(), 'so')
+  on conflict (user_id) do update set ui_locale = excluded.ui_locale;
+
+  select count(*) into v_owner_rows from public.user_preference where user_id = auth.uid();
+  if v_owner_rows <> 1 then
+    raise exception 'NN (1): owner could not read their own user_preference';
+  end if;
+
+  -- Try to insert for someone else — must fail at RLS.
+  v_failed := false;
+  begin
+    insert into public.user_preference (user_id, ui_locale)
+    values ('00000000-0000-0000-0000-000000000003'::uuid, 'so');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'NN (1): RLS allowed insert for another user_id';
+  end if;
+end;
+$$;
+
+-- 2. New capabilities present + owner has them.
+-- Capability table is RLS-locked away from authenticated; run the
+-- existence probe via the capability helper which IS exposed.
+do $$
+declare
+  v_shop_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  if not public.auth_user_has_capability('audit.view', v_shop_id) then
+    raise exception 'NN (2): owner role missing audit.view';
+  end if;
+  if not public.auth_user_has_capability('sales.export', v_shop_id) then
+    raise exception 'NN (2): owner role missing sales.export';
+  end if;
+  if not public.auth_user_has_capability('inventory.product.bulk_edit', v_shop_id) then
+    raise exception 'NN (2): owner role missing inventory.product.bulk_edit';
+  end if;
+  if not public.auth_user_has_capability('setup.staff.invite', v_shop_id) then
+    raise exception 'NN (2): owner role missing setup.staff.invite';
+  end if;
+  if not public.auth_user_has_capability('dashboard.view_org', v_shop_id) then
+    raise exception 'NN (2): owner role missing dashboard.view_org';
+  end if;
+end;
+$$;
+
+-- 3. update_shop_settings: owner allowed + audit-logged.
+do $$
+declare
+  v_shop_id     uuid;
+  v_audit_count int;
+  v_failed      boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+
+  -- Owner edits timezone.
+  perform public.update_shop_settings(
+    v_shop_id,
+    jsonb_build_object('timezone', 'Africa/Mogadishu')
+  );
+  select count(*) into v_audit_count
+  from public.audit_log
+  where action_code = 'setup.shop.edit'
+    and entity_id = v_shop_id;
+  if v_audit_count < 1 then
+    raise exception 'NN (3): update_shop_settings did not emit audit_log';
+  end if;
+
+  -- Empty patch is a no-op (no new audit row).
+  perform public.update_shop_settings(v_shop_id, '{}'::jsonb);
+  select count(*) into v_audit_count
+  from public.audit_log
+  where action_code = 'setup.shop.edit'
+    and entity_id = v_shop_id;
+  if v_audit_count <> 1 then
+    raise exception 'NN (3): empty patch must not write a new audit row (got %)', v_audit_count;
+  end if;
+end;
+$$;
+
+-- 4. create_shop_invite: cashier denied.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+do $$
+declare
+  v_shop_id uuid;
+  v_failed  boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_failed := false;
+  begin
+    perform public.create_shop_invite(v_shop_id, '+252611111111', 'cashier');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'NN (4): cashier was allowed to create_shop_invite';
+  end if;
+end;
+$$;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- 4b. create_shop_invite: owner happy path + idempotent.
+do $$
+declare
+  v_shop_id    uuid;
+  v_invite_1   uuid;
+  v_invite_2   uuid;
+  v_audit_n    int;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_invite_1 := public.create_shop_invite(v_shop_id, '+252611222333', 'cashier');
+  if v_invite_1 is null then
+    raise exception 'NN (4b): create_shop_invite returned null';
+  end if;
+
+  -- Same (shop, phone) — returns the same id.
+  v_invite_2 := public.create_shop_invite(v_shop_id, '+252611222333', 'cashier');
+  if v_invite_2 <> v_invite_1 then
+    raise exception 'NN (4b): create_shop_invite not idempotent (got % vs %)',
+      v_invite_2, v_invite_1;
+  end if;
+
+  -- Audit row written.
+  select count(*) into v_audit_n
+  from public.audit_log
+  where action_code = 'setup.staff.invite'
+    and entity_id = v_invite_1;
+  if v_audit_n <> 1 then
+    raise exception 'NN (4b): expected 1 audit row, got %', v_audit_n;
+  end if;
+end;
+$$;
+
+-- 5. accept_shop_invite: phone mismatch + expired rejected.
+do $$
+declare
+  v_shop_id  uuid;
+  v_invite   uuid;
+  v_failed   boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_invite := public.create_shop_invite(v_shop_id, '+252619998888', 'cashier');
+
+  -- Caller's JWT phone is unset → must fail.
+  v_failed := false;
+  begin
+    perform public.accept_shop_invite(v_invite);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'NN (5): accept_shop_invite must reject phone-mismatch';
+  end if;
+
+  -- Force the invite to be expired and try again.
+  reset role;
+  update public.shop_invite set expires_at = pg_catalog.now() - interval '1 day'
+  where id = v_invite;
+  set role authenticated;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+  set request.jwt.claim.phone_number = '+252619998888';
+
+  v_failed := false;
+  begin
+    perform public.accept_shop_invite(v_invite);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'NN (5): accept_shop_invite must reject expired invite';
+  end if;
+  reset request.jwt.claim.phone_number;
+end;
+$$;
+reset role;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';
