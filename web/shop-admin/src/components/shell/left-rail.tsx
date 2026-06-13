@@ -1,6 +1,7 @@
 // Persistent left navigation rail. Order matches docs/shop-admin-portal.md
-// § 5.1. Each nav item will be capability-gated in #269 — until then
-// every item renders for every user.
+// § 5.1. Items are filtered by the capability set for the current shop —
+// a cashier never sees Setup or Audit because they can't access those
+// modules. Mapping picked from migration 0048_capabilities.sql.
 
 "use client";
 
@@ -14,28 +15,49 @@ import {
   Wallet,
   Settings,
   ScrollText,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useShopContext } from "@/lib/shop-context";
 
-const NAV_ITEMS = [
-  { href: "/overview", label: "Overview", icon: LayoutDashboard },
-  { href: "/sales", label: "Sales", icon: Receipt },
-  { href: "/inventory", label: "Inventory", icon: Boxes },
-  { href: "/people", label: "People", icon: Users },
-  { href: "/money", label: "Money", icon: Wallet },
-  { href: "/setup", label: "Setup", icon: Settings },
-  { href: "/audit", label: "Audit", icon: ScrollText },
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  /** Capability required to see this item. `null` = always visible. */
+  capability: string | null;
+};
+
+const NAV_ITEMS: readonly NavItem[] = [
+  { href: "/overview", label: "Overview", icon: LayoutDashboard, capability: "dashboard.view" },
+  { href: "/sales", label: "Sales", icon: Receipt, capability: "sales.history.view" },
+  { href: "/inventory", label: "Inventory", icon: Boxes, capability: "inventory.product.view" },
+  { href: "/people", label: "People", icon: Users, capability: "people.party.view" },
+  { href: "/money", label: "Money", icon: Wallet, capability: "money.payment.view" },
+  { href: "/setup", label: "Setup", icon: Settings, capability: "setup.shop.edit" },
+  { href: "/audit", label: "Audit", icon: ScrollText, capability: "audit.view" },
 ] as const;
 
 export function LeftRail() {
   const pathname = usePathname();
+  const { capabilities, currentShop } = useShopContext();
+
+  // No shop selected → no nav. The switcher in the top bar surfaces
+  // the empty state; left rail just collapses to the brand chip so
+  // the layout doesn't shift.
+  const visibleItems = currentShop
+    ? NAV_ITEMS.filter(
+        (item) => item.capability === null || capabilities.has(item.capability),
+      )
+    : [];
+
   return (
     <aside className="hidden w-60 shrink-0 border-r bg-sidebar text-sidebar-foreground md:flex md:flex-col">
       <div className="flex h-14 items-center px-4 font-semibold tracking-tight">
         Dukan
       </div>
       <nav className="flex flex-col gap-1 p-3">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {visibleItems.map(({ href, label, icon: Icon }) => {
           const active = pathname?.startsWith(href);
           return (
             <Link
