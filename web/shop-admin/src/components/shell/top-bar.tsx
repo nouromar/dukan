@@ -3,11 +3,13 @@
 // createSupabaseServerClient without shipping the SDK to the client.
 
 import { Search } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Input } from "@/components/ui/input";
 import { UserMenu } from "@/components/shell/user-menu";
 import { ShopSwitcher } from "@/components/shell/shop-switcher";
 
-export function TopBar() {
+export async function TopBar() {
+  const t = await getTranslations("topBar");
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background px-6">
       <ShopSwitcher />
@@ -18,10 +20,10 @@ export function TopBar() {
         />
         <Input
           type="search"
-          placeholder="Search products, parties, invoices…"
+          placeholder={t("searchPlaceholder")}
           className="pl-8"
           disabled
-          aria-label="Search"
+          aria-label={t("searchPlaceholder")}
         />
       </div>
       <UserMenu />

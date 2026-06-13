@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, ChevronsUpDown, Store } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +16,7 @@ import { useShopContext } from "@/lib/shop-context";
 
 export function ShopSwitcher() {
   const { shops, currentShop } = useShopContext();
+  const t = useTranslations("shopSwitcher");
 
   // Zero shops: most likely a brand-new user whose org/shop is still
   // being created on mobile. Show a quiet badge instead of an empty
@@ -23,7 +25,7 @@ export function ShopSwitcher() {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Store className="size-4" aria-hidden />
-        <span>No shops yet</span>
+        <span>{t("empty")}</span>
       </div>
     );
   }
@@ -51,13 +53,13 @@ export function ShopSwitcher() {
       >
         <Store className="size-4" aria-hidden />
         <span className="max-w-[200px] truncate text-sm font-medium">
-          {currentShop?.name ?? "Select shop"}
+          {currentShop?.name ?? t("select")}
         </span>
         <ChevronsUpDown className="size-3 text-muted-foreground" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-          Switch shop
+          {t("switch")}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {shops.map((shop) => {

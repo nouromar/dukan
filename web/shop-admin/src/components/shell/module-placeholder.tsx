@@ -3,33 +3,43 @@
 // fill in one module at a time without empty-route 404s.
 
 import { Construction } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function ModulePlaceholder({
-  title,
-  tagline,
+export type ModuleKey =
+  | "overview"
+  | "sales"
+  | "inventory"
+  | "people"
+  | "money"
+  | "setup"
+  | "audit";
+
+export async function ModulePlaceholder({
+  module,
   task,
 }: {
-  title: string;
-  tagline: string;
+  module: ModuleKey;
   task: string;
 }) {
+  const tNav = await getTranslations("nav");
+  const tPlaceholder = await getTranslations("modulePlaceholder");
   return (
     <div className="mx-auto max-w-2xl py-12">
       <div className="mb-6 flex items-center gap-3">
         <Construction className="size-6 text-muted-foreground" aria-hidden />
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {tNav(module)}
+        </h1>
       </div>
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-medium text-muted-foreground">
-            {tagline}
+            {tPlaceholder(module)}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          This module is scaffolded but not yet implemented. Tracked as{" "}
-          <span className="font-mono">{task}</span> in
-          docs/shop-admin-portal-alignment.md.
+          {tPlaceholder("notImplemented", { task })}
         </CardContent>
       </Card>
     </div>

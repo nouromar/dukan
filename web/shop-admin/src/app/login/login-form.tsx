@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { defaultCountryCode } from "shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/";
+  const t = useTranslations("login");
 
   const [phone, setPhone] = useState(defaultCountryCode);
   const [sending, setSending] = useState(false);
@@ -27,9 +29,9 @@ export function LoginForm() {
       normalized = normalizePhoneNumber(phone);
     } catch (err) {
       if (err instanceof PhoneFormatError) {
-        toast.error("Enter a valid phone number, for example +252612345678.");
+        toast.error(t("errorPhone"));
       } else {
-        toast.error("Something went wrong. Try again.");
+        toast.error(t("errorGeneric"));
       }
       setSending(false);
       return;
@@ -41,7 +43,7 @@ export function LoginForm() {
     });
 
     if (error) {
-      toast.error(error.message || "Could not send the code. Try again.");
+      toast.error(error.message || t("errorSend"));
       setSending(false);
       return;
     }
@@ -53,12 +55,12 @@ export function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign in</CardTitle>
+        <CardTitle>{t("title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone number</Label>
+            <Label htmlFor="phone">{t("phoneLabel")}</Label>
             <Input
               id="phone"
               type="tel"
@@ -66,15 +68,13 @@ export function LoginForm() {
               autoComplete="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+252612345678"
+              placeholder={t("phonePlaceholder")}
               required
             />
-            <p className="text-xs text-muted-foreground">
-              We&apos;ll text you a 6-digit code.
-            </p>
+            <p className="text-xs text-muted-foreground">{t("phoneHelp")}</p>
           </div>
           <Button type="submit" className="w-full" disabled={sending}>
-            {sending ? "Sending…" : "Send code"}
+            {sending ? t("sending") : t("sendCode")}
           </Button>
         </form>
       </CardContent>

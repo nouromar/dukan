@@ -1,0 +1,60 @@
+{
+  "app": {
+    "name": "Dukan",
+    "subtitle": "Maamulka Dukaanka"
+  },
+  "nav": {
+    "overview": "Guudmar",
+    "sales": "Iibyada",
+    "inventory": "Alaabta",
+    "people": "Dadka",
+    "money": "Lacagta",
+    "setup": "Hagaajinta",
+    "audit": "Diiwaanka"
+  },
+  "modulePlaceholder": {
+    "notImplemented": "Qaybtan way diyaarsan tahay laakiin weli lama dhisin. Waxaa la raacayaa {task} ee docs/shop-admin-portal-alignment.md.",
+    "overview": "Maanta, toddobaadkan, bishan — dukaamada oo dhan.",
+    "sales": "Taariikhda, warbixinada, baajinta, soo-saarka.",
+    "inventory": "Alaabta, kaydka, hagaajinta, kayd-yar, kuwa ugu badan, kuwa aan dhaqaaqayn.",
+    "people": "Macaamiisha, qeybiyeyaasha, deynta, koontooyinka.",
+    "money": "Bixinta, kharashka, faaiidada, lacagta jeebka.",
+    "setup": "Habaynta dukaanka, shaqaalaha, doorka, qaab-dhismeedka, isku-xirka.",
+    "audit": "Diiwaan la baadhi karo oo dhammaan ficillada dukaankan."
+  },
+  "topBar": {
+    "searchPlaceholder": "Raadi alaab, dadka, qaansheegyada…"
+  },
+  "shopSwitcher": {
+    "switch": "Beddel dukaanka",
+    "select": "Dooro dukaanka",
+    "empty": "Wali dukaan ma jiro"
+  },
+  "userMenu": {
+    "signedInAs": "Waxaad u soo gashay",
+    "signOut": "Ka bax",
+    "language": "Luqadda"
+  },
+  "login": {
+    "title": "Soo gal",
+    "phoneLabel": "Lambarka taleefanka",
+    "phonePlaceholder": "+252612345678",
+    "phoneHelp": "Waxaan kuu soo dirayaa koodh 6 lambar ah.",
+    "sendCode": "Dir koodhka",
+    "sending": "Diridda…",
+    "errorPhone": "Geli lambar sax ah, tusaale +252612345678.",
+    "errorGeneric": "Wax baa khaldamay. Mar kale isku day.",
+    "errorSend": "Lama dirin karin koodhka. Mar kale isku day."
+  },
+  "verify": {
+    "title": "Geli koodhkaaga",
+    "codeLabel": "Koodh 6 lambar ah",
+    "codePlaceholder": "123456",
+    "sentTo": "Loo diray {phone}.",
+    "wrongNumber": "Lambar khaldan?",
+    "errorLength": "Koodhku waa 6 lambar.",
+    "errorVerify": "Koodhkaas ma shaqayn. Mar kale isku day.",
+    "submit": "Soo gal",
+    "verifying": "Xaqiijinta…"
+  }
+}

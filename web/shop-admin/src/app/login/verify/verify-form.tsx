@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Card,
@@ -21,6 +22,7 @@ export function VerifyForm() {
   const next = searchParams.get("next") ?? "/";
   const [code, setCode] = useState("");
   const [verifying, setVerifying] = useState(false);
+  const t = useTranslations("verify");
 
   // Defensive: missing phone param → back to /login.
   useEffect(() => {
@@ -30,7 +32,7 @@ export function VerifyForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (code.length !== 6) {
-      toast.error("Code is 6 digits.");
+      toast.error(t("errorLength"));
       return;
     }
     setVerifying(true);
@@ -41,7 +43,7 @@ export function VerifyForm() {
       type: "sms",
     });
     if (error) {
-      toast.error(error.message || "That code didn't work. Try again.");
+      toast.error(error.message || t("errorVerify"));
       setVerifying(false);
       return;
     }
@@ -53,12 +55,12 @@ export function VerifyForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Enter your code</CardTitle>
+        <CardTitle>{t("title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label htmlFor="code">6-digit code</Label>
+            <Label htmlFor="code">{t("codeLabel")}</Label>
             <Input
               id="code"
               type="text"
@@ -68,23 +70,23 @@ export function VerifyForm() {
               autoComplete="one-time-code"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              placeholder="123456"
+              placeholder={t("codePlaceholder")}
               required
               autoFocus
             />
             <p className="text-xs text-muted-foreground">
-              Sent to <span className="font-medium">{phone}</span>.{" "}
+              {t("sentTo", { phone })}{" "}
               <button
                 type="button"
                 className="text-primary underline-offset-2 hover:underline"
                 onClick={() => router.push("/login")}
               >
-                Wrong number?
+                {t("wrongNumber")}
               </button>
             </p>
           </div>
           <Button type="submit" className="w-full" disabled={verifying}>
-            {verifying ? "Verifying…" : "Sign in"}
+            {verifying ? t("verifying") : t("submit")}
           </Button>
         </form>
       </CardContent>

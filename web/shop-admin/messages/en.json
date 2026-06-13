@@ -1,0 +1,60 @@
+{
+  "app": {
+    "name": "Dukan",
+    "subtitle": "Shop Admin"
+  },
+  "nav": {
+    "overview": "Overview",
+    "sales": "Sales",
+    "inventory": "Inventory",
+    "people": "People",
+    "money": "Money",
+    "setup": "Setup",
+    "audit": "Audit"
+  },
+  "modulePlaceholder": {
+    "notImplemented": "This module is scaffolded but not yet implemented. Tracked as {task} in docs/shop-admin-portal-alignment.md.",
+    "overview": "Today, this week, this month — across all shops.",
+    "sales": "History, reports, voids, exports.",
+    "inventory": "Products, stock, adjustments, low stock, top movers, dead stock.",
+    "people": "Customers, suppliers, aging, statements.",
+    "money": "Payments, expenses, P&L, cash position.",
+    "setup": "Shop settings, staff, roles, templates, integrations.",
+    "audit": "Searchable log of every action taken in this shop."
+  },
+  "topBar": {
+    "searchPlaceholder": "Search products, parties, invoices…"
+  },
+  "shopSwitcher": {
+    "switch": "Switch shop",
+    "select": "Select shop",
+    "empty": "No shops yet"
+  },
+  "userMenu": {
+    "signedInAs": "Signed in as",
+    "signOut": "Sign out",
+    "language": "Language"
+  },
+  "login": {
+    "title": "Sign in",
+    "phoneLabel": "Phone number",
+    "phonePlaceholder": "+252612345678",
+    "phoneHelp": "We'll text you a 6-digit code.",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "errorPhone": "Enter a valid phone number, for example +252612345678.",
+    "errorGeneric": "Something went wrong. Try again.",
+    "errorSend": "Could not send the code. Try again."
+  },
+  "verify": {
+    "title": "Enter your code",
+    "codeLabel": "6-digit code",
+    "codePlaceholder": "123456",
+    "sentTo": "Sent to {phone}.",
+    "wrongNumber": "Wrong number?",
+    "errorLength": "Code is 6 digits.",
+    "errorVerify": "That code didn't work. Try again.",
+    "submit": "Sign in",
+    "verifying": "Verifying…"
+  }
+}

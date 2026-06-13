@@ -7,6 +7,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   Receipt,
@@ -22,25 +23,35 @@ import { useShopContext } from "@/lib/shop-context";
 
 type NavItem = {
   href: string;
-  label: string;
+  /** i18n key under `nav.*`. */
+  i18nKey:
+    | "overview"
+    | "sales"
+    | "inventory"
+    | "people"
+    | "money"
+    | "setup"
+    | "audit";
   icon: LucideIcon;
   /** Capability required to see this item. `null` = always visible. */
   capability: string | null;
 };
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { href: "/overview", label: "Overview", icon: LayoutDashboard, capability: "dashboard.view" },
-  { href: "/sales", label: "Sales", icon: Receipt, capability: "sales.history.view" },
-  { href: "/inventory", label: "Inventory", icon: Boxes, capability: "inventory.product.view" },
-  { href: "/people", label: "People", icon: Users, capability: "people.party.view" },
-  { href: "/money", label: "Money", icon: Wallet, capability: "money.payment.view" },
-  { href: "/setup", label: "Setup", icon: Settings, capability: "setup.shop.edit" },
-  { href: "/audit", label: "Audit", icon: ScrollText, capability: "audit.view" },
+  { href: "/overview", i18nKey: "overview", icon: LayoutDashboard, capability: "dashboard.view" },
+  { href: "/sales", i18nKey: "sales", icon: Receipt, capability: "sales.history.view" },
+  { href: "/inventory", i18nKey: "inventory", icon: Boxes, capability: "inventory.product.view" },
+  { href: "/people", i18nKey: "people", icon: Users, capability: "people.party.view" },
+  { href: "/money", i18nKey: "money", icon: Wallet, capability: "money.payment.view" },
+  { href: "/setup", i18nKey: "setup", icon: Settings, capability: "setup.shop.edit" },
+  { href: "/audit", i18nKey: "audit", icon: ScrollText, capability: "audit.view" },
 ] as const;
 
 export function LeftRail() {
   const pathname = usePathname();
   const { capabilities, currentShop } = useShopContext();
+  const t = useTranslations("nav");
+  const tApp = useTranslations("app");
 
   // No shop selected → no nav. The switcher in the top bar surfaces
   // the empty state; left rail just collapses to the brand chip so
@@ -54,10 +65,10 @@ export function LeftRail() {
   return (
     <aside className="hidden w-60 shrink-0 border-r bg-sidebar text-sidebar-foreground md:flex md:flex-col">
       <div className="flex h-14 items-center px-4 font-semibold tracking-tight">
-        Dukan
+        {tApp("name")}
       </div>
       <nav className="flex flex-col gap-1 p-3">
-        {visibleItems.map(({ href, label, icon: Icon }) => {
+        {visibleItems.map(({ href, i18nKey, icon: Icon }) => {
           const active = pathname?.startsWith(href);
           return (
             <Link
@@ -71,7 +82,7 @@ export function LeftRail() {
               )}
             >
               <Icon className="size-4" aria-hidden />
-              {label}
+              {t(i18nKey)}
             </Link>
           );
         })}
