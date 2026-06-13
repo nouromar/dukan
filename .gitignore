@@ -5,3 +5,15 @@
 node_modules/
 .venv/
 __pycache__/
+
+# Web (Next.js / pnpm)
+.next/
+.vercel/
+.turbo/
+out/
+dist/
+*.tsbuildinfo
+.pnpm-store/
+
+# Local Supabase
+supabase/.temp/

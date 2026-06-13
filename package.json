@@ -1,0 +1,19 @@
+{
+  "name": "dukan-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Dukan monorepo root: Flutter mobile app under app/dukan/, web portals under web/, shared TypeScript types/utilities under web/shared/.",
+  "scripts": {
+    "web:dev": "pnpm --filter shop-admin dev",
+    "web:build": "pnpm -r --filter './web/*' build",
+    "web:lint": "pnpm -r --filter './web/*' lint",
+    "web:typecheck": "pnpm -r --filter './web/*' typecheck",
+    "web:test": "pnpm -r --filter './web/*' test",
+    "types:gen": "pnpm --filter shared types:gen"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.9"
+}

@@ -1,0 +1,22 @@
+{
+  "name": "shared",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Cross-portal shared TypeScript surface: generated Supabase database types, business-rule constants mirrored from app/dukan/lib/config/business_rules.dart, currency formatters, capability-code enums.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./database.types": "./src/database.types.ts",
+    "./config": "./src/config.ts"
+  },
+  "scripts": {
+    "types:gen": "echo 'TODO: wire `supabase gen types typescript` in #268 after we have the project ref' && exit 0",
+    "lint": "echo 'shared package has no lint yet' && exit 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
