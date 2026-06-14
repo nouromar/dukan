@@ -12,6 +12,30 @@
     "setup": "Hagaajinta",
     "audit": "Diiwaanka"
   },
+  "people": {
+    "tabCustomers": "Macaamiisha",
+    "tabSuppliers": "Qeybiyeyaasha",
+    "columns": {
+      "name": "Magaca",
+      "phone": "Taleefan",
+      "receivable": "Wuxuu kuu leeyahay",
+      "payable": "Waxaad u leedahay"
+    },
+    "search": {
+      "customersPlaceholder": "Raadi macaamiisha magaca ama taleefanka…",
+      "suppliersPlaceholder": "Raadi qeybiyeyaasha magaca ama taleefanka…"
+    },
+    "empty": {
+      "customersTitle": "Wax macaamiil ah weli ma jiraan",
+      "customersDescription": "Macaamiisha halkan ayay ka muuqdaan marka iib amaah ah ama bixin lagu diiwaan geliyo mobaylka.",
+      "suppliersTitle": "Wax qeybiye ah weli ma jirin",
+      "suppliersDescription": "Qeybiyeyaasha halkan ayay ka muuqdaan marka qaadasho amaah ah ama bixin lagu diiwaan geliyo mobaylka."
+    },
+    "noShop": {
+      "title": "Wax dukaan ah lama dooran",
+      "description": "Dooro ama dejiyaha dukaan si aad u aragto macaamiisha iyo qeybiyeyaasha."
+    }
+  },
   "overview": {
     "noShop": {
       "title": "Wax dukaan ah lama dooran",

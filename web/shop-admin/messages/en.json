@@ -12,6 +12,30 @@
     "setup": "Setup",
     "audit": "Audit"
   },
+  "people": {
+    "tabCustomers": "Customers",
+    "tabSuppliers": "Suppliers",
+    "columns": {
+      "name": "Name",
+      "phone": "Phone",
+      "receivable": "Owes you",
+      "payable": "You owe"
+    },
+    "search": {
+      "customersPlaceholder": "Search customers by name or phone…",
+      "suppliersPlaceholder": "Search suppliers by name or phone…"
+    },
+    "empty": {
+      "customersTitle": "No customers yet",
+      "customersDescription": "Customers appear here after their first credit sale or payment is recorded on mobile.",
+      "suppliersTitle": "No suppliers yet",
+      "suppliersDescription": "Suppliers appear here after their first credit receive or payment is recorded on mobile."
+    },
+    "noShop": {
+      "title": "No shop selected",
+      "description": "Pick or set up a shop to see its customers and suppliers."
+    }
+  },
   "overview": {
     "noShop": {
       "title": "No shop selected",
