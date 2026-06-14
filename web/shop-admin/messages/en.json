@@ -82,6 +82,37 @@
       "description": "Pick or set up a shop to see its products."
     }
   },
+  "partyDetail": {
+    "back": "← All people",
+    "typeCustomer": "Customer",
+    "typeSupplier": "Supplier",
+    "balanceOwesYou": "Owes you",
+    "balanceYouOwe": "You owe",
+    "noPhone": "No phone",
+    "inactive": "Inactive",
+    "sectionsSales": "Sales",
+    "sectionsReceives": "Receives",
+    "sectionsPayments": "Payments",
+    "columns": {
+      "when": "When",
+      "total": "Total",
+      "paid": "Paid",
+      "amount": "Amount",
+      "direction": "Direction"
+    },
+    "directionIn": "In",
+    "directionOut": "Out",
+    "statusVoided": "Voided",
+    "empty": {
+      "sales": "No sales recorded for this customer yet.",
+      "receives": "No receives recorded from this supplier yet.",
+      "payments": "No payments recorded yet."
+    },
+    "notFound": {
+      "title": "Party not found",
+      "description": "This customer or supplier doesn't exist, or you don't have access to it."
+    }
+  },
   "people": {
     "tabCustomers": "Customers",
     "tabSuppliers": "Suppliers",

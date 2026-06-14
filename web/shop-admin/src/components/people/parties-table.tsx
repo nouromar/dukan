@@ -9,6 +9,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -39,6 +40,7 @@ export function PartiesTable({
   locale: string;
 }) {
   const t = useTranslations("people");
+  const router = useRouter();
   const money = (n: number) => formatMoney(n, currencyCode, locale);
   const [query, setQuery] = useState("");
 
@@ -114,6 +116,7 @@ export function PartiesTable({
       <DataTable
         columns={columns}
         data={filtered}
+        onRowClick={(row) => router.push(`/people/${row.id}`)}
         empty={
           <EmptyState
             title={

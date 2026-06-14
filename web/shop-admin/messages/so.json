@@ -82,6 +82,37 @@
       "description": "Dooro ama dejiyaha dukaan si aad u aragto alaabta."
     }
   },
+  "partyDetail": {
+    "back": "← Dhammaan dadka",
+    "typeCustomer": "Macmiil",
+    "typeSupplier": "Qeybiye",
+    "balanceOwesYou": "Wuxuu kuu leeyahay",
+    "balanceYouOwe": "Waxaad u leedahay",
+    "noPhone": "Taleefan ma jiro",
+    "inactive": "Aan firfircoonayn",
+    "sectionsSales": "Iibyada",
+    "sectionsReceives": "Qaadashada",
+    "sectionsPayments": "Bixinta",
+    "columns": {
+      "when": "Goorma",
+      "total": "Wadarta",
+      "paid": "La bixiyay",
+      "amount": "Lacagta",
+      "direction": "Jihada"
+    },
+    "directionIn": "Soo galay",
+    "directionOut": "Bixiyay",
+    "statusVoided": "La baajiyay",
+    "empty": {
+      "sales": "Wax iib ah uma jiraan macmiilkan weli.",
+      "receives": "Wax qaadasho ah uma jiraan qeybiyahan weli.",
+      "payments": "Wax bixin ah weli ma jirin."
+    },
+    "notFound": {
+      "title": "Lama helin shaqsi",
+      "description": "Macmiilkaan/qeybiyahaan ma jiro, ama ma haysatid gelitaan."
+    }
+  },
   "people": {
     "tabCustomers": "Macaamiisha",
     "tabSuppliers": "Qeybiyeyaasha",
