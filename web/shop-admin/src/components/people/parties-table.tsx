@@ -12,6 +12,7 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { formatMoney } from "shared";
 import { DataTable, EmptyState } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
 
@@ -26,13 +27,19 @@ export type Party = {
 export function PartiesTable({
   kind,
   rows,
-  formatMoney,
+  currencyCode,
+  locale,
 }: {
   kind: "customers" | "suppliers";
   rows: Party[];
-  formatMoney: (n: number) => string;
+  // Funcs can't cross the server→client boundary in RSC. Pass the
+  // currency code + locale and let this component call formatMoney
+  // directly.
+  currencyCode: string;
+  locale: string;
 }) {
   const t = useTranslations("people");
+  const money = (n: number) => formatMoney(n, currencyCode, locale);
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -77,12 +84,12 @@ export function PartiesTable({
                 : "text-muted-foreground tabular-nums"
             }
           >
-            {formatMoney(row.original.balance)}
+            {money(row.original.balance)}
           </span>
         ),
       },
     ],
-    [kind, t, formatMoney],
+    [kind, t, money],
   );
 
   return (

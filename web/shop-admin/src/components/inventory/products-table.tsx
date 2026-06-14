@@ -8,8 +8,7 @@
 //   - dim missing prices to "—"
 //
 // Read-only for now. Inline edits for reorder_threshold + sale_price
-// are tracked as the #278 follow-on once we agree on the optimistic-
-// update pattern.
+// are tracked as #286.
 
 "use client";
 
@@ -17,6 +16,7 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { formatMoney, formatCount } from "shared";
 import { DataTable, EmptyState } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -35,15 +35,21 @@ export type Product = {
 
 export function ProductsTable({
   rows,
-  formatMoney,
-  formatCount,
+  currencyCode,
+  locale,
 }: {
   rows: Product[];
-  formatMoney: (n: number) => string;
-  formatCount: (n: number) => string;
+  // Funcs can't cross the server→client boundary in RSC. Pass the
+  // currency code + locale and let this component call the shared
+  // formatters directly.
+  currencyCode: string;
+  locale: string;
 }) {
   const t = useTranslations("inventory");
   const [query, setQuery] = useState("");
+
+  const money = (n: number) => formatMoney(n, currencyCode, locale);
+  const count = (n: number) => formatCount(n, locale);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -97,7 +103,7 @@ export function ProductsTable({
                   low && "text-amber-600 dark:text-amber-500",
                 )}
               >
-                {formatCount(stock)} {row.original.base_unit_label}
+                {count(stock)} {row.original.base_unit_label}
               </span>
               {out ? (
                 <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive">
@@ -118,7 +124,7 @@ export function ProductsTable({
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground tabular-nums">
             {row.original.reorder_threshold !== null
-              ? `${formatCount(row.original.reorder_threshold)} ${row.original.base_unit_label}`
+              ? `${count(row.original.reorder_threshold)} ${row.original.base_unit_label}`
               : "—"}
           </span>
         ),
@@ -129,14 +135,14 @@ export function ProductsTable({
         cell: ({ row }) =>
           row.original.default_sale_price !== null ? (
             <span className="font-medium tabular-nums">
-              {formatMoney(row.original.default_sale_price)}
+              {money(row.original.default_sale_price)}
             </span>
           ) : (
             <span className="text-muted-foreground">{t("noPrice")}</span>
           ),
       },
     ],
-    [t, formatMoney, formatCount],
+    [t, currencyCode, locale],
   );
 
   return (

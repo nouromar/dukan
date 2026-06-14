@@ -11,11 +11,13 @@ import { PartiesTable, type Party } from "./parties-table";
 export function PeopleTabs({
   customers,
   suppliers,
-  formatMoney,
+  currencyCode,
+  locale,
 }: {
   customers: Party[];
   suppliers: Party[];
-  formatMoney: (n: number) => string;
+  currencyCode: string;
+  locale: string;
 }) {
   const t = useTranslations("people");
   return (
@@ -32,14 +34,16 @@ export function PeopleTabs({
         <PartiesTable
           kind="customers"
           rows={customers}
-          formatMoney={formatMoney}
+          currencyCode={currencyCode}
+          locale={locale}
         />
       </TabsContent>
       <TabsContent value="suppliers" className="mt-4">
         <PartiesTable
           kind="suppliers"
           rows={suppliers}
-          formatMoney={formatMoney}
+          currencyCode={currencyCode}
+          locale={locale}
         />
       </TabsContent>
     </Tabs>

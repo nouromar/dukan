@@ -8,7 +8,7 @@
 // + audit-log surfacing first).
 
 import { getTranslations, getLocale } from "next-intl/server";
-import { formatMoney, formatCount } from "shared";
+import { formatCount } from "shared";
 import { getCurrentShop } from "@/lib/current-shop";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -77,10 +77,6 @@ export default async function InventoryPage() {
     is_active: r.is_active,
   }));
 
-  const money = (n: number) =>
-    formatMoney(n, currentShop.currency_code, locale);
-  const count = (n: number) => formatCount(n, locale);
-
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-baseline justify-between">
@@ -88,13 +84,13 @@ export default async function InventoryPage() {
           {currentShop.name}
         </h1>
         <span className="text-sm text-muted-foreground">
-          {count(products.length)}
+          {formatCount(products.length, locale)}
         </span>
       </div>
       <ProductsTable
         rows={products}
-        formatMoney={money}
-        formatCount={count}
+        currencyCode={currentShop.currency_code}
+        locale={locale}
       />
     </div>
   );

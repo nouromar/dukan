@@ -7,7 +7,6 @@
 // first sort" per design doc § People).
 
 import { getTranslations, getLocale } from "next-intl/server";
-import { formatMoney } from "shared";
 import { getCurrentShop } from "@/lib/current-shop";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PeopleTabs } from "@/components/people/people-tabs";
@@ -85,11 +84,6 @@ export default async function PeoplePage() {
     }))
     .sort((a, b) => b.balance - a.balance || a.name.localeCompare(b.name));
 
-  // Bind the shop currency once so the table doesn't re-derive per
-  // row. Locale comes from next-intl's resolved locale.
-  const money = (n: number) =>
-    formatMoney(n, currentShop.currency_code, locale);
-
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">
@@ -98,7 +92,8 @@ export default async function PeoplePage() {
       <PeopleTabs
         customers={customers}
         suppliers={suppliers}
-        formatMoney={money}
+        currencyCode={currentShop.currency_code}
+        locale={locale}
       />
     </div>
   );
