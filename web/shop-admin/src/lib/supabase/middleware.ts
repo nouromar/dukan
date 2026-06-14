@@ -7,6 +7,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 
 const PUBLIC_ROUTES = ["/login", "/login/verify"];
+// Routes that must always run regardless of auth state — these
+// don't render content, they set/exchange cookies. Most important:
+// /auth/callback is the magic-link landing pad and runs while the
+// user is still unauthenticated (the callback itself creates the
+// session).
+const ALWAYS_ALLOW_ROUTES = ["/auth/callback"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -39,6 +45,9 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+  if (ALWAYS_ALLOW_ROUTES.includes(pathname)) {
+    return response;
+  }
   const isPublic = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );

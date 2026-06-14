@@ -37,14 +37,26 @@
   },
   "login": {
     "title": "Sign in",
+    "tabEmail": "Email",
+    "tabPhone": "Phone",
     "phoneLabel": "Phone number",
     "phonePlaceholder": "+252612345678",
     "phoneHelp": "We'll text you a 6-digit code.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "emailHelp": "We'll email you a sign-in link.",
+    "emailSendLink": "Send link",
+    "emailSending": "Sending…",
+    "emailSent": "Check your inbox",
+    "emailSentBody": "We sent a sign-in link to {email}. Click it to continue.",
+    "emailErrorNoAccount": "No account found for that email. Sign up on the mobile app first.",
+    "emailErrorGeneric": "Could not send the link. Try again.",
     "sendCode": "Send code",
     "sending": "Sending…",
     "errorPhone": "Enter a valid phone number, for example +252612345678.",
     "errorGeneric": "Something went wrong. Try again.",
-    "errorSend": "Could not send the code. Try again."
+    "errorSend": "Could not send the code. Try again.",
+    "callbackError": "That sign-in link didn't work. Try sending another."
   },
   "table": {
     "empty": {

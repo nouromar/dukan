@@ -37,14 +37,26 @@
   },
   "login": {
     "title": "Soo gal",
+    "tabEmail": "Iimaylka",
+    "tabPhone": "Taleefanka",
     "phoneLabel": "Lambarka taleefanka",
     "phonePlaceholder": "+252612345678",
     "phoneHelp": "Waxaan kuu soo dirayaa koodh 6 lambar ah.",
+    "emailLabel": "Iimaylka",
+    "emailPlaceholder": "you@example.com",
+    "emailHelp": "Waxaan kuu soo diri doonaa link aad ku soo gasho.",
+    "emailSendLink": "Dir linkiga",
+    "emailSending": "Diridda…",
+    "emailSent": "Hubi sanduuqaaga iimaylka",
+    "emailSentBody": "Waxaan u dirnay link soo galid ah {email}. Riix si aad u sii wadato.",
+    "emailErrorNoAccount": "Iimaylkaas account uma jiro. Marka hore is-diiwaan geli abka mobaylka.",
+    "emailErrorGeneric": "Lama diri karin linkiga. Mar kale isku day.",
     "sendCode": "Dir koodhka",
     "sending": "Diridda…",
     "errorPhone": "Geli lambar sax ah, tusaale +252612345678.",
     "errorGeneric": "Wax baa khaldamay. Mar kale isku day.",
-    "errorSend": "Lama dirin karin koodhka. Mar kale isku day."
+    "errorSend": "Lama dirin karin koodhka. Mar kale isku day.",
+    "callbackError": "Linkigaas soo galid ma shaqayn. Mid kale dir."
   },
   "table": {
     "empty": {
