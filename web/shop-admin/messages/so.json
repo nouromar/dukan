@@ -59,6 +59,40 @@
       "description": "Dooro ama dejiyaha dukaan si aad u aragto diiwaanka."
     }
   },
+  "productDetail": {
+    "back": "← Dhammaan alaabta",
+    "inactive": "Aan firfircoonayn",
+    "stock": {
+      "label": "Kayd",
+      "outBadge": "Dhammaaday",
+      "lowBadge": "Yar (≤ {threshold} {unit})"
+    },
+    "sections": {
+      "packaging": "Xidhmaynta",
+      "aliases": "Magacyo kale"
+    },
+    "packaging": {
+      "columns": {
+        "name": "Xidhmo",
+        "conversion": "Wuxuu la mid yahay",
+        "salePrice": "Qiimaha iibka",
+        "lastCost": "Qiimihii ugu dambeeyay",
+        "defaultSale": "Iibka asaasiga",
+        "defaultReceive": "Qaadashada asaasiga"
+      },
+      "defaultYes": "✓",
+      "empty": "Wax xidhmo ah lama dejin. Isticmaal abka mobaylka si aad ugu darto cabbiro."
+    },
+    "aliases": {
+      "empty": "Magac kale weli ma jiro.",
+      "displayBadge": "Magaca tusaalaha"
+    },
+    "noPrice": "—",
+    "notFound": {
+      "title": "Alaab lama helin",
+      "description": "Alaabtaan ma jirto, ama ma haysatid gelitaan."
+    }
+  },
   "inventory": {
     "search": {
       "placeholder": "Raadi alaab magaca…"

@@ -13,6 +13,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -46,6 +47,7 @@ export function ProductsTable({
   locale: string;
 }) {
   const t = useTranslations("inventory");
+  const router = useRouter();
   const [query, setQuery] = useState("");
 
   const money = (n: number) => formatMoney(n, currencyCode, locale);
@@ -163,6 +165,7 @@ export function ProductsTable({
       <DataTable
         columns={columns}
         data={filtered}
+        onRowClick={(row) => router.push(`/inventory/${row.shop_item_id}`)}
         empty={
           <EmptyState
             title={t("empty.title")}

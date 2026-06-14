@@ -59,6 +59,40 @@
       "description": "Pick or set up a shop to see its audit log."
     }
   },
+  "productDetail": {
+    "back": "← All products",
+    "inactive": "Inactive",
+    "stock": {
+      "label": "In stock",
+      "outBadge": "Out",
+      "lowBadge": "Low (≤ {threshold} {unit})"
+    },
+    "sections": {
+      "packaging": "Packaging",
+      "aliases": "Other names"
+    },
+    "packaging": {
+      "columns": {
+        "name": "Pack",
+        "conversion": "Equals",
+        "salePrice": "Sale price",
+        "lastCost": "Last cost",
+        "defaultSale": "Default sale",
+        "defaultReceive": "Default receive"
+      },
+      "defaultYes": "✓",
+      "empty": "No packaging configured. Use the mobile app to add pack sizes."
+    },
+    "aliases": {
+      "empty": "No other names yet.",
+      "displayBadge": "Display"
+    },
+    "noPrice": "—",
+    "notFound": {
+      "title": "Product not found",
+      "description": "This product doesn't exist, or you don't have access to it."
+    }
+  },
   "inventory": {
     "search": {
       "placeholder": "Search products by name…"
