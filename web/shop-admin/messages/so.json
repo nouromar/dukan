@@ -116,6 +116,37 @@
       "description": "Dooro ama dejiyaha dukaan si aad u aragto alaabta."
     }
   },
+  "aging": {
+    "title": "Warbixin gabowga deynta",
+    "subtitle": "Deyno hadhay ee saxan ee dhaqdhaqaaqa ugu dambeeyay",
+    "viewLink": "Eeg warbixinta deynta →",
+    "back": "← Dhammaan dadka",
+    "tabReceivables": "Lacagaha la sugayo",
+    "tabPayables": "Deynta",
+    "columns": {
+      "name": "Magaca",
+      "balance": "Lacagta",
+      "lastActivity": "Dhaqdhaqaaqa ugu dambeeyay",
+      "age": "Da'da"
+    },
+    "bucketCurrent": "Hadda",
+    "bucketOver30": "31-60 maalmood",
+    "bucketOver60": "61-90 maalmood",
+    "bucketOver90": "90+ maalmood",
+    "bucketNever": "Wax dhaqdhaqaaq ah ma jirin",
+    "daysAgo": "{days, plural, one {# maalin ka hor} other {# maalmood ka hor}}",
+    "noActivityAgo": "Wax dhaqdhaqaaq ah weli ma jirin",
+    "empty": {
+      "receivablesTitle": "Wax deyn ah ma jiraan",
+      "receivablesDescription": "Hadda macmiil kuu leh lacag ma jiro.",
+      "payablesTitle": "Wax deyn ah ma jirin",
+      "payablesDescription": "Hadda wax aad u leedahay qeybiyaha ma jiro."
+    },
+    "noShop": {
+      "title": "Wax dukaan ah lama dooran",
+      "description": "Dooro ama dejiyaha dukaan si aad u aragto warbixinta."
+    }
+  },
   "partyDetail": {
     "back": "← Dhammaan dadka",
     "typeCustomer": "Macmiil",

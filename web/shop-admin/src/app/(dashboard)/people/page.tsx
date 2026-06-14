@@ -6,6 +6,7 @@
 // balance are bolded so the user's eye lands on them first ("balance-
 // first sort" per design doc § People).
 
+import Link from "next/link";
 import { getTranslations, getLocale } from "next-intl/server";
 import { getCurrentShop } from "@/lib/current-shop";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -84,11 +85,21 @@ export default async function PeoplePage() {
     }))
     .sort((a, b) => b.balance - a.balance || a.name.localeCompare(b.name));
 
+  const tAging = await getTranslations("aging");
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        {currentShop.name}
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {currentShop.name}
+        </h1>
+        <Link
+          href="/aging"
+          className="text-sm font-medium text-primary hover:underline"
+        >
+          {tAging("viewLink")}
+        </Link>
+      </div>
       <PeopleTabs
         customers={customers}
         suppliers={suppliers}

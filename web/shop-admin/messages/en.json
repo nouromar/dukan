@@ -116,6 +116,37 @@
       "description": "Pick or set up a shop to see its products."
     }
   },
+  "aging": {
+    "title": "Aging report",
+    "subtitle": "Outstanding balances by last activity",
+    "viewLink": "View aging report →",
+    "back": "← All people",
+    "tabReceivables": "Receivables",
+    "tabPayables": "Payables",
+    "columns": {
+      "name": "Name",
+      "balance": "Balance",
+      "lastActivity": "Last activity",
+      "age": "Age"
+    },
+    "bucketCurrent": "Current",
+    "bucketOver30": "31-60 days",
+    "bucketOver60": "61-90 days",
+    "bucketOver90": "90+ days",
+    "bucketNever": "No activity",
+    "daysAgo": "{days, plural, one {# day ago} other {# days ago}}",
+    "noActivityAgo": "No activity yet",
+    "empty": {
+      "receivablesTitle": "Nothing outstanding",
+      "receivablesDescription": "No customers owe you money right now.",
+      "payablesTitle": "Nothing outstanding",
+      "payablesDescription": "You don't owe any suppliers right now."
+    },
+    "noShop": {
+      "title": "No shop selected",
+      "description": "Pick or set up a shop to see its aging report."
+    }
+  },
   "partyDetail": {
     "back": "← All people",
     "typeCustomer": "Customer",
