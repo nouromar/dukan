@@ -1,0 +1,77 @@
+name: web-ci
+
+# CI for the pnpm workspace under web/. Runs typecheck + build on every
+# push to main and every PR that touches web/. Mobile (app/dukan) and
+# backend (supabase/) have their own out-of-band test paths and aren't
+# covered here.
+#
+# Vercel deployment (#272 second half) lives in vercel.json — not in
+# this workflow — so a failed CI gate blocks merge but doesn't block
+# Vercel from building its own preview from the same commit.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/web-ci.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/web-ci.yml"
+
+concurrency:
+  # New pushes to a branch cancel in-flight runs for that branch — saves
+  # CI minutes when a PR is force-pushed mid-build.
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck-build:
+    name: typecheck + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          # Mirrors `packageManager` in root package.json.
+          version: 9.15.9
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck web/shared
+        run: pnpm --filter shared typecheck
+
+      - name: Typecheck web/shop-admin
+        run: pnpm --filter shop-admin typecheck
+
+      - name: Lint web/shop-admin
+        # `next lint` ships its own ESLint config; this is a no-op
+        # placeholder when no .eslintrc exists yet. Kept in CI so we
+        # notice when a rule is added that the codebase fails.
+        run: pnpm --filter shop-admin lint
+        continue-on-error: true
+
+      - name: Build web/shop-admin
+        # Env vars are dummies — the build only needs them to pass the
+        # zod validation in src/lib/env.ts. CI never connects to
+        # Supabase.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_ci_placeholder_xxxxxxxxxxxxxx
+        run: pnpm --filter shop-admin build
