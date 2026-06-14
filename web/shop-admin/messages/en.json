@@ -12,6 +12,30 @@
     "setup": "Setup",
     "audit": "Audit"
   },
+  "sales": {
+    "search": {
+      "placeholder": "Search by customer…"
+    },
+    "columns": {
+      "when": "When",
+      "customer": "Customer",
+      "total": "Total",
+      "paid": "Paid",
+      "status": "Status"
+    },
+    "walkIn": "Walk-in",
+    "statusPosted": "Posted",
+    "statusVoided": "Voided",
+    "creditMarker": "credit",
+    "empty": {
+      "title": "No sales yet",
+      "description": "Sales posted from the mobile app appear here, newest first."
+    },
+    "noShop": {
+      "title": "No shop selected",
+      "description": "Pick or set up a shop to see its sales history."
+    }
+  },
   "audit": {
     "columns": {
       "time": "When",

@@ -12,6 +12,30 @@
     "setup": "Hagaajinta",
     "audit": "Diiwaanka"
   },
+  "sales": {
+    "search": {
+      "placeholder": "Raadi macmiil…"
+    },
+    "columns": {
+      "when": "Goorma",
+      "customer": "Macmiil",
+      "total": "Wadarta",
+      "paid": "La bixiyay",
+      "status": "Xaalad"
+    },
+    "walkIn": "Macmiil aan caadi ahayn",
+    "statusPosted": "La diiwaan geliyay",
+    "statusVoided": "La baajiyay",
+    "creditMarker": "amaah",
+    "empty": {
+      "title": "Wax iib ah weli ma jirin",
+      "description": "Iibyada laga diiwaan geliyo mobaylka ayaa halkan ka muuqda, kuwa cusub horta."
+    },
+    "noShop": {
+      "title": "Wax dukaan ah lama dooran",
+      "description": "Dooro ama dejiyaha dukaan si aad u aragto iibyada."
+    }
+  },
   "audit": {
     "columns": {
       "time": "Goorma",
