@@ -12,6 +12,29 @@
     "setup": "Setup",
     "audit": "Audit"
   },
+  "inventory": {
+    "search": {
+      "placeholder": "Search products by name…"
+    },
+    "columns": {
+      "name": "Product",
+      "category": "Category",
+      "stock": "Stock",
+      "threshold": "Reorder at",
+      "price": "Default price"
+    },
+    "noPrice": "—",
+    "lowStockBadge": "Low",
+    "outOfStockBadge": "Out",
+    "empty": {
+      "title": "No products yet",
+      "description": "Activate items from the catalog template, or add custom items from the mobile app."
+    },
+    "noShop": {
+      "title": "No shop selected",
+      "description": "Pick or set up a shop to see its products."
+    }
+  },
   "people": {
     "tabCustomers": "Customers",
     "tabSuppliers": "Suppliers",

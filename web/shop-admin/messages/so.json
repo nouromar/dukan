@@ -12,6 +12,29 @@
     "setup": "Hagaajinta",
     "audit": "Diiwaanka"
   },
+  "inventory": {
+    "search": {
+      "placeholder": "Raadi alaab magaca…"
+    },
+    "columns": {
+      "name": "Alaab",
+      "category": "Qaybta",
+      "stock": "Kayd",
+      "threshold": "Dalbasho",
+      "price": "Qiimaha"
+    },
+    "noPrice": "—",
+    "lowStockBadge": "Yar",
+    "outOfStockBadge": "Dhammaaday",
+    "empty": {
+      "title": "Wax alaab ah ma jiraan",
+      "description": "Ka shaqee alaabta xirmada cataloga, ama ku dar alaab gaar ah app-ka mobaylka."
+    },
+    "noShop": {
+      "title": "Wax dukaan ah lama dooran",
+      "description": "Dooro ama dejiyaha dukaan si aad u aragto alaabta."
+    }
+  },
   "people": {
     "tabCustomers": "Macaamiisha",
     "tabSuppliers": "Qeybiyeyaasha",
