@@ -23,4 +23,42 @@ void main() {
       );
     });
   });
+
+  group('normalizeEmail', () {
+    test('lowercases + trims valid addresses', () {
+      expect(normalizeEmail('  Owner@Example.COM '), 'owner@example.com');
+    });
+
+    test('accepts internationalized-looking simple form', () {
+      expect(normalizeEmail('a.b+tag@sub.example.co'), 'a.b+tag@sub.example.co');
+    });
+
+    test('rejects missing @', () {
+      expect(
+        () => normalizeEmail('not-an-email'),
+        throwsA(isA<AuthInputException>()),
+      );
+    });
+
+    test('rejects missing domain', () {
+      expect(
+        () => normalizeEmail('user@'),
+        throwsA(isA<AuthInputException>()),
+      );
+    });
+
+    test('rejects whitespace inside the address', () {
+      expect(
+        () => normalizeEmail('user @example.com'),
+        throwsA(isA<AuthInputException>()),
+      );
+    });
+
+    test('rejects missing TLD dot', () {
+      expect(
+        () => normalizeEmail('user@example'),
+        throwsA(isA<AuthInputException>()),
+      );
+    });
+  });
 }

@@ -1136,6 +1136,18 @@ abstract class AppLocalizations {
   /// **'Login'**
   String get loginTitle;
 
+  /// No description provided for @loginTabPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get loginTabPhone;
+
+  /// No description provided for @loginTabEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get loginTabEmail;
+
   /// No description provided for @loginHeadline.
   ///
   /// In en, this message translates to:
@@ -1148,17 +1160,41 @@ abstract class AppLocalizations {
   /// **'We will send a one-time code. Dukan can deliver it by WhatsApp from the backend.'**
   String get loginBody;
 
+  /// No description provided for @loginEmailHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your email'**
+  String get loginEmailHeadline;
+
+  /// No description provided for @loginEmailBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We will email you a one-time code.'**
+  String get loginEmailBody;
+
   /// No description provided for @phoneNumberLabel.
   ///
   /// In en, this message translates to:
   /// **'Phone number'**
   String get phoneNumberLabel;
 
+  /// No description provided for @emailAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emailAddressLabel;
+
   /// No description provided for @sendOtpButton.
   ///
   /// In en, this message translates to:
   /// **'SEND CODE'**
   String get sendOtpButton;
+
+  /// No description provided for @sendEmailOtpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SEND CODE'**
+  String get sendEmailOtpButton;
 
   /// No description provided for @verifyOtpTitle.
   ///
@@ -1172,11 +1208,23 @@ abstract class AppLocalizations {
   /// **'Check your phone'**
   String get verifyOtpHeadline;
 
+  /// No description provided for @verifyOtpHeadlineEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email'**
+  String get verifyOtpHeadlineEmail;
+
   /// No description provided for @verifyOtpBody.
   ///
   /// In en, this message translates to:
   /// **'Enter the code sent to {phone}.'**
-  String verifyOtpBody(Object phone);
+  String verifyOtpBody(String phone);
+
+  /// No description provided for @verifyOtpBodyEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code sent to {email}.'**
+  String verifyOtpBodyEmail(String email);
 
   /// No description provided for @otpCodeLabel.
   ///
@@ -1195,6 +1243,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Change phone number'**
   String get changePhoneButton;
+
+  /// No description provided for @changeEmailButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Change email'**
+  String get changeEmailButton;
 
   /// No description provided for @ownerOnboardingTitle.
   ///
@@ -1262,11 +1316,23 @@ abstract class AppLocalizations {
   /// **'Enter a valid phone number, for example +252612345678.'**
   String get invalidPhoneMessage;
 
+  /// No description provided for @invalidEmailMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email, for example you@example.com.'**
+  String get invalidEmailMessage;
+
   /// No description provided for @missingPendingPhoneMessage.
   ///
   /// In en, this message translates to:
   /// **'Start with your phone number first.'**
   String get missingPendingPhoneMessage;
+
+  /// No description provided for @missingPendingDestinationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with your phone or email first.'**
+  String get missingPendingDestinationMessage;
 
   /// No description provided for @missingShopNamesMessage.
   ///
@@ -1279,6 +1345,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We could not send the code. Check the phone number or internet and try again.'**
   String get sendOtpFailedMessage;
+
+  /// No description provided for @sendEmailOtpFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not email the code. Check the address or your internet and try again.'**
+  String get sendEmailOtpFailedMessage;
+
+  /// No description provided for @emailAccountNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No account found for that email. Ask your shop owner to add you.'**
+  String get emailAccountNotFoundMessage;
 
   /// No description provided for @verifyOtpFailedMessage.
   ///

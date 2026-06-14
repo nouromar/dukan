@@ -16,6 +16,7 @@ PreferredSizeWidget dukanAppBar(
   String title, {
   List<Widget> actions = const [],
   bool showLanguageToggle = false,
+  PreferredSizeWidget? bottom,
 }) => AppBar(
   title: Text(title),
   actions: [
@@ -26,6 +27,7 @@ PreferredSizeWidget dukanAppBar(
         child: LanguageToggle(),
       ),
   ],
+  bottom: bottom,
 );
 
 class LanguageToggle extends StatelessWidget {

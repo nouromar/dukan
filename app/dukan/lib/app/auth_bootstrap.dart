@@ -4,9 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/auth/login_screen.dart';
 import 'package:dukan/auth/otp_verification_screen.dart';
 import 'package:dukan/auth/owner_onboarding_screen.dart';
-import 'package:dukan/auth/phone_login_screen.dart';
 import 'package:dukan/auth/shop_picker_screen.dart';
 import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/home/home_screen.dart';
@@ -179,9 +179,10 @@ class AuthRouter extends StatelessWidget {
     }
 
     if (auth.session == null) {
-      return auth.pendingPhone != null
+      final hasPending = auth.pendingPhone != null || auth.pendingEmail != null;
+      return hasPending
           ? const OtpVerificationScreen()
-          : const PhoneLoginScreen();
+          : const LoginScreen();
     }
 
     if (auth.shopsLoading) {

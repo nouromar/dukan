@@ -16,7 +16,13 @@ class DukanOtpDelivery {
   static const verifyType = OtpType.sms;
 }
 
-enum AuthInputIssue { invalidPhone, missingPendingPhone, missingShopNames }
+enum AuthInputIssue {
+  invalidPhone,
+  invalidEmail,
+  missingPendingPhone,
+  missingPendingDestination,
+  missingShopNames,
+}
 
 class AuthInputException implements Exception {
   const AuthInputException(this.issue);
@@ -40,6 +46,7 @@ class AuthController extends ChangeNotifier {
   List<ShopSummary> _shops = const [];
   ShopSummary? _selectedShop;
   String? _pendingPhone;
+  String? _pendingEmail;
   Capabilities _capabilities = Capabilities.empty();
   String? _capabilitiesShopId;
 
@@ -51,6 +58,7 @@ class AuthController extends ChangeNotifier {
   ShopSummary? get selectedShop =>
       _selectedShop ?? (_shops.length == 1 ? _shops.first : null);
   String? get pendingPhone => _pendingPhone;
+  String? get pendingEmail => _pendingEmail;
 
   /// Capability set for the currently-selected shop. Empty when no
   /// shop is selected or while the first load is in flight — UI
@@ -88,27 +96,65 @@ class AuthController extends ChangeNotifier {
       channel: DukanOtpDelivery.channel,
     );
     _pendingPhone = phone;
+    _pendingEmail = null;
     notifyListeners();
   }
 
-  Future<void> verifyOtp(String token) async {
-    final phone = _pendingPhone;
-    if (phone == null) {
-      throw const AuthInputException(AuthInputIssue.missingPendingPhone);
-    }
-
-    await _client.auth.verifyOTP(
-      phone: phone,
-      token: token.trim(),
-      type: DukanOtpDelivery.verifyType,
+  /// Sends a 6-digit OTP to the given email. shouldCreateUser:false enforces
+  /// "account must already exist" — matches the pre-onboarding model where
+  /// org+shop+user are created up-front by support staff (see #285 / web
+  /// portal #284). For Supabase to email the code (not a magic link), the
+  /// "Magic Link" email template must include {{ .Token }} alongside or
+  /// instead of {{ .ConfirmationURL }}.
+  Future<void> sendEmailOtp(String rawEmail) async {
+    final email = normalizeEmail(rawEmail);
+    await _client.auth.signInWithOtp(
+      email: email,
+      shouldCreateUser: false,
     );
+    _pendingEmail = email;
     _pendingPhone = null;
     notifyListeners();
+  }
+
+  /// Verifies the code against whichever destination is currently pending
+  /// (phone OR email). Throws missingPendingDestination if neither was
+  /// initiated — i.e. someone reached the verify screen without first
+  /// requesting a code.
+  Future<void> verifyOtp(String token) async {
+    final phone = _pendingPhone;
+    final email = _pendingEmail;
+    final trimmed = token.trim();
+
+    if (phone != null) {
+      await _client.auth.verifyOTP(
+        phone: phone,
+        token: trimmed,
+        type: DukanOtpDelivery.verifyType,
+      );
+      _pendingPhone = null;
+      notifyListeners();
+      return;
+    }
+
+    if (email != null) {
+      await _client.auth.verifyOTP(
+        email: email,
+        token: trimmed,
+        type: OtpType.email,
+      );
+      _pendingEmail = null;
+      notifyListeners();
+      return;
+    }
+
+    throw const AuthInputException(AuthInputIssue.missingPendingDestination);
   }
 
   void cancelOtp() {
-    if (_pendingPhone == null) return;
+    if (_pendingPhone == null && _pendingEmail == null) return;
     _pendingPhone = null;
+    _pendingEmail = null;
     notifyListeners();
   }
 
@@ -208,6 +254,7 @@ class AuthController extends ChangeNotifier {
   Future<void> signOut() async {
     await _client.auth.signOut();
     _pendingPhone = null;
+    _pendingEmail = null;
     _shops = const [];
     _selectedShop = null;
     _capabilities = Capabilities.empty();
@@ -280,4 +327,19 @@ String normalizePhoneNumber(String rawPhone) {
   }
 
   return phone;
+}
+
+/// Lightweight email validation. Trims surrounding whitespace and
+/// lower-cases the address (mirrors Supabase's own normalization on
+/// auth.users.email). Throws AuthInputException(invalidEmail) when
+/// the result doesn't look like an address. Not RFC 5322 strict —
+/// the source of truth is Supabase, which will reject anything we'd
+/// otherwise let through.
+String normalizeEmail(String rawEmail) {
+  final email = rawEmail.trim().toLowerCase();
+  final isValid = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email);
+  if (!isValid) {
+    throw const AuthInputException(AuthInputIssue.invalidEmail);
+  }
+  return email;
 }

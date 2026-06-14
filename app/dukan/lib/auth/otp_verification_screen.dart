@@ -47,7 +47,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    final pendingPhone = context.watch<AuthController>().pendingPhone;
+    final auth = context.watch<AuthController>();
+    final pendingPhone = auth.pendingPhone;
+    final pendingEmail = auth.pendingEmail;
+    final isEmail = pendingEmail != null;
     return Scaffold(
       appBar: dukanAppBar(context, l.verifyOtpTitle, showLanguageToggle: true),
       body: SafeArea(
@@ -55,13 +58,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             Text(
-              l.verifyOtpHeadline,
+              isEmail ? l.verifyOtpHeadlineEmail : l.verifyOtpHeadline,
               style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
-              l.verifyOtpBody(pendingPhone ?? ''),
+              isEmail
+                  ? l.verifyOtpBodyEmail(pendingEmail)
+                  : l.verifyOtpBody(pendingPhone ?? ''),
               style: Theme.of(context).textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
@@ -90,7 +95,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               onPressed: _verifying
                   ? null
                   : () => context.read<AuthController>().cancelOtp(),
-              child: Text(l.changePhoneButton),
+              child: Text(isEmail ? l.changeEmailButton : l.changePhoneButton),
             ),
           ],
         ),

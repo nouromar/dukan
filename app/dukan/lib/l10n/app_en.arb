@@ -276,16 +276,35 @@
   "supabaseConfigCommand": "flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...",
   "openPrototype": "Open prototype",
   "loginTitle": "Login",
+  "loginTabPhone": "Phone",
+  "loginTabEmail": "Email",
   "loginHeadline": "Use your phone number",
   "loginBody": "We will send a one-time code. Dukan can deliver it by WhatsApp from the backend.",
+  "loginEmailHeadline": "Use your email",
+  "loginEmailBody": "We will email you a one-time code.",
   "phoneNumberLabel": "Phone number",
+  "emailAddressLabel": "Email",
   "sendOtpButton": "SEND CODE",
+  "sendEmailOtpButton": "SEND CODE",
   "verifyOtpTitle": "Enter code",
   "verifyOtpHeadline": "Check your phone",
+  "verifyOtpHeadlineEmail": "Check your email",
   "verifyOtpBody": "Enter the code sent to {phone}.",
+  "@verifyOtpBody": {
+    "placeholders": {
+      "phone": { "type": "String" }
+    }
+  },
+  "verifyOtpBodyEmail": "Enter the code sent to {email}.",
+  "@verifyOtpBodyEmail": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
   "otpCodeLabel": "Code",
   "verifyOtpButton": "VERIFY",
   "changePhoneButton": "Change phone number",
+  "changeEmailButton": "Change email",
   "ownerOnboardingTitle": "Create shop",
   "ownerOnboardingHeadline": "Set up your first shop",
   "ownerOnboardingBody": "Enter the business and shop names. You can add workers later.",
@@ -297,9 +316,13 @@
   "activeShopLabel": "Shop: {shop}",
   "signOut": "Sign out",
   "invalidPhoneMessage": "Enter a valid phone number, for example +252612345678.",
+  "invalidEmailMessage": "Enter a valid email, for example you@example.com.",
   "missingPendingPhoneMessage": "Start with your phone number first.",
+  "missingPendingDestinationMessage": "Start with your phone or email first.",
   "missingShopNamesMessage": "Enter both business name and shop name.",
   "sendOtpFailedMessage": "We could not send the code. Check the phone number or internet and try again.",
+  "sendEmailOtpFailedMessage": "We could not email the code. Check the address or your internet and try again.",
+  "emailAccountNotFoundMessage": "No account found for that email. Ask your shop owner to add you.",
   "verifyOtpFailedMessage": "The code is wrong or expired. Check the code and try again.",
   "createShopFailedMessage": "We could not create the shop. Check your internet and try again.",
   "shopLoadFailedTitle": "Could not open shops",

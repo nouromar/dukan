@@ -27,6 +27,7 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
     bool shopsLoading = false,
     bool shopLoadFailed = false,
     String? pendingPhone,
+    String? pendingEmail,
     Capabilities? capabilities,
   }) : _shops = shops,
        _selectedShop = selectedShop,
@@ -35,6 +36,7 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
        _shopsLoading = shopsLoading,
        _shopLoadFailed = shopLoadFailed,
        _pendingPhone = pendingPhone,
+       _pendingEmail = pendingEmail,
        _capabilities = capabilities ?? Capabilities.empty();
 
   List<ShopSummary> _shops;
@@ -44,9 +46,11 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
   bool _shopsLoading;
   bool _shopLoadFailed;
   String? _pendingPhone;
+  String? _pendingEmail;
   Capabilities _capabilities;
 
   Future<void> Function(String rawPhone)? onSendOtp;
+  Future<void> Function(String rawEmail)? onSendEmailOtp;
   Future<void> Function(String token)? onVerifyOtp;
   Future<void> Function(String businessName, String shopName)?
   onCreateFirstShop;
@@ -81,6 +85,11 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
     notifyListeners();
   }
 
+  void setPendingEmail(String? email) {
+    _pendingEmail = email;
+    notifyListeners();
+  }
+
   void setSession(Session? session) {
     _session = session;
     notifyListeners();
@@ -107,6 +116,8 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
   @override
   String? get pendingPhone => _pendingPhone;
   @override
+  String? get pendingEmail => _pendingEmail;
+  @override
   Capabilities get capabilities => _capabilities;
 
   /// Test helper for capability-gated widget tests.
@@ -125,6 +136,15 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
   Future<void> sendOtp(String rawPhone) async {
     if (onSendOtp != null) return onSendOtp!(rawPhone);
     _pendingPhone = rawPhone;
+    _pendingEmail = null;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> sendEmailOtp(String rawEmail) async {
+    if (onSendEmailOtp != null) return onSendEmailOtp!(rawEmail);
+    _pendingEmail = rawEmail;
+    _pendingPhone = null;
     notifyListeners();
   }
 
@@ -132,13 +152,15 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
   Future<void> verifyOtp(String token) async {
     if (onVerifyOtp != null) return onVerifyOtp!(token);
     _pendingPhone = null;
+    _pendingEmail = null;
     notifyListeners();
   }
 
   @override
   void cancelOtp() {
-    if (_pendingPhone == null) return;
+    if (_pendingPhone == null && _pendingEmail == null) return;
     _pendingPhone = null;
+    _pendingEmail = null;
     notifyListeners();
   }
 
@@ -176,6 +198,7 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
     _shops = const [];
     _selectedShop = null;
     _pendingPhone = null;
+    _pendingEmail = null;
     notifyListeners();
   }
 }

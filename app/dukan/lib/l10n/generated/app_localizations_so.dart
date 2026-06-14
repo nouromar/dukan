@@ -597,6 +597,12 @@ class AppLocalizationsSo extends AppLocalizations {
   String get loginTitle => 'Soo gal';
 
   @override
+  String get loginTabPhone => 'Taleefan';
+
+  @override
+  String get loginTabEmail => 'Iimayl';
+
+  @override
   String get loginHeadline => 'Isticmaal telefoonkaaga';
 
   @override
@@ -604,10 +610,23 @@ class AppLocalizationsSo extends AppLocalizations {
       'Waxaan kuu diraynaa kood hal mar la isticmaalo, text ama whatsapp.';
 
   @override
+  String get loginEmailHeadline => 'Isticmaal iimaylkaaga';
+
+  @override
+  String get loginEmailBody =>
+      'Waxaan iimaylkaaga ku soo diri doonnaa kood hal mar la isticmaalo.';
+
+  @override
   String get phoneNumberLabel => 'Lambarka telefoonka';
 
   @override
+  String get emailAddressLabel => 'Iimayl';
+
+  @override
   String get sendOtpButton => 'DIR KOOD';
+
+  @override
+  String get sendEmailOtpButton => 'DIR KOOD';
 
   @override
   String get verifyOtpTitle => 'Geli kood';
@@ -616,8 +635,16 @@ class AppLocalizationsSo extends AppLocalizations {
   String get verifyOtpHeadline => 'Eeg telefoonkaaga';
 
   @override
-  String verifyOtpBody(Object phone) {
+  String get verifyOtpHeadlineEmail => 'Eeg iimaylkaaga';
+
+  @override
+  String verifyOtpBody(String phone) {
     return 'Geli koodka loo diray $phone.';
+  }
+
+  @override
+  String verifyOtpBodyEmail(String email) {
+    return 'Geli koodka loo diray $email.';
   }
 
   @override
@@ -628,6 +655,9 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get changePhoneButton => 'Bedel lambarka telefoonka';
+
+  @override
+  String get changeEmailButton => 'Bedel iimaylka';
 
   @override
   String get ownerOnboardingTitle => 'Abuur dukaan';
@@ -669,8 +699,16 @@ class AppLocalizationsSo extends AppLocalizations {
       'Geli lambar telefoon sax ah, tusaale +252612345678.';
 
   @override
+  String get invalidEmailMessage =>
+      'Geli iimayl sax ah, tusaale you@example.com.';
+
+  @override
   String get missingPendingPhoneMessage =>
       'Marka hore ku bilow lambarka telefoonkaaga.';
+
+  @override
+  String get missingPendingDestinationMessage =>
+      'Marka hore ku bilow taleefan ama iimayl.';
 
   @override
   String get missingShopNamesMessage =>
@@ -679,6 +717,14 @@ class AppLocalizationsSo extends AppLocalizations {
   @override
   String get sendOtpFailedMessage =>
       'Koodka lama diri karin. Hubi lambarka ama internetka, ka dib mar kale isku day.';
+
+  @override
+  String get sendEmailOtpFailedMessage =>
+      'Koodka iimaylka lama diri karin. Hubi cinwaanka ama internet-ka, ka dib mar kale isku day.';
+
+  @override
+  String get emailAccountNotFoundMessage =>
+      'Iimaylkaas account uma jiro. Weydiiso milkiilaha dukaanka inuu ku daro.';
 
   @override
   String get verifyOtpFailedMessage =>

@@ -596,6 +596,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginTitle => 'Login';
 
   @override
+  String get loginTabPhone => 'Phone';
+
+  @override
+  String get loginTabEmail => 'Email';
+
+  @override
   String get loginHeadline => 'Use your phone number';
 
   @override
@@ -603,10 +609,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'We will send a one-time code. Dukan can deliver it by WhatsApp from the backend.';
 
   @override
+  String get loginEmailHeadline => 'Use your email';
+
+  @override
+  String get loginEmailBody => 'We will email you a one-time code.';
+
+  @override
   String get phoneNumberLabel => 'Phone number';
 
   @override
+  String get emailAddressLabel => 'Email';
+
+  @override
   String get sendOtpButton => 'SEND CODE';
+
+  @override
+  String get sendEmailOtpButton => 'SEND CODE';
 
   @override
   String get verifyOtpTitle => 'Enter code';
@@ -615,8 +633,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verifyOtpHeadline => 'Check your phone';
 
   @override
-  String verifyOtpBody(Object phone) {
+  String get verifyOtpHeadlineEmail => 'Check your email';
+
+  @override
+  String verifyOtpBody(String phone) {
     return 'Enter the code sent to $phone.';
+  }
+
+  @override
+  String verifyOtpBodyEmail(String email) {
+    return 'Enter the code sent to $email.';
   }
 
   @override
@@ -627,6 +653,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get changePhoneButton => 'Change phone number';
+
+  @override
+  String get changeEmailButton => 'Change email';
 
   @override
   String get ownerOnboardingTitle => 'Create shop';
@@ -668,8 +697,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter a valid phone number, for example +252612345678.';
 
   @override
+  String get invalidEmailMessage =>
+      'Enter a valid email, for example you@example.com.';
+
+  @override
   String get missingPendingPhoneMessage =>
       'Start with your phone number first.';
+
+  @override
+  String get missingPendingDestinationMessage =>
+      'Start with your phone or email first.';
 
   @override
   String get missingShopNamesMessage =>
@@ -678,6 +715,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sendOtpFailedMessage =>
       'We could not send the code. Check the phone number or internet and try again.';
+
+  @override
+  String get sendEmailOtpFailedMessage =>
+      'We could not email the code. Check the address or your internet and try again.';
+
+  @override
+  String get emailAccountNotFoundMessage =>
+      'No account found for that email. Ask your shop owner to add you.';
 
   @override
   String get verifyOtpFailedMessage =>

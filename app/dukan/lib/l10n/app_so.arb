@@ -276,16 +276,35 @@
   "supabaseConfigCommand": "flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...",
   "openPrototype": "Fur tijaabada",
   "loginTitle": "Soo gal",
+  "loginTabPhone": "Taleefan",
+  "loginTabEmail": "Iimayl",
   "loginHeadline": "Isticmaal telefoonkaaga",
   "loginBody": "Waxaan kuu diraynaa kood hal mar la isticmaalo, text ama whatsapp.",
+  "loginEmailHeadline": "Isticmaal iimaylkaaga",
+  "loginEmailBody": "Waxaan iimaylkaaga ku soo diri doonnaa kood hal mar la isticmaalo.",
   "phoneNumberLabel": "Lambarka telefoonka",
+  "emailAddressLabel": "Iimayl",
   "sendOtpButton": "DIR KOOD",
+  "sendEmailOtpButton": "DIR KOOD",
   "verifyOtpTitle": "Geli kood",
   "verifyOtpHeadline": "Eeg telefoonkaaga",
+  "verifyOtpHeadlineEmail": "Eeg iimaylkaaga",
   "verifyOtpBody": "Geli koodka loo diray {phone}.",
+  "@verifyOtpBody": {
+    "placeholders": {
+      "phone": { "type": "String" }
+    }
+  },
+  "verifyOtpBodyEmail": "Geli koodka loo diray {email}.",
+  "@verifyOtpBodyEmail": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
   "otpCodeLabel": "Kood",
   "verifyOtpButton": "XAQIIJI",
   "changePhoneButton": "Bedel lambarka telefoonka",
+  "changeEmailButton": "Bedel iimaylka",
   "ownerOnboardingTitle": "Abuur dukaan",
   "ownerOnboardingHeadline": "Diyaari dukaanka koowaad",
   "ownerOnboardingBody": "Geli magaca ganacsiga iyo dukaanka. Shaqaale waad ku dari kartaa marka dambe.",
@@ -297,9 +316,13 @@
   "activeShopLabel": "Dukaan: {shop}",
   "signOut": "Ka bax",
   "invalidPhoneMessage": "Geli lambar telefoon sax ah, tusaale +252612345678.",
+  "invalidEmailMessage": "Geli iimayl sax ah, tusaale you@example.com.",
   "missingPendingPhoneMessage": "Marka hore ku bilow lambarka telefoonkaaga.",
+  "missingPendingDestinationMessage": "Marka hore ku bilow taleefan ama iimayl.",
   "missingShopNamesMessage": "Geli magaca ganacsiga iyo magaca dukaanka labadaba.",
   "sendOtpFailedMessage": "Koodka lama diri karin. Hubi lambarka ama internetka, ka dib mar kale isku day.",
+  "sendEmailOtpFailedMessage": "Koodka iimaylka lama diri karin. Hubi cinwaanka ama internet-ka, ka dib mar kale isku day.",
+  "emailAccountNotFoundMessage": "Iimaylkaas account uma jiro. Weydiiso milkiilaha dukaanka inuu ku daro.",
   "verifyOtpFailedMessage": "Koodku waa khalad ama wuu dhacay. Hubi koodka, ka dib mar kale isku day.",
   "createShopFailedMessage": "Dukaanka lama abuuri karin. Hubi internetka, ka dib mar kale isku day.",
   "shopLoadFailedTitle": "Dukaamada lama furi karin",

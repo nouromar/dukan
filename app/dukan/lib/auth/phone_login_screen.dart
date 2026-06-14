@@ -9,14 +9,42 @@ import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 
-class PhoneLoginScreen extends StatefulWidget {
+/// Standalone phone-login screen (Scaffold + AppBar). Retained for the
+/// widget tests that drive PhoneLoginScreen directly; the production
+/// auth flow now uses LoginScreen which embeds PhoneLoginForm next to
+/// EmailLoginForm in a TabBar.
+class PhoneLoginScreen extends StatelessWidget {
   const PhoneLoginScreen({super.key});
 
   @override
-  State<PhoneLoginScreen> createState() => _PhoneLoginScreenState();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: dukanAppBar(
+        context,
+        tr(context).loginTitle,
+        showLanguageToggle: true,
+      ),
+      body: const SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: PhoneLoginForm(),
+        ),
+      ),
+    );
+  }
 }
 
-class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
+/// Body of the phone-login flow, with no Scaffold of its own so it can
+/// be embedded in a TabBarView. The standalone PhoneLoginScreen above
+/// wraps it for backward-compat with widget tests.
+class PhoneLoginForm extends StatefulWidget {
+  const PhoneLoginForm({super.key});
+
+  @override
+  State<PhoneLoginForm> createState() => _PhoneLoginFormState();
+}
+
+class _PhoneLoginFormState extends State<PhoneLoginForm> {
   final _phoneController = TextEditingController(text: defaultCountryCode);
   bool _sending = false;
 
@@ -48,51 +76,46 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    return Scaffold(
-      appBar: dukanAppBar(context, l.loginTitle, showLanguageToggle: true),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Icon(
-              Icons.phone_android,
-              size: 72,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              l.loginHeadline,
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              l.loginBody,
-              style: Theme.of(context).textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.done,
-              // Phone numbers must stay ASCII for E.164 normalization;
-              // accept "+" plus ASCII / Arabic / Persian digits.
-              textDirection: TextDirection.ltr,
-              inputFormatters: const [PhoneDigitsInputFormatter()],
-              decoration: InputDecoration(labelText: l.phoneNumberLabel),
-              onSubmitted: (_) => _sending ? null : _sendOtp(),
-            ),
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _sending ? null : _sendOtp,
-              child: _sending
-                  ? const CircularProgressIndicator()
-                  : Text(l.sendOtpButton),
-            ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Icon(
+          Icons.phone_android,
+          size: 72,
+          color: Theme.of(context).colorScheme.primary,
         ),
-      ),
+        const SizedBox(height: 20),
+        Text(
+          l.loginHeadline,
+          style: Theme.of(context).textTheme.titleLarge,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l.loginBody,
+          style: Theme.of(context).textTheme.bodyLarge,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        TextField(
+          controller: _phoneController,
+          keyboardType: TextInputType.phone,
+          textInputAction: TextInputAction.done,
+          // Phone numbers must stay ASCII for E.164 normalization;
+          // accept "+" plus ASCII / Arabic / Persian digits.
+          textDirection: TextDirection.ltr,
+          inputFormatters: const [PhoneDigitsInputFormatter()],
+          decoration: InputDecoration(labelText: l.phoneNumberLabel),
+          onSubmitted: (_) => _sending ? null : _sendOtp(),
+        ),
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed: _sending ? null : _sendOtp,
+          child: _sending
+              ? const CircularProgressIndicator()
+              : Text(l.sendOtpButton),
+        ),
+      ],
     );
   }
 }

@@ -72,4 +72,30 @@ void main() {
 
     expect(auth.pendingPhone, isNull);
   });
+
+  group('email path', () {
+    setUp(() {
+      auth = FakeAuthController(pendingEmail: 'owner@example.com');
+    });
+
+    testWidgets('renders the pending email in the body', (tester) async {
+      await pumpOtp(tester);
+
+      expect(
+        find.text(en.verifyOtpBodyEmail('owner@example.com')),
+        findsOneWidget,
+      );
+      expect(find.text(en.verifyOtpHeadlineEmail), findsOneWidget);
+    });
+
+    testWidgets('"change email" clears the pending email', (tester) async {
+      await pumpOtp(tester);
+
+      expect(auth.pendingEmail, 'owner@example.com');
+      await tester.tap(find.widgetWithText(TextButton, en.changeEmailButton));
+      await tester.pumpAndSettle();
+
+      expect(auth.pendingEmail, isNull);
+    });
+  });
 }
