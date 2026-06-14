@@ -17,3 +17,4 @@
 // Importable as `from 'shared'` from any web/* workspace member.
 
 export * from './config';
+export * from './currency';

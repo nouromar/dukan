@@ -12,6 +12,31 @@
     "setup": "Setup",
     "audit": "Audit"
   },
+  "overview": {
+    "noShop": {
+      "title": "No shop selected",
+      "description": "Once a shop is set up for you, its dashboard will appear here."
+    },
+    "kpis": {
+      "salesToday": "Sales today",
+      "monthRevenue": "Revenue this month",
+      "receivables": "Customers owe",
+      "payables": "You owe suppliers",
+      "lowStock": "Low stock",
+      "lowStockUnit": "{count, plural, =0 {no items} one {# item} other {# items}}",
+      "salesCount": "{count, plural, =0 {no sales} one {# sale} other {# sales}}"
+    },
+    "topCustomers": {
+      "title": "Top customers by balance",
+      "empty": "No customer balances yet.",
+      "viewAll": "View all customers"
+    },
+    "topSuppliers": {
+      "title": "Top suppliers by balance",
+      "empty": "No supplier balances yet.",
+      "viewAll": "View all suppliers"
+    }
+  },
   "modulePlaceholder": {
     "notImplemented": "This module is scaffolded but not yet implemented. Tracked as {task} in docs/shop-admin-portal-alignment.md.",
     "overview": "Today, this week, this month — across all shops.",

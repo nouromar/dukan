@@ -16,6 +16,7 @@ export type Shop = {
   id: string;
   name: string;
   organization_id: string;
+  currency_code: string;
 };
 
 export type ShopContextValue = {

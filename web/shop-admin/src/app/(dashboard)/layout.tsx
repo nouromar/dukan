@@ -3,55 +3,21 @@
 // § 5.1: 7 nav sections (Overview / Sales / Inventory / People / Money
 // / Setup / Audit).
 //
-// This is a Server Component so the shop list + capability set can be
-// fetched on the server in one roundtrip, then handed to client
-// components (left rail, shop switcher, capability guards) via
-// ShopContextProvider.
+// Shop + capability resolution is delegated to getCurrentShop() so
+// module pages can call it again without a second RPC roundtrip
+// (React `cache` dedupes within a request).
 
-import { cookies } from "next/headers";
 import { LeftRail } from "@/components/shell/left-rail";
 import { TopBar } from "@/components/shell/top-bar";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ShopContextProvider, type Shop } from "@/lib/shop-context";
-import { SHOP_COOKIE } from "@/app/auth/select-shop/route";
+import { ShopContextProvider } from "@/lib/shop-context";
+import { getCurrentShop } from "@/lib/current-shop";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createSupabaseServerClient();
-
-  // RLS already restricts `shop` to the rows the signed-in user can
-  // access; no explicit user-scope filter needed.
-  const { data: shopRows } = await supabase
-    .from("shop")
-    .select("id, name, organization_id")
-    .order("name", { ascending: true });
-  const shops: Shop[] = shopRows ?? [];
-
-  const cookieStore = await cookies();
-  const cookieShopId = cookieStore.get(SHOP_COOKIE)?.value;
-  // Resolve current shop: prefer the cookie if it still corresponds to
-  // an accessible shop; otherwise fall back to the first shop. If the
-  // user has zero shops, currentShop is null and the dashboard renders
-  // a "no shops yet" empty state via the switcher.
-  const currentShop =
-    shops.find((s) => s.id === cookieShopId) ?? shops[0] ?? null;
-
-  let capabilities: string[] = [];
-  if (currentShop) {
-    const { data: capData } = await supabase.rpc(
-      "auth_user_shop_capabilities",
-      { p_shop_id: currentShop.id },
-    );
-    // RPC returns jsonb array<text>; supabase-js parses it for us.
-    if (Array.isArray(capData)) {
-      capabilities = capData.filter(
-        (v): v is string => typeof v === "string",
-      );
-    }
-  }
+  const { shops, currentShop, capabilities } = await getCurrentShop();
 
   return (
     <ShopContextProvider
