@@ -48,10 +48,19 @@ export default async function InventoryPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.rpc("list_shop_items", {
+  const { data, error } = await supabase.rpc("list_shop_items", {
     p_shop_id: currentShop.id,
     p_locale: locale,
   });
+  if (error) {
+    // Surface to Vercel function logs so production diagnostics aren't
+    // a black box. Re-throw so Next renders the standard error page.
+    console.error(
+      "[inventory] list_shop_items failed:",
+      JSON.stringify(error),
+    );
+    throw error;
+  }
 
   const rows = (data as RpcRow[] | null) ?? [];
   const products: Product[] = rows.map((r) => ({

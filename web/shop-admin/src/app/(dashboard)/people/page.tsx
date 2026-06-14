@@ -19,8 +19,10 @@ type PartyRow = {
   phone: string | null;
   receivable: number | string | null;
   payable: number | string | null;
-  type: { code: string } | null;
+  type_id: string;
 };
+
+type PartyTypeRow = { id: string; code: string };
 
 export default async function PeoplePage() {
   const t = await getTranslations("people");
@@ -39,19 +41,33 @@ export default async function PeoplePage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  // RLS limits to the user's accessible shops; explicit shop_id filter
-  // narrows to just this shop (an org-owner has access to all shops in
-  // their org). is_active filter hides soft-deleted parties.
-  const { data: rows } = await supabase
-    .from("party")
-    .select("id, name, phone, receivable, payable, type:type_id(code)")
-    .eq("shop_id", currentShop.id)
-    .eq("is_active", true)
-    .order("name", { ascending: true });
+  // Two parallel queries instead of a PostgREST inline join — avoids
+  // any auto-detection edge case when party has more than one FK to a
+  // *_type table (it has both type_id and supplier_type_id).
+  const [partiesRes, typesRes] = await Promise.all([
+    supabase
+      .from("party")
+      .select("id, name, phone, receivable, payable, type_id")
+      .eq("shop_id", currentShop.id)
+      .eq("is_active", true)
+      .order("name", { ascending: true }),
+    supabase.from("party_type").select("id, code"),
+  ]);
+  if (partiesRes.error) {
+    console.error("[people] party fetch failed:", partiesRes.error);
+    throw partiesRes.error;
+  }
+  if (typesRes.error) {
+    console.error("[people] party_type fetch failed:", typesRes.error);
+    throw typesRes.error;
+  }
 
-  const all = (rows as unknown as PartyRow[] | null) ?? [];
+  const typeById = new Map(
+    ((typesRes.data ?? []) as PartyTypeRow[]).map((t) => [t.id, t.code]),
+  );
+  const all = (partiesRes.data ?? []) as PartyRow[];
   const customers: Party[] = all
-    .filter((r) => r.type?.code === "customer")
+    .filter((r) => typeById.get(r.type_id) === "customer")
     .map((r) => ({
       id: r.id,
       name: r.name,
@@ -60,7 +76,7 @@ export default async function PeoplePage() {
     }))
     .sort((a, b) => b.balance - a.balance || a.name.localeCompare(b.name));
   const suppliers: Party[] = all
-    .filter((r) => r.type?.code === "supplier")
+    .filter((r) => typeById.get(r.type_id) === "supplier")
     .map((r) => ({
       id: r.id,
       name: r.name,
