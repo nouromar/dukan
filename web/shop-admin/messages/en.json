@@ -12,6 +12,29 @@
     "setup": "Setup",
     "audit": "Audit"
   },
+  "audit": {
+    "columns": {
+      "time": "When",
+      "action": "Action",
+      "entity": "Entity",
+      "source": "Source"
+    },
+    "sources": {
+      "mobile": "Mobile",
+      "shop_admin_web": "Web",
+      "system_admin_web": "Platform",
+      "rpc": "System",
+      "system": "System"
+    },
+    "empty": {
+      "title": "No activity recorded yet",
+      "description": "Sales, receives, payments, voids — every change posted in this shop appears here."
+    },
+    "noShop": {
+      "title": "No shop selected",
+      "description": "Pick or set up a shop to see its audit log."
+    }
+  },
   "inventory": {
     "search": {
       "placeholder": "Search products by name…"

@@ -12,6 +12,29 @@
     "setup": "Hagaajinta",
     "audit": "Diiwaanka"
   },
+  "audit": {
+    "columns": {
+      "time": "Goorma",
+      "action": "Ficil",
+      "entity": "Walax",
+      "source": "Halka"
+    },
+    "sources": {
+      "mobile": "Mobayl",
+      "shop_admin_web": "Web",
+      "system_admin_web": "Nidaamka",
+      "rpc": "Nidaam",
+      "system": "Nidaam"
+    },
+    "empty": {
+      "title": "Wax weli lama diiwaan gelin",
+      "description": "Iibyada, qaadashada, bixinta, baajinta — wax kasta oo dukaankan ka dhaca ayaa halkan ka muuqda."
+    },
+    "noShop": {
+      "title": "Wax dukaan ah lama dooran",
+      "description": "Dooro ama dejiyaha dukaan si aad u aragto diiwaanka."
+    }
+  },
   "inventory": {
     "search": {
       "placeholder": "Raadi alaab magaca…"
