@@ -12,6 +12,35 @@
     "setup": "Setup",
     "audit": "Audit"
   },
+  "saleDetail": {
+    "back": "← All sales",
+    "walkIn": "Walk-in customer",
+    "statusPosted": "Posted",
+    "statusVoided": "Voided",
+    "kpis": {
+      "total": "Total",
+      "paid": "Paid",
+      "outstanding": "Outstanding",
+      "method": "Payment"
+    },
+    "linesTitle": "Items",
+    "columns": {
+      "line": "#",
+      "item": "Item",
+      "quantity": "Qty",
+      "unitPrice": "Unit",
+      "lineTotal": "Total",
+      "cogs": "Cost",
+      "margin": "Margin"
+    },
+    "marginPercent": "{percent}%",
+    "marginNoCost": "—",
+    "linesEmpty": "No lines recorded on this sale.",
+    "notFound": {
+      "title": "Sale not found",
+      "description": "This sale doesn't exist, or you don't have access to it."
+    }
+  },
   "sales": {
     "search": {
       "placeholder": "Search by customer…"

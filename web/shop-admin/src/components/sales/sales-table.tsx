@@ -9,6 +9,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -36,6 +37,7 @@ export function SalesTable({
   locale: string;
 }) {
   const t = useTranslations("sales");
+  const router = useRouter();
   const [query, setQuery] = useState("");
 
   const money = (n: number) => formatMoney(n, currencyCode, locale);
@@ -159,6 +161,7 @@ export function SalesTable({
       <DataTable
         columns={columns}
         data={filtered}
+        onRowClick={(row) => router.push(`/sales/${row.txn_id}`)}
         empty={
           <EmptyState
             title={t("empty.title")}

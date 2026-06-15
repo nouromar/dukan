@@ -12,6 +12,35 @@
     "setup": "Hagaajinta",
     "audit": "Diiwaanka"
   },
+  "saleDetail": {
+    "back": "← Dhammaan iibyada",
+    "walkIn": "Macmiil aan caadi ahayn",
+    "statusPosted": "La diiwaan geliyay",
+    "statusVoided": "La baajiyay",
+    "kpis": {
+      "total": "Wadarta",
+      "paid": "La bixiyay",
+      "outstanding": "Hadhay",
+      "method": "Bixinta"
+    },
+    "linesTitle": "Alaabta",
+    "columns": {
+      "line": "#",
+      "item": "Alaab",
+      "quantity": "Tirada",
+      "unitPrice": "Halkii",
+      "lineTotal": "Wadarta",
+      "cogs": "Qiimaha",
+      "margin": "Faaiido"
+    },
+    "marginPercent": "{percent}%",
+    "marginNoCost": "—",
+    "linesEmpty": "Wax safaf ah lama diiwaan gelin iibkan.",
+    "notFound": {
+      "title": "Lama helin iibka",
+      "description": "Iibkaan ma jiro, ama ma haysatid gelitaan."
+    }
+  },
   "sales": {
     "search": {
       "placeholder": "Raadi macmiil…"
