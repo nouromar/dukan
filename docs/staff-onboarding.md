@@ -128,6 +128,21 @@ path makes it redundant for the standard flow — no UI calls it today.
 |                                            | reactivates the membership.                 |
 | Network failure during claim               | Swallowed; user can retry by reopening app. |
 
+## User display name
+
+`public.user_profile` (migration `0057_user_profile.sql`) stores a
+free-form `display_name` per user. RLS: self-edit + read access shared
+with anyone the viewer co-owns a `shop_membership` row with. The
+portal's `/setup` page has a **My profile** card at the top where each
+user sets their own name; the staff list and audit log render that
+name in place of the UUID prefix when one is set.
+
+There's no UI to set someone else's name — a user picks their own
+display name and it shows up everywhere they're visible. Mobile profile
+edit is deferred; mobile users without a display name show as "Unnamed"
++ UUID prefix on the portal until they sign in to the portal once and
+set it (or until we ship the mobile profile edit screen).
+
 ## Testing
 
 `scripts/test-backend-migrations.sh` (sections 4 / 4b / 4c / 4d):

@@ -357,18 +357,33 @@
       "title": "Wax dukaan ah lama dooran",
       "description": "Dooro ama dejiyaha dukaan si aad u maamusho shaqaalaha."
     },
+    "profile": {
+      "title": "Profilekayga",
+      "description": "Magacaaga waxaa lagu arkayaa meel kasta oo portalka ah ee la muujinayo cidda waxa ay sameysay — diiwaanka, liiska shaqaalaha, iyo warbixinada. Waxaa arki kara dadka aad la wadaagto dukaan.",
+      "nameLabel": "Magaca la muujinayo",
+      "namePlaceholder": "tusaale Asha Mohamed",
+      "save": "Kaydi",
+      "saving": "Kaydinta…",
+      "saved": "Waa la kaydiyay.",
+      "errorEmpty": "Geli magac.",
+      "errorGeneric": "Lama kaydin karin. Mar kale isku day."
+    },
     "staff": {
       "title": "Shaqaalaha",
       "addButton": "Ku dar shaqaale",
       "membersHeader": "Xubnaha hadda jira",
       "pendingHeader": "Casuumaadaha la sugayo",
       "columns": {
+        "name": "Magaca",
         "contact": "Xidhiidh",
         "role": "Door",
+        "joined": "Soo galay",
+        "invited": "La casuumay",
         "expires": "Dhammaadka",
         "actions": ""
       },
       "youTag": "adi",
+      "unnamed": "Magac la'aan",
       "roleOwner": "Milkiile",
       "roleCashier": "Maamule iibka",
       "membersEmpty": "Wax xubin ah weli ma jirin.",

@@ -1,11 +1,14 @@
-// Setup module. V1 surfaces a single concern: staff. Two sections —
-// active members and pending invites. "Add staff" dialog is gated by
-// the setup.staff.invite capability; cashiers see the page (it's on
-// their nav after #265's caps split) but no Add button.
+// Setup module. V1 surfaces:
+//   1. My profile — current viewer edits their display_name.
+//   2. Staff list — active members with display_name + join date.
+//   3. Pending invites — contact + role + invite date + expiry.
 //
-// Member rows show role + UUID short (real names land with #287).
-// Pending rows show contact (phone or email) verbatim since the
-// owner just typed them.
+// "Add staff" dialog is gated by the setup.staff.invite capability;
+// cashiers see the page but no Add button.
+//
+// Display names + join/invite dates queried through user_profile +
+// shop_membership.created_at. UUID short fallback for users who
+// haven't set a name yet.
 
 import { getTranslations, getLocale } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +16,14 @@ import { getCurrentShop } from "@/lib/current-shop";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Can } from "@/components/auth/can";
 import { AddStaffDialog } from "@/components/setup/add-staff-dialog";
+import { MyProfileCard } from "@/components/setup/my-profile-card";
 
 type MembershipRow = {
   user_id: string;
   is_active: boolean;
   role_id: string;
+  created_at: string;
+  updated_at: string;
 };
 type RoleRow = { id: string; code: string };
 type InviteRow = {
@@ -26,7 +32,9 @@ type InviteRow = {
   email: string | null;
   role_code: string;
   expires_at: string;
+  created_at: string;
 };
+type ProfileRow = { user_id: string; display_name: string };
 
 export default async function SetupPage() {
   const t = await getTranslations("setup");
@@ -45,21 +53,25 @@ export default async function SetupPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const [membersRes, rolesRes, invitesRes, userRes] = await Promise.all([
+  const [membersRes, rolesRes, invitesRes, profilesRes, userRes] = await Promise.all([
     supabase
       .from("shop_membership")
-      .select("user_id, is_active, role_id")
+      .select("user_id, is_active, role_id, created_at, updated_at")
       .eq("shop_id", currentShop.id),
     supabase.from("shop_role").select("id, code"),
     supabase
       .from("shop_invite")
-      .select("id, phone, email, role_code, expires_at")
+      .select("id, phone, email, role_code, expires_at, created_at")
       .eq("shop_id", currentShop.id)
       .is("accepted_at", null)
       .order("created_at", { ascending: false }),
+    // RLS on user_profile lets the viewer see any row for users they
+    // share a shop with — so this fetch is automatically scoped to
+    // members of the current shop (and the viewer themselves).
+    supabase.from("user_profile").select("user_id, display_name"),
     supabase.auth.getUser(),
   ]);
-  for (const r of [membersRes, rolesRes, invitesRes]) {
+  for (const r of [membersRes, rolesRes, invitesRes, profilesRes]) {
     if (r.error) {
       console.error("[setup] fetch failed:", r.error);
       throw r.error;
@@ -70,6 +82,15 @@ export default async function SetupPage() {
   const roleCodeById = new Map(
     ((rolesRes.data ?? []) as RoleRow[]).map((r) => [r.id, r.code]),
   );
+  const nameByUserId = new Map(
+    ((profilesRes.data ?? []) as ProfileRow[]).map((p) => [
+      p.user_id,
+      p.display_name,
+    ]),
+  );
+  const myDisplayName =
+    currentUserId ? (nameByUserId.get(currentUserId) ?? "") : "";
+
   const members = ((membersRes.data ?? []) as MembershipRow[]).filter(
     (m) => m.is_active,
   );
@@ -93,6 +114,8 @@ export default async function SetupPage() {
         </Can>
       </div>
 
+      <MyProfileCard initialName={myDisplayName} />
+
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium">
@@ -108,12 +131,20 @@ export default async function SetupPage() {
             <ul className="divide-y">
               {members.map((m) => {
                 const isSelf = m.user_id === currentUserId;
+                const displayName = nameByUserId.get(m.user_id);
                 return (
                   <li
                     key={m.user_id}
-                    className="flex items-center justify-between py-3 text-sm"
+                    className="flex items-center justify-between gap-4 py-3 text-sm"
                   >
                     <div className="flex items-center gap-2">
+                      {displayName ? (
+                        <span className="font-medium">{displayName}</span>
+                      ) : (
+                        <span className="italic text-muted-foreground">
+                          {t("staff.unnamed")}
+                        </span>
+                      )}
                       <span
                         className="font-mono text-xs text-muted-foreground"
                         title={m.user_id}
@@ -126,9 +157,15 @@ export default async function SetupPage() {
                         </span>
                       ) : null}
                     </div>
-                    <span className="text-sm font-medium">
-                      {roleLabel(roleCodeById.get(m.role_id) ?? "")}
-                    </span>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span className="tabular-nums">
+                        {t("staff.columns.joined")}:{" "}
+                        {dateFmt.format(new Date(m.created_at))}
+                      </span>
+                      <span className="text-sm font-medium text-foreground">
+                        {roleLabel(roleCodeById.get(m.role_id) ?? "")}
+                      </span>
+                    </div>
                   </li>
                 );
               })}
@@ -159,6 +196,11 @@ export default async function SetupPage() {
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span>{roleLabel(iv.role_code)}</span>
                     <span className="tabular-nums">
+                      {t("staff.columns.invited")}:{" "}
+                      {dateFmt.format(new Date(iv.created_at))}
+                    </span>
+                    <span className="tabular-nums">
+                      {t("staff.columns.expires")}:{" "}
                       {dateFmt.format(new Date(iv.expires_at))}
                     </span>
                   </div>

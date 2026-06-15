@@ -20,6 +20,8 @@ export type AuditEntry = {
   source: string;
   /** Full UUID of the actor; null when the row was emitted by RPC/cron/system. */
   actor_user_id: string | null;
+  /** Resolved display_name from user_profile; null when the actor hasn't set one yet. */
+  actor_display_name: string | null;
   /** True when actor_user_id equals the current viewer — drives a small "you" tag. */
   is_self: boolean;
 };
@@ -88,12 +90,21 @@ export function AuditTable({
           }
           return (
             <div className="flex items-center gap-2">
-              <span
-                className="font-mono text-xs text-muted-foreground"
-                title={row.original.actor_user_id}
-              >
-                {row.original.actor_user_id.slice(0, 8)}
-              </span>
+              {row.original.actor_display_name ? (
+                <span
+                  className="font-medium"
+                  title={row.original.actor_user_id ?? undefined}
+                >
+                  {row.original.actor_display_name}
+                </span>
+              ) : (
+                <span
+                  className="font-mono text-xs text-muted-foreground"
+                  title={row.original.actor_user_id}
+                >
+                  {row.original.actor_user_id.slice(0, 8)}
+                </span>
+              )}
               {row.original.is_self ? (
                 <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
                   {t("actorYouTag")}

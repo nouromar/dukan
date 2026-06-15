@@ -8,6 +8,37 @@ import { revalidatePath } from "next/cache";
 import { defaultCountryCode } from "shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+export type UpdateProfileResult =
+  | { ok: true }
+  | { ok: false; code: "empty" | "generic"; message?: string };
+
+export async function updateMyProfileAction(input: {
+  displayName: string;
+}): Promise<UpdateProfileResult> {
+  const name = input.displayName.trim();
+  if (name.length === 0) return { ok: false, code: "empty" };
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, code: "generic" };
+
+  const { error } = await supabase
+    .from("user_profile")
+    .upsert(
+      { user_id: user.id, display_name: name },
+      { onConflict: "user_id" },
+    );
+  if (error) {
+    console.error("[setup-profile] upsert failed:", error);
+    return { ok: false, code: "generic", message: error.message };
+  }
+  revalidatePath("/setup");
+  revalidatePath("/audit");
+  return { ok: true };
+}
+
 export type AddStaffResult =
   | { ok: true; channel: "phone" | "email"; value: string }
   | {

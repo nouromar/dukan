@@ -47,7 +47,7 @@ export default async function AuditPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const [eventsRes, actionsRes, userRes] = await Promise.all([
+  const [eventsRes, actionsRes, profilesRes, userRes] = await Promise.all([
     supabase
       .from("audit_log")
       .select(
@@ -57,6 +57,9 @@ export default async function AuditPage() {
       .order("occurred_at", { ascending: false })
       .limit(PAGE_LIMIT),
     supabase.from("audit_action_code").select("code, description"),
+    // RLS gates user_profile to same-shop members so this returns
+    // only profiles we're allowed to display.
+    supabase.from("user_profile").select("user_id, display_name"),
     supabase.auth.getUser(),
   ]);
   const currentUserId = userRes.data.user?.id ?? null;
@@ -71,12 +74,22 @@ export default async function AuditPage() {
     );
     throw actionsRes.error;
   }
+  if (profilesRes.error) {
+    console.error("[audit] user_profile fetch failed:", profilesRes.error);
+    // Soft failure — keep rendering with UUID fallbacks.
+  }
 
   const descByCode = new Map(
     ((actionsRes.data ?? []) as ActionRow[]).map((r) => [
       r.code,
       r.description ?? r.code,
     ]),
+  );
+  const nameByUserId = new Map(
+    ((profilesRes.data ?? []) as Array<{
+      user_id: string;
+      display_name: string;
+    }>).map((p) => [p.user_id, p.display_name]),
   );
   const entries: AuditEntry[] = (
     (eventsRes.data ?? []) as AuditRow[]
@@ -89,6 +102,10 @@ export default async function AuditPage() {
     entity_id: r.entity_id,
     source: r.source,
     actor_user_id: r.actor_user_id,
+    actor_display_name:
+      r.actor_user_id !== null
+        ? (nameByUserId.get(r.actor_user_id) ?? null)
+        : null,
     is_self:
       r.actor_user_id !== null && r.actor_user_id === currentUserId,
   }));

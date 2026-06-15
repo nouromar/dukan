@@ -357,18 +357,33 @@
       "title": "No shop selected",
       "description": "Pick or set up a shop to manage its staff."
     },
+    "profile": {
+      "title": "My profile",
+      "description": "Your name appears wherever the portal shows who did what — in the audit log, the staff list, and reports. Visible to everyone who shares a shop with you.",
+      "nameLabel": "Display name",
+      "namePlaceholder": "e.g. Asha Mohamed",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved.",
+      "errorEmpty": "Enter a name.",
+      "errorGeneric": "Could not save. Try again."
+    },
     "staff": {
       "title": "Staff",
       "addButton": "Add staff",
       "membersHeader": "Current members",
       "pendingHeader": "Pending invites",
       "columns": {
+        "name": "Name",
         "contact": "Contact",
         "role": "Role",
+        "joined": "Joined",
+        "invited": "Invited",
         "expires": "Expires",
         "actions": ""
       },
       "youTag": "you",
+      "unnamed": "Unnamed",
       "roleOwner": "Owner",
       "roleCashier": "Cashier",
       "membersEmpty": "No members yet.",
