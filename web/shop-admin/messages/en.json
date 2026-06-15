@@ -85,9 +85,13 @@
     "columns": {
       "time": "When",
       "action": "Action",
+      "actor": "Who",
       "entity": "Entity",
       "source": "Source"
     },
+    "actorYou": "You",
+    "actorSystem": "—",
+    "actorOther": "Other user",
     "sources": {
       "mobile": "Mobile",
       "shop_admin_web": "Web",

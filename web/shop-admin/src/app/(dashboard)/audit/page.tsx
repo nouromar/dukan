@@ -23,6 +23,7 @@ type AuditRow = {
   entity_type: string;
   entity_id: string | null;
   source: string;
+  actor_user_id: string | null;
 };
 
 type ActionRow = { code: string; description: string | null };
@@ -44,17 +45,19 @@ export default async function AuditPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const [eventsRes, actionsRes] = await Promise.all([
+  const [eventsRes, actionsRes, userRes] = await Promise.all([
     supabase
       .from("audit_log")
       .select(
-        "id, occurred_at, action_code, entity_type, entity_id, source",
+        "id, occurred_at, action_code, entity_type, entity_id, source, actor_user_id",
       )
       .eq("shop_id", currentShop.id)
       .order("occurred_at", { ascending: false })
       .limit(PAGE_LIMIT),
     supabase.from("audit_action_code").select("code, description"),
+    supabase.auth.getUser(),
   ]);
+  const currentUserId = userRes.data.user?.id ?? null;
   if (eventsRes.error) {
     console.error("[audit] audit_log fetch failed:", eventsRes.error);
     throw eventsRes.error;
@@ -75,15 +78,28 @@ export default async function AuditPage() {
   );
   const entries: AuditEntry[] = (
     (eventsRes.data ?? []) as AuditRow[]
-  ).map((r) => ({
-    id: r.id,
-    occurred_at: r.occurred_at,
-    action_code: r.action_code,
-    action_label: descByCode.get(r.action_code) ?? r.action_code,
-    entity_type: r.entity_type,
-    entity_id: r.entity_id,
-    source: r.source,
-  }));
+  ).map((r) => {
+    const actor: AuditEntry["actor"] =
+      r.actor_user_id === null
+        ? "system"
+        : r.actor_user_id === currentUserId
+          ? "you"
+          : "other";
+    return {
+      id: r.id,
+      occurred_at: r.occurred_at,
+      action_code: r.action_code,
+      action_label: descByCode.get(r.action_code) ?? r.action_code,
+      entity_type: r.entity_type,
+      entity_id: r.entity_id,
+      source: r.source,
+      actor,
+      actor_id_short:
+        r.actor_user_id && actor !== "you"
+          ? r.actor_user_id.slice(0, 8)
+          : null,
+    };
+  });
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">

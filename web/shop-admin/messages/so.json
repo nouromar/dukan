@@ -85,9 +85,13 @@
     "columns": {
       "time": "Goorma",
       "action": "Ficil",
+      "actor": "Yaa",
       "entity": "Walax",
       "source": "Halka"
     },
+    "actorYou": "Adi",
+    "actorSystem": "—",
+    "actorOther": "Qof kale",
     "sources": {
       "mobile": "Mobayl",
       "shop_admin_web": "Web",

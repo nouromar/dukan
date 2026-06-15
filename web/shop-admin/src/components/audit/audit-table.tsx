@@ -18,6 +18,14 @@ export type AuditEntry = {
   entity_type: string;
   entity_id: string | null;
   source: string;
+  /**
+   * 'you' = actor_user_id matched the current viewer
+   * 'system' = actor_user_id was null (RPC / cron / impersonation)
+   * 'other' = a different user (display name resolution pending —
+   * needs a privileged view over auth.users that we haven't added)
+   */
+  actor: "you" | "system" | "other";
+  actor_id_short: string | null;
 };
 
 const SOURCE_KEYS: Record<string, string> = {
@@ -70,6 +78,36 @@ export function AuditTable({
             </span>
           </div>
         ),
+      },
+      {
+        accessorKey: "actor",
+        header: t("columns.actor"),
+        cell: ({ row }) => {
+          const label =
+            row.original.actor === "you"
+              ? t("actorYou")
+              : row.original.actor === "system"
+                ? t("actorSystem")
+                : t("actorOther");
+          return (
+            <div className="flex flex-col text-sm">
+              <span
+                className={
+                  row.original.actor === "you"
+                    ? "font-medium text-primary"
+                    : "text-foreground"
+                }
+              >
+                {label}
+              </span>
+              {row.original.actor_id_short ? (
+                <span className="font-mono text-xs text-muted-foreground">
+                  {row.original.actor_id_short}
+                </span>
+              ) : null}
+            </div>
+          );
+        },
       },
       {
         accessorKey: "entity_type",
