@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -24,163 +23,180 @@ import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/today_summary_cache.dart';
 import 'package:dukan/observability/timing.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.shop, this.onSignOut});
 
   final ShopSummary? shop;
   final VoidCallback? onSignOut;
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // Ticker that _TodayCard listens to. Bumped after each action
+  // navigation (Sale / Receive / Payment / Expense) returns, so the
+  // summary card refreshes without the user having to leave the
+  // screen.
+  final ValueNotifier<int> _refreshTrigger = ValueNotifier<int>(0);
+
+  @override
+  void dispose() {
+    _refreshTrigger.dispose();
+    super.dispose();
+  }
+
+  /// Pushes the given page and bumps the refresh ticker on return.
+  /// Use for the top-level action buttons whose flows mutate today's
+  /// numbers. The card's own navigation (drill-into-history) keeps
+  /// its existing inline reload — no double fetch.
+  Future<void> _pushAndRefresh(WidgetBuilder builder) async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: builder));
+    if (mounted) _refreshTrigger.value = _refreshTrigger.value + 1;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l = tr(context);
+    final shop = widget.shop;
     return Scaffold(
-      drawer: shop != null ? DukanDrawer(shop: shop!) : null,
+      drawer: shop != null ? DukanDrawer(shop: shop) : null,
       appBar: dukanAppBar(
         context,
         l.appTitle,
         actions: [
-          if (onSignOut != null)
+          if (widget.onSignOut != null)
             IconButton(
               tooltip: l.signOut,
-              onPressed: onSignOut,
+              onPressed: widget.onSignOut,
               icon: const Icon(Icons.logout),
             ),
         ],
       ),
       body: SafeArea(
-        child: Padding(
+        // Single scrollable column — title, chip, summary, then action
+        // grid stacked top-to-bottom with no forced bottom anchor.
+        // Earlier layout used Expanded which created a visible empty
+        // gap when the summary card was short. The new flow keeps
+        // buttons within thumb reach on real devices because the
+        // content above is always small.
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Action grid stays anchored at the bottom (primary tap
-              // surface). Tighter than before so the Today summary card
-              // above can render without clipping its last row.
-              final buttonAreaHeight = math.min(
-                280.0,
-                constraints.maxHeight * 0.45,
-              );
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            l.homeHint,
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          if (shop != null) ...[
-                            const SizedBox(height: 12),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Chip(
-                                avatar: const Icon(Icons.storefront),
-                                label: Text(l.activeShopLabel(shop!.name)),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            _TodayCard(shop: shop!),
-                          ],
-                        ],
-                      ),
-                    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l.homeHint,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              if (shop != null) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    avatar: const Icon(Icons.storefront),
+                    label: Text(l.activeShopLabel(shop.name)),
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: buttonAreaHeight,
-                    child: GridView(
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 14,
-                        crossAxisSpacing: 14,
-                        // Compute cell height from the budget so 2 rows
-                        // always fit regardless of viewport width.
-                        mainAxisExtent: (buttonAreaHeight - 14) / 2,
-                      ),
-                      children: [
-                        HomeAction(
-                          icon: Icons.point_of_sale,
-                          label: l.sale,
-                          onTap: shop == null
-                              ? () {}
-                              : () {
-                                  Timing.startFlow('sale');
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => SaleScreen(shop: shop!),
-                                    ),
-                                  );
-                                },
-                        ),
-                        HomeAction(
-                          icon: Icons.inventory_2,
-                          label: l.receive,
-                          onTap: shop == null
-                              ? () {}
-                              : () {
-                                  final receive =
-                                      context.read<ReceiveController>();
-                                  // Resume a partial bono if one is in
-                                  // flight; otherwise start from the
-                                  // supplier picker. Supplier alone is
-                                  // not enough to count as "in flight"
-                                  // — we resume only when actual lines
-                                  // exist, so an aborted picker visit
-                                  // doesn't pin us to a stale supplier.
-                                  final destination = receive.isNotEmpty
-                                      ? ReceiveScreen(shop: shop!)
-                                      : SupplierPickerScreen(shop: shop!);
-                                  Timing.startFlow('receive');
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => destination,
-                                    ),
-                                  );
-                                },
-                        ),
-                        HomeAction(
-                          icon: Icons.payments,
-                          label: l.payment,
-                          onTap: shop == null
-                              ? () {}
-                              : () {
-                                  Timing.startFlow('payment');
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          PaymentScreen(shop: shop!),
-                                    ),
-                                  );
-                                },
-                        ),
-                        HomeAction(
-                          icon: Icons.receipt_long,
-                          label: l.expense,
-                          onTap: shop == null
-                              ? () {}
-                              : () {
-                                  Timing.startFlow('expense');
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          ExpenseScreen(shop: shop!),
-                                    ),
-                                  );
-                                },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
+                ),
+                const SizedBox(height: 12),
+                _TodayCard(
+                  shop: shop,
+                  refreshTrigger: _refreshTrigger,
+                ),
+              ],
+              const SizedBox(height: 20),
+              _ActionGrid(
+                shop: shop,
+                onSale: () => _pushAndRefresh(
+                  (_) {
+                    Timing.startFlow('sale');
+                    return SaleScreen(shop: shop!);
+                  },
+                ),
+                onReceive: () => _pushAndRefresh(
+                  (_) {
+                    final receive = context.read<ReceiveController>();
+                    Timing.startFlow('receive');
+                    // Resume a partial bono if one is in flight;
+                    // otherwise start from the supplier picker.
+                    return receive.isNotEmpty
+                        ? ReceiveScreen(shop: shop!)
+                        : SupplierPickerScreen(shop: shop!);
+                  },
+                ),
+                onPayment: () => _pushAndRefresh(
+                  (_) {
+                    Timing.startFlow('payment');
+                    return PaymentScreen(shop: shop!);
+                  },
+                ),
+                onExpense: () => _pushAndRefresh(
+                  (_) {
+                    Timing.startFlow('expense');
+                    return ExpenseScreen(shop: shop!);
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ActionGrid extends StatelessWidget {
+  const _ActionGrid({
+    required this.shop,
+    required this.onSale,
+    required this.onReceive,
+    required this.onPayment,
+    required this.onExpense,
+  });
+
+  final ShopSummary? shop;
+  final VoidCallback onSale;
+  final VoidCallback onReceive;
+  final VoidCallback onPayment;
+  final VoidCallback onExpense;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    // 2x2 grid at a fixed cell height matching the previous design's
+    // tap-target size. We don't enforce a parent height; the grid
+    // sits at the natural end of the scroll column.
+    return GridView(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 14,
+        crossAxisSpacing: 14,
+        mainAxisExtent: 128,
+      ),
+      children: [
+        HomeAction(
+          icon: Icons.point_of_sale,
+          label: l.sale,
+          onTap: shop == null ? () {} : onSale,
+        ),
+        HomeAction(
+          icon: Icons.inventory_2,
+          label: l.receive,
+          onTap: shop == null ? () {} : onReceive,
+        ),
+        HomeAction(
+          icon: Icons.payments,
+          label: l.payment,
+          onTap: shop == null ? () {} : onPayment,
+        ),
+        HomeAction(
+          icon: Icons.receipt_long,
+          label: l.expense,
+          onTap: shop == null ? () {} : onExpense,
+        ),
+      ],
     );
   }
 }
@@ -215,10 +231,12 @@ class HomeAction extends StatelessWidget {
 
 /// Today summary card on Home — sales total + counters for receivables,
 /// payables, and low-stock. Each counter row is tappable into the
-/// corresponding report. Refreshes on revisit.
+/// corresponding report. Refreshes on revisit and when the parent
+/// HomeScreen's refresh ticker is bumped (after an action returns).
 class _TodayCard extends StatefulWidget {
-  const _TodayCard({required this.shop});
+  const _TodayCard({required this.shop, this.refreshTrigger});
   final ShopSummary shop;
+  final ValueNotifier<int>? refreshTrigger;
 
   @override
   State<_TodayCard> createState() => _TodayCardState();
@@ -239,6 +257,27 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
       Timing.endFlow(context);
       _prefetchFavorites();
     });
+    widget.refreshTrigger?.addListener(_onRefreshTrigger);
+  }
+
+  @override
+  void didUpdateWidget(covariant _TodayCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshTrigger != widget.refreshTrigger) {
+      oldWidget.refreshTrigger?.removeListener(_onRefreshTrigger);
+      widget.refreshTrigger?.addListener(_onRefreshTrigger);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.refreshTrigger?.removeListener(_onRefreshTrigger);
+    super.dispose();
+  }
+
+  void _onRefreshTrigger() {
+    if (!mounted) return;
+    _reload();
   }
 
   void _prefetchFavorites() {
