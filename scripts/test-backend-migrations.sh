@@ -5005,7 +5005,7 @@ begin
   select shop_id into v_shop_id from test_ids;
   v_failed := false;
   begin
-    perform public.create_shop_invite(v_shop_id, '+252611111111', null, 'cashier');
+    perform public.create_shop_invite(v_shop_id, '+252611111111', null, 'cashier', null);
   exception when others then v_failed := true;
   end;
   if not v_failed then
@@ -5086,7 +5086,7 @@ begin
   -- Neither phone nor email refused.
   v_failed := false;
   begin
-    perform public.create_shop_invite(v_shop_id, null, null, 'cashier');
+    perform public.create_shop_invite(v_shop_id, null, null, 'cashier', null);
   exception when others then v_failed := true;
   end;
   if not v_failed then

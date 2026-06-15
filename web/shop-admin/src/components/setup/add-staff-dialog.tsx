@@ -31,6 +31,7 @@ export function AddStaffDialog({ shopId }: { shopId: string }) {
   const t = useTranslations("setup");
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [displayName, setDisplayName] = useState("");
   const [contact, setContact] = useState("");
   const [role, setRole] = useState<Role>("cashier");
   const [pending, startTransition] = useTransition();
@@ -41,6 +42,7 @@ export function AddStaffDialog({ shopId }: { shopId: string }) {
         shopId,
         contact,
         roleCode: role,
+        displayName,
       });
       if (result.ok) {
         const messageKey =
@@ -58,6 +60,7 @@ export function AddStaffDialog({ shopId }: { shopId: string }) {
         setOpen(false);
         setContact("");
         setRole("cashier");
+        setDisplayName("");
         router.refresh();
         return;
       }
@@ -87,6 +90,22 @@ export function AddStaffDialog({ shopId }: { shopId: string }) {
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="staff-name">{t("addDialog.nameLabel")}</Label>
+            <Input
+              id="staff-name"
+              type="text"
+              autoComplete="name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder={t("addDialog.namePlaceholder")}
+              maxLength={120}
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("addDialog.nameHelp")}
+            </p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="contact">{t("addDialog.contactLabel")}</Label>
             <Input
               id="contact"
@@ -96,7 +115,6 @@ export function AddStaffDialog({ shopId }: { shopId: string }) {
               value={contact}
               onChange={(e) => setContact(e.target.value)}
               placeholder={t("addDialog.contactPlaceholder")}
-              autoFocus
             />
             <p className="text-xs text-muted-foreground">
               {t("addDialog.contactHelp")}

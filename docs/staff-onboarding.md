@@ -69,13 +69,17 @@ So re-adding the same contact for the same shop while a previous
 invite is still pending **returns the existing invite id** (with
 refreshed expiry) — never creates duplicates.
 
-### `create_shop_invite(p_shop_id, p_phone, p_email, p_role_code)`
+### `create_shop_invite(p_shop_id, p_phone, p_email, p_role_code, p_display_name)`
 
 Owner-only (capability: `setup.staff.invite`). Called by the portal's
 Setup → Add Staff dialog. Provide exactly one of `p_phone` / `p_email`.
+`p_display_name` is optional — when set, the invitee's `user_profile`
+is seeded with it on claim (only if they don't already have one).
 
 Idempotent on `(shop_id, phone)` or `(shop_id, email)` for pending
-invites. Audit-logs `setup.staff.invite`.
+invites. Re-invoking with the same contact refreshes `expires_at`
+and updates `display_name` to the new value if provided. Audit-logs
+`setup.staff.invite`.
 
 ### `claim_pending_invites_for_me()` — the auto-claim path
 

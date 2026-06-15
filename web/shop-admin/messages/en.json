@@ -392,6 +392,9 @@
     "addDialog": {
       "title": "Add staff",
       "description": "They'll see the shop next time they sign in.",
+      "nameLabel": "Name",
+      "namePlaceholder": "Asha Mohamed",
+      "nameHelp": "Optional — they can change it later.",
       "contactLabel": "Phone or email",
       "contactPlaceholder": "+252612345678 or name@example.com",
       "contactHelp": "Phone defaults to +252.",

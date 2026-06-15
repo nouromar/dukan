@@ -76,6 +76,7 @@ export async function addStaffAction(input: {
   shopId: string;
   contact: string;
   roleCode: "cashier" | "owner";
+  displayName?: string;
 }): Promise<AddStaffResult> {
   const raw = input.contact.trim();
   let phone: string | null = null;
@@ -87,6 +88,7 @@ export async function addStaffAction(input: {
     phone = normalizePhone(raw);
     if (!phone) return { ok: false, code: "invalid_contact" };
   }
+  const displayName = input.displayName?.trim() ?? "";
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc("create_shop_invite", {
@@ -94,6 +96,7 @@ export async function addStaffAction(input: {
     p_phone: phone,
     p_email: email,
     p_role_code: input.roleCode,
+    p_display_name: displayName.length > 0 ? displayName : null,
   });
 
   if (error) {

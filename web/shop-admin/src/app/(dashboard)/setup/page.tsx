@@ -30,6 +30,7 @@ type InviteRow = {
   id: string;
   phone: string | null;
   email: string | null;
+  display_name: string | null;
   role_code: string;
   expires_at: string;
   created_at: string;
@@ -61,7 +62,9 @@ export default async function SetupPage() {
     supabase.from("shop_role").select("id, code"),
     supabase
       .from("shop_invite")
-      .select("id, phone, email, role_code, expires_at, created_at")
+      .select(
+        "id, phone, email, display_name, role_code, expires_at, created_at",
+      )
       .eq("shop_id", currentShop.id)
       .is("accepted_at", null)
       .order("created_at", { ascending: false }),
@@ -192,7 +195,20 @@ export default async function SetupPage() {
                   key={iv.id}
                   className="flex items-center justify-between gap-4 py-3 text-sm"
                 >
-                  <span className="font-medium">{iv.phone ?? iv.email}</span>
+                  <div className="flex flex-col">
+                    {iv.display_name ? (
+                      <span className="font-medium">{iv.display_name}</span>
+                    ) : null}
+                    <span
+                      className={
+                        iv.display_name
+                          ? "text-xs text-muted-foreground"
+                          : "font-medium"
+                      }
+                    >
+                      {iv.phone ?? iv.email}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span>{roleLabel(iv.role_code)}</span>
                     <span className="tabular-nums">

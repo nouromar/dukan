@@ -392,6 +392,9 @@
     "addDialog": {
       "title": "Ku dar shaqaale",
       "description": "Marka uu mar kale soo galo, ayuu dukaanka arki doonaa.",
+      "nameLabel": "Magaca",
+      "namePlaceholder": "Asha Mohamed",
+      "nameHelp": "Ikhtiyaari — way badeli karaan dabadeed.",
       "contactLabel": "Taleefan ama iimayl",
       "contactPlaceholder": "+252612345678 ama qof@example.com",
       "contactHelp": "Taleefanka wuxuu si toos ah u raacayaa +252.",
