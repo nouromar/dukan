@@ -14,6 +14,22 @@
   },
   "saleDetail": {
     "back": "← Dhammaan iibyada",
+    "voidButton": "Baaji iibka",
+    "voidDialog": {
+      "title": "Ma baajinaysaa iibkan?",
+      "description": "Tani waxay diiwaan gelinaysaa diiwaan rogis ah oo soo celiya kayd-ka, bixinta, iyo deynta. Safaf asalka ah ayaa weli ka muuqdaya taariikhda iyada oo leh calaamadda La baajiyay. Tan dib looma celin karo — si aad mar kale u sameyso, iib cusub ku diiwaan geli mobaylka.",
+      "reasonLabel": "Sababta",
+      "reasonPlaceholder": "tusaale macmiil khaldan, alaab khaldan, soo celin",
+      "reasonRequired": "Fadlan geli sabab. Diiwaanka u baahan yahay.",
+      "cancel": "Jooji",
+      "confirm": "Haa, baaji iibka",
+      "submitting": "Baajinta…",
+      "windowExpired": "Wakhtiga baajinta ayaa dhammaaday (>7 maalmood). Hagaajin iib cusub.",
+      "ownerOnly": "Kaliya milkiilaha dukaanka ayaa baajin kara iibka.",
+      "alreadyVoided": "Iibkaan horey loo baajiyay.",
+      "errorGeneric": "Lama baajin karin. Mar kale isku day."
+    },
+    "voidSuccess": "Iibka waa la baajiyay.",
     "walkIn": "Macmiil aan caadi ahayn",
     "statusPosted": "La diiwaan geliyay",
     "statusVoided": "La baajiyay",

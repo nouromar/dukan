@@ -14,6 +14,22 @@
   },
   "saleDetail": {
     "back": "← All sales",
+    "voidButton": "Void sale",
+    "voidDialog": {
+      "title": "Void this sale?",
+      "description": "This posts a reversal entry that backs out the stock, payments, and balances. The original line items stay visible in history with a Voided marker. This cannot be undone — to redo, post a fresh sale on mobile.",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "e.g. wrong customer, wrong items, returned",
+      "reasonRequired": "Please enter a reason. Audit log needs it.",
+      "cancel": "Cancel",
+      "confirm": "Yes, void sale",
+      "submitting": "Voiding…",
+      "windowExpired": "Void window expired (>7 days). Post a correction sale instead.",
+      "ownerOnly": "Only the shop owner can void a sale.",
+      "alreadyVoided": "This sale is already voided.",
+      "errorGeneric": "Could not void. Try again."
+    },
+    "voidSuccess": "Sale voided.",
     "walkIn": "Walk-in customer",
     "statusPosted": "Posted",
     "statusVoided": "Voided",

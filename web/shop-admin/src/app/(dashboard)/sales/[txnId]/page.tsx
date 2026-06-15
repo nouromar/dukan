@@ -17,6 +17,8 @@ import {
   LinesTable,
   type SaleLine,
 } from "@/components/sales/detail/lines-table";
+import { VoidSaleButton } from "@/components/sales/detail/void-sale-button";
+import { Can } from "@/components/auth/can";
 import { cn } from "@/lib/utils";
 
 type SaleHeader = {
@@ -110,32 +112,42 @@ export default async function SaleDetailPage({
         {t("back")}
       </Link>
 
-      <header className="space-y-2">
-        <div className="flex items-center gap-3">
-          <h1
-            className={cn(
-              "text-3xl font-semibold tracking-tight",
-              header.is_voided && "text-muted-foreground line-through",
+      <header className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <h1
+              className={cn(
+                "text-3xl font-semibold tracking-tight",
+                header.is_voided && "text-muted-foreground line-through",
+              )}
+            >
+              {header.party_name ?? t("walkIn")}
+            </h1>
+            {header.is_voided ? (
+              <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                {t("statusVoided")}
+              </span>
+            ) : (
+              <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {t("statusPosted")}
+              </span>
             )}
-          >
-            {header.party_name ?? t("walkIn")}
-          </h1>
-          {header.is_voided ? (
-            <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-              {t("statusVoided")}
-            </span>
-          ) : (
-            <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-              {t("statusPosted")}
-            </span>
-          )}
+          </div>
+          <p className="text-sm text-muted-foreground tabular-nums">
+            {new Intl.DateTimeFormat(locale, {
+              dateStyle: "full",
+              timeStyle: "short",
+            }).format(occurredAt)}
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground tabular-nums">
-          {new Intl.DateTimeFormat(locale, {
-            dateStyle: "full",
-            timeStyle: "short",
-          }).format(occurredAt)}
-        </p>
+        {!header.is_voided ? (
+          // setup.shop.edit is an owner-only capability; reusing it
+          // here matches void_sale RPC's auth_has_shop_role('owner')
+          // gate. Cashiers don't see the button.
+          <Can capability="setup.shop.edit">
+            <VoidSaleButton shopId={currentShop.id} txnId={txnId} />
+          </Can>
+        ) : null}
       </header>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
