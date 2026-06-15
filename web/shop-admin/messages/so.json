@@ -321,6 +321,49 @@
     "errorSend": "Lama dirin karin koodhka. Mar kale isku day.",
     "callbackError": "Linkigaas soo galid ma shaqayn. Mid kale dir."
   },
+  "setup": {
+    "title": "Hagaajinta",
+    "subtitle": "Habaynta dukaanka iyo shaqaalaha",
+    "noShop": {
+      "title": "Wax dukaan ah lama dooran",
+      "description": "Dooro ama dejiyaha dukaan si aad u maamusho shaqaalaha."
+    },
+    "staff": {
+      "title": "Shaqaalaha",
+      "addButton": "Ku dar shaqaale",
+      "membersHeader": "Xubnaha hadda jira",
+      "pendingHeader": "Casuumaadaha la sugayo",
+      "columns": {
+        "contact": "Xidhiidh",
+        "role": "Door",
+        "expires": "Dhammaadka",
+        "actions": ""
+      },
+      "youTag": "adi",
+      "roleOwner": "Milkiile",
+      "roleCashier": "Maamule iibka",
+      "membersEmpty": "Wax xubin ah weli ma jirin.",
+      "pendingEmpty": "Wax casuumaad ah lama sugayo."
+    },
+    "addDialog": {
+      "title": "Ku dar shaqaale",
+      "description": "Marka uu mar kale soo galo, ayuu dukaanka arki doonaa — link ama koodh uma baahna. Kaliya u sheeg taleefan ama iimaylka uu isticmaalo.",
+      "contactLabel": "Taleefan ama iimayl",
+      "contactPlaceholder": "+252612345678 ama qof@example.com",
+      "contactHelp": "Si toos ah ayaan u garanaynaa. Taleefankuu si toos u rasaastooyaa +252 haddii aanad geli code-ka dalka.",
+      "roleLabel": "Doorka",
+      "roleCashier": "Maamule iibka — kaliya hawlaha maalinlaha",
+      "roleOwner": "Milkiile — gelitaan dhammaystiran",
+      "cancel": "Jooji",
+      "confirm": "Ku dar",
+      "submitting": "Lagu darayaa…",
+      "successPhone": "Waxaa lagu daray {phone}. Marka xiga ee uu soo galo, ayuu dukaanka arki doonaa.",
+      "successEmail": "Waxaa lagu daray {email}. Marka xiga ee uu soo galo, ayuu dukaanka arki doonaa.",
+      "errorInvalidContact": "Geli taleefan sax ah (E.164, tusaale +252612345678) ama iimayl.",
+      "errorPermission": "Kaliya milkiilaha dukaanka ayaa shaqaale ku dari kara.",
+      "errorGeneric": "Lama dari karin. Mar kale isku day."
+    }
+  },
   "table": {
     "empty": {
       "title": "Wax weli halkan kuma jiro",

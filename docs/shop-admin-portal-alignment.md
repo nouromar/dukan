@@ -331,11 +331,12 @@ These are defaults. If you want to pre-empt any of them say so before #265 lands
 **Capability:** `setup.staff.invite` (for invite); revoke under `setup.staff.assign_role`.
 **Effort:** M.
 
-### 8.3 [P1] Staff invite (phone + role + SMS deep link)
+### 8.3 [DONE] Staff invite (phone OR email, auto-claim on sign-in)
 **Target:** design § 6.6 + § 16.
-**What:** invite by phone → SMS deep link to mobile app onboarding (the link carries a `shop_invite_id` claim).
-**Backend:** new RPC `create_shop_invite(p_shop_id, p_phone, p_role)` + `accept_shop_invite(p_invite_id)`. SMS via Edge function (uses same Twilio/Meta provider as auth OTP).
-**Effort:** L.
+**What we shipped (#288, simpler than original P1 design):** owner enters phone OR email + role in Setup → portal calls `create_shop_invite` → invite waits in `shop_invite` table → cashier signs in normally on mobile or portal → `claim_pending_invites_for_me` RPC fires automatically and creates the `shop_membership` row. **No SMS, no deep links, no accept step.** Owner tells the cashier which phone/email to log in with via WhatsApp / in person.
+**Backend:** `create_shop_invite(p_shop_id, p_phone, p_email, p_role_code)` + `claim_pending_invites_for_me()` (migration `0055_invite_email_and_autoclaim.sql`). Hook in `getCurrentShop()` (portal) + `AuthController.start` (mobile) call the claim RPC.
+**Full design:** `docs/staff-onboarding.md`.
+**Effort delivered:** M (saved L by skipping SMS infra and deep-link plumbing).
 
 ### 8.4 [P2] Receipt template editor (logo, header, footer)
 **Target:** design § 6.6 + § 15.

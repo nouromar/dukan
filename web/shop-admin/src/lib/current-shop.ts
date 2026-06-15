@@ -25,6 +25,19 @@ export type CurrentShopResult = {
 export const getCurrentShop = cache(async (): Promise<CurrentShopResult> => {
   const supabase = await createSupabaseServerClient();
 
+  // Auto-claim any pending invites for this user before reading the
+  // shop list, so freshly-claimed shops show up on the very next
+  // request after an owner sends an invite. RPC is idempotent +
+  // cheap when there's nothing to claim; safe to call per-render
+  // (React.cache dedupes within a request anyway).
+  const claimRes = await supabase.rpc("claim_pending_invites_for_me");
+  if (claimRes.error) {
+    console.error(
+      "[current-shop] claim_pending_invites_for_me failed:",
+      claimRes.error,
+    );
+  }
+
   const { data: shopRows } = await supabase
     .from("shop")
     .select("id, name, organization_id, currency_code")

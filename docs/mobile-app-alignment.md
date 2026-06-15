@@ -217,6 +217,11 @@ These items map cleanly to the target. Listed here so future contributors can co
 
 ---
 
+### 3.11b [DONE] Auto-claim pending shop invites on sign-in
+**Target:** `docs/staff-onboarding.md`. **Current:** `AuthController.start` calls `claim_pending_invites_for_me()` right after the session loads (initial + each `onAuthStateChange` event with a non-null session) and before `loadShops()`, so a freshly-claimed shop appears in the first shop list without a manual refresh. Errors are swallowed via FlutterError.reportError so a failed claim never blocks sign-in. Backend: migration `0055_invite_email_and_autoclaim.sql`.
+
+---
+
 ### 3.12 [P1] Push notifications
 **Target:** `mobile-app.md` § 17. **Current:** none.
 

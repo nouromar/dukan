@@ -21,6 +21,7 @@ Templates live in the platform layer (`docs/architecture.md` § 8aa) and are app
 - `docs/backend-schema.md` — Supabase/Postgres schema, RLS, RPC posting functions, Storage policy, migration order.
 - `docs/templates-and-learning.md` — operating-template contents, fast-entry mappings, shop-specific learning rules.
 - `docs/roles-and-permissions.md` — capability vocabulary, role catalog, scope tiers (platform/org/shop).
+- `docs/staff-onboarding.md` — how owners add cashiers / other owners: `create_shop_invite` (phone OR email) + `claim_pending_invites_for_me()` auto-claim on sign-in. No SMS, no deep links, no accept step.
 - `docs/mobile-app.md` — target-state design for the Flutter shop app. Companion: `docs/mobile-app-alignment.md` (punch list to reach target).
 - `docs/shop-admin-portal.md` — target-state design for the React/Next.js back-office portal used by org/shop owners.
 - `docs/system-admin-portal.md` — target-state design for the Dukan-internal mission-control portal. Supersedes `docs/admin-portal.md` (kept for historical reference until alignment doc lands).

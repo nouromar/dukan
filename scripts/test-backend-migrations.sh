@@ -5005,7 +5005,7 @@ begin
   select shop_id into v_shop_id from test_ids;
   v_failed := false;
   begin
-    perform public.create_shop_invite(v_shop_id, '+252611111111', 'cashier');
+    perform public.create_shop_invite(v_shop_id, '+252611111111', null, 'cashier');
   exception when others then v_failed := true;
   end;
   if not v_failed then
@@ -5015,7 +5015,7 @@ end;
 $$;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
--- 4b. create_shop_invite: owner happy path + idempotent.
+-- 4b. create_shop_invite: owner happy path + idempotent (phone variant).
 do $$
 declare
   v_shop_id    uuid;
@@ -5024,13 +5024,15 @@ declare
   v_audit_n    int;
 begin
   select shop_id into v_shop_id from test_ids;
-  v_invite_1 := public.create_shop_invite(v_shop_id, '+252611222333', 'cashier');
+  v_invite_1 := public.create_shop_invite(
+    v_shop_id, '+252611222333', null, 'cashier');
   if v_invite_1 is null then
     raise exception 'NN (4b): create_shop_invite returned null';
   end if;
 
   -- Same (shop, phone) — returns the same id.
-  v_invite_2 := public.create_shop_invite(v_shop_id, '+252611222333', 'cashier');
+  v_invite_2 := public.create_shop_invite(
+    v_shop_id, '+252611222333', null, 'cashier');
   if v_invite_2 <> v_invite_1 then
     raise exception 'NN (4b): create_shop_invite not idempotent (got % vs %)',
       v_invite_2, v_invite_1;
@@ -5047,6 +5049,123 @@ begin
 end;
 $$;
 
+-- 4c. create_shop_invite: email variant + idempotent + bad-both rejected.
+do $$
+declare
+  v_shop_id   uuid;
+  v_invite_1  uuid;
+  v_invite_2  uuid;
+  v_failed    boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_invite_1 := public.create_shop_invite(
+    v_shop_id, null, 'CASHIER@Example.COM', 'cashier');
+  if v_invite_1 is null then
+    raise exception 'NN (4c): email invite returned null';
+  end if;
+
+  -- Email normalized to lowercase + trimmed; idempotent on canonical form.
+  v_invite_2 := public.create_shop_invite(
+    v_shop_id, null, 'cashier@example.com', 'cashier');
+  if v_invite_2 <> v_invite_1 then
+    raise exception 'NN (4c): email invite not idempotent (got % vs %)',
+      v_invite_2, v_invite_1;
+  end if;
+
+  -- Both phone+email refused.
+  v_failed := false;
+  begin
+    perform public.create_shop_invite(
+      v_shop_id, '+252611555666', 'other@example.com', 'cashier');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'NN (4c): both phone+email must be refused';
+  end if;
+
+  -- Neither phone nor email refused.
+  v_failed := false;
+  begin
+    perform public.create_shop_invite(v_shop_id, null, null, 'cashier');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'NN (4c): empty contact must be refused';
+  end if;
+end;
+$$;
+
+-- 4d. claim_pending_invites_for_me: phone match + email match + idempotent.
+do $$
+declare
+  v_shop_id     uuid;
+  v_org_id      uuid;
+  v_invite_p    uuid;
+  v_invite_e    uuid;
+  v_user_id     uuid := '00000000-0000-0000-0000-00000000C111';
+  v_claimed     int;
+  v_again       int;
+  v_member      uuid;
+  v_audit_join  int;
+begin
+  select shop_id, organization_id into v_shop_id, v_org_id from test_ids;
+
+  -- Create a fresh auth.users row with both phone + email so we can
+  -- exercise either side of the claim. The harness mocks auth.users.
+  insert into auth.users (id, email, phone)
+  values (v_user_id, 'newhire@example.com', '+252615550001')
+  on conflict (id) do update
+    set email = excluded.email, phone = excluded.phone;
+
+  -- Owner issues both kinds of invite for the same future user.
+  v_invite_p := public.create_shop_invite(
+    v_shop_id, '+252615550001', null, 'cashier');
+  v_invite_e := public.create_shop_invite(
+    v_shop_id, null, 'newhire@example.com', 'cashier');
+
+  -- Switch session to the new user and claim.
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000C111';
+
+  v_claimed := public.claim_pending_invites_for_me();
+  if v_claimed < 1 then
+    raise exception 'NN (4d): claim returned 0 — expected ≥ 1';
+  end if;
+
+  -- Membership exists.
+  select id into v_member
+  from public.shop_membership
+  where shop_id = v_shop_id and user_id = v_user_id;
+  if v_member is null then
+    raise exception 'NN (4d): shop_membership not created';
+  end if;
+
+  -- Both invites marked accepted.
+  if exists (
+    select 1 from public.shop_invite
+    where id in (v_invite_p, v_invite_e) and accepted_at is null
+  ) then
+    raise exception 'NN (4d): some invites were not marked accepted';
+  end if;
+
+  -- setup.staff.join audit rows landed (one per invite).
+  select count(*) into v_audit_join
+  from public.audit_log
+  where action_code = 'setup.staff.join'
+    and shop_id = v_shop_id;
+  if v_audit_join < 2 then
+    raise exception 'NN (4d): expected ≥2 join audit rows, got %', v_audit_join;
+  end if;
+
+  -- Re-running claim is a no-op (no fresh pending invites left).
+  v_again := public.claim_pending_invites_for_me();
+  if v_again <> 0 then
+    raise exception 'NN (4d): re-claim must be 0, got %', v_again;
+  end if;
+
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+end;
+$$;
+
 -- 5. accept_shop_invite: phone mismatch + expired rejected.
 do $$
 declare
@@ -5055,7 +5174,8 @@ declare
   v_failed   boolean;
 begin
   select shop_id into v_shop_id from test_ids;
-  v_invite := public.create_shop_invite(v_shop_id, '+252619998888', 'cashier');
+  v_invite := public.create_shop_invite(
+    v_shop_id, '+252619998888', null, 'cashier');
 
   -- Caller's JWT phone is unset → must fail.
   v_failed := false;

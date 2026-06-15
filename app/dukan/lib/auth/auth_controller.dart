@@ -76,17 +76,41 @@ class AuthController extends ChangeNotifier {
         _selectedShop = null;
         _shopLoadFailed = false;
       } else {
+        // Pending-invite auto-claim runs before shop load so any
+        // freshly-claimed shop shows up in the first loadShops()
+        // call — no extra refresh from the UI side.
+        await _claimPendingInvitesSilently();
         await loadShops();
       }
       notifyListeners();
     });
 
     if (_session != null) {
+      await _claimPendingInvitesSilently();
       await loadShops();
     }
 
     _initialized = true;
     notifyListeners();
+  }
+
+  /// Calls claim_pending_invites_for_me() and swallows errors. The RPC
+  /// is idempotent and cheap when nothing matches — safe to call on
+  /// every sign-in. Failures don't block sign-in: the user can still
+  /// access whatever they have without the invite.
+  Future<void> _claimPendingInvitesSilently() async {
+    try {
+      await _client.rpc('claim_pending_invites_for_me');
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan auth',
+          context: ErrorDescription('claim_pending_invites_for_me'),
+        ),
+      );
+    }
   }
 
   Future<void> sendOtp(String rawPhone) async {

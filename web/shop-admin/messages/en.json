@@ -321,6 +321,49 @@
     "errorSend": "Could not send the code. Try again.",
     "callbackError": "That sign-in link didn't work. Try sending another."
   },
+  "setup": {
+    "title": "Setup",
+    "subtitle": "Shop configuration and staff",
+    "noShop": {
+      "title": "No shop selected",
+      "description": "Pick or set up a shop to manage its staff."
+    },
+    "staff": {
+      "title": "Staff",
+      "addButton": "Add staff",
+      "membersHeader": "Current members",
+      "pendingHeader": "Pending invites",
+      "columns": {
+        "contact": "Contact",
+        "role": "Role",
+        "expires": "Expires",
+        "actions": ""
+      },
+      "youTag": "you",
+      "roleOwner": "Owner",
+      "roleCashier": "Cashier",
+      "membersEmpty": "No members yet.",
+      "pendingEmpty": "No pending invites."
+    },
+    "addDialog": {
+      "title": "Add staff member",
+      "description": "They'll see the shop the next time they sign in — no link or code to share. Just tell them which phone or email to log in with.",
+      "contactLabel": "Phone or email",
+      "contactPlaceholder": "+252612345678 or person@example.com",
+      "contactHelp": "We detect phone vs. email automatically. Phone numbers default to +252 if you skip the country code.",
+      "roleLabel": "Role",
+      "roleCashier": "Cashier — daily flows only",
+      "roleOwner": "Owner — full access",
+      "cancel": "Cancel",
+      "confirm": "Add staff",
+      "submitting": "Adding…",
+      "successPhone": "Added {phone}. They'll see the shop on next sign-in.",
+      "successEmail": "Added {email}. They'll see the shop on next sign-in.",
+      "errorInvalidContact": "Enter a valid phone (E.164, like +252612345678) or email.",
+      "errorPermission": "Only the shop owner can add staff.",
+      "errorGeneric": "Could not add. Try again."
+    }
+  },
   "table": {
     "empty": {
       "title": "Nothing here yet",
