@@ -31,7 +31,7 @@ export function VerifyForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (code.length !== 6) {
+    if (code.length < 6 || code.length > 10) {
       toast.error(t("errorLength"));
       return;
     }
@@ -64,12 +64,14 @@ export function VerifyForm() {
             <Input
               id="code"
               type="text"
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              maxLength={6}
+              // Supabase OTP length is 6–10 in project settings, and the
+              // format can be alphanumeric — accept both, trim
+              // whitespace, don't strip non-digits.
+              inputMode="text"
+              maxLength={10}
               autoComplete="one-time-code"
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+              onChange={(e) => setCode(e.target.value.trim())}
               placeholder={t("codePlaceholder")}
               required
               autoFocus

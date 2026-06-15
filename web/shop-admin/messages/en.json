@@ -342,7 +342,7 @@
     "codePlaceholder": "123456",
     "sentTo": "Sent to {phone}.",
     "wrongNumber": "Wrong number?",
-    "errorLength": "Code is 6 digits.",
+    "errorLength": "Code is 6–10 characters.",
     "errorVerify": "That code didn't work. Try again.",
     "submit": "Sign in",
     "verifying": "Verifying…"

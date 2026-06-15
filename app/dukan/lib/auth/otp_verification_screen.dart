@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/auth/auth_controller.dart';
-import 'package:dukan/shared/digit_input.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -75,11 +74,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               controller: _otpController,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
-              maxLength: 6,
-              // LTR + ASCII digit-only so Arabic/Persian-script
-              // keyboards still produce a usable code.
+              // Supabase email-OTP length is configurable in the
+              // project settings (6–10 chars). 10 covers the max;
+              // verifyOTP doesn't care about extra unused capacity.
+              maxLength: 10,
+              // LTR for digit alignment regardless of system locale.
+              // No DigitsOnlyInputFormatter — Supabase may send
+              // alphanumeric tokens depending on the project's
+              // OTP-format setting.
               textDirection: TextDirection.ltr,
-              inputFormatters: const [DigitsOnlyInputFormatter()],
               decoration: InputDecoration(labelText: l.otpCodeLabel),
               onSubmitted: (_) => _verifying ? null : _verifyOtp(),
             ),

@@ -342,7 +342,7 @@
     "codePlaceholder": "123456",
     "sentTo": "Loo diray {phone}.",
     "wrongNumber": "Lambar khaldan?",
-    "errorLength": "Koodhku waa 6 lambar.",
+    "errorLength": "Koodhku waa 6–10 xaraf.",
     "errorVerify": "Koodhkaas ma shaqayn. Mar kale isku day.",
     "submit": "Soo gal",
     "verifying": "Xaqiijinta…"
