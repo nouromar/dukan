@@ -15,6 +15,7 @@ import {
   ProductsTable,
   type Product,
 } from "@/components/inventory/products-table";
+import { ExportCsvButton } from "@/components/shared/export-csv-button";
 
 type RpcRow = {
   shop_item_id: string;
@@ -34,7 +35,8 @@ type RpcRow = {
 export default async function InventoryPage() {
   const t = await getTranslations("inventory");
   const locale = await getLocale();
-  const { currentShop } = await getCurrentShop();
+  const { currentShop, capabilities } = await getCurrentShop();
+  const canExport = capabilities.includes("inventory.product.view");
 
   if (!currentShop) {
     return (
@@ -79,13 +81,16 @@ export default async function InventoryPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {currentShop.name}
-        </h1>
-        <span className="text-sm text-muted-foreground">
-          {formatCount(products.length, locale)}
-        </span>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {currentShop.name}
+          </h1>
+          <span className="text-sm text-muted-foreground">
+            {formatCount(products.length, locale)}
+          </span>
+        </div>
+        {canExport ? <ExportCsvButton href="/api/export/inventory" /> : null}
       </div>
       <ProductsTable
         rows={products}

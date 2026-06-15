@@ -13,6 +13,7 @@ import {
   AuditTable,
   type AuditEntry,
 } from "@/components/audit/audit-table";
+import { ExportCsvButton } from "@/components/shared/export-csv-button";
 
 const PAGE_LIMIT = 100;
 
@@ -31,7 +32,8 @@ type ActionRow = { code: string; description: string | null };
 export default async function AuditPage() {
   const t = await getTranslations("audit");
   const locale = await getLocale();
-  const { currentShop } = await getCurrentShop();
+  const { currentShop, capabilities } = await getCurrentShop();
+  const canExport = capabilities.includes("audit.export");
 
   if (!currentShop) {
     return (
@@ -93,13 +95,16 @@ export default async function AuditPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {currentShop.name}
-        </h1>
-        <span className="text-sm text-muted-foreground">
-          {entries.length === PAGE_LIMIT ? `${PAGE_LIMIT}+` : entries.length}
-        </span>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {currentShop.name}
+          </h1>
+          <span className="text-sm text-muted-foreground">
+            {entries.length === PAGE_LIMIT ? `${PAGE_LIMIT}+` : entries.length}
+          </span>
+        </div>
+        {canExport ? <ExportCsvButton href="/api/export/audit" /> : null}
       </div>
       <AuditTable rows={entries} locale={locale} />
     </div>

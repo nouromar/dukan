@@ -8,6 +8,7 @@ import { historyPageLimit } from "shared";
 import { getCurrentShop } from "@/lib/current-shop";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SalesTable, type Sale } from "@/components/sales/sales-table";
+import { ExportCsvButton } from "@/components/shared/export-csv-button";
 
 type SaleRow = {
   txn_id: string;
@@ -26,7 +27,8 @@ type SaleRow = {
 export default async function SalesPage() {
   const t = await getTranslations("sales");
   const locale = await getLocale();
-  const { currentShop } = await getCurrentShop();
+  const { currentShop, capabilities } = await getCurrentShop();
+  const canExport = capabilities.includes("sales.export");
 
   if (!currentShop) {
     return (
@@ -61,13 +63,16 @@ export default async function SalesPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {currentShop.name}
-        </h1>
-        <span className="text-sm text-muted-foreground">
-          {sales.length === historyPageLimit ? `${historyPageLimit}+` : sales.length}
-        </span>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {currentShop.name}
+          </h1>
+          <span className="text-sm text-muted-foreground">
+            {sales.length === historyPageLimit ? `${historyPageLimit}+` : sales.length}
+          </span>
+        </div>
+        {canExport ? <ExportCsvButton href="/api/export/sales" /> : null}
       </div>
       <SalesTable
         rows={sales}

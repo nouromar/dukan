@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { getTranslations, getLocale } from "next-intl/server";
 import { getCurrentShop } from "@/lib/current-shop";
+import { ExportCsvButton } from "@/components/shared/export-csv-button";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PeopleTabs } from "@/components/people/people-tabs";
 import type { Party } from "@/components/people/parties-table";
@@ -27,7 +28,8 @@ type PartyTypeRow = { id: string; code: string };
 export default async function PeoplePage() {
   const t = await getTranslations("people");
   const locale = await getLocale();
-  const { currentShop } = await getCurrentShop();
+  const { currentShop, capabilities } = await getCurrentShop();
+  const canExport = capabilities.includes("people.statement.export");
 
   if (!currentShop) {
     return (
@@ -89,16 +91,24 @@ export default async function PeoplePage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">
           {currentShop.name}
         </h1>
-        <Link
-          href="/aging"
-          className="text-sm font-medium text-primary hover:underline"
-        >
-          {tAging("viewLink")}
-        </Link>
+        <div className="flex items-center gap-3">
+          {canExport ? (
+            <>
+              <ExportCsvButton href="/api/export/customers" />
+              <ExportCsvButton href="/api/export/suppliers" />
+            </>
+          ) : null}
+          <Link
+            href="/aging"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            {tAging("viewLink")}
+          </Link>
+        </div>
       </div>
       <PeopleTabs
         customers={customers}

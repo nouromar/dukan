@@ -5208,6 +5208,139 @@ end;
 $$;
 reset role;
 
+-- ---------------------------------------------------------------
+-- 6. Bulk inventory edits (migration 0056).
+-- ---------------------------------------------------------------
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- 6a. bulk_set_default_sale_price: cashier denied, owner happy path
+--     writes sale_price + audit row.
+do $$
+declare
+  v_shop_id      uuid;
+  v_item_a       uuid;
+  v_item_b       uuid;
+  v_unit_a       uuid;
+  v_unit_b       uuid;
+  v_count        int;
+  v_failed       boolean;
+  v_audit_n      int;
+  v_price_after  numeric;
+begin
+  select shop_id into v_shop_id from test_ids;
+
+  -- Pick two priced-but-distinct shop_items for the test. The
+  -- existing harness already activated a couple of items.
+  select id into v_item_a from public.shop_item where shop_id = v_shop_id limit 1;
+  if v_item_a is null then
+    raise notice 'NN (6a): no shop_item rows; skipping bulk_set_default_sale_price';
+    return;
+  end if;
+  select id into v_item_b from public.shop_item where shop_id = v_shop_id and id <> v_item_a limit 1;
+  if v_item_b is null then
+    v_item_b := v_item_a;  -- single-item shop, still test the loop
+  end if;
+
+  -- Cashier role denied.
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+  v_failed := false;
+  begin
+    perform public.bulk_set_default_sale_price(
+      v_shop_id, array[v_item_a]::uuid[], 12.34);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'NN (6a): cashier was allowed to bulk_set_default_sale_price';
+  end if;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+  -- Owner happy path — count matches input.
+  v_count := public.bulk_set_default_sale_price(
+    v_shop_id, array[v_item_a, v_item_b]::uuid[], 7.50);
+  if v_count < 1 then
+    raise exception 'NN (6a): bulk update returned 0';
+  end if;
+
+  -- The chosen default unit now has the new price.
+  select id, sale_price into v_unit_a, v_price_after
+  from public.shop_item_unit
+  where shop_id = v_shop_id and shop_item_id = v_item_a
+  order by is_default_sale desc, (conversion_to_base = 1) desc
+  limit 1;
+  if v_price_after is null or v_price_after <> 7.50 then
+    raise exception 'NN (6a): expected sale_price 7.50, got %', v_price_after;
+  end if;
+
+  -- Per-row audit log written.
+  select count(*) into v_audit_n
+  from public.audit_log
+  where action_code = 'inventory.unit.price_edit'
+    and entity_id = v_unit_a
+    and after_state->>'via' = 'bulk';
+  if v_audit_n < 1 then
+    raise exception 'NN (6a): missing bulk audit row for inventory.unit.price_edit';
+  end if;
+end;
+$$;
+
+-- 6b. bulk_set_reorder_threshold: writes shop_item.reorder_threshold
+--     + audit row; negative rejected.
+do $$
+declare
+  v_shop_id   uuid;
+  v_item      uuid;
+  v_count     int;
+  v_thresh    numeric;
+  v_failed    boolean;
+  v_audit_n   int;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_item from public.shop_item where shop_id = v_shop_id limit 1;
+  if v_item is null then
+    raise notice 'NN (6b): no shop_item rows; skipping bulk_set_reorder_threshold';
+    return;
+  end if;
+
+  v_count := public.bulk_set_reorder_threshold(
+    v_shop_id, array[v_item]::uuid[], 5);
+  if v_count <> 1 then
+    raise exception 'NN (6b): expected 1 row, got %', v_count;
+  end if;
+
+  select reorder_threshold into v_thresh
+  from public.shop_item
+  where shop_id = v_shop_id and id = v_item;
+  if v_thresh is null or v_thresh <> 5 then
+    raise exception 'NN (6b): expected threshold 5, got %', v_thresh;
+  end if;
+
+  -- Negative threshold refused.
+  v_failed := false;
+  begin
+    perform public.bulk_set_reorder_threshold(
+      v_shop_id, array[v_item]::uuid[], -3);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'NN (6b): negative threshold must be refused';
+  end if;
+
+  -- Audit row from the successful run.
+  select count(*) into v_audit_n
+  from public.audit_log
+  where action_code = 'inventory.product.edit'
+    and entity_id = v_item
+    and after_state->>'via' = 'bulk';
+  if v_audit_n < 1 then
+    raise exception 'NN (6b): missing bulk audit row for inventory.product.edit';
+  end if;
+end;
+$$;
+
+reset role;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';

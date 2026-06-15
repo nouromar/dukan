@@ -12,6 +12,7 @@ import Link from "next/link";
 import { getTranslations, getLocale } from "next-intl/server";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCurrentShop } from "@/lib/current-shop";
+import { ExportCsvButton } from "@/components/shared/export-csv-button";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   AgingTable,
@@ -47,7 +48,8 @@ function ageRank(b: AgingBucket): number {
 export default async function AgingPage() {
   const t = await getTranslations("aging");
   const locale = await getLocale();
-  const { currentShop } = await getCurrentShop();
+  const { currentShop, capabilities } = await getCurrentShop();
+  const canExport = capabilities.includes("people.statement.export");
 
   if (!currentShop) {
     return (
@@ -138,15 +140,20 @@ export default async function AgingPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-col gap-1">
-        <Link
-          href="/people"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          {t("back")}
-        </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <Link
+            href="/people"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            {t("back")}
+          </Link>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t("title")}
+          </h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        {canExport ? <ExportCsvButton href="/api/export/aging" /> : null}
       </div>
 
       <Tabs defaultValue="receivables" className="w-full">

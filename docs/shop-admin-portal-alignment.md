@@ -383,13 +383,13 @@ These are defaults. If you want to pre-empt any of them say so before #265 lands
 ### 10.1 [P0] Multi-select infrastructure
 Already covered in scaffolding (§ 2.8). Every table inherits.
 
-### 10.2 [P1] Bulk action bar (sticky bottom, capability-gated actions)
+### 10.2 [DONE] Bulk action bar + first wired bulk edits (price + threshold)
 **Target:** design § 11.
-Already partially covered in scaffolding; each module wires its actions.
+**Shipped (#289):** bulk action bar from #271 wired in `/inventory`. Two actions live today: **Set price** (writes `shop_item_unit.sale_price` on the default-sale packaging per row, falling back to the base unit) and **Set threshold** (writes `shop_item.reorder_threshold`). Backed by two new bulk RPCs in migration `0056_bulk_inventory_edits.sql`, both capability-gated on `inventory.product.bulk_edit` and audit-logged per row with `via='bulk'` so the trail is grep-able.
 
-### 10.3 [P1] Preview-then-confirm dialog primitive
+### 10.3 [P2] Preview-then-confirm dialog primitive
 **Target:** design § 11 + § 19.
-**What:** generic primitive used by bulk price change, bulk recategorize, bulk threshold update, etc. Shows the diff per row + per-row success/failure on commit.
+**What:** generic primitive used by future bulk recategorize, bulk delete, etc. Shows the diff per row + per-row success/failure on commit. The simple "apply one value to all selected" dialog in #289 covers price + threshold without it; this is for actions where row-level outcomes vary.
 **Effort:** M.
 
 ### 10.4 [P2] Spreadsheet paste primitive
@@ -411,10 +411,9 @@ Already partially covered in scaffolding; each module wires its actions.
 **What:** shared layout: period selector + compare-to + filter chips + chart-on-top + table-below + export buttons. Every report in modules 4, 5, 7 plugs into this.
 **Effort:** M.
 
-### 11.2 [P1] CSV export shared hook
+### 11.2 [DONE] CSV export across modules
 **Target:** design § 14.
-**What:** `useCsvExport(table, filters)` — respects active filters, UTF-8 with BOM for Somali support.
-**Effort:** S.
+**Shipped (#290):** server-driven CSV via a single Route Handler `/api/export/[module]/route.ts`. Modules covered today: `sales`, `inventory`, `customers`, `suppliers`, `audit`, `aging`. Each page exposes a small **Export CSV** button in its header, capability-gated per module (`sales.export`, `audit.export`, `people.statement.export`, `inventory.product.view`). Filename: `dukan-<slug>-<module>-YYYY-MM-DD.csv`. CSV escaping in `web/shop-admin/src/lib/csv.ts` (RFC 4180; quotes only when needed). Future work: column-filter-aware export, UTF-8 BOM for Excel-on-Windows if the field comes back from pilot.
 
 ### 11.3 [P2] PDF edge function (Puppeteer + templates)
 **Target:** design § 13.

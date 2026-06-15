@@ -81,6 +81,10 @@
       "description": "Dooro ama dejiyaha dukaan si aad u aragto iibyada."
     }
   },
+  "export": {
+    "button": "Soo saar CSV",
+    "exporting": "Soo saarista…"
+  },
   "audit": {
     "columns": {
       "time": "Goorma",
@@ -144,6 +148,31 @@
   "inventory": {
     "search": {
       "placeholder": "Raadi alaab magaca…"
+    },
+    "bulk": {
+      "setPrice": "Dejiyi qiimaha",
+      "setThreshold": "Dejiyi xadka",
+      "priceDialog": {
+        "title": "Dejiyi qiimaha iibka asaasiga",
+        "description": "Waxay khusaynaysaa {count, plural, one {# alaab} other {# alaab}}. Qiimaha waxaa lagu dejinayaa xidhmaha iibka asaasiga ah ee alaabta.",
+        "label": "Qiimaha iibka",
+        "placeholder": "tusaale 1.50",
+        "confirm": "Ku celi dhammaan",
+        "submitting": "Lagu dabaqayaa…"
+      },
+      "thresholdDialog": {
+        "title": "Dejiyi xadka dalbashada",
+        "description": "Waxay khusaynaysaa {count, plural, one {# alaab} other {# alaab}}. Xadka waxaa lagu kaydiyaa cabbirka asaasiga ee alaabta (kg, pc, iwm). Faaruji si aad u tirtirto xadka.",
+        "label": "Dalbo marka",
+        "placeholder": "tusaale 10",
+        "confirm": "Ku celi dhammaan",
+        "submitting": "Lagu dabaqayaa…"
+      },
+      "cancel": "Jooji",
+      "successPrice": "{count, plural, one {# alaab la cusbooneysiiyay} other {# alaab la cusbooneysiiyay}}.",
+      "successThreshold": "{count, plural, one {# alaab la cusbooneysiiyay} other {# alaab la cusbooneysiiyay}}.",
+      "errorPermission": "Kaliya milkiilayaasha ayaa cusbooneysii dhammaan sameyn kara.",
+      "errorGeneric": "Lama cusbooneysiin karin. Mar kale isku day."
     },
     "columns": {
       "name": "Alaab",

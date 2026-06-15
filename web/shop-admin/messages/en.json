@@ -81,6 +81,10 @@
       "description": "Pick or set up a shop to see its sales history."
     }
   },
+  "export": {
+    "button": "Export CSV",
+    "exporting": "Exporting…"
+  },
   "audit": {
     "columns": {
       "time": "When",
@@ -144,6 +148,31 @@
   "inventory": {
     "search": {
       "placeholder": "Search products by name…"
+    },
+    "bulk": {
+      "setPrice": "Set price",
+      "setThreshold": "Set threshold",
+      "priceDialog": {
+        "title": "Set default sale price",
+        "description": "Applies to {count, plural, one {# product} other {# products}}. The price is set on each product's default-sale packaging (or the base unit if none is marked).",
+        "label": "Sale price",
+        "placeholder": "e.g. 1.50",
+        "confirm": "Apply to all",
+        "submitting": "Applying…"
+      },
+      "thresholdDialog": {
+        "title": "Set reorder threshold",
+        "description": "Applies to {count, plural, one {# product} other {# products}}. The threshold is stored in the product's base unit (kg, pc, etc.). Clear the field to remove the threshold.",
+        "label": "Reorder at",
+        "placeholder": "e.g. 10",
+        "confirm": "Apply to all",
+        "submitting": "Applying…"
+      },
+      "cancel": "Cancel",
+      "successPrice": "{count, plural, one {Updated # product} other {Updated # products}}.",
+      "successThreshold": "{count, plural, one {Updated # product} other {Updated # products}}.",
+      "errorPermission": "Only owners (or roles with inventory.product.bulk_edit) can run bulk updates.",
+      "errorGeneric": "Could not update. Try again."
     },
     "columns": {
       "name": "Product",

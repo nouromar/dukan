@@ -15,12 +15,17 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Search } from "lucide-react";
+import { Search, DollarSign, AlertTriangle } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatMoney, formatCount } from "shared";
-import { DataTable, EmptyState } from "@/components/data-table";
+import { DataTable, EmptyState, type BulkAction } from "@/components/data-table";
 import { Input } from "@/components/ui/input";
+import { useShopContext } from "@/lib/shop-context";
 import { cn } from "@/lib/utils";
+import {
+  BulkEditDialog,
+  type BulkVariant,
+} from "./bulk-edit-dialog";
 
 export type Product = {
   shop_item_id: string;
@@ -47,8 +52,16 @@ export function ProductsTable({
   locale: string;
 }) {
   const t = useTranslations("inventory");
+  const tBulk = useTranslations("inventory.bulk");
   const router = useRouter();
+  const { currentShop, capabilities } = useShopContext();
   const [query, setQuery] = useState("");
+  const [bulkVariant, setBulkVariant] = useState<BulkVariant | null>(null);
+  const [selectedIdsForDialog, setSelectedIdsForDialog] = useState<string[]>(
+    [],
+  );
+
+  const canBulkEdit = capabilities.has("inventory.product.bulk_edit");
 
   const money = (n: number) => formatMoney(n, currencyCode, locale);
   const count = (n: number) => formatCount(n, locale);
@@ -173,7 +186,46 @@ export function ProductsTable({
           />
         }
         getRowId={(row) => row.shop_item_id}
+        bulkActions={
+          canBulkEdit && currentShop
+            ? (selected): BulkAction[] => {
+                const ids = selected.map((s) => s.shop_item_id);
+                return [
+                  {
+                    id: "bulk-price",
+                    label: tBulk("setPrice"),
+                    icon: DollarSign,
+                    onClick: () => {
+                      setSelectedIdsForDialog(ids);
+                      setBulkVariant("price");
+                    },
+                  },
+                  {
+                    id: "bulk-threshold",
+                    label: tBulk("setThreshold"),
+                    icon: AlertTriangle,
+                    variant: "outline",
+                    onClick: () => {
+                      setSelectedIdsForDialog(ids);
+                      setBulkVariant("threshold");
+                    },
+                  },
+                ];
+              }
+            : undefined
+        }
       />
+      {currentShop && bulkVariant !== null ? (
+        <BulkEditDialog
+          variant={bulkVariant}
+          open={bulkVariant !== null}
+          onOpenChange={(open) => {
+            if (!open) setBulkVariant(null);
+          }}
+          shopId={currentShop.id}
+          shopItemIds={selectedIdsForDialog}
+        />
+      ) : null}
     </div>
   );
 }
