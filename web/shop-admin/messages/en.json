@@ -89,9 +89,8 @@
       "entity": "Entity",
       "source": "Source"
     },
-    "actorYou": "You",
+    "actorYouTag": "you",
     "actorSystem": "—",
-    "actorOther": "Other user",
     "sources": {
       "mobile": "Mobile",
       "shop_admin_web": "Web",

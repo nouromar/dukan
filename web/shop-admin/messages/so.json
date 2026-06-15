@@ -89,9 +89,8 @@
       "entity": "Walax",
       "source": "Halka"
     },
-    "actorYou": "Adi",
+    "actorYouTag": "adi",
     "actorSystem": "—",
-    "actorOther": "Qof kale",
     "sources": {
       "mobile": "Mobayl",
       "shop_admin_web": "Web",

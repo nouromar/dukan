@@ -18,14 +18,10 @@ export type AuditEntry = {
   entity_type: string;
   entity_id: string | null;
   source: string;
-  /**
-   * 'you' = actor_user_id matched the current viewer
-   * 'system' = actor_user_id was null (RPC / cron / impersonation)
-   * 'other' = a different user (display name resolution pending —
-   * needs a privileged view over auth.users that we haven't added)
-   */
-  actor: "you" | "system" | "other";
-  actor_id_short: string | null;
+  /** Full UUID of the actor; null when the row was emitted by RPC/cron/system. */
+  actor_user_id: string | null;
+  /** True when actor_user_id equals the current viewer — drives a small "you" tag. */
+  is_self: boolean;
 };
 
 const SOURCE_KEYS: Record<string, string> = {
@@ -80,29 +76,27 @@ export function AuditTable({
         ),
       },
       {
-        accessorKey: "actor",
+        accessorKey: "actor_user_id",
         header: t("columns.actor"),
         cell: ({ row }) => {
-          const label =
-            row.original.actor === "you"
-              ? t("actorYou")
-              : row.original.actor === "system"
-                ? t("actorSystem")
-                : t("actorOther");
-          return (
-            <div className="flex flex-col text-sm">
-              <span
-                className={
-                  row.original.actor === "you"
-                    ? "font-medium text-primary"
-                    : "text-foreground"
-                }
-              >
-                {label}
+          if (row.original.actor_user_id === null) {
+            return (
+              <span className="text-sm text-muted-foreground">
+                {t("actorSystem")}
               </span>
-              {row.original.actor_id_short ? (
-                <span className="font-mono text-xs text-muted-foreground">
-                  {row.original.actor_id_short}
+            );
+          }
+          return (
+            <div className="flex items-center gap-2">
+              <span
+                className="font-mono text-xs text-muted-foreground"
+                title={row.original.actor_user_id}
+              >
+                {row.original.actor_user_id.slice(0, 8)}
+              </span>
+              {row.original.is_self ? (
+                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                  {t("actorYouTag")}
                 </span>
               ) : null}
             </div>
