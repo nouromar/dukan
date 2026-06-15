@@ -35,6 +35,11 @@ class _EmailLoginFormState extends State<EmailLoginForm> {
         showError(context, authInputErrorMessage(context, error.issue));
       }
     } on AuthException catch (error) {
+      // Print the real Supabase error to console so logcat / flutter run
+      // terminal surfaces it. Otherwise the user sees only the friendly
+      // snackbar and the underlying "Email rate limit exceeded" /
+      // "Invalid sender" / etc. is invisible.
+      debugPrint('[email-login] AuthException: ${error.message}');
       if (mounted) {
         // Supabase returns a generic "signups not allowed" string when the
         // address doesn't match an existing user; surface the friendlier
@@ -48,6 +53,15 @@ class _EmailLoginFormState extends State<EmailLoginForm> {
               ? tr(context).emailAccountNotFoundMessage
               : tr(context).sendEmailOtpFailedMessage,
         );
+      }
+    } catch (error, stackTrace) {
+      // Network / unexpected errors (SocketException, TimeoutException)
+      // don't surface as AuthException — log them too so spinning-then-
+      // failing is debuggable from the terminal.
+      debugPrint('[email-login] non-Auth error: $error');
+      debugPrint('$stackTrace');
+      if (mounted) {
+        showError(context, tr(context).sendEmailOtpFailedMessage);
       }
     } finally {
       if (mounted) {
