@@ -17,17 +17,17 @@
     "voidButton": "Void sale",
     "voidDialog": {
       "title": "Void this sale?",
-      "description": "This posts a reversal entry that backs out the stock, payments, and balances. The original line items stay visible in history with a Voided marker. This cannot be undone — to redo, post a fresh sale on mobile.",
+      "description": "Reverses stock, payments, and balances. Can't be undone.",
       "reasonLabel": "Reason",
-      "reasonPlaceholder": "e.g. wrong customer, wrong items, returned",
-      "reasonRequired": "Please enter a reason. Audit log needs it.",
+      "reasonPlaceholder": "e.g. wrong customer, returned",
+      "reasonRequired": "Reason required.",
       "cancel": "Cancel",
-      "confirm": "Yes, void sale",
+      "confirm": "Void sale",
       "submitting": "Voiding…",
-      "windowExpired": "Void window expired (>7 days). Post a correction sale instead.",
-      "ownerOnly": "Only the shop owner can void a sale.",
-      "alreadyVoided": "This sale is already voided.",
-      "errorGeneric": "Could not void. Try again."
+      "windowExpired": "Past the 7-day void window.",
+      "ownerOnly": "Owners only.",
+      "alreadyVoided": "Already voided.",
+      "errorGeneric": "Couldn't void."
     },
     "voidSuccess": "Sale voided.",
     "walkIn": "Walk-in customer",
@@ -74,11 +74,11 @@
     "creditMarker": "credit",
     "empty": {
       "title": "No sales yet",
-      "description": "Sales posted from the mobile app appear here, newest first."
+      "description": "Sales posted on mobile appear here."
     },
     "noShop": {
       "title": "No shop selected",
-      "description": "Pick or set up a shop to see its sales history."
+      "description": "Pick a shop."
     }
   },
   "export": {
@@ -133,16 +133,16 @@
         "defaultReceive": "Default receive"
       },
       "defaultYes": "✓",
-      "empty": "No packaging configured. Use the mobile app to add pack sizes."
+      "empty": "No packaging."
     },
     "aliases": {
-      "empty": "No other names yet.",
+      "empty": "No aliases.",
       "displayBadge": "Display"
     },
     "noPrice": "—",
     "notFound": {
-      "title": "Product not found",
-      "description": "This product doesn't exist, or you don't have access to it."
+      "title": "Not found",
+      "description": "This product doesn't exist."
     }
   },
   "inventory": {
@@ -153,26 +153,26 @@
       "setPrice": "Set price",
       "setThreshold": "Set threshold",
       "priceDialog": {
-        "title": "Set default sale price",
-        "description": "Applies to {count, plural, one {# product} other {# products}}. The price is set on each product's default-sale packaging (or the base unit if none is marked).",
+        "title": "Set price",
+        "description": "Updates {count, plural, one {# product} other {# products}}.",
         "label": "Sale price",
-        "placeholder": "e.g. 1.50",
-        "confirm": "Apply to all",
+        "placeholder": "1.50",
+        "confirm": "Apply",
         "submitting": "Applying…"
       },
       "thresholdDialog": {
-        "title": "Set reorder threshold",
-        "description": "Applies to {count, plural, one {# product} other {# products}}. The threshold is stored in the product's base unit (kg, pc, etc.). Clear the field to remove the threshold.",
+        "title": "Set threshold",
+        "description": "Updates {count, plural, one {# product} other {# products}}. Empty = no threshold.",
         "label": "Reorder at",
-        "placeholder": "e.g. 10",
-        "confirm": "Apply to all",
+        "placeholder": "10",
+        "confirm": "Apply",
         "submitting": "Applying…"
       },
       "cancel": "Cancel",
-      "successPrice": "{count, plural, one {Updated # product} other {Updated # products}}.",
-      "successThreshold": "{count, plural, one {Updated # product} other {Updated # products}}.",
-      "errorPermission": "Only owners (or roles with inventory.product.bulk_edit) can run bulk updates.",
-      "errorGeneric": "Could not update. Try again."
+      "successPrice": "{count, plural, one {Updated # product.} other {Updated # products.}}",
+      "successThreshold": "{count, plural, one {Updated # product.} other {Updated # products.}}",
+      "errorPermission": "Owners only.",
+      "errorGeneric": "Couldn't update."
     },
     "columns": {
       "name": "Product",
@@ -214,14 +214,14 @@
     "daysAgo": "{days, plural, one {# day ago} other {# days ago}}",
     "noActivityAgo": "No activity yet",
     "empty": {
-      "receivablesTitle": "Nothing outstanding",
-      "receivablesDescription": "No customers owe you money right now.",
-      "payablesTitle": "Nothing outstanding",
-      "payablesDescription": "You don't owe any suppliers right now."
+      "receivablesTitle": "All paid up",
+      "receivablesDescription": "No customers owe you.",
+      "payablesTitle": "All paid up",
+      "payablesDescription": "You don't owe any suppliers."
     },
     "noShop": {
       "title": "No shop selected",
-      "description": "Pick or set up a shop to see its aging report."
+      "description": "Pick a shop."
     }
   },
   "partyDetail": {
@@ -246,13 +246,13 @@
     "directionOut": "Out",
     "statusVoided": "Voided",
     "empty": {
-      "sales": "No sales recorded for this customer yet.",
-      "receives": "No receives recorded from this supplier yet.",
-      "payments": "No payments recorded yet."
+      "sales": "No sales yet.",
+      "receives": "No receives yet.",
+      "payments": "No payments yet."
     },
     "notFound": {
-      "title": "Party not found",
-      "description": "This customer or supplier doesn't exist, or you don't have access to it."
+      "title": "Not found",
+      "description": "This customer or supplier doesn't exist."
     }
   },
   "people": {
@@ -270,19 +270,19 @@
     },
     "empty": {
       "customersTitle": "No customers yet",
-      "customersDescription": "Customers appear here after their first credit sale or payment is recorded on mobile.",
+      "customersDescription": "Added when a sale is recorded for them.",
       "suppliersTitle": "No suppliers yet",
-      "suppliersDescription": "Suppliers appear here after their first credit receive or payment is recorded on mobile."
+      "suppliersDescription": "Added when a receive is recorded for them."
     },
     "noShop": {
       "title": "No shop selected",
-      "description": "Pick or set up a shop to see its customers and suppliers."
+      "description": "Pick a shop."
     }
   },
   "overview": {
     "noShop": {
-      "title": "No shop selected",
-      "description": "Once a shop is set up for you, its dashboard will appear here."
+      "title": "No shop yet",
+      "description": "Set up a shop to see its dashboard."
     },
     "kpis": {
       "salesToday": "Sales today",
@@ -294,14 +294,14 @@
       "salesCount": "{count, plural, =0 {no sales} one {# sale} other {# sales}}"
     },
     "topCustomers": {
-      "title": "Top customers by balance",
-      "empty": "No customer balances yet.",
-      "viewAll": "View all customers"
+      "title": "Top customers",
+      "empty": "No outstanding balances.",
+      "viewAll": "All customers"
     },
     "topSuppliers": {
-      "title": "Top suppliers by balance",
-      "empty": "No supplier balances yet.",
-      "viewAll": "View all suppliers"
+      "title": "Top suppliers",
+      "empty": "No outstanding balances.",
+      "viewAll": "All suppliers"
     }
   },
   "modulePlaceholder": {
@@ -333,22 +333,22 @@
     "tabPhone": "Phone",
     "phoneLabel": "Phone number",
     "phonePlaceholder": "+252612345678",
-    "phoneHelp": "We'll text you a 6-digit code.",
+    "phoneHelp": "We'll text you a code.",
     "emailLabel": "Email",
     "emailPlaceholder": "you@example.com",
-    "emailHelp": "We'll email you a sign-in link.",
+    "emailHelp": "We'll email you a code.",
     "emailSendLink": "Send link",
     "emailSending": "Sending…",
     "emailSent": "Check your inbox",
     "emailSentBody": "We sent a sign-in link to {email}. Click it to continue.",
-    "emailErrorNoAccount": "No account found for that email. Sign up on the mobile app first.",
-    "emailErrorGeneric": "Could not send the link. Try again.",
+    "emailErrorNoAccount": "No account for that email.",
+    "emailErrorGeneric": "Couldn't send the link.",
     "sendCode": "Send code",
     "sending": "Sending…",
-    "errorPhone": "Enter a valid phone number, for example +252612345678.",
-    "errorGeneric": "Something went wrong. Try again.",
-    "errorSend": "Could not send the code. Try again.",
-    "callbackError": "That sign-in link didn't work. Try sending another."
+    "errorPhone": "Enter a valid phone (e.g. +252612345678).",
+    "errorGeneric": "Something went wrong.",
+    "errorSend": "Couldn't send the code.",
+    "callbackError": "Sign-in link expired. Send another."
   },
   "setup": {
     "title": "Setup",
@@ -359,14 +359,14 @@
     },
     "profile": {
       "title": "My profile",
-      "description": "Your name appears wherever the portal shows who did what — in the audit log, the staff list, and reports. Visible to everyone who shares a shop with you.",
+      "description": "Shown wherever the portal lists who did what.",
       "nameLabel": "Display name",
-      "namePlaceholder": "e.g. Asha Mohamed",
+      "namePlaceholder": "Asha Mohamed",
       "save": "Save",
       "saving": "Saving…",
       "saved": "Saved.",
       "errorEmpty": "Enter a name.",
-      "errorGeneric": "Could not save. Try again."
+      "errorGeneric": "Couldn't save."
     },
     "staff": {
       "title": "Staff",
@@ -390,22 +390,22 @@
       "pendingEmpty": "No pending invites."
     },
     "addDialog": {
-      "title": "Add staff member",
-      "description": "They'll see the shop the next time they sign in — no link or code to share. Just tell them which phone or email to log in with.",
+      "title": "Add staff",
+      "description": "They'll see the shop next time they sign in.",
       "contactLabel": "Phone or email",
-      "contactPlaceholder": "+252612345678 or person@example.com",
-      "contactHelp": "We detect phone vs. email automatically. Phone numbers default to +252 if you skip the country code.",
+      "contactPlaceholder": "+252612345678 or name@example.com",
+      "contactHelp": "Phone defaults to +252.",
       "roleLabel": "Role",
-      "roleCashier": "Cashier — daily flows only",
-      "roleOwner": "Owner — full access",
+      "roleCashier": "Cashier",
+      "roleOwner": "Owner",
       "cancel": "Cancel",
-      "confirm": "Add staff",
+      "confirm": "Add",
       "submitting": "Adding…",
-      "successPhone": "Added {phone}. They'll see the shop on next sign-in.",
-      "successEmail": "Added {email}. They'll see the shop on next sign-in.",
-      "errorInvalidContact": "Enter a valid phone (E.164, like +252612345678) or email.",
-      "errorPermission": "Only the shop owner can add staff.",
-      "errorGeneric": "Could not add. Try again."
+      "successPhone": "Added {phone}.",
+      "successEmail": "Added {email}.",
+      "errorInvalidContact": "Enter a valid phone or email.",
+      "errorPermission": "Owners only.",
+      "errorGeneric": "Couldn't add."
     }
   },
   "table": {
@@ -433,7 +433,7 @@
     "sentTo": "Sent to {phone}.",
     "wrongNumber": "Wrong number?",
     "errorLength": "Code is 6–10 characters.",
-    "errorVerify": "That code didn't work. Try again.",
+    "errorVerify": "Wrong code.",
     "submit": "Sign in",
     "verifying": "Verifying…"
   }

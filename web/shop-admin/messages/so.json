@@ -16,18 +16,18 @@
     "back": "← Dhammaan iibyada",
     "voidButton": "Baaji iibka",
     "voidDialog": {
-      "title": "Ma baajinaysaa iibkan?",
-      "description": "Tani waxay diiwaan gelinaysaa diiwaan rogis ah oo soo celiya kayd-ka, bixinta, iyo deynta. Safaf asalka ah ayaa weli ka muuqdaya taariikhda iyada oo leh calaamadda La baajiyay. Tan dib looma celin karo — si aad mar kale u sameyso, iib cusub ku diiwaan geli mobaylka.",
+      "title": "Baaji iibkan?",
+      "description": "Wuxuu soo celiyaa kayd, bixin iyo deyn. Dib looma celin karo.",
       "reasonLabel": "Sababta",
-      "reasonPlaceholder": "tusaale macmiil khaldan, alaab khaldan, soo celin",
-      "reasonRequired": "Fadlan geli sabab. Diiwaanka u baahan yahay.",
+      "reasonPlaceholder": "tusaale macmiil khaldan, soo celin",
+      "reasonRequired": "Sabab loo baahan yahay.",
       "cancel": "Jooji",
-      "confirm": "Haa, baaji iibka",
+      "confirm": "Baaji",
       "submitting": "Baajinta…",
-      "windowExpired": "Wakhtiga baajinta ayaa dhammaaday (>7 maalmood). Hagaajin iib cusub.",
-      "ownerOnly": "Kaliya milkiilaha dukaanka ayaa baajin kara iibka.",
-      "alreadyVoided": "Iibkaan horey loo baajiyay.",
-      "errorGeneric": "Lama baajin karin. Mar kale isku day."
+      "windowExpired": "Wakhtiga 7-maalmood ayaa dhammaaday.",
+      "ownerOnly": "Milkiilo kaliya.",
+      "alreadyVoided": "Horey loo baajiyay.",
+      "errorGeneric": "Lama baajin karin."
     },
     "voidSuccess": "Iibka waa la baajiyay.",
     "walkIn": "Macmiil aan caadi ahayn",
@@ -73,12 +73,12 @@
     "statusVoided": "La baajiyay",
     "creditMarker": "amaah",
     "empty": {
-      "title": "Wax iib ah weli ma jirin",
-      "description": "Iibyada laga diiwaan geliyo mobaylka ayaa halkan ka muuqda, kuwa cusub horta."
+      "title": "Wax iib ah ma jirin",
+      "description": "Iibyada laga diiwaan geliyo mobaylka ayaa halkan ka muuqda."
     },
     "noShop": {
       "title": "Wax dukaan ah lama dooran",
-      "description": "Dooro ama dejiyaha dukaan si aad u aragto iibyada."
+      "description": "Dooro dukaan."
     }
   },
   "export": {
@@ -133,16 +133,16 @@
         "defaultReceive": "Qaadashada asaasiga"
       },
       "defaultYes": "✓",
-      "empty": "Wax xidhmo ah lama dejin. Isticmaal abka mobaylka si aad ugu darto cabbiro."
+      "empty": "Xidhmo ma jirto."
     },
     "aliases": {
-      "empty": "Magac kale weli ma jiro.",
+      "empty": "Magac kale ma jiro.",
       "displayBadge": "Magaca tusaalaha"
     },
     "noPrice": "—",
     "notFound": {
-      "title": "Alaab lama helin",
-      "description": "Alaabtaan ma jirto, ama ma haysatid gelitaan."
+      "title": "Lama helin",
+      "description": "Alaabtan ma jirto."
     }
   },
   "inventory": {
@@ -153,26 +153,26 @@
       "setPrice": "Dejiyi qiimaha",
       "setThreshold": "Dejiyi xadka",
       "priceDialog": {
-        "title": "Dejiyi qiimaha iibka asaasiga",
-        "description": "Waxay khusaynaysaa {count, plural, one {# alaab} other {# alaab}}. Qiimaha waxaa lagu dejinayaa xidhmaha iibka asaasiga ah ee alaabta.",
-        "label": "Qiimaha iibka",
-        "placeholder": "tusaale 1.50",
-        "confirm": "Ku celi dhammaan",
+        "title": "Dejiyi qiimaha",
+        "description": "Cusbooneysii {count, plural, one {# alaab} other {# alaab}}.",
+        "label": "Qiimaha",
+        "placeholder": "1.50",
+        "confirm": "Codso",
         "submitting": "Lagu dabaqayaa…"
       },
       "thresholdDialog": {
-        "title": "Dejiyi xadka dalbashada",
-        "description": "Waxay khusaynaysaa {count, plural, one {# alaab} other {# alaab}}. Xadka waxaa lagu kaydiyaa cabbirka asaasiga ee alaabta (kg, pc, iwm). Faaruji si aad u tirtirto xadka.",
+        "title": "Dejiyi xadka",
+        "description": "Cusbooneysii {count, plural, one {# alaab} other {# alaab}}. Faaruji = xad ma jiro.",
         "label": "Dalbo marka",
-        "placeholder": "tusaale 10",
-        "confirm": "Ku celi dhammaan",
+        "placeholder": "10",
+        "confirm": "Codso",
         "submitting": "Lagu dabaqayaa…"
       },
       "cancel": "Jooji",
-      "successPrice": "{count, plural, one {# alaab la cusbooneysiiyay} other {# alaab la cusbooneysiiyay}}.",
-      "successThreshold": "{count, plural, one {# alaab la cusbooneysiiyay} other {# alaab la cusbooneysiiyay}}.",
-      "errorPermission": "Kaliya milkiilayaasha ayaa cusbooneysii dhammaan sameyn kara.",
-      "errorGeneric": "Lama cusbooneysiin karin. Mar kale isku day."
+      "successPrice": "{count, plural, one {# alaab la cusbooneysiiyay.} other {# alaab la cusbooneysiiyay.}}",
+      "successThreshold": "{count, plural, one {# alaab la cusbooneysiiyay.} other {# alaab la cusbooneysiiyay.}}",
+      "errorPermission": "Milkiilo kaliya.",
+      "errorGeneric": "Lama cusbooneysiin karin."
     },
     "columns": {
       "name": "Alaab",
@@ -214,14 +214,14 @@
     "daysAgo": "{days, plural, one {# maalin ka hor} other {# maalmood ka hor}}",
     "noActivityAgo": "Wax dhaqdhaqaaq ah weli ma jirin",
     "empty": {
-      "receivablesTitle": "Wax deyn ah ma jiraan",
-      "receivablesDescription": "Hadda macmiil kuu leh lacag ma jiro.",
-      "payablesTitle": "Wax deyn ah ma jirin",
-      "payablesDescription": "Hadda wax aad u leedahay qeybiyaha ma jiro."
+      "receivablesTitle": "Deyn ma jirto",
+      "receivablesDescription": "Macmiil kuu leh lacag ma jiro.",
+      "payablesTitle": "Deyn ma jirto",
+      "payablesDescription": "Wax aad u leedahay ma jiro."
     },
     "noShop": {
       "title": "Wax dukaan ah lama dooran",
-      "description": "Dooro ama dejiyaha dukaan si aad u aragto warbixinta."
+      "description": "Dooro dukaan."
     }
   },
   "partyDetail": {
@@ -246,13 +246,13 @@
     "directionOut": "Bixiyay",
     "statusVoided": "La baajiyay",
     "empty": {
-      "sales": "Wax iib ah uma jiraan macmiilkan weli.",
-      "receives": "Wax qaadasho ah uma jiraan qeybiyahan weli.",
-      "payments": "Wax bixin ah weli ma jirin."
+      "sales": "Wax iib ah ma jiraan.",
+      "receives": "Wax qaadasho ah ma jiraan.",
+      "payments": "Wax bixin ah ma jiraan."
     },
     "notFound": {
-      "title": "Lama helin shaqsi",
-      "description": "Macmiilkaan/qeybiyahaan ma jiro, ama ma haysatid gelitaan."
+      "title": "Lama helin",
+      "description": "Macmiil/qeybiye ma jiro."
     }
   },
   "people": {
@@ -269,20 +269,20 @@
       "suppliersPlaceholder": "Raadi qeybiyeyaasha magaca ama taleefanka…"
     },
     "empty": {
-      "customersTitle": "Wax macaamiil ah weli ma jiraan",
-      "customersDescription": "Macaamiisha halkan ayay ka muuqdaan marka iib amaah ah ama bixin lagu diiwaan geliyo mobaylka.",
-      "suppliersTitle": "Wax qeybiye ah weli ma jirin",
-      "suppliersDescription": "Qeybiyeyaasha halkan ayay ka muuqdaan marka qaadasho amaah ah ama bixin lagu diiwaan geliyo mobaylka."
+      "customersTitle": "Wax macmiil ah ma jiraan",
+      "customersDescription": "Waxaa lagu daraa marka iibka la diiwaan geliyo.",
+      "suppliersTitle": "Wax qeybiye ah ma jiraan",
+      "suppliersDescription": "Waxaa lagu daraa marka qaadasho la diiwaan geliyo."
     },
     "noShop": {
       "title": "Wax dukaan ah lama dooran",
-      "description": "Dooro ama dejiyaha dukaan si aad u aragto macaamiisha iyo qeybiyeyaasha."
+      "description": "Dooro dukaan."
     }
   },
   "overview": {
     "noShop": {
-      "title": "Wax dukaan ah lama dooran",
-      "description": "Marka laguu sameeyo dukaan, dashboardkiisa ayaa halkan ka muuqan doona."
+      "title": "Dukaan weli ma jiro",
+      "description": "Dejiyaha dukaan si aad u aragto dashboard-ka."
     },
     "kpis": {
       "salesToday": "Iibyada maanta",
@@ -294,14 +294,14 @@
       "salesCount": "{count, plural, =0 {iib ma jirin} one {# iib} other {# iib}}"
     },
     "topCustomers": {
-      "title": "Macaamiisha ugu sarreeya deynta",
-      "empty": "Wax deyn ah weli kuma jiraan macaamiisha.",
-      "viewAll": "Eeg dhammaan macaamiisha"
+      "title": "Macaamiisha sare",
+      "empty": "Deyn ma jirto.",
+      "viewAll": "Dhammaan macaamiisha"
     },
     "topSuppliers": {
-      "title": "Qeybiyeyaasha ugu sarreeya deynta",
-      "empty": "Wax deyn ah weli kuma jiraan qeybiyeyaasha.",
-      "viewAll": "Eeg dhammaan qeybiyeyaasha"
+      "title": "Qeybiyeyaasha sare",
+      "empty": "Deyn ma jirto.",
+      "viewAll": "Dhammaan qeybiyeyaasha"
     }
   },
   "modulePlaceholder": {
@@ -333,22 +333,22 @@
     "tabPhone": "Taleefanka",
     "phoneLabel": "Lambarka taleefanka",
     "phonePlaceholder": "+252612345678",
-    "phoneHelp": "Waxaan kuu soo dirayaa koodh 6 lambar ah.",
+    "phoneHelp": "Waxaan kuu soo dirayaa koodh.",
     "emailLabel": "Iimaylka",
     "emailPlaceholder": "you@example.com",
-    "emailHelp": "Waxaan kuu soo diri doonaa link aad ku soo gasho.",
+    "emailHelp": "Waxaan iimaylka ku soo diri doonaa koodh.",
     "emailSendLink": "Dir linkiga",
     "emailSending": "Diridda…",
     "emailSent": "Hubi sanduuqaaga iimaylka",
     "emailSentBody": "Waxaan u dirnay link soo galid ah {email}. Riix si aad u sii wadato.",
-    "emailErrorNoAccount": "Iimaylkaas account uma jiro. Marka hore is-diiwaan geli abka mobaylka.",
-    "emailErrorGeneric": "Lama diri karin linkiga. Mar kale isku day.",
+    "emailErrorNoAccount": "Iimaylkaas account uma jiro.",
+    "emailErrorGeneric": "Lama diri karin koodhka.",
     "sendCode": "Dir koodhka",
     "sending": "Diridda…",
-    "errorPhone": "Geli lambar sax ah, tusaale +252612345678.",
-    "errorGeneric": "Wax baa khaldamay. Mar kale isku day.",
-    "errorSend": "Lama dirin karin koodhka. Mar kale isku day.",
-    "callbackError": "Linkigaas soo galid ma shaqayn. Mid kale dir."
+    "errorPhone": "Geli lambar sax ah (tusaale +252612345678).",
+    "errorGeneric": "Wax baa khaldamay.",
+    "errorSend": "Lama dirin karin koodhka.",
+    "callbackError": "Linkigii waa dhacay. Mid cusub dir."
   },
   "setup": {
     "title": "Hagaajinta",
@@ -359,14 +359,14 @@
     },
     "profile": {
       "title": "Profilekayga",
-      "description": "Magacaaga waxaa lagu arkayaa meel kasta oo portalka ah ee la muujinayo cidda waxa ay sameysay — diiwaanka, liiska shaqaalaha, iyo warbixinada. Waxaa arki kara dadka aad la wadaagto dukaan.",
+      "description": "Lagu arki doonaa meel kasta oo la sheegayo cidda wax sameysay.",
       "nameLabel": "Magaca la muujinayo",
-      "namePlaceholder": "tusaale Asha Mohamed",
+      "namePlaceholder": "Asha Mohamed",
       "save": "Kaydi",
       "saving": "Kaydinta…",
       "saved": "Waa la kaydiyay.",
       "errorEmpty": "Geli magac.",
-      "errorGeneric": "Lama kaydin karin. Mar kale isku day."
+      "errorGeneric": "Lama kaydin karin."
     },
     "staff": {
       "title": "Shaqaalaha",
@@ -391,21 +391,21 @@
     },
     "addDialog": {
       "title": "Ku dar shaqaale",
-      "description": "Marka uu mar kale soo galo, ayuu dukaanka arki doonaa — link ama koodh uma baahna. Kaliya u sheeg taleefan ama iimaylka uu isticmaalo.",
+      "description": "Marka uu mar kale soo galo, ayuu dukaanka arki doonaa.",
       "contactLabel": "Taleefan ama iimayl",
       "contactPlaceholder": "+252612345678 ama qof@example.com",
-      "contactHelp": "Si toos ah ayaan u garanaynaa. Taleefankuu si toos u rasaastooyaa +252 haddii aanad geli code-ka dalka.",
+      "contactHelp": "Taleefanka wuxuu si toos ah u raacayaa +252.",
       "roleLabel": "Doorka",
-      "roleCashier": "Maamule iibka — kaliya hawlaha maalinlaha",
-      "roleOwner": "Milkiile — gelitaan dhammaystiran",
+      "roleCashier": "Maamule iibka",
+      "roleOwner": "Milkiile",
       "cancel": "Jooji",
       "confirm": "Ku dar",
       "submitting": "Lagu darayaa…",
-      "successPhone": "Waxaa lagu daray {phone}. Marka xiga ee uu soo galo, ayuu dukaanka arki doonaa.",
-      "successEmail": "Waxaa lagu daray {email}. Marka xiga ee uu soo galo, ayuu dukaanka arki doonaa.",
-      "errorInvalidContact": "Geli taleefan sax ah (E.164, tusaale +252612345678) ama iimayl.",
-      "errorPermission": "Kaliya milkiilaha dukaanka ayaa shaqaale ku dari kara.",
-      "errorGeneric": "Lama dari karin. Mar kale isku day."
+      "successPhone": "Waxaa lagu daray {phone}.",
+      "successEmail": "Waxaa lagu daray {email}.",
+      "errorInvalidContact": "Geli taleefan ama iimayl sax ah.",
+      "errorPermission": "Milkiilo kaliya.",
+      "errorGeneric": "Lama dari karin."
     }
   },
   "table": {
@@ -433,7 +433,7 @@
     "sentTo": "Loo diray {phone}.",
     "wrongNumber": "Lambar khaldan?",
     "errorLength": "Koodhku waa 6–10 xaraf.",
-    "errorVerify": "Koodhkaas ma shaqayn. Mar kale isku day.",
+    "errorVerify": "Koodh khaldan.",
     "submit": "Soo gal",
     "verifying": "Xaqiijinta…"
   }
