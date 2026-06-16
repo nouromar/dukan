@@ -307,11 +307,10 @@
       "name": "Alaab",
       "category": "Qaybta",
       "stock": "Kayd",
-      "threshold": "Dalbasho",
+      "cost": "Qarashka",
       "price": "Qiimaha"
     },
     "noPrice": "—",
-    "lowStockBadge": "Yar",
     "outOfStockBadge": "Dhammaaday",
     "empty": {
       "title": "Wax alaab ah ma jiraan",

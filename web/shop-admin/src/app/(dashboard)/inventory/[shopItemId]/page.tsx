@@ -102,10 +102,6 @@ export default async function ProductDetailPage({
   ).map((u) => ({ code: u.code, label: u.default_label }));
 
   const stock = Number(detail.header.current_stock ?? 0);
-  const threshold =
-    detail.header.reorder_threshold === null
-      ? null
-      : Number(detail.header.reorder_threshold);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -123,7 +119,6 @@ export default async function ProductDetailPage({
         initialCategoryId={currentCategoryId}
         initialCategoryName={detail.header.category_name}
         initialIsActive={detail.header.is_active}
-        initialThreshold={threshold}
         currentStock={stock}
         baseUnitLabel={detail.header.base_unit_label}
         categories={categories}

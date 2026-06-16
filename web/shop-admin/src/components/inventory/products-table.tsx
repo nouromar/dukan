@@ -1,21 +1,20 @@
-// Client-side wrapper around DataTable for the Products list. Drives:
-//   - search input that filters in-memory (131 rows is small; we can
-//     swap to server-side search via list_shop_items(p_query) later
-//     when shops grow real catalogs)
-//   - stock badge: red "Out" when current_stock <= 0; amber "Low"
-//     when current_stock <= reorder_threshold (threshold may be null,
-//     in which case Low never triggers)
-//   - dim missing prices to "—"
+// Client-side wrapper around DataTable for the Products list.
 //
-// Read-only for now. Inline edits for reorder_threshold + sale_price
-// are tracked as #286.
+//   - search filters in-memory (will move to server-side via
+//     list_shop_items(p_query) once shops grow real catalogs).
+//   - Out-of-stock badge when current_stock <= 0. No low-stock /
+//     reorder badge in v1 — reorder thresholds aren't a thing in the
+//     v1 East African market.
+//   - Cost + price render side-by-side in the same packaging unit
+//     (the default sale packaging) so margin is obvious at a glance.
+//   - Bulk action: set price only (no bulk-threshold in v1).
 
 "use client";
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Search, DollarSign, AlertTriangle } from "lucide-react";
+import { Search, DollarSign } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatMoney, formatCount } from "shared";
 import { DataTable, EmptyState, type BulkAction } from "@/components/data-table";
@@ -34,8 +33,8 @@ export type Product = {
   base_unit_code: string;
   base_unit_label: string;
   current_stock: number;
-  reorder_threshold: number | null;
   default_sale_price: number | null;
+  default_sale_cost: number | null;
   is_active: boolean;
 };
 
@@ -106,17 +105,11 @@ export function ProductsTable({
         header: t("columns.stock"),
         cell: ({ row }) => {
           const stock = row.original.current_stock;
-          const threshold = row.original.reorder_threshold;
           const out = stock <= 0;
-          const low = !out && threshold !== null && stock <= threshold;
           return (
             <div className="flex items-center gap-2 tabular-nums">
               <span
-                className={cn(
-                  "font-medium",
-                  out && "text-destructive",
-                  low && "text-amber-600 dark:text-amber-500",
-                )}
+                className={cn("font-medium", out && "text-destructive")}
               >
                 {count(stock)} {row.original.base_unit_label}
               </span>
@@ -124,25 +117,23 @@ export function ProductsTable({
                 <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive">
                   {t("outOfStockBadge")}
                 </span>
-              ) : low ? (
-                <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-                  {t("lowStockBadge")}
-                </span>
               ) : null}
             </div>
           );
         },
       },
       {
-        accessorKey: "reorder_threshold",
-        header: t("columns.threshold"),
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {row.original.reorder_threshold !== null
-              ? `${count(row.original.reorder_threshold)} ${row.original.base_unit_label}`
-              : "—"}
-          </span>
-        ),
+        accessorKey: "default_sale_cost",
+        header: t("columns.cost"),
+        cell: ({ row }) =>
+          row.original.default_sale_cost !== null &&
+          row.original.default_sale_cost > 0 ? (
+            <span className="tabular-nums text-muted-foreground">
+              {money(row.original.default_sale_cost)}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">{t("noPrice")}</span>
+          ),
       },
       {
         accessorKey: "default_sale_price",
@@ -198,16 +189,6 @@ export function ProductsTable({
                     onClick: () => {
                       setSelectedIdsForDialog(ids);
                       setBulkVariant("price");
-                    },
-                  },
-                  {
-                    id: "bulk-threshold",
-                    label: tBulk("setThreshold"),
-                    icon: AlertTriangle,
-                    variant: "outline",
-                    onClick: () => {
-                      setSelectedIdsForDialog(ids);
-                      setBulkVariant("threshold");
                     },
                   },
                 ];

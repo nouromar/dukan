@@ -36,6 +36,7 @@ type RpcRow = {
   unit_count: number;
   is_active: boolean;
   default_sale_price: number | string | null;
+  default_sale_cost: number | string | null;
   any_price_set: boolean;
 };
 
@@ -94,10 +95,12 @@ export default async function InventoryPage() {
     base_unit_code: r.base_unit_code,
     base_unit_label: r.base_unit_label,
     current_stock: Number(r.current_stock ?? 0),
-    reorder_threshold:
-      r.reorder_threshold === null ? null : Number(r.reorder_threshold),
     default_sale_price:
       r.default_sale_price === null ? null : Number(r.default_sale_price),
+    default_sale_cost:
+      r.default_sale_cost === null || r.default_sale_cost === undefined
+        ? null
+        : Number(r.default_sale_cost),
     is_active: r.is_active,
   }));
 

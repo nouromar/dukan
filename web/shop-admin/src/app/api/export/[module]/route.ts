@@ -145,7 +145,7 @@ async function exportInventory(
     "category",
     "base_unit",
     "current_stock",
-    "reorder_threshold",
+    "default_sale_cost",
     "default_sale_price",
     "is_active",
     "currency",
@@ -156,9 +156,9 @@ async function exportInventory(
     r.category_name ?? "",
     r.base_unit_code,
     formatCount(Number(r.current_stock ?? 0), "en"),
-    r.reorder_threshold === null
+    r.default_sale_cost === null || r.default_sale_cost === undefined
       ? ""
-      : formatCount(Number(r.reorder_threshold), "en"),
+      : formatMoney(Number(r.default_sale_cost), currency, "en"),
     r.default_sale_price === null
       ? ""
       : formatMoney(Number(r.default_sale_price), currency, "en"),

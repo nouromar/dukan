@@ -307,11 +307,10 @@
       "name": "Product",
       "category": "Category",
       "stock": "Stock",
-      "threshold": "Reorder at",
-      "price": "Default price"
+      "cost": "Cost",
+      "price": "Price"
     },
     "noPrice": "—",
-    "lowStockBadge": "Low",
     "outOfStockBadge": "Out",
     "empty": {
       "title": "No products yet",
