@@ -325,7 +325,20 @@
   "userMenu": {
     "signedInAs": "Waxaad u soo gashay",
     "signOut": "Ka bax",
-    "language": "Luqadda"
+    "language": "Luqadda",
+    "editName": "Bedel magaca",
+    "nameDialog": {
+      "title": "Bedel magaca",
+      "description": "Lagu arki doonaa meel kasta oo la sheegayo cidda wax sameysay.",
+      "label": "Magaca la muujinayo",
+      "placeholder": "Asha Mohamed",
+      "cancel": "Jooji",
+      "save": "Kaydi",
+      "saving": "Kaydinta…",
+      "saved": "Waa la kaydiyay.",
+      "errorEmpty": "Geli magac.",
+      "errorGeneric": "Lama kaydin karin."
+    }
   },
   "login": {
     "title": "Soo gal",
@@ -356,17 +369,6 @@
     "noShop": {
       "title": "Wax dukaan ah lama dooran",
       "description": "Dooro ama dejiyaha dukaan si aad u maamusho shaqaalaha."
-    },
-    "profile": {
-      "title": "Profilekayga",
-      "description": "Lagu arki doonaa meel kasta oo la sheegayo cidda wax sameysay.",
-      "nameLabel": "Magaca la muujinayo",
-      "namePlaceholder": "Asha Mohamed",
-      "save": "Kaydi",
-      "saving": "Kaydinta…",
-      "saved": "Waa la kaydiyay.",
-      "errorEmpty": "Geli magac.",
-      "errorGeneric": "Lama kaydin karin."
     },
     "staff": {
       "title": "Shaqaalaha",

@@ -16,7 +16,6 @@ import { getCurrentShop } from "@/lib/current-shop";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Can } from "@/components/auth/can";
 import { AddStaffDialog } from "@/components/setup/add-staff-dialog";
-import { MyProfileCard } from "@/components/setup/my-profile-card";
 
 type MembershipRow = {
   user_id: string;
@@ -36,6 +35,10 @@ type InviteRow = {
   created_at: string;
 };
 type ProfileRow = { user_id: string; display_name: string };
+
+// Display-name self-edit lives in the top-bar user menu (see
+// UserMenuPanel). Keeping it out of /setup keeps that page focused
+// on shop-level config + staff list.
 
 export default async function SetupPage() {
   const t = await getTranslations("setup");
@@ -91,8 +94,6 @@ export default async function SetupPage() {
       p.display_name,
     ]),
   );
-  const myDisplayName =
-    currentUserId ? (nameByUserId.get(currentUserId) ?? "") : "";
 
   const members = ((membersRes.data ?? []) as MembershipRow[]).filter(
     (m) => m.is_active,
@@ -116,8 +117,6 @@ export default async function SetupPage() {
           <AddStaffDialog shopId={currentShop.id} />
         </Can>
       </div>
-
-      <MyProfileCard initialName={myDisplayName} />
 
       <Card>
         <CardHeader>

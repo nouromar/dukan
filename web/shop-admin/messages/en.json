@@ -325,7 +325,20 @@
   "userMenu": {
     "signedInAs": "Signed in as",
     "signOut": "Sign out",
-    "language": "Language"
+    "language": "Language",
+    "editName": "Edit name",
+    "nameDialog": {
+      "title": "Edit name",
+      "description": "Shown wherever the portal lists who did what.",
+      "label": "Display name",
+      "placeholder": "Asha Mohamed",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved.",
+      "errorEmpty": "Enter a name.",
+      "errorGeneric": "Couldn't save."
+    }
   },
   "login": {
     "title": "Sign in",
@@ -356,17 +369,6 @@
     "noShop": {
       "title": "No shop selected",
       "description": "Pick or set up a shop to manage its staff."
-    },
-    "profile": {
-      "title": "My profile",
-      "description": "Shown wherever the portal lists who did what.",
-      "nameLabel": "Display name",
-      "namePlaceholder": "Asha Mohamed",
-      "save": "Save",
-      "saving": "Saving…",
-      "saved": "Saved.",
-      "errorEmpty": "Enter a name.",
-      "errorGeneric": "Couldn't save."
     },
     "staff": {
       "title": "Staff",
