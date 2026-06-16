@@ -228,6 +228,20 @@
   },
   "partyDetail": {
     "back": "← Dhammaan dadka",
+    "edit": "Bedel",
+    "editDialog": {
+      "title": "Bedel xubinta",
+      "nameLabel": "Magaca",
+      "phoneLabel": "Taleefan",
+      "phonePlaceholder": "+252612345678",
+      "cancel": "Jooji",
+      "save": "Kaydi",
+      "saving": "Kaydinta…",
+      "saved": "Waa la kaydiyay.",
+      "errorName": "Geli magac.",
+      "errorPhone": "Foomka taleefanka khaldan.",
+      "errorGeneric": "Lama kaydin karin."
+    },
     "typeCustomer": "Macmiil",
     "typeSupplier": "Qeybiye",
     "balanceOwesYou": "Wuxuu kuu leeyahay",

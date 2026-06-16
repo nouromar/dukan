@@ -15,6 +15,8 @@ import {
   type TxnRow,
   type PaymentRow,
 } from "@/components/people/detail/transactions-list";
+import { EditPartyDialog } from "@/components/people/detail/edit-party-dialog";
+import { Can } from "@/components/auth/can";
 
 type PartyDetail = {
   header: {
@@ -83,23 +85,33 @@ export default async function PartyDetailPage({
         {t("back")}
       </Link>
 
-      <header className="space-y-2">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {detail.header.name}
-          </h1>
-          <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            {isCustomer ? t("typeCustomer") : t("typeSupplier")}
-          </span>
-          {!detail.header.is_active ? (
-            <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-              {t("inactive")}
+      <header className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight">
+              {detail.header.name}
+            </h1>
+            <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              {isCustomer ? t("typeCustomer") : t("typeSupplier")}
             </span>
-          ) : null}
+            {!detail.header.is_active ? (
+              <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                {t("inactive")}
+              </span>
+            ) : null}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {detail.header.phone ?? t("noPhone")}
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {detail.header.phone ?? t("noPhone")}
-        </p>
+        <Can capability="people.party.edit">
+          <EditPartyDialog
+            shopId={currentShop.id}
+            partyId={detail.header.id}
+            initialName={detail.header.name}
+            initialPhone={detail.header.phone}
+          />
+        </Can>
       </header>
 
       <Card>

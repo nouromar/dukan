@@ -228,6 +228,20 @@
   },
   "partyDetail": {
     "back": "← All people",
+    "edit": "Edit",
+    "editDialog": {
+      "title": "Edit party",
+      "nameLabel": "Name",
+      "phoneLabel": "Phone",
+      "phonePlaceholder": "+252612345678",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved.",
+      "errorName": "Enter a name.",
+      "errorPhone": "Phone format invalid.",
+      "errorGeneric": "Couldn't save."
+    },
     "typeCustomer": "Customer",
     "typeSupplier": "Supplier",
     "balanceOwesYou": "Owes you",
