@@ -9,95 +9,6 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 // ---------------------------------------------------------------
-// Edit product — multi-RPC save
-// ---------------------------------------------------------------
-
-export type EditProductResult =
-  | { ok: true }
-  | { ok: false; code: "permission" | "generic"; message?: string };
-
-/**
- * Calls each underlying RPC only for fields the user actually changed.
- * Non-atomic — if one of the calls fails after another succeeds, the
- * earlier change persists. That's acceptable for this v1 surface
- * because each field is independent (no integrity dependencies).
- */
-export async function editProductAction(input: {
-  shopId: string;
-  shopItemId: string;
-  /** New display alias to add (skipped when null). */
-  newName: string | null;
-  /** Locale for the alias (matches the user's UI locale). */
-  newNameLocale: string;
-  /** undefined = don't touch; null = clear category; uuid = set. */
-  categoryId: string | null | undefined;
-  /** undefined = don't touch; null = clear threshold; number = set. */
-  threshold: number | null | undefined;
-  /** undefined = don't touch; boolean = set is_active flag. */
-  isActive: boolean | undefined;
-}): Promise<EditProductResult> {
-  const supabase = await createSupabaseServerClient();
-  const errors: string[] = [];
-
-  if (input.newName && input.newName.trim().length > 0) {
-    const { error } = await supabase.rpc("add_shop_item_alias", {
-      p_shop_id: input.shopId,
-      p_shop_item_id: input.shopItemId,
-      p_alias_text: input.newName.trim(),
-      p_language_code: input.newNameLocale,
-      p_is_display: true,
-      p_source: "manual",
-    });
-    if (error) errors.push(`alias: ${error.message}`);
-  }
-
-  // Distinguish "user provided category null/blank" from "user didn't touch
-  // the field". The page passes null when blank, but it's still valid to
-  // call set_shop_item_category with null (clear category). For v1 we
-  // skip the call when the value equals the current — the page is
-  // responsible for not passing a no-op.
-  if (input.categoryId !== undefined) {
-    const { error } = await supabase.rpc("set_shop_item_category", {
-      p_shop_id: input.shopId,
-      p_shop_item_id: input.shopItemId,
-      p_category_id: input.categoryId,
-    });
-    if (error) errors.push(`category: ${error.message}`);
-  }
-
-  if (input.threshold !== undefined) {
-    const { error } = await supabase.rpc("set_shop_item_reorder_threshold", {
-      p_shop_id: input.shopId,
-      p_shop_item_id: input.shopItemId,
-      p_reorder_threshold: input.threshold,
-    });
-    if (error) errors.push(`threshold: ${error.message}`);
-  }
-
-  if (input.isActive !== undefined) {
-    const { error } = await supabase.rpc("set_shop_item_active", {
-      p_shop_id: input.shopId,
-      p_shop_item_id: input.shopItemId,
-      p_is_active: input.isActive,
-    });
-    if (error) errors.push(`active: ${error.message}`);
-  }
-
-  if (errors.length > 0) {
-    const joined = errors.join("; ");
-    if (joined.toLowerCase().includes("not allowed")) {
-      return { ok: false, code: "permission", message: joined };
-    }
-    console.error("[edit-product] failed:", joined);
-    return { ok: false, code: "generic", message: joined };
-  }
-
-  revalidatePath(`/inventory/${input.shopItemId}`);
-  revalidatePath("/inventory");
-  return { ok: true };
-}
-
-// ---------------------------------------------------------------
 // Stock adjustment (owner-only — single-line wrapper around the
 // post_inventory_adjustment RPC)
 // ---------------------------------------------------------------
@@ -147,6 +58,203 @@ export async function adjustStockAction(input: {
   revalidatePath(`/inventory/${input.shopItemId}`);
   revalidatePath("/inventory");
   return { ok: true, adjustmentId: (data as string) ?? "" };
+}
+
+// ---------------------------------------------------------------
+// Inline-edit single fields (used by the redesigned product detail
+// page). Each takes an opaque diff, calls the existing single-field
+// RPC, and revalidates the detail + list paths.
+// ---------------------------------------------------------------
+
+export type FieldUpdateResult =
+  | { ok: true }
+  | { ok: false; code: "permission" | "generic"; message?: string };
+
+function classifyFieldError(message: string): FieldUpdateResult {
+  const m = message.toLowerCase();
+  if (m.includes("not allowed") || m.includes("owner")) {
+    return { ok: false, code: "permission", message };
+  }
+  return { ok: false, code: "generic", message };
+}
+
+/**
+ * Adds a display alias (effectively renames the product).
+ * Old display alias stays as a non-display alias for OCR/search reuse.
+ */
+export async function setProductNameAction(input: {
+  shopId: string;
+  shopItemId: string;
+  newName: string;
+  languageCode: string;
+}): Promise<FieldUpdateResult> {
+  if (input.newName.trim().length === 0) {
+    return { ok: false, code: "generic", message: "empty name" };
+  }
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("add_shop_item_alias", {
+    p_shop_id: input.shopId,
+    p_shop_item_id: input.shopItemId,
+    p_alias_text: input.newName.trim(),
+    p_language_code: input.languageCode,
+    p_is_display: true,
+    p_source: "manual",
+  });
+  if (error) return classifyFieldError(error.message ?? "");
+  revalidatePath(`/inventory/${input.shopItemId}`);
+  revalidatePath("/inventory");
+  return { ok: true };
+}
+
+export async function setProductCategoryAction(input: {
+  shopId: string;
+  shopItemId: string;
+  categoryId: string | null;
+}): Promise<FieldUpdateResult> {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("set_shop_item_category", {
+    p_shop_id: input.shopId,
+    p_shop_item_id: input.shopItemId,
+    p_category_id: input.categoryId,
+  });
+  if (error) return classifyFieldError(error.message ?? "");
+  revalidatePath(`/inventory/${input.shopItemId}`);
+  revalidatePath("/inventory");
+  return { ok: true };
+}
+
+export async function setProductThresholdAction(input: {
+  shopId: string;
+  shopItemId: string;
+  threshold: number | null;
+}): Promise<FieldUpdateResult> {
+  if (input.threshold !== null && (Number.isNaN(input.threshold) || input.threshold < 0)) {
+    return { ok: false, code: "generic", message: "invalid threshold" };
+  }
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("set_shop_item_reorder_threshold", {
+    p_shop_id: input.shopId,
+    p_shop_item_id: input.shopItemId,
+    p_reorder_threshold: input.threshold,
+  });
+  if (error) return classifyFieldError(error.message ?? "");
+  revalidatePath(`/inventory/${input.shopItemId}`);
+  revalidatePath("/inventory");
+  return { ok: true };
+}
+
+export async function setProductActiveAction(input: {
+  shopId: string;
+  shopItemId: string;
+  isActive: boolean;
+}): Promise<FieldUpdateResult> {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("set_shop_item_active", {
+    p_shop_id: input.shopId,
+    p_shop_item_id: input.shopItemId,
+    p_is_active: input.isActive,
+  });
+  if (error) return classifyFieldError(error.message ?? "");
+  revalidatePath(`/inventory/${input.shopItemId}`);
+  revalidatePath("/inventory");
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------
+// Packaging — add + deactivate
+// ---------------------------------------------------------------
+
+export type AddPackagingResult =
+  | { ok: true; shopItemUnitId: string }
+  | {
+      ok: false;
+      code: "validation" | "permission" | "duplicate" | "generic";
+      message?: string;
+    };
+
+/**
+ * Adds a new (non-base) packaging row to an existing shop_item.
+ * conversion_to_base must be > 0 and != 1 (a conversion of 1 would
+ * collide with the existing base-unit row).
+ */
+export async function addPackagingAction(input: {
+  shopId: string;
+  shopItemId: string;
+  unitCode: string;
+  conversionToBase: number;
+  salePrice: number | null;
+}): Promise<AddPackagingResult> {
+  if (!input.unitCode) {
+    return { ok: false, code: "validation", message: "unit_code required" };
+  }
+  if (
+    !Number.isFinite(input.conversionToBase) ||
+    input.conversionToBase <= 0
+  ) {
+    return { ok: false, code: "validation", message: "conversion must be > 0" };
+  }
+  if (input.salePrice !== null && (Number.isNaN(input.salePrice) || input.salePrice < 0)) {
+    return { ok: false, code: "validation", message: "invalid sale price" };
+  }
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("create_shop_item_unit", {
+    p_shop_id: input.shopId,
+    p_shop_item_id: input.shopItemId,
+    p_unit_code: input.unitCode,
+    p_conversion_to_base: input.conversionToBase,
+    p_sale_price: input.salePrice,
+  });
+  if (error) {
+    const msg = error.message?.toLowerCase() ?? "";
+    if (msg.includes("not allowed")) {
+      return { ok: false, code: "permission" };
+    }
+    if (msg.includes("unique") || msg.includes("already") || msg.includes("conflict")) {
+      return { ok: false, code: "duplicate" };
+    }
+    console.error("[inventory] create_shop_item_unit failed:", error);
+    return { ok: false, code: "generic", message: error.message };
+  }
+  revalidatePath(`/inventory/${input.shopItemId}`);
+  revalidatePath("/inventory");
+  return { ok: true, shopItemUnitId: (data as string) ?? "" };
+}
+
+export type DeactivatePackagingResult =
+  | { ok: true }
+  | {
+      ok: false;
+      code: "base_unit" | "permission" | "in_use" | "generic";
+      message?: string;
+    };
+
+export async function deactivatePackagingAction(input: {
+  shopId: string;
+  shopItemId: string;
+  shopItemUnitId: string;
+}): Promise<DeactivatePackagingResult> {
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("deactivate_shop_item_unit", {
+    p_shop_id: input.shopId,
+    p_shop_item_unit_id: input.shopItemUnitId,
+  });
+  if (error) {
+    const msg = error.message?.toLowerCase() ?? "";
+    if (msg.includes("base")) {
+      return { ok: false, code: "base_unit" };
+    }
+    if (msg.includes("not allowed")) {
+      return { ok: false, code: "permission" };
+    }
+    if (msg.includes("reference") || msg.includes("in use") || msg.includes("constraint")) {
+      return { ok: false, code: "in_use" };
+    }
+    console.error("[inventory] deactivate_shop_item_unit failed:", error);
+    return { ok: false, code: "generic", message: error.message };
+  }
+  revalidatePath(`/inventory/${input.shopItemId}`);
+  revalidatePath("/inventory");
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------

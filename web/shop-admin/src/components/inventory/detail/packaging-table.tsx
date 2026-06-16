@@ -1,7 +1,7 @@
 // Packaging breakdown table. One row per shop_item_unit returned by
 // get_shop_item.units. Sale-price cell is inline-editable when the
-// viewer can edit (capability inventory.product.edit) — auto-saves
-// on blur or Enter via setUnitPriceAction.
+// viewer can edit. Each non-base packaging gets a Disable action in
+// the last column.
 
 "use client";
 
@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useShopContext } from "@/lib/shop-context";
 import { PriceEditCell } from "./price-edit-cell";
+import { DisablePackagingButton } from "./disable-packaging-button";
 
 export type PackagingUnit = {
   shop_item_unit_id: string;
@@ -53,9 +54,6 @@ export function PackagingTable({
   const t = useTranslations("productDetail.packaging");
   const tProd = useTranslations("productDetail");
   const { capabilities } = useShopContext();
-  // Single-row edits use the cashier-or-better cap; align here.
-  // (Bulk edits require inventory.product.bulk_edit; this is the
-  // looser gate matching the underlying RPC's auth_can_post_shop.)
   const canEdit = capabilities.has("inventory.product.edit");
   const money = (n: number) => formatMoney(n, currencyCode, locale);
 
@@ -96,13 +94,18 @@ export function PackagingTable({
             <TableHead className="text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("columns.defaultReceive")}
             </TableHead>
+            {canEdit ? (
+              <TableHead className="w-24 text-right text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("columns.actions")}
+              </TableHead>
+            ) : null}
           </TableRow>
         </TableHeader>
         <TableBody>
           {sorted.map((u) => (
             <TableRow
               key={u.shop_item_unit_id}
-              className={cn(!u.is_active && "text-muted-foreground")}
+              className={cn(!u.is_active && "text-muted-foreground opacity-60")}
             >
               <TableCell className={cn("font-medium", !u.is_active && "line-through")}>
                 {u.unit_label}
@@ -136,6 +139,17 @@ export function PackagingTable({
               <TableCell className="text-center text-primary">
                 {u.is_default_receive ? t("defaultYes") : ""}
               </TableCell>
+              {canEdit ? (
+                <TableCell className="text-right">
+                  {!u.is_base_unit && u.is_active ? (
+                    <DisablePackagingButton
+                      shopId={shopId}
+                      shopItemId={shopItemId}
+                      shopItemUnitId={u.shop_item_unit_id}
+                    />
+                  ) : null}
+                </TableCell>
+              ) : null}
             </TableRow>
           ))}
         </TableBody>

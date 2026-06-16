@@ -87,7 +87,7 @@ export default async function SetupPage() {
     supabase.from("user_profile").select("user_id, display_name"),
     supabase.auth.getUser(),
     supabase.from("currency").select("code, symbol").order("code"),
-    supabase.from("language").select("code, default_label").order("code"),
+    supabase.from("language").select("code, name").order("code"),
   ]);
   for (const r of [membersRes, rolesRes, invitesRes, profilesRes]) {
     if (r.error) {
@@ -99,8 +99,8 @@ export default async function SetupPage() {
     (currenciesRes.data ?? []) as Array<{ code: string; symbol: string | null }>
   ).map((c) => ({ code: c.code, label: c.symbol ?? c.code }));
   const languages: LanguageOption[] = (
-    (languagesRes.data ?? []) as Array<{ code: string; default_label: string }>
-  ).map((l) => ({ code: l.code, label: l.default_label }));
+    (languagesRes.data ?? []) as Array<{ code: string; name: string }>
+  ).map((l) => ({ code: l.code, label: l.name }));
 
   const currentUserId = userRes.data.user?.id ?? null;
   const roleCodeById = new Map(

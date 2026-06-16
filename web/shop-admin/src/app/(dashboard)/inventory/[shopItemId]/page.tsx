@@ -1,13 +1,10 @@
-// Product detail. Single get_shop_item RPC returns header + packaging
-// units + aliases + barcodes for the chosen shop_item.
-//
-// Read-only for now. Add/remove aliases, change default pack, edit
-// price come later — all need an audited mutation path.
+// Product detail. Header + stock/threshold + packaging + aliases.
+// Inline-editable throughout — no Edit dialog. Each field saves
+// individually via its own Server Action.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations, getLocale } from "next-intl/server";
-import { formatCount } from "shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentShop } from "@/lib/current-shop";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -16,14 +13,20 @@ import {
   type PackagingUnit,
 } from "@/components/inventory/detail/packaging-table";
 import {
-  EditProductDialog,
-  type EditCategoryOption,
-} from "@/components/inventory/detail/edit-product-dialog";
+  ProductDetailHeader,
+  type DetailCategoryOption,
+} from "@/components/inventory/detail/product-detail-header";
+import { StockCardInline } from "@/components/inventory/detail/stock-card-inline";
 import {
   AdjustStockDialog,
   type AdjustmentReason,
 } from "@/components/inventory/detail/adjust-stock-dialog";
+import {
+  AddPackagingDialog,
+  type PackagingUnitOption,
+} from "@/components/inventory/detail/add-packaging-dialog";
 import { Can } from "@/components/auth/can";
+import { formatCount } from "shared";
 import { cn } from "@/lib/utils";
 
 type ProductDetail = {
@@ -58,12 +61,10 @@ export default async function ProductDetailPage({
   const locale = await getLocale();
   const { currentShop } = await getCurrentShop();
 
-  if (!currentShop) {
-    notFound();
-  }
+  if (!currentShop) notFound();
 
   const supabase = await createSupabaseServerClient();
-  const [productRes, categoriesRes, shopItemRes, reasonsRes] =
+  const [productRes, categoriesRes, shopItemRes, reasonsRes, unitsRes] =
     await Promise.all([
       supabase.rpc("get_shop_item", {
         p_shop_id: currentShop.id,
@@ -82,6 +83,7 @@ export default async function ProductDetailPage({
         .select("code, label, is_increase")
         .eq("is_active", true)
         .order("code"),
+      supabase.from("unit").select("code, default_label").order("code"),
     ]);
   if (productRes.error) {
     if (productRes.error.message?.includes("not found")) {
@@ -92,7 +94,8 @@ export default async function ProductDetailPage({
   }
   const detail = productRes.data as ProductDetail | null;
   if (!detail) notFound();
-  const categories: EditCategoryOption[] = (
+
+  const categories: DetailCategoryOption[] = (
     (categoriesRes.data ?? []) as Array<{ id: string; name: string }>
   ).map((c) => ({ id: c.id, name: c.name }));
   const currentCategoryId =
@@ -104,106 +107,68 @@ export default async function ProductDetailPage({
       is_increase: boolean | null;
     }>
   ).map((r) => ({ code: r.code, label: r.label, is_increase: r.is_increase }));
+  const unitOptions: PackagingUnitOption[] = (
+    (unitsRes.data ?? []) as Array<{ code: string; default_label: string }>
+  ).map((u) => ({ code: u.code, label: u.default_label }));
 
   const stock = Number(detail.header.current_stock ?? 0);
   const threshold =
     detail.header.reorder_threshold === null
       ? null
       : Number(detail.header.reorder_threshold);
-  const out = stock <= 0;
-  const low = !out && threshold !== null && stock <= threshold;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <Link
-        href="/inventory"
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        {t("back")}
-      </Link>
+      <div className="flex items-center justify-between gap-4">
+        <Link
+          href="/inventory"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          {t("back")}
+        </Link>
+        <Can capability="inventory.adjustment.post">
+          <AdjustStockDialog
+            shopId={currentShop.id}
+            shopItemId={detail.header.shop_item_id}
+            currentStockDisplay={`${formatCount(stock, locale)} ${detail.header.base_unit_label}`}
+            unitLabel={detail.header.base_unit_label}
+            reasons={adjustmentReasons}
+          />
+        </Can>
+      </div>
 
-      <header className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight">
-              {detail.header.display_name}
-            </h1>
-            {!detail.header.is_active ? (
-              <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                {t("inactive")}
-              </span>
-            ) : null}
-          </div>
-          {detail.header.category_name ? (
-            <p className="text-sm text-muted-foreground">
-              {detail.header.category_name}
-            </p>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2">
-          <Can capability="inventory.adjustment.post">
-            <AdjustStockDialog
-              shopId={currentShop.id}
-              shopItemId={detail.header.shop_item_id}
-              currentStockDisplay={`${formatCount(stock, locale)} ${detail.header.base_unit_label}`}
-              unitLabel={detail.header.base_unit_label}
-              reasons={adjustmentReasons}
-            />
-          </Can>
-          <Can capability="inventory.product.edit">
-            <EditProductDialog
-              shopId={currentShop.id}
-              shopItemId={detail.header.shop_item_id}
-              initialName={detail.header.display_name}
-              initialCategoryId={currentCategoryId}
-              initialThreshold={
-                detail.header.reorder_threshold === null
-                  ? null
-                  : Number(detail.header.reorder_threshold)
-              }
-              initialIsActive={detail.header.is_active}
-              categories={categories}
-            />
-          </Can>
-        </div>
-      </header>
+      <ProductDetailHeader
+        shopId={currentShop.id}
+        shopItemId={detail.header.shop_item_id}
+        initialName={detail.header.display_name}
+        initialCategoryId={currentCategoryId}
+        initialCategoryName={detail.header.category_name}
+        initialIsActive={detail.header.is_active}
+        categories={categories}
+      />
+
+      <StockCardInline
+        shopId={currentShop.id}
+        shopItemId={detail.header.shop_item_id}
+        currentStock={stock}
+        baseUnitLabel={detail.header.base_unit_label}
+        initialThreshold={threshold}
+        locale={locale}
+      />
 
       <Card>
-        <CardContent className="pt-6">
-          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t("stock.label")}
-          </div>
-          <div className="mt-1 flex items-baseline gap-3">
-            <span
-              className={cn(
-                "text-3xl font-semibold tabular-nums",
-                out && "text-destructive",
-                low && "text-amber-600 dark:text-amber-500",
-              )}
-            >
-              {formatCount(stock, locale)} {detail.header.base_unit_label}
-            </span>
-            {out ? (
-              <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                {t("stock.outBadge")}
-              </span>
-            ) : low ? (
-              <span className="rounded bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-                {t("stock.lowBadge", {
-                  threshold: formatCount(threshold ?? 0, locale),
-                  unit: detail.header.base_unit_label,
-                })}
-              </span>
-            ) : null}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium">
             {t("sections.packaging")}
           </CardTitle>
+          <Can capability="inventory.product.edit">
+            <AddPackagingDialog
+              shopId={currentShop.id}
+              shopItemId={detail.header.shop_item_id}
+              baseUnitLabel={detail.header.base_unit_label}
+              units={unitOptions}
+            />
+          </Can>
         </CardHeader>
         <CardContent>
           <PackagingTable

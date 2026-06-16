@@ -181,12 +181,38 @@
         "salePrice": "Sale price",
         "lastCost": "Last cost",
         "defaultSale": "Default sale",
-        "defaultReceive": "Default receive"
+        "defaultReceive": "Default receive",
+        "actions": ""
       },
       "defaultYes": "✓",
       "empty": "No packaging.",
       "priceSaved": "Price saved.",
-      "priceError": "Couldn't save price."
+      "priceError": "Couldn't save price.",
+      "addButton": "Add packaging",
+      "addDialog": {
+        "title": "Add packaging",
+        "description": "Defines a sellable or receivable pack size. The conversion is how many base units one of this pack equals.",
+        "unitLabel": "Unit",
+        "conversionLabel": "Equals (in base units)",
+        "conversionHelp": "e.g. a 25kg bag → 25; a single piece → 1.",
+        "salePriceLabel": "Sale price",
+        "salePriceHelp": "Optional. Can be set later.",
+        "cancel": "Cancel",
+        "confirm": "Add",
+        "submitting": "Adding…",
+        "success": "Packaging added.",
+        "errorValidation": "Check the values.",
+        "errorPermission": "Not allowed.",
+        "errorDuplicate": "This packaging already exists.",
+        "errorGeneric": "Couldn't add."
+      },
+      "disableButton": "Disable",
+      "disableTooltip": "Hide this packaging from new sales and receives.",
+      "disableSuccess": "Packaging disabled.",
+      "disableErrorBase": "Can't disable the base packaging.",
+      "disableErrorPermission": "Owners only.",
+      "disableErrorInUse": "In use — past transactions reference it.",
+      "disableErrorGeneric": "Couldn't disable."
     },
     "aliases": {
       "empty": "No aliases.",
