@@ -1,6 +1,7 @@
-// Product detail. Header + stock/threshold + packaging + aliases.
-// Inline-editable throughout — no Edit dialog. Each field saves
-// individually via its own Server Action.
+// Product detail. Server Component shell that fetches everything and
+// hands it to the client ProductEditForm. The form owns the view↔edit
+// state machine; this page only handles data + the read-only alias
+// list at the bottom.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,25 +9,13 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentShop } from "@/lib/current-shop";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { type PackagingUnit } from "@/components/inventory/detail/packaging-table";
 import {
-  PackagingTable,
-  type PackagingUnit,
-} from "@/components/inventory/detail/packaging-table";
-import {
-  ProductDetailHeader,
-  type DetailCategoryOption,
-} from "@/components/inventory/detail/product-detail-header";
-import { StockCardInline } from "@/components/inventory/detail/stock-card-inline";
-import {
-  AdjustStockDialog,
-  type AdjustmentReason,
-} from "@/components/inventory/detail/adjust-stock-dialog";
-import {
-  AddPackagingDialog,
-  type PackagingUnitOption,
-} from "@/components/inventory/detail/add-packaging-dialog";
-import { Can } from "@/components/auth/can";
-import { formatCount } from "shared";
+  ProductEditForm,
+  type CategoryOption,
+} from "@/components/inventory/detail/product-edit-form";
+import { type AdjustmentReason } from "@/components/inventory/detail/adjust-stock-dialog";
+import { type PackagingUnitOption } from "@/components/inventory/detail/add-packaging-dialog";
 import { cn } from "@/lib/utils";
 
 type ProductDetail = {
@@ -95,11 +84,12 @@ export default async function ProductDetailPage({
   const detail = productRes.data as ProductDetail | null;
   if (!detail) notFound();
 
-  const categories: DetailCategoryOption[] = (
+  const categories: CategoryOption[] = (
     (categoriesRes.data ?? []) as Array<{ id: string; name: string }>
   ).map((c) => ({ id: c.id, name: c.name }));
   const currentCategoryId =
-    ((shopItemRes.data as { category_id: string | null } | null)?.category_id) ?? null;
+    ((shopItemRes.data as { category_id: string | null } | null)?.category_id) ??
+    null;
   const adjustmentReasons: AdjustmentReason[] = (
     (reasonsRes.data ?? []) as Array<{
       code: string;
@@ -119,68 +109,29 @@ export default async function ProductDetailPage({
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <Link
-          href="/inventory"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          {t("back")}
-        </Link>
-        <Can capability="inventory.adjustment.post">
-          <AdjustStockDialog
-            shopId={currentShop.id}
-            shopItemId={detail.header.shop_item_id}
-            currentStockDisplay={`${formatCount(stock, locale)} ${detail.header.base_unit_label}`}
-            unitLabel={detail.header.base_unit_label}
-            reasons={adjustmentReasons}
-          />
-        </Can>
-      </div>
+      <Link
+        href="/inventory"
+        className="text-sm text-muted-foreground hover:text-foreground"
+      >
+        {t("back")}
+      </Link>
 
-      <ProductDetailHeader
+      <ProductEditForm
         shopId={currentShop.id}
         shopItemId={detail.header.shop_item_id}
         initialName={detail.header.display_name}
         initialCategoryId={currentCategoryId}
         initialCategoryName={detail.header.category_name}
         initialIsActive={detail.header.is_active}
-        categories={categories}
-      />
-
-      <StockCardInline
-        shopId={currentShop.id}
-        shopItemId={detail.header.shop_item_id}
+        initialThreshold={threshold}
         currentStock={stock}
         baseUnitLabel={detail.header.base_unit_label}
-        initialThreshold={threshold}
-        locale={locale}
+        categories={categories}
+        packagingRows={detail.units}
+        unitOptions={unitOptions}
+        adjustmentReasons={adjustmentReasons}
+        currencyCode={currentShop.currency_code}
       />
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium">
-            {t("sections.packaging")}
-          </CardTitle>
-          <Can capability="inventory.product.edit">
-            <AddPackagingDialog
-              shopId={currentShop.id}
-              shopItemId={detail.header.shop_item_id}
-              baseUnitLabel={detail.header.base_unit_label}
-              units={unitOptions}
-            />
-          </Can>
-        </CardHeader>
-        <CardContent>
-          <PackagingTable
-            shopId={currentShop.id}
-            shopItemId={detail.header.shop_item_id}
-            rows={detail.units}
-            currencyCode={currentShop.currency_code}
-            locale={locale}
-            emptyMessage={t("packaging.empty")}
-          />
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>

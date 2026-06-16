@@ -146,23 +146,25 @@
       "errorPermission": "Milkiilo kaliya.",
       "errorGeneric": "Lama hagaajin karin."
     },
-    "editDialog": {
-      "title": "Bedel alaabta",
-      "nameLabel": "Magaca la muujinayo",
-      "nameHelp": "Ku darayaa magac cusub. Magacyada hore ayaa weli ka muuqda magacyo kale.",
-      "categoryLabel": "Qaybta",
+    "editForm": {
+      "editingBanner": "Bedelka — dooro waxa aad bedelayso, ka dibna Kaydi.",
+      "fieldName": "Magaca",
+      "fieldCategory": "Qaybta",
       "categoryNone": "Qayb la'aan",
-      "thresholdLabel": "Xadka dalbashada",
-      "thresholdHelp": "Cabbirka asaasiga ah. Faaruji = xad ma jiro.",
-      "activeLabel": "Firfircoon",
-      "activeOn": "Ka muuqda cataloga.",
-      "activeOff": "La qariyay — iib ama qaadasho cusub ma laha.",
+      "fieldStatus": "Xaalad",
+      "statusActive": "Firfircoon",
+      "statusActiveHelp": "Ka muuqda iibka iyo qaadashada.",
+      "statusHidden": "La qariyay",
+      "statusHiddenHelp": "Ma soo muuqan doonto markaad iib ama qaadasho gelinayso.",
+      "fieldThreshold": "Xadka dalbashada",
+      "fieldThresholdHelp": "Wuxuu ku digayaa marka kaydku gaaro xadkan. Faaruji haddii aanad rabin.",
+      "fieldPrice": "Qiimaha",
       "cancel": "Jooji",
-      "save": "Kaydi",
+      "save": "Kaydi bedelkii",
       "saving": "Kaydinta…",
-      "saved": "Waa la kaydiyay.",
-      "errorPermission": "Lama oggola.",
-      "errorGeneric": "Lama kaydin karin."
+      "savedAll": "La kaydiyay.",
+      "savedPartial": "La kaydiyay {ok}, {failed} waa fashilmay (tusaale {first}).",
+      "noChanges": "Bedel kaydsan ma jiro."
     },
     "inactive": "Aan firfircoonayn",
     "stock": {
@@ -186,8 +188,6 @@
       },
       "defaultYes": "✓",
       "empty": "Xidhmo ma jirto.",
-      "priceSaved": "Qiimaha waa la kaydiyay.",
-      "priceError": "Lama kaydin karin.",
       "addButton": "Ku dar xidhmo",
       "addDialog": {
         "title": "Ku dar xidhmo",
