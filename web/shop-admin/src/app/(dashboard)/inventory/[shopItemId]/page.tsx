@@ -19,6 +19,10 @@ import {
   EditProductDialog,
   type EditCategoryOption,
 } from "@/components/inventory/detail/edit-product-dialog";
+import {
+  AdjustStockDialog,
+  type AdjustmentReason,
+} from "@/components/inventory/detail/adjust-stock-dialog";
 import { Can } from "@/components/auth/can";
 import { cn } from "@/lib/utils";
 
@@ -59,22 +63,26 @@ export default async function ProductDetailPage({
   }
 
   const supabase = await createSupabaseServerClient();
-  const [productRes, categoriesRes, shopItemRes] = await Promise.all([
-    supabase.rpc("get_shop_item", {
-      p_shop_id: currentShop.id,
-      p_shop_item_id: shopItemId,
-      p_locale: locale,
-    }),
-    supabase.from("category").select("id, name").order("name"),
-    // We need category_id directly (get_shop_item returns name only)
-    // so the Edit dialog can preselect.
-    supabase
-      .from("shop_item")
-      .select("category_id")
-      .eq("shop_id", currentShop.id)
-      .eq("id", shopItemId)
-      .maybeSingle(),
-  ]);
+  const [productRes, categoriesRes, shopItemRes, reasonsRes] =
+    await Promise.all([
+      supabase.rpc("get_shop_item", {
+        p_shop_id: currentShop.id,
+        p_shop_item_id: shopItemId,
+        p_locale: locale,
+      }),
+      supabase.from("category").select("id, name").order("name"),
+      supabase
+        .from("shop_item")
+        .select("category_id")
+        .eq("shop_id", currentShop.id)
+        .eq("id", shopItemId)
+        .maybeSingle(),
+      supabase
+        .from("adjustment_reason")
+        .select("code, label, is_increase")
+        .eq("is_active", true)
+        .order("code"),
+    ]);
   if (productRes.error) {
     if (productRes.error.message?.includes("not found")) {
       notFound();
@@ -89,6 +97,13 @@ export default async function ProductDetailPage({
   ).map((c) => ({ id: c.id, name: c.name }));
   const currentCategoryId =
     ((shopItemRes.data as { category_id: string | null } | null)?.category_id) ?? null;
+  const adjustmentReasons: AdjustmentReason[] = (
+    (reasonsRes.data ?? []) as Array<{
+      code: string;
+      label: string;
+      is_increase: boolean | null;
+    }>
+  ).map((r) => ({ code: r.code, label: r.label, is_increase: r.is_increase }));
 
   const stock = Number(detail.header.current_stock ?? 0);
   const threshold =
@@ -125,21 +140,32 @@ export default async function ProductDetailPage({
             </p>
           ) : null}
         </div>
-        <Can capability="inventory.product.edit">
-          <EditProductDialog
-            shopId={currentShop.id}
-            shopItemId={detail.header.shop_item_id}
-            initialName={detail.header.display_name}
-            initialCategoryId={currentCategoryId}
-            initialThreshold={
-              detail.header.reorder_threshold === null
-                ? null
-                : Number(detail.header.reorder_threshold)
-            }
-            initialIsActive={detail.header.is_active}
-            categories={categories}
-          />
-        </Can>
+        <div className="flex items-center gap-2">
+          <Can capability="inventory.adjustment.post">
+            <AdjustStockDialog
+              shopId={currentShop.id}
+              shopItemId={detail.header.shop_item_id}
+              currentStockDisplay={`${formatCount(stock, locale)} ${detail.header.base_unit_label}`}
+              unitLabel={detail.header.base_unit_label}
+              reasons={adjustmentReasons}
+            />
+          </Can>
+          <Can capability="inventory.product.edit">
+            <EditProductDialog
+              shopId={currentShop.id}
+              shopItemId={detail.header.shop_item_id}
+              initialName={detail.header.display_name}
+              initialCategoryId={currentCategoryId}
+              initialThreshold={
+                detail.header.reorder_threshold === null
+                  ? null
+                  : Number(detail.header.reorder_threshold)
+              }
+              initialIsActive={detail.header.is_active}
+              categories={categories}
+            />
+          </Can>
+        </div>
       </header>
 
       <Card>

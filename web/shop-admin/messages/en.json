@@ -114,6 +114,24 @@
   "productDetail": {
     "back": "← All products",
     "edit": "Edit",
+    "adjustStock": "Adjust stock",
+    "adjustDialog": {
+      "title": "Adjust stock",
+      "currentLabel": "Current stock",
+      "deltaLabel": "Change",
+      "deltaHelp": "Positive to add, negative to remove. In base units.",
+      "reasonLabel": "Reason",
+      "notesLabel": "Notes",
+      "notesPlaceholder": "Optional",
+      "cancel": "Cancel",
+      "confirm": "Apply",
+      "submitting": "Applying…",
+      "success": "Stock adjusted.",
+      "errorEmpty": "Enter a non-zero change.",
+      "errorReasonMismatch": "Sign of the change doesn't match the reason.",
+      "errorPermission": "Owners only.",
+      "errorGeneric": "Couldn't adjust."
+    },
     "editDialog": {
       "title": "Edit product",
       "nameLabel": "Display name",

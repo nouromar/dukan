@@ -114,6 +114,24 @@
   "productDetail": {
     "back": "← Dhammaan alaabta",
     "edit": "Bedel",
+    "adjustStock": "Hagaaji kayd",
+    "adjustDialog": {
+      "title": "Hagaaji kayd",
+      "currentLabel": "Kayd hadda",
+      "deltaLabel": "Bedel",
+      "deltaHelp": "Positive si aad u kordhiso, negative si aad u dhimto. Cabbirka asaasiga ah.",
+      "reasonLabel": "Sababta",
+      "notesLabel": "Qoraallo",
+      "notesPlaceholder": "Ikhtiyaari",
+      "cancel": "Jooji",
+      "confirm": "Codso",
+      "submitting": "Lagu dabaqayaa…",
+      "success": "Kayd waa la hagaajiyay.",
+      "errorEmpty": "Geli bedel aan eber ahayn.",
+      "errorReasonMismatch": "Calaamada bedelka ma is waafaqsana sababta.",
+      "errorPermission": "Milkiilo kaliya.",
+      "errorGeneric": "Lama hagaajin karin."
+    },
     "editDialog": {
       "title": "Bedel alaabta",
       "nameLabel": "Magaca la muujinayo",

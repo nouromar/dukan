@@ -98,6 +98,58 @@ export async function editProductAction(input: {
 }
 
 // ---------------------------------------------------------------
+// Stock adjustment (owner-only — single-line wrapper around the
+// post_inventory_adjustment RPC)
+// ---------------------------------------------------------------
+
+export type AdjustStockResult =
+  | { ok: true; adjustmentId: string }
+  | {
+      ok: false;
+      code: "validation" | "reason_mismatch" | "permission" | "generic";
+      message?: string;
+    };
+
+export async function adjustStockAction(input: {
+  shopId: string;
+  shopItemId: string;
+  /** Positive = add, negative = remove. Zero is refused. In base units. */
+  quantityDelta: number;
+  reasonCode: string;
+  notes: string | null;
+}): Promise<AdjustStockResult> {
+  if (!Number.isFinite(input.quantityDelta) || input.quantityDelta === 0) {
+    return { ok: false, code: "validation" };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("post_inventory_adjustment", {
+    p_shop_id: input.shopId,
+    p_reason_code: input.reasonCode,
+    p_lines: [
+      { shop_item_id: input.shopItemId, quantity_delta: input.quantityDelta },
+    ],
+    p_notes: input.notes,
+  });
+
+  if (error) {
+    const msg = error.message?.toLowerCase() ?? "";
+    if (msg.includes("not allowed") || msg.includes("owner")) {
+      return { ok: false, code: "permission" };
+    }
+    if (msg.includes("reason") && (msg.includes("increase") || msg.includes("decrease") || msg.includes("sign"))) {
+      return { ok: false, code: "reason_mismatch" };
+    }
+    console.error("[inventory] post_inventory_adjustment failed:", error);
+    return { ok: false, code: "generic", message: error.message };
+  }
+
+  revalidatePath(`/inventory/${input.shopItemId}`);
+  revalidatePath("/inventory");
+  return { ok: true, adjustmentId: (data as string) ?? "" };
+}
+
+// ---------------------------------------------------------------
 // Inline single-unit price edit (from #286)
 // ---------------------------------------------------------------
 
