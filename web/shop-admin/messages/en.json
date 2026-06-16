@@ -185,6 +185,20 @@
     }
   },
   "inventory": {
+    "importButton": "Import CSV",
+    "importDialog": {
+      "title": "Import products",
+      "description": "Upload a CSV with columns: name, base_unit, category, sale_price. Only name and base_unit are required.",
+      "fileLabel": "CSV file",
+      "cancel": "Cancel",
+      "confirm": "Import",
+      "submitting": "Importing…",
+      "success": "Created {created}. Skipped {skipped}.",
+      "noFile": "Pick a file.",
+      "errorPermission": "Not allowed.",
+      "errorGeneric": "Couldn't import.",
+      "errorPattern": "Row {row}: {reason}"
+    },
     "addButton": "Add product",
     "addDialog": {
       "title": "Add product",

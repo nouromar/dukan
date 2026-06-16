@@ -185,6 +185,20 @@
     }
   },
   "inventory": {
+    "importButton": "Soo gali CSV",
+    "importDialog": {
+      "title": "Soo gali alaabta",
+      "description": "Soo gali CSV oo leh columns: name, base_unit, category, sale_price. Kaliya name iyo base_unit ayaa loo baahan yahay.",
+      "fileLabel": "Fayl CSV",
+      "cancel": "Jooji",
+      "confirm": "Soo gali",
+      "submitting": "Soo gelinta…",
+      "success": "La abuuray {created}. La booday {skipped}.",
+      "noFile": "Dooro fayl.",
+      "errorPermission": "Lama oggola.",
+      "errorGeneric": "Lama soo gelin karin.",
+      "errorPattern": "Row {row}: {reason}"
+    },
     "addButton": "Ku dar alaab",
     "addDialog": {
       "title": "Ku dar alaab",

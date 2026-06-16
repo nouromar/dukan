@@ -21,6 +21,7 @@ import {
   type UnitOption,
   type CategoryOption,
 } from "@/components/inventory/add-product-dialog";
+import { ImportProductsDialog } from "@/components/inventory/import-products-dialog";
 import { Can } from "@/components/auth/can";
 
 type RpcRow = {
@@ -114,6 +115,7 @@ export default async function InventoryPage() {
         <div className="flex items-center gap-3">
           {canExport ? <ExportCsvButton href="/api/export/inventory" /> : null}
           <Can capability="inventory.product.create">
+            <ImportProductsDialog shopId={currentShop.id} />
             <AddProductDialog
               shopId={currentShop.id}
               units={units}
