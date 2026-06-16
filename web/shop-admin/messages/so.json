@@ -133,7 +133,9 @@
         "defaultReceive": "Qaadashada asaasiga"
       },
       "defaultYes": "✓",
-      "empty": "Xidhmo ma jirto."
+      "empty": "Xidhmo ma jirto.",
+      "priceSaved": "Qiimaha waa la kaydiyay.",
+      "priceError": "Lama kaydin karin."
     },
     "aliases": {
       "empty": "Magac kale ma jiro.",

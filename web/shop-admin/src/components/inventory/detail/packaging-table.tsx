@@ -1,7 +1,7 @@
-// Packaging breakdown table for the product detail screen. One row per
-// shop_item_unit returned by get_shop_item.units. Default-sale and
-// default-receive flags are shown as check marks in their own columns
-// so the user can spot the canonical pack at a glance.
+// Packaging breakdown table. One row per shop_item_unit returned by
+// get_shop_item.units. Sale-price cell is inline-editable when the
+// viewer can edit (capability inventory.product.edit) — auto-saves
+// on blur or Enter via setUnitPriceAction.
 
 "use client";
 
@@ -17,6 +17,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { useShopContext } from "@/lib/shop-context";
+import { PriceEditCell } from "./price-edit-cell";
 
 export type PackagingUnit = {
   shop_item_unit_id: string;
@@ -34,11 +36,15 @@ export type PackagingUnit = {
 };
 
 export function PackagingTable({
+  shopId,
+  shopItemId,
   rows,
   currencyCode,
   locale,
   emptyMessage,
 }: {
+  shopId: string;
+  shopItemId: string;
   rows: PackagingUnit[];
   currencyCode: string;
   locale: string;
@@ -46,6 +52,11 @@ export function PackagingTable({
 }) {
   const t = useTranslations("productDetail.packaging");
   const tProd = useTranslations("productDetail");
+  const { capabilities } = useShopContext();
+  // Single-row edits use the cashier-or-better cap; align here.
+  // (Bulk edits require inventory.product.bulk_edit; this is the
+  // looser gate matching the underlying RPC's auth_can_post_shop.)
+  const canEdit = capabilities.has("inventory.product.edit");
   const money = (n: number) => formatMoney(n, currencyCode, locale);
 
   const sorted = useMemo(
@@ -99,16 +110,22 @@ export function PackagingTable({
               <TableCell className="text-sm text-muted-foreground">
                 {u.packaging_label}
               </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {u.sale_price !== null ? (
-                  money(u.sale_price)
-                ) : (
-                  <span className="text-muted-foreground">{tProd("noPrice")}</span>
-                )}
+              <TableCell className="text-right">
+                <PriceEditCell
+                  shopId={shopId}
+                  shopItemId={shopItemId}
+                  shopItemUnitId={u.shop_item_unit_id}
+                  initialPrice={u.sale_price}
+                  currencyCode={currencyCode}
+                  locale={locale}
+                  canEdit={canEdit && u.is_active}
+                />
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {u.last_cost !== null ? (
-                  money(u.last_cost)
+                  <span className="text-sm text-muted-foreground">
+                    {money(u.last_cost)}
+                  </span>
                 ) : (
                   <span className="text-muted-foreground">{tProd("noPrice")}</span>
                 )}

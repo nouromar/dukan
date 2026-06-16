@@ -143,6 +143,8 @@ export default async function ProductDetailPage({
         </CardHeader>
         <CardContent>
           <PackagingTable
+            shopId={currentShop.id}
+            shopItemId={detail.header.shop_item_id}
             rows={detail.units}
             currencyCode={currentShop.currency_code}
             locale={locale}

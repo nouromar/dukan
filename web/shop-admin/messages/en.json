@@ -133,7 +133,9 @@
         "defaultReceive": "Default receive"
       },
       "defaultYes": "✓",
-      "empty": "No packaging."
+      "empty": "No packaging.",
+      "priceSaved": "Price saved.",
+      "priceError": "Couldn't save price."
     },
     "aliases": {
       "empty": "No aliases.",
