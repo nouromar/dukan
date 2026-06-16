@@ -1,7 +1,26 @@
-// Add Staff dialog — single contact field (phone OR email, auto-
-// detected) + role select. Client component: form state + transition.
-// Capability-gate (setup.staff.invite) is enforced at the page level,
-// so this component assumes the viewer is allowed to invite.
+// Add Staff dialog. Layout:
+//
+//   ┌──────────────────────────────────────┐
+//   │ Add staff                            │
+//   │ They'll see the shop next sign-in.   │
+//   ├──────────────────────────────────────┤
+//   │                                      │
+//   │ Name                                 │
+//   │ [____________________________]       │
+//   │ Optional — they can change later.    │
+//   │                                      │
+//   │ ─── Sign in with ──────              │
+//   │ 📱 [+252612345678_____________]      │
+//   │ ✉️  [name@example.com___________]    │
+//   │ Phone, email, or both.               │
+//   │                                      │
+//   │ Role  [Cashier ▾]                    │
+//   │                                      │
+//   │            [Cancel] [Add staff]      │
+//   └──────────────────────────────────────┘
+//
+// The cashier uses whichever channel they prefer to sign in; the
+// auto-claim RPC matches on either and creates their membership.
 
 "use client";
 
@@ -9,7 +28,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Phone, Mail } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,42 +51,46 @@ export function AddStaffDialog({ shopId }: { shopId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
-  const [contact, setContact] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("cashier");
   const [pending, startTransition] = useTransition();
+
+  const canSubmit =
+    !pending && (phone.trim() !== "" || email.trim() !== "");
+
+  function reset() {
+    setPhone("");
+    setEmail("");
+    setRole("cashier");
+    setDisplayName("");
+  }
 
   function handleConfirm() {
     startTransition(async () => {
       const result = await addStaffAction({
         shopId,
-        contact,
+        phoneRaw: phone,
+        emailRaw: email,
         roleCode: role,
         displayName,
       });
       if (result.ok) {
-        const messageKey =
-          result.channel === "phone"
-            ? "addDialog.successPhone"
-            : "addDialog.successEmail";
         toast.success(
-          t(
-            messageKey as "addDialog.successPhone",
-            result.channel === "phone"
-              ? { phone: result.value }
-              : { email: result.value },
-          ),
+          t("addDialog.success", { name: result.displayLabel }),
         );
         setOpen(false);
-        setContact("");
-        setRole("cashier");
-        setDisplayName("");
+        reset();
         router.refresh();
         return;
       }
       const errorKey = (
         {
-          invalid_contact: "addDialog.errorInvalidContact",
+          missing_contact: "addDialog.errorMissingContact",
+          invalid_phone: "addDialog.errorInvalidPhone",
+          invalid_email: "addDialog.errorInvalidEmail",
           permission: "addDialog.errorPermission",
+          conflict: "addDialog.errorConflict",
           generic: "addDialog.errorGeneric",
         } as const
       )[result.code];
@@ -76,7 +99,13 @@ export function AddStaffDialog({ shopId }: { shopId: string }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) reset();
+      }}
+    >
       <DialogTrigger
         className={cn(buttonVariants({ size: "sm" }), "gap-2")}
       >
@@ -88,8 +117,10 @@ export function AddStaffDialog({ shopId }: { shopId: string }) {
           <DialogTitle>{t("addDialog.title")}</DialogTitle>
           <DialogDescription>{t("addDialog.description")}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
+
+        <div className="space-y-5">
+          {/* Name */}
+          <div className="space-y-1.5">
             <Label htmlFor="staff-name">{t("addDialog.nameLabel")}</Label>
             <Input
               id="staff-name"
@@ -105,34 +136,59 @@ export function AddStaffDialog({ shopId }: { shopId: string }) {
               {t("addDialog.nameHelp")}
             </p>
           </div>
+
+          {/* Sign-in channels (grouped) */}
           <div className="space-y-2">
-            <Label htmlFor="contact">{t("addDialog.contactLabel")}</Label>
-            <Input
-              id="contact"
-              type="text"
-              inputMode="text"
-              autoComplete="off"
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-              placeholder={t("addDialog.contactPlaceholder")}
-            />
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("addDialog.signInWith")}
+              </span>
+              <div className="h-px flex-1 bg-border" aria-hidden />
+            </div>
+            <div className="space-y-2">
+              <IconInput
+                id="staff-phone"
+                icon={Phone}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={setPhone}
+                placeholder={t("addDialog.phonePlaceholder")}
+              />
+              <IconInput
+                id="staff-email"
+                icon={Mail}
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={setEmail}
+                placeholder={t("addDialog.emailPlaceholder")}
+              />
+            </div>
             <p className="text-xs text-muted-foreground">
-              {t("addDialog.contactHelp")}
+              {t("addDialog.contactHint")}
             </p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="role">{t("addDialog.roleLabel")}</Label>
+
+          {/* Role */}
+          <div className="flex items-center gap-3">
+            <Label htmlFor="role" className="shrink-0">
+              {t("addDialog.roleLabel")}
+            </Label>
             <select
               id="role"
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+              className="flex h-9 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm"
             >
               <option value="cashier">{t("addDialog.roleCashier")}</option>
               <option value="owner">{t("addDialog.roleOwner")}</option>
             </select>
           </div>
         </div>
+
         <DialogFooter>
           <Button
             variant="outline"
@@ -141,14 +197,50 @@ export function AddStaffDialog({ shopId }: { shopId: string }) {
           >
             {t("addDialog.cancel")}
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={pending || contact.trim().length === 0}
-          >
+          <Button onClick={handleConfirm} disabled={!canSubmit}>
             {pending ? t("addDialog.submitting") : t("addDialog.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function IconInput({
+  id,
+  icon: Icon,
+  type,
+  inputMode,
+  autoComplete,
+  value,
+  onChange,
+  placeholder,
+}: {
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  type: string;
+  inputMode: "tel" | "email" | "text";
+  autoComplete: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <div className="relative">
+      <Icon
+        className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground"
+        aria-hidden
+      />
+      <Input
+        id={id}
+        type={type}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="pl-9"
+      />
+    </div>
   );
 }

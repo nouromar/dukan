@@ -40,10 +40,16 @@ export async function updateMyProfileAction(input: {
 }
 
 export type AddStaffResult =
-  | { ok: true; channel: "phone" | "email"; value: string }
+  | { ok: true; displayLabel: string }
   | {
       ok: false;
-      code: "invalid_contact" | "permission" | "generic";
+      code:
+        | "missing_contact"
+        | "invalid_phone"
+        | "invalid_email"
+        | "permission"
+        | "conflict"
+        | "generic";
       message?: string;
     };
 
@@ -63,9 +69,6 @@ function normalizePhone(raw: string): string | null {
   return phone;
 }
 
-function looksLikeEmail(value: string): boolean {
-  return /@/.test(value);
-}
 function normalizeEmail(value: string): string | null {
   const email = value.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
@@ -74,20 +77,30 @@ function normalizeEmail(value: string): string | null {
 
 export async function addStaffAction(input: {
   shopId: string;
-  contact: string;
+  phoneRaw: string;
+  emailRaw: string;
   roleCode: "cashier" | "owner";
   displayName?: string;
 }): Promise<AddStaffResult> {
-  const raw = input.contact.trim();
-  let phone: string | null = null;
-  let email: string | null = null;
-  if (looksLikeEmail(raw)) {
-    email = normalizeEmail(raw);
-    if (!email) return { ok: false, code: "invalid_contact" };
-  } else {
-    phone = normalizePhone(raw);
-    if (!phone) return { ok: false, code: "invalid_contact" };
+  const phoneRaw = input.phoneRaw.trim();
+  const emailRaw = input.emailRaw.trim();
+
+  if (phoneRaw === "" && emailRaw === "") {
+    return { ok: false, code: "missing_contact" };
   }
+
+  let phone: string | null = null;
+  if (phoneRaw !== "") {
+    phone = normalizePhone(phoneRaw);
+    if (!phone) return { ok: false, code: "invalid_phone" };
+  }
+
+  let email: string | null = null;
+  if (emailRaw !== "") {
+    email = normalizeEmail(emailRaw);
+    if (!email) return { ok: false, code: "invalid_email" };
+  }
+
   const displayName = input.displayName?.trim() ?? "";
 
   const supabase = await createSupabaseServerClient();
@@ -104,14 +117,18 @@ export async function addStaffAction(input: {
     if (msg.includes("not allowed")) {
       return { ok: false, code: "permission" };
     }
+    if (
+      msg.includes("different pending invites") ||
+      msg.includes("already")
+    ) {
+      return { ok: false, code: "conflict" };
+    }
     console.error("[setup-staff] create_shop_invite failed:", error);
     return { ok: false, code: "generic", message: error.message };
   }
 
   revalidatePath("/setup");
-  return {
-    ok: true,
-    channel: phone ? "phone" : "email",
-    value: phone ?? email!,
-  };
+  const displayLabel =
+    displayName || phone || email || "";
+  return { ok: true, displayLabel };
 }
