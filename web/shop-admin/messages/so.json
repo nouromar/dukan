@@ -329,6 +329,19 @@
         "description": "Kharashka laga diiwaan geliyo mobaylka ayaa halkan ka muuqda."
       }
     },
+    "cash": {
+      "title": "Lacag jeebka",
+      "subtitle": "Lacagta saafiga ah ee soo dhaaftay sanduuqa.",
+      "kpis": {
+        "in": "Lacag soo gashay",
+        "out": "Lacag baxay",
+        "balance": "Saafi"
+      },
+      "empty": {
+        "title": "Wax lacag socod ah ma jirin",
+        "description": "Lacagta waxay buuxisaa marka iib ama kharash lacag caddaan ah la diiwaan geliyo."
+      }
+    },
     "profit": {
       "thisMonth": "Bishan",
       "kpis": {

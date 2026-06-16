@@ -329,6 +329,19 @@
         "description": "Expenses recorded on mobile appear here."
       }
     },
+    "cash": {
+      "title": "Cash on hand",
+      "subtitle": "Net cash that has flowed through the till.",
+      "kpis": {
+        "in": "Cash in",
+        "out": "Cash out",
+        "balance": "Net balance"
+      },
+      "empty": {
+        "title": "No cash flow yet",
+        "description": "Cash totals populate after the first cash sale or expense posts."
+      }
+    },
     "profit": {
       "thisMonth": "This month",
       "kpis": {

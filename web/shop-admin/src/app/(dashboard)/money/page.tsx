@@ -20,6 +20,7 @@ import {
   ProfitPanel,
   type MonthlyProfitRow,
 } from "@/components/money/profit-panel";
+import { CashPanel, type CashPosition } from "@/components/money/cash-panel";
 
 type PaymentRow = {
   payment_id: string;
@@ -49,7 +50,7 @@ export default async function MoneyPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const [paymentsRes, expensesRes, profitRes] = await Promise.all([
+  const [paymentsRes, expensesRes, profitRes, cashRes] = await Promise.all([
     supabase.rpc("list_payments", {
       p_shop_id: currentShop.id,
       p_limit: historyPageLimit,
@@ -68,6 +69,11 @@ export default async function MoneyPage() {
       .eq("shop_id", currentShop.id)
       .order("local_month", { ascending: false })
       .limit(6),
+    supabase
+      .from("v_cash_position")
+      .select("cash_in, cash_out, cash_balance")
+      .eq("shop_id", currentShop.id)
+      .maybeSingle(),
   ]);
   if (paymentsRes.error) {
     console.error("[money] list_payments failed:", paymentsRes.error);
@@ -80,6 +86,10 @@ export default async function MoneyPage() {
   if (profitRes.error) {
     console.error("[money] v_monthly_profit failed:", profitRes.error);
     // Don't throw — let the P&L tab render its empty state.
+  }
+  if (cashRes.error) {
+    console.error("[money] v_cash_position failed:", cashRes.error);
+    // Same — cash tab handles null gracefully.
   }
 
   const payments: Payment[] = (
@@ -133,6 +143,17 @@ export default async function MoneyPage() {
     net_profit: Number(r.net_profit ?? 0),
   }));
 
+  const cashRow = cashRes.data as
+    | { cash_in: number | string; cash_out: number | string; cash_balance: number | string }
+    | null;
+  const cash: CashPosition | null = cashRow
+    ? {
+        cash_in: Number(cashRow.cash_in ?? 0),
+        cash_out: Number(cashRow.cash_out ?? 0),
+        cash_balance: Number(cashRow.cash_balance ?? 0),
+      }
+    : null;
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">
@@ -171,21 +192,15 @@ export default async function MoneyPage() {
           />
         </TabsContent>
         <TabsContent value="cash" className="mt-4">
-          <ComingSoon />
+          <CashPanel
+            position={cash}
+            currencyCode={currentShop.currency_code}
+            locale={locale}
+          />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-async function ComingSoon() {
-  const t = await getTranslations("money.comingSoon");
-  return (
-    <Card>
-      <CardContent className="py-12 text-center">
-        <h3 className="text-base font-medium">{t("title")}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
-      </CardContent>
-    </Card>
-  );
-}
+// ComingSoon helper removed — all four tabs are now wired.
