@@ -12,6 +12,10 @@ import {
   PaymentsTable,
   type Payment,
 } from "@/components/money/payments-table";
+import {
+  ExpensesTable,
+  type Expense,
+} from "@/components/money/expenses-table";
 
 type PaymentRow = {
   payment_id: string;
@@ -41,22 +45,53 @@ export default async function MoneyPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data: paymentsData, error } = await supabase.rpc("list_payments", {
-    p_shop_id: currentShop.id,
-    p_limit: historyPageLimit,
-  });
-  if (error) {
-    console.error("[money] list_payments failed:", error);
-    throw error;
+  const [paymentsRes, expensesRes] = await Promise.all([
+    supabase.rpc("list_payments", {
+      p_shop_id: currentShop.id,
+      p_limit: historyPageLimit,
+    }),
+    supabase.rpc("list_expenses", {
+      p_shop_id: currentShop.id,
+      p_limit: historyPageLimit,
+      p_locale: locale,
+    }),
+  ]);
+  if (paymentsRes.error) {
+    console.error("[money] list_payments failed:", paymentsRes.error);
+    throw paymentsRes.error;
+  }
+  if (expensesRes.error) {
+    console.error("[money] list_expenses failed:", expensesRes.error);
+    throw expensesRes.error;
   }
 
-  const payments: Payment[] = ((paymentsData ?? []) as PaymentRow[]).map(
+  const payments: Payment[] = (
+    (paymentsRes.data ?? []) as PaymentRow[]
+  ).map((r) => ({
+    payment_id: r.payment_id,
+    occurred_at: r.occurred_at,
+    party_name: r.party_name,
+    amount: Number(r.amount ?? 0),
+    direction: r.direction,
+    payment_method_code: r.payment_method_code,
+    notes: r.notes,
+  }));
+
+  type ExpenseRow = {
+    txn_id: string;
+    occurred_at: string;
+    amount: number | string;
+    payment_method_code: string | null;
+    category_id: string | null;
+    category_name: string | null;
+    notes: string | null;
+  };
+  const expenses: Expense[] = ((expensesRes.data ?? []) as ExpenseRow[]).map(
     (r) => ({
-      payment_id: r.payment_id,
+      txn_id: r.txn_id,
       occurred_at: r.occurred_at,
-      party_name: r.party_name,
+      category_name: r.category_name,
       amount: Number(r.amount ?? 0),
-      direction: r.direction,
       payment_method_code: r.payment_method_code,
       notes: r.notes,
     }),
@@ -72,7 +107,9 @@ export default async function MoneyPage() {
           <TabsTrigger value="payments">
             {t("tabPayments")} ({payments.length})
           </TabsTrigger>
-          <TabsTrigger value="expenses">{t("tabExpenses")}</TabsTrigger>
+          <TabsTrigger value="expenses">
+            {t("tabExpenses")} ({expenses.length})
+          </TabsTrigger>
           <TabsTrigger value="profit">{t("tabProfit")}</TabsTrigger>
           <TabsTrigger value="cash">{t("tabCash")}</TabsTrigger>
         </TabsList>
@@ -84,7 +121,11 @@ export default async function MoneyPage() {
           />
         </TabsContent>
         <TabsContent value="expenses" className="mt-4">
-          <ComingSoon />
+          <ExpensesTable
+            rows={expenses}
+            currencyCode={currentShop.currency_code}
+            locale={locale}
+          />
         </TabsContent>
         <TabsContent value="profit" className="mt-4">
           <ComingSoon />

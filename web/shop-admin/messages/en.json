@@ -314,6 +314,21 @@
         "description": "Payments posted on mobile appear here."
       }
     },
+    "expenses": {
+      "columns": {
+        "when": "When",
+        "category": "Category",
+        "amount": "Amount",
+        "method": "Method",
+        "notes": "Notes"
+      },
+      "search": "Search by category…",
+      "noCategory": "—",
+      "empty": {
+        "title": "No expenses yet",
+        "description": "Expenses recorded on mobile appear here."
+      }
+    },
     "noShop": {
       "title": "No shop selected",
       "description": "Pick a shop."

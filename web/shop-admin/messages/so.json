@@ -314,6 +314,21 @@
         "description": "Bixinta laga diiwaan geliyo mobaylka ayaa halkan ka muuqda."
       }
     },
+    "expenses": {
+      "columns": {
+        "when": "Goorma",
+        "category": "Qaybta",
+        "amount": "Lacagta",
+        "method": "Habka",
+        "notes": "Qoraallo"
+      },
+      "search": "Raadi qayb…",
+      "noCategory": "—",
+      "empty": {
+        "title": "Wax kharash ah ma jirin",
+        "description": "Kharashka laga diiwaan geliyo mobaylka ayaa halkan ka muuqda."
+      }
+    },
     "noShop": {
       "title": "Wax dukaan ah lama dooran",
       "description": "Dooro dukaan."
