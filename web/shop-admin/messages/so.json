@@ -113,6 +113,25 @@
   },
   "productDetail": {
     "back": "← Dhammaan alaabta",
+    "edit": "Bedel",
+    "editDialog": {
+      "title": "Bedel alaabta",
+      "nameLabel": "Magaca la muujinayo",
+      "nameHelp": "Ku darayaa magac cusub. Magacyada hore ayaa weli ka muuqda magacyo kale.",
+      "categoryLabel": "Qaybta",
+      "categoryNone": "Qayb la'aan",
+      "thresholdLabel": "Xadka dalbashada",
+      "thresholdHelp": "Cabbirka asaasiga ah. Faaruji = xad ma jiro.",
+      "activeLabel": "Firfircoon",
+      "activeOn": "Ka muuqda cataloga.",
+      "activeOff": "La qariyay — iib ama qaadasho cusub ma laha.",
+      "cancel": "Jooji",
+      "save": "Kaydi",
+      "saving": "Kaydinta…",
+      "saved": "Waa la kaydiyay.",
+      "errorPermission": "Lama oggola.",
+      "errorGeneric": "Lama kaydin karin."
+    },
     "inactive": "Aan firfircoonayn",
     "stock": {
       "label": "Kayd",

@@ -8,6 +8,99 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+// ---------------------------------------------------------------
+// Edit product — multi-RPC save
+// ---------------------------------------------------------------
+
+export type EditProductResult =
+  | { ok: true }
+  | { ok: false; code: "permission" | "generic"; message?: string };
+
+/**
+ * Calls each underlying RPC only for fields the user actually changed.
+ * Non-atomic — if one of the calls fails after another succeeds, the
+ * earlier change persists. That's acceptable for this v1 surface
+ * because each field is independent (no integrity dependencies).
+ */
+export async function editProductAction(input: {
+  shopId: string;
+  shopItemId: string;
+  /** New display alias to add (skipped when null). */
+  newName: string | null;
+  /** Locale for the alias (matches the user's UI locale). */
+  newNameLocale: string;
+  /** undefined = don't touch; null = clear category; uuid = set. */
+  categoryId: string | null | undefined;
+  /** undefined = don't touch; null = clear threshold; number = set. */
+  threshold: number | null | undefined;
+  /** undefined = don't touch; boolean = set is_active flag. */
+  isActive: boolean | undefined;
+}): Promise<EditProductResult> {
+  const supabase = await createSupabaseServerClient();
+  const errors: string[] = [];
+
+  if (input.newName && input.newName.trim().length > 0) {
+    const { error } = await supabase.rpc("add_shop_item_alias", {
+      p_shop_id: input.shopId,
+      p_shop_item_id: input.shopItemId,
+      p_alias_text: input.newName.trim(),
+      p_language_code: input.newNameLocale,
+      p_is_display: true,
+      p_source: "manual",
+    });
+    if (error) errors.push(`alias: ${error.message}`);
+  }
+
+  // Distinguish "user provided category null/blank" from "user didn't touch
+  // the field". The page passes null when blank, but it's still valid to
+  // call set_shop_item_category with null (clear category). For v1 we
+  // skip the call when the value equals the current — the page is
+  // responsible for not passing a no-op.
+  if (input.categoryId !== undefined) {
+    const { error } = await supabase.rpc("set_shop_item_category", {
+      p_shop_id: input.shopId,
+      p_shop_item_id: input.shopItemId,
+      p_category_id: input.categoryId,
+    });
+    if (error) errors.push(`category: ${error.message}`);
+  }
+
+  if (input.threshold !== undefined) {
+    const { error } = await supabase.rpc("set_shop_item_reorder_threshold", {
+      p_shop_id: input.shopId,
+      p_shop_item_id: input.shopItemId,
+      p_reorder_threshold: input.threshold,
+    });
+    if (error) errors.push(`threshold: ${error.message}`);
+  }
+
+  if (input.isActive !== undefined) {
+    const { error } = await supabase.rpc("set_shop_item_active", {
+      p_shop_id: input.shopId,
+      p_shop_item_id: input.shopItemId,
+      p_is_active: input.isActive,
+    });
+    if (error) errors.push(`active: ${error.message}`);
+  }
+
+  if (errors.length > 0) {
+    const joined = errors.join("; ");
+    if (joined.toLowerCase().includes("not allowed")) {
+      return { ok: false, code: "permission", message: joined };
+    }
+    console.error("[edit-product] failed:", joined);
+    return { ok: false, code: "generic", message: joined };
+  }
+
+  revalidatePath(`/inventory/${input.shopItemId}`);
+  revalidatePath("/inventory");
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------
+// Inline single-unit price edit (from #286)
+// ---------------------------------------------------------------
+
 export type SetUnitPriceResult =
   | { ok: true }
   | { ok: false; code: "validation" | "permission" | "generic"; message?: string };

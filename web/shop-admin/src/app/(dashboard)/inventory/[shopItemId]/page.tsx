@@ -15,6 +15,11 @@ import {
   PackagingTable,
   type PackagingUnit,
 } from "@/components/inventory/detail/packaging-table";
+import {
+  EditProductDialog,
+  type EditCategoryOption,
+} from "@/components/inventory/detail/edit-product-dialog";
+import { Can } from "@/components/auth/can";
 import { cn } from "@/lib/utils";
 
 type ProductDetail = {
@@ -54,20 +59,36 @@ export default async function ProductDetailPage({
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("get_shop_item", {
-    p_shop_id: currentShop.id,
-    p_shop_item_id: shopItemId,
-    p_locale: locale,
-  });
-  if (error) {
-    if (error.message?.includes("not found")) {
+  const [productRes, categoriesRes, shopItemRes] = await Promise.all([
+    supabase.rpc("get_shop_item", {
+      p_shop_id: currentShop.id,
+      p_shop_item_id: shopItemId,
+      p_locale: locale,
+    }),
+    supabase.from("category").select("id, name").order("name"),
+    // We need category_id directly (get_shop_item returns name only)
+    // so the Edit dialog can preselect.
+    supabase
+      .from("shop_item")
+      .select("category_id")
+      .eq("shop_id", currentShop.id)
+      .eq("id", shopItemId)
+      .maybeSingle(),
+  ]);
+  if (productRes.error) {
+    if (productRes.error.message?.includes("not found")) {
       notFound();
     }
-    console.error("[product-detail] get_shop_item failed:", error);
-    throw error;
+    console.error("[product-detail] get_shop_item failed:", productRes.error);
+    throw productRes.error;
   }
-  const detail = data as ProductDetail | null;
+  const detail = productRes.data as ProductDetail | null;
   if (!detail) notFound();
+  const categories: EditCategoryOption[] = (
+    (categoriesRes.data ?? []) as Array<{ id: string; name: string }>
+  ).map((c) => ({ id: c.id, name: c.name }));
+  const currentCategoryId =
+    ((shopItemRes.data as { category_id: string | null } | null)?.category_id) ?? null;
 
   const stock = Number(detail.header.current_stock ?? 0);
   const threshold =
@@ -86,22 +107,39 @@ export default async function ProductDetailPage({
         {t("back")}
       </Link>
 
-      <header className="space-y-2">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {detail.header.display_name}
-          </h1>
-          {!detail.header.is_active ? (
-            <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-              {t("inactive")}
-            </span>
+      <header className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight">
+              {detail.header.display_name}
+            </h1>
+            {!detail.header.is_active ? (
+              <span className="rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                {t("inactive")}
+              </span>
+            ) : null}
+          </div>
+          {detail.header.category_name ? (
+            <p className="text-sm text-muted-foreground">
+              {detail.header.category_name}
+            </p>
           ) : null}
         </div>
-        {detail.header.category_name ? (
-          <p className="text-sm text-muted-foreground">
-            {detail.header.category_name}
-          </p>
-        ) : null}
+        <Can capability="inventory.product.edit">
+          <EditProductDialog
+            shopId={currentShop.id}
+            shopItemId={detail.header.shop_item_id}
+            initialName={detail.header.display_name}
+            initialCategoryId={currentCategoryId}
+            initialThreshold={
+              detail.header.reorder_threshold === null
+                ? null
+                : Number(detail.header.reorder_threshold)
+            }
+            initialIsActive={detail.header.is_active}
+            categories={categories}
+          />
+        </Can>
       </header>
 
       <Card>

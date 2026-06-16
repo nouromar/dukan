@@ -113,6 +113,25 @@
   },
   "productDetail": {
     "back": "← All products",
+    "edit": "Edit",
+    "editDialog": {
+      "title": "Edit product",
+      "nameLabel": "Display name",
+      "nameHelp": "Adds a new display name. Old names stay as aliases.",
+      "categoryLabel": "Category",
+      "categoryNone": "No category",
+      "thresholdLabel": "Reorder threshold",
+      "thresholdHelp": "In base units. Empty = no threshold.",
+      "activeLabel": "Active",
+      "activeOn": "Visible in the catalog.",
+      "activeOff": "Hidden — no new sales or receives.",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved.",
+      "errorPermission": "Not allowed.",
+      "errorGeneric": "Couldn't save."
+    },
     "inactive": "Inactive",
     "stock": {
       "label": "In stock",
