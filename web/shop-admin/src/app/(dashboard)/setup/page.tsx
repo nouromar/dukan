@@ -16,6 +16,11 @@ import { getCurrentShop } from "@/lib/current-shop";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Can } from "@/components/auth/can";
 import { AddStaffDialog } from "@/components/setup/add-staff-dialog";
+import {
+  ShopSettingsCard,
+  type CurrencyOption,
+  type LanguageOption,
+} from "@/components/setup/shop-settings-card";
 
 type MembershipRow = {
   user_id: string;
@@ -57,7 +62,15 @@ export default async function SetupPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const [membersRes, rolesRes, invitesRes, profilesRes, userRes] = await Promise.all([
+  const [
+    membersRes,
+    rolesRes,
+    invitesRes,
+    profilesRes,
+    userRes,
+    currenciesRes,
+    languagesRes,
+  ] = await Promise.all([
     supabase
       .from("shop_membership")
       .select("user_id, is_active, role_id, created_at, updated_at")
@@ -71,11 +84,10 @@ export default async function SetupPage() {
       .eq("shop_id", currentShop.id)
       .is("accepted_at", null)
       .order("created_at", { ascending: false }),
-    // RLS on user_profile lets the viewer see any row for users they
-    // share a shop with — so this fetch is automatically scoped to
-    // members of the current shop (and the viewer themselves).
     supabase.from("user_profile").select("user_id, display_name"),
     supabase.auth.getUser(),
+    supabase.from("currency").select("code, symbol").order("code"),
+    supabase.from("language").select("code, default_label").order("code"),
   ]);
   for (const r of [membersRes, rolesRes, invitesRes, profilesRes]) {
     if (r.error) {
@@ -83,6 +95,12 @@ export default async function SetupPage() {
       throw r.error;
     }
   }
+  const currencies: CurrencyOption[] = (
+    (currenciesRes.data ?? []) as Array<{ code: string; symbol: string | null }>
+  ).map((c) => ({ code: c.code, label: c.symbol ?? c.code }));
+  const languages: LanguageOption[] = (
+    (languagesRes.data ?? []) as Array<{ code: string; default_label: string }>
+  ).map((l) => ({ code: l.code, label: l.default_label }));
 
   const currentUserId = userRes.data.user?.id ?? null;
   const roleCodeById = new Map(
@@ -117,6 +135,17 @@ export default async function SetupPage() {
           <AddStaffDialog shopId={currentShop.id} />
         </Can>
       </div>
+
+      <Can capability="setup.shop.edit">
+        <ShopSettingsCard
+          shopId={currentShop.id}
+          initialName={currentShop.name}
+          initialCurrencyCode={currentShop.currency_code}
+          initialLanguageCode={currentShop.default_language_code ?? "en"}
+          currencies={currencies}
+          languages={languages}
+        />
+      </Can>
 
       <Card>
         <CardHeader>

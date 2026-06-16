@@ -40,7 +40,7 @@ export const getCurrentShop = cache(async (): Promise<CurrentShopResult> => {
 
   const { data: shopRows } = await supabase
     .from("shop")
-    .select("id, name, organization_id, currency_code")
+    .select("id, name, organization_id, currency_code, default_language_code")
     .order("name", { ascending: true });
   const shops: Shop[] = shopRows ?? [];
 

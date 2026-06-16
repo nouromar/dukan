@@ -423,6 +423,18 @@
   "setup": {
     "title": "Setup",
     "subtitle": "Shop configuration and staff",
+    "shopSettings": {
+      "title": "Shop",
+      "nameLabel": "Shop name",
+      "currencyLabel": "Currency",
+      "languageLabel": "Default language",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved.",
+      "errorEmpty": "Enter a name.",
+      "errorPermission": "Owners only.",
+      "errorGeneric": "Couldn't save."
+    },
     "noShop": {
       "title": "No shop selected",
       "description": "Pick or set up a shop to manage its staff."

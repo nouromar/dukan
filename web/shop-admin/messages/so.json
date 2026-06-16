@@ -423,6 +423,18 @@
   "setup": {
     "title": "Hagaajinta",
     "subtitle": "Habaynta dukaanka iyo shaqaalaha",
+    "shopSettings": {
+      "title": "Dukaanka",
+      "nameLabel": "Magaca dukaanka",
+      "currencyLabel": "Lacagta",
+      "languageLabel": "Luqadda asaasiga",
+      "save": "Kaydi",
+      "saving": "Kaydinta…",
+      "saved": "Waa la kaydiyay.",
+      "errorEmpty": "Geli magac.",
+      "errorPermission": "Milkiilo kaliya.",
+      "errorGeneric": "Lama kaydin karin."
+    },
     "noShop": {
       "title": "Wax dukaan ah lama dooran",
       "description": "Dooro ama dejiyaha dukaan si aad u maamusho shaqaalaha."

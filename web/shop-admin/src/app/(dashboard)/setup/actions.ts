@@ -8,6 +8,47 @@ import { revalidatePath } from "next/cache";
 import { defaultCountryCode } from "shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+// ---------------------------------------------------------------
+// Update shop settings (owner-only)
+// ---------------------------------------------------------------
+
+export type UpdateShopResult =
+  | { ok: true }
+  | { ok: false; code: "empty" | "permission" | "generic"; message?: string };
+
+export async function updateShopSettingsAction(input: {
+  shopId: string;
+  name: string;
+  currencyCode: string;
+  defaultLanguageCode: string;
+}): Promise<UpdateShopResult> {
+  const name = input.name.trim();
+  if (name.length === 0) return { ok: false, code: "empty" };
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("update_shop_settings", {
+    p_shop_id: input.shopId,
+    p_settings: {
+      name,
+      currency_code: input.currencyCode,
+      default_language_code: input.defaultLanguageCode,
+    },
+  });
+  if (error) {
+    const msg = error.message?.toLowerCase() ?? "";
+    if (msg.includes("owner") || msg.includes("not allowed")) {
+      return { ok: false, code: "permission" };
+    }
+    console.error("[setup-shop] update_shop_settings failed:", error);
+    return { ok: false, code: "generic", message: error.message };
+  }
+  revalidatePath("/setup");
+  // Shop name + currency drive every other page's chrome; nuke the
+  // cache broadly so the change shows up everywhere on the next nav.
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 export type UpdateProfileResult =
   | { ok: true }
   | { ok: false; code: "empty" | "generic"; message?: string };
