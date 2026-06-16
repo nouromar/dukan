@@ -329,6 +329,29 @@
         "description": "Expenses recorded on mobile appear here."
       }
     },
+    "profit": {
+      "thisMonth": "This month",
+      "kpis": {
+        "revenue": "Revenue",
+        "cogs": "Cost of goods sold",
+        "grossProfit": "Gross profit",
+        "expenses": "Expenses",
+        "netProfit": "Net profit"
+      },
+      "history": "Last 6 months",
+      "columns": {
+        "month": "Month",
+        "revenue": "Revenue",
+        "cogs": "COGS",
+        "gross": "Gross",
+        "expenses": "Expenses",
+        "net": "Net"
+      },
+      "empty": {
+        "title": "No data yet",
+        "description": "P&L populates after sales and expenses are posted."
+      }
+    },
     "noShop": {
       "title": "No shop selected",
       "description": "Pick a shop."

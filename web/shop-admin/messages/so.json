@@ -329,6 +329,29 @@
         "description": "Kharashka laga diiwaan geliyo mobaylka ayaa halkan ka muuqda."
       }
     },
+    "profit": {
+      "thisMonth": "Bishan",
+      "kpis": {
+        "revenue": "Dakhliga",
+        "cogs": "Qiimaha alaabta la iibiyay",
+        "grossProfit": "Faaiido aan saafi ahayn",
+        "expenses": "Kharash",
+        "netProfit": "Faaiido saafi ah"
+      },
+      "history": "6dii bilood ee la soo dhaafay",
+      "columns": {
+        "month": "Bil",
+        "revenue": "Dakhli",
+        "cogs": "COGS",
+        "gross": "Aan saafi",
+        "expenses": "Kharash",
+        "net": "Saafi"
+      },
+      "empty": {
+        "title": "Wax xog ah ma jirin",
+        "description": "P&L wuxuu buuxiyaa marka iibyo iyo kharash la diiwaan geliyo."
+      }
+    },
     "noShop": {
       "title": "Wax dukaan ah lama dooran",
       "description": "Dooro dukaan."

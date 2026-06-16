@@ -16,6 +16,10 @@ import {
   ExpensesTable,
   type Expense,
 } from "@/components/money/expenses-table";
+import {
+  ProfitPanel,
+  type MonthlyProfitRow,
+} from "@/components/money/profit-panel";
 
 type PaymentRow = {
   payment_id: string;
@@ -45,7 +49,7 @@ export default async function MoneyPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const [paymentsRes, expensesRes] = await Promise.all([
+  const [paymentsRes, expensesRes, profitRes] = await Promise.all([
     supabase.rpc("list_payments", {
       p_shop_id: currentShop.id,
       p_limit: historyPageLimit,
@@ -55,6 +59,15 @@ export default async function MoneyPage() {
       p_limit: historyPageLimit,
       p_locale: locale,
     }),
+    // Last 6 months of v_monthly_profit, ordered newest-first.
+    supabase
+      .from("v_monthly_profit")
+      .select(
+        "local_month, revenue, cogs_total, gross_profit, expense_total, net_profit",
+      )
+      .eq("shop_id", currentShop.id)
+      .order("local_month", { ascending: false })
+      .limit(6),
   ]);
   if (paymentsRes.error) {
     console.error("[money] list_payments failed:", paymentsRes.error);
@@ -63,6 +76,10 @@ export default async function MoneyPage() {
   if (expensesRes.error) {
     console.error("[money] list_expenses failed:", expensesRes.error);
     throw expensesRes.error;
+  }
+  if (profitRes.error) {
+    console.error("[money] v_monthly_profit failed:", profitRes.error);
+    // Don't throw — let the P&L tab render its empty state.
   }
 
   const payments: Payment[] = (
@@ -97,6 +114,25 @@ export default async function MoneyPage() {
     }),
   );
 
+  type ProfitRowRaw = {
+    local_month: string;
+    revenue: number | string;
+    cogs_total: number | string;
+    gross_profit: number | string;
+    expense_total: number | string;
+    net_profit: number | string;
+  };
+  const profitRows: MonthlyProfitRow[] = (
+    (profitRes.data ?? []) as ProfitRowRaw[]
+  ).map((r) => ({
+    local_month: r.local_month,
+    revenue: Number(r.revenue ?? 0),
+    cogs_total: Number(r.cogs_total ?? 0),
+    gross_profit: Number(r.gross_profit ?? 0),
+    expense_total: Number(r.expense_total ?? 0),
+    net_profit: Number(r.net_profit ?? 0),
+  }));
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">
@@ -128,7 +164,11 @@ export default async function MoneyPage() {
           />
         </TabsContent>
         <TabsContent value="profit" className="mt-4">
-          <ComingSoon />
+          <ProfitPanel
+            rows={profitRows}
+            currencyCode={currentShop.currency_code}
+            locale={locale}
+          />
         </TabsContent>
         <TabsContent value="cash" className="mt-4">
           <ComingSoon />
