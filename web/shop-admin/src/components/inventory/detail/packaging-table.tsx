@@ -19,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useShopContext } from "@/lib/shop-context";
 import { PriceEditCell } from "./price-edit-cell";
-import { DisablePackagingButton } from "./disable-packaging-button";
+import { RemovePackagingButton } from "./remove-packaging-button";
 
 export type PackagingUnit = {
   shop_item_unit_id: string;
@@ -142,7 +142,7 @@ export function PackagingTable({
               {canEdit ? (
                 <TableCell className="text-right">
                   {!u.is_base_unit && u.is_active ? (
-                    <DisablePackagingButton
+                    <RemovePackagingButton
                       shopId={shopId}
                       shopItemId={shopItemId}
                       shopItemUnitId={u.shop_item_unit_id}

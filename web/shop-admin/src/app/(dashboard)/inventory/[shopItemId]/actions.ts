@@ -220,24 +220,32 @@ export async function addPackagingAction(input: {
   return { ok: true, shopItemUnitId: (data as string) ?? "" };
 }
 
-export type DeactivatePackagingResult =
-  | { ok: true }
+export type RemovePackagingResult =
+  | { ok: true; action: "removed" | "disabled" }
   | {
       ok: false;
-      code: "base_unit" | "permission" | "in_use" | "generic";
+      code: "base_unit" | "permission" | "generic";
       message?: string;
     };
 
-export async function deactivatePackagingAction(input: {
+/**
+ * Removes a packaging when it has never been sold or received, otherwise
+ * soft-disables it so the historical transaction lines keep a valid FK.
+ * The server picks; the caller learns the outcome via `action`.
+ */
+export async function removePackagingAction(input: {
   shopId: string;
   shopItemId: string;
   shopItemUnitId: string;
-}): Promise<DeactivatePackagingResult> {
+}): Promise<RemovePackagingResult> {
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc("deactivate_shop_item_unit", {
-    p_shop_id: input.shopId,
-    p_shop_item_unit_id: input.shopItemUnitId,
-  });
+  const { data, error } = await supabase.rpc(
+    "remove_or_disable_shop_item_unit",
+    {
+      p_shop_id: input.shopId,
+      p_shop_item_unit_id: input.shopItemUnitId,
+    },
+  );
   if (error) {
     const msg = error.message?.toLowerCase() ?? "";
     if (msg.includes("base")) {
@@ -246,15 +254,15 @@ export async function deactivatePackagingAction(input: {
     if (msg.includes("not allowed")) {
       return { ok: false, code: "permission" };
     }
-    if (msg.includes("reference") || msg.includes("in use") || msg.includes("constraint")) {
-      return { ok: false, code: "in_use" };
-    }
-    console.error("[inventory] deactivate_shop_item_unit failed:", error);
+    console.error("[inventory] remove_or_disable_shop_item_unit failed:", error);
     return { ok: false, code: "generic", message: error.message };
   }
   revalidatePath(`/inventory/${input.shopItemId}`);
   revalidatePath("/inventory");
-  return { ok: true };
+  const action = (data === "removed" ? "removed" : "disabled") as
+    | "removed"
+    | "disabled";
+  return { ok: true, action };
 }
 
 // ---------------------------------------------------------------

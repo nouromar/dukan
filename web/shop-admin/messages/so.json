@@ -206,13 +206,13 @@
         "errorDuplicate": "Xidhmadaan horey ayuu u jiray.",
         "errorGeneric": "Lama dari karin."
       },
-      "disableButton": "Jooji",
-      "disableTooltip": "Ka qari iibyada cusub iyo qaadashada.",
-      "disableSuccess": "Xidhmadii la joojiyay.",
-      "disableErrorBase": "Lama joojin karo xidhmada asaasiga.",
-      "disableErrorPermission": "Milkiilo kaliya.",
-      "disableErrorInUse": "Hadda la isticmaalayo — diiwaano hore ayaa tixraacaya.",
-      "disableErrorGeneric": "Lama joojin karin."
+      "removeButton": "Tirtir",
+      "removeTooltip": "Tirtir xidhmada. Haddii hore loo iibiyay ama la qaaday, waxa la qarinayaa si diiwaanku u sii ahaado.",
+      "removeSuccessRemoved": "Xidhmada la tirtiray.",
+      "removeSuccessDisabled": "Xidhmada waa la qariyay — diiwaano hore ayaa weli tixraacaya.",
+      "removeErrorBase": "Lama tirtiri karo xidhmada asaasiga.",
+      "removeErrorPermission": "Milkiilo kaliya.",
+      "removeErrorGeneric": "Lama tirtiri karin."
     },
     "aliases": {
       "empty": "Magac kale ma jiro.",

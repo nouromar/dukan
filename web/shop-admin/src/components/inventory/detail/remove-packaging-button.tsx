@@ -1,6 +1,8 @@
-// Per-row disable action on a packaging row. Calls
-// deactivate_shop_item_unit which refuses the base packaging and
-// (per backend) errors when transactions reference the unit.
+// Per-row remove action on a packaging row. Calls
+// remove_or_disable_shop_item_unit which decides server-side:
+//   * never sold/received → hard-delete
+//   * referenced by history → soft-disable (history stays intact)
+// The toast reports which path the server took.
 
 "use client";
 
@@ -10,9 +12,9 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { deactivatePackagingAction } from "@/app/(dashboard)/inventory/[shopItemId]/actions";
+import { removePackagingAction } from "@/app/(dashboard)/inventory/[shopItemId]/actions";
 
-export function DisablePackagingButton({
+export function RemovePackagingButton({
   shopId,
   shopItemId,
   shopItemUnitId,
@@ -27,25 +29,28 @@ export function DisablePackagingButton({
 
   function handleClick() {
     startTransition(async () => {
-      const result = await deactivatePackagingAction({
+      const result = await removePackagingAction({
         shopId,
         shopItemId,
         shopItemUnitId,
       });
       if (result.ok) {
-        toast.success(t("disableSuccess"));
+        toast.success(
+          result.action === "removed"
+            ? t("removeSuccessRemoved")
+            : t("removeSuccessDisabled"),
+        );
         router.refresh();
         return;
       }
       const key = (
         {
-          base_unit: "disableErrorBase",
-          permission: "disableErrorPermission",
-          in_use: "disableErrorInUse",
-          generic: "disableErrorGeneric",
+          base_unit: "removeErrorBase",
+          permission: "removeErrorPermission",
+          generic: "removeErrorGeneric",
         } as const
       )[result.code];
-      toast.error(t(key as "disableErrorGeneric"));
+      toast.error(t(key));
     });
   }
 
@@ -56,10 +61,10 @@ export function DisablePackagingButton({
       onClick={handleClick}
       disabled={pending}
       className="h-7 gap-1 px-2 text-muted-foreground hover:text-destructive"
-      title={t("disableTooltip")}
+      title={t("removeTooltip")}
     >
       <X className="size-3.5" aria-hidden />
-      <span className="text-xs">{t("disableButton")}</span>
+      <span className="text-xs">{t("removeButton")}</span>
     </Button>
   );
 }

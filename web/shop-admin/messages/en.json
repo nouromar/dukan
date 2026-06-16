@@ -206,13 +206,13 @@
         "errorDuplicate": "This packaging already exists.",
         "errorGeneric": "Couldn't add."
       },
-      "disableButton": "Disable",
-      "disableTooltip": "Hide this packaging from new sales and receives.",
-      "disableSuccess": "Packaging disabled.",
-      "disableErrorBase": "Can't disable the base packaging.",
-      "disableErrorPermission": "Owners only.",
-      "disableErrorInUse": "In use — past transactions reference it.",
-      "disableErrorGeneric": "Couldn't disable."
+      "removeButton": "Remove",
+      "removeTooltip": "Removes the packaging. If it's been sold or received, hides it instead so history stays intact.",
+      "removeSuccessRemoved": "Packaging removed.",
+      "removeSuccessDisabled": "Packaging hidden — past transactions still reference it.",
+      "removeErrorBase": "Can't remove the base packaging.",
+      "removeErrorPermission": "Owners only.",
+      "removeErrorGeneric": "Couldn't remove."
     },
     "aliases": {
       "empty": "No aliases.",

@@ -30,8 +30,13 @@ create role anon nologin;
 create role authenticated nologin;
 create schema auth;
 create schema storage;
+-- Mock auth.users mirrors the columns the migrations / tests actually
+-- read: id (always), plus email + phone (used by the invite auto-claim
+-- path added in 0055/0056 and by the user_profile join in 0057).
 create table auth.users (
-  id uuid primary key default gen_random_uuid()
+  id    uuid primary key default gen_random_uuid(),
+  email text,
+  phone text
 );
 create table storage.buckets (
   id text primary key,
@@ -62,6 +67,11 @@ as $$
 $$;
 grant usage on schema auth to authenticated, anon;
 grant select on auth.users to authenticated, anon;
+-- The harness simulates Supabase signing a user up by inserting into
+-- this mock table from inside an `authenticated`-role DO block. Real
+-- Supabase writes to auth.users through Auth Admin, not as
+-- authenticated — so this grant exists only inside the harness.
+grant insert, update on auth.users to authenticated;
 grant usage on schema storage to authenticated, anon;
 SQL
 
@@ -5049,12 +5059,15 @@ begin
 end;
 $$;
 
--- 4c. create_shop_invite: email variant + idempotent + bad-both rejected.
+-- 4c. create_shop_invite: email variant + idempotent + dual-channel
+-- merge + empty-contact rejection.
 do $$
 declare
   v_shop_id   uuid;
   v_invite_1  uuid;
   v_invite_2  uuid;
+  v_invite_3  uuid;
+  v_row       record;
   v_failed    boolean;
 begin
   select shop_id into v_shop_id from test_ids;
@@ -5072,15 +5085,20 @@ begin
       v_invite_2, v_invite_1;
   end if;
 
-  -- Both phone+email refused.
-  v_failed := false;
-  begin
-    perform public.create_shop_invite(
-      v_shop_id, '+252611555666', 'other@example.com', 'cashier');
-  exception when others then v_failed := true;
-  end;
-  if not v_failed then
-    raise exception 'NN (4c): both phone+email must be refused';
+  -- Dual-contact (since 0059): passing both phone and email is allowed
+  -- and merges into the existing invite — fills in the missing channel
+  -- instead of raising.
+  v_invite_3 := public.create_shop_invite(
+    v_shop_id, '+252611555666', 'cashier@example.com', 'cashier');
+  if v_invite_3 <> v_invite_1 then
+    raise exception 'NN (4c): dual-channel call should merge into existing invite (got % vs %)',
+      v_invite_3, v_invite_1;
+  end if;
+  select phone, email into v_row
+    from public.shop_invite where id = v_invite_1;
+  if v_row.phone <> '+252611555666' or v_row.email <> 'cashier@example.com' then
+    raise exception 'NN (4c): dual-channel merge did not fill both channels (phone=%, email=%)',
+      v_row.phone, v_row.email;
   end if;
 
   -- Neither phone nor email refused.
@@ -5336,6 +5354,106 @@ begin
   if v_audit_n < 1 then
     raise exception 'NN (6b): missing bulk audit row for inventory.product.edit';
   end if;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- §OO remove_or_disable_shop_item_unit (0063). Verify:
+--   1. base packaging is refused.
+--   2. fresh (unused) packaging is hard-deleted, RPC returns 'removed'.
+--   3. packaging referenced by a transaction_line is soft-deactivated
+--      and the row remains; RPC returns 'disabled'.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_shop_id      uuid;
+  v_item_id      uuid;
+  v_base_unit_id uuid;
+  v_fresh_unit   uuid;
+  v_used_unit    uuid;
+  v_action       text;
+  v_failed       boolean;
+  v_remaining    int;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Pick any shop_item with a base unit to operate against.
+  select si.id
+    into v_item_id
+    from public.shop_item si
+    join public.shop_item_unit siu on siu.shop_item_id = si.id
+   where si.shop_id = v_shop_id
+     and siu.conversion_to_base = 1
+     and siu.is_active
+   limit 1;
+  if v_item_id is null then
+    raise exception 'OO: no shop_item found to test against';
+  end if;
+
+  select id into v_base_unit_id
+    from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_item_id
+     and conversion_to_base = 1
+   limit 1;
+
+  -- 1. base packaging refused.
+  v_failed := false;
+  begin
+    perform public.remove_or_disable_shop_item_unit(v_shop_id, v_base_unit_id);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'OO (1): base packaging removal must be refused';
+  end if;
+
+  -- 2. Fresh packaging — never sold/received — is hard-deleted.
+  v_fresh_unit := public.create_shop_item_unit(
+    p_shop_id             => v_shop_id,
+    p_shop_item_id        => v_item_id,
+    p_unit_code           => 'box',
+    p_conversion_to_base  => 24,
+    p_sale_price          => null
+  );
+  v_action := public.remove_or_disable_shop_item_unit(v_shop_id, v_fresh_unit);
+  if v_action <> 'removed' then
+    raise exception 'OO (2): expected "removed", got %', v_action;
+  end if;
+  select count(*) into v_remaining
+    from public.shop_item_unit
+   where id = v_fresh_unit;
+  if v_remaining <> 0 then
+    raise exception 'OO (2): row should be hard-deleted';
+  end if;
+
+  -- 3. Packaging that a transaction_line references is soft-disabled.
+  -- Find any non-base packaging that's been referenced by a posted sale
+  -- or receive. The harness's earlier sections (§15, §JJ etc.) post
+  -- plenty of these.
+  select tl.shop_item_unit_id
+    into v_used_unit
+    from public.transaction_line tl
+    join public.shop_item_unit siu on siu.id = tl.shop_item_unit_id
+   where tl.shop_id = v_shop_id
+     and siu.is_active
+     and siu.conversion_to_base <> 1
+   limit 1;
+  if v_used_unit is null then
+    raise notice 'OO (3): no posted line referencing a non-base packaging; skipping';
+    return;
+  end if;
+  v_action := public.remove_or_disable_shop_item_unit(v_shop_id, v_used_unit);
+  if v_action <> 'disabled' then
+    raise exception 'OO (3): expected "disabled", got %', v_action;
+  end if;
+  if (select is_active from public.shop_item_unit where id = v_used_unit) then
+    raise exception 'OO (3): used packaging must be flipped inactive';
+  end if;
+  if (select is_default_sale or is_default_receive
+        from public.shop_item_unit where id = v_used_unit) then
+    raise exception 'OO (3): used packaging default flags must be cleared';
+  end if;
+  -- Restore so later sections that depend on it still pass.
+  update public.shop_item_unit set is_active = true where id = v_used_unit;
 end;
 $$;
 
