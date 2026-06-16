@@ -93,6 +93,13 @@
     "exporting": "Exporting…"
   },
   "audit": {
+    "filters": {
+      "action": "Action",
+      "anyAction": "Any action",
+      "from": "From",
+      "to": "To",
+      "clear": "Clear filters"
+    },
     "columns": {
       "time": "When",
       "action": "Action",

@@ -93,6 +93,13 @@
     "exporting": "Soo saarista…"
   },
   "audit": {
+    "filters": {
+      "action": "Ficil",
+      "anyAction": "Ficil kasta",
+      "from": "Laga bilaabo",
+      "to": "Ilaa",
+      "clear": "Jooji shaandhayn"
+    },
     "columns": {
       "time": "Goorma",
       "action": "Ficil",

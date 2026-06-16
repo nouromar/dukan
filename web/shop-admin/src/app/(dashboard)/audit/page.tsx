@@ -13,6 +13,10 @@ import {
   AuditTable,
   type AuditEntry,
 } from "@/components/audit/audit-table";
+import {
+  AuditFilters,
+  type ActionOption,
+} from "@/components/audit/audit-filters";
 import { ExportCsvButton } from "@/components/shared/export-csv-button";
 
 const PAGE_LIMIT = 100;
@@ -29,11 +33,16 @@ type AuditRow = {
 
 type ActionRow = { code: string; description: string | null };
 
-export default async function AuditPage() {
+export default async function AuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ action?: string; from?: string; to?: string }>;
+}) {
   const t = await getTranslations("audit");
   const locale = await getLocale();
   const { currentShop, capabilities } = await getCurrentShop();
   const canExport = capabilities.includes("audit.export");
+  const { action: actionCode, from, to } = await searchParams;
 
   if (!currentShop) {
     return (
@@ -47,18 +56,37 @@ export default async function AuditPage() {
   }
 
   const supabase = await createSupabaseServerClient();
+  // Build the filtered events query — action_code + date range from
+  // searchParams. PostgREST chains gte/lt on a timestamp; date-only
+  // strings parse as midnight in the request's session timezone,
+  // close enough for the filter granularity.
+  let eventsQuery = supabase
+    .from("audit_log")
+    .select(
+      "id, occurred_at, action_code, entity_type, entity_id, source, actor_user_id",
+    )
+    .eq("shop_id", currentShop.id)
+    .order("occurred_at", { ascending: false })
+    .limit(PAGE_LIMIT);
+  if (actionCode) {
+    eventsQuery = eventsQuery.eq("action_code", actionCode);
+  }
+  if (from) {
+    eventsQuery = eventsQuery.gte("occurred_at", from);
+  }
+  if (to) {
+    // Add one day so "to=2026-06-16" includes the whole 16th.
+    const toExclusive = new Date(to);
+    toExclusive.setUTCDate(toExclusive.getUTCDate() + 1);
+    eventsQuery = eventsQuery.lt(
+      "occurred_at",
+      toExclusive.toISOString().slice(0, 10),
+    );
+  }
+
   const [eventsRes, actionsRes, profilesRes, userRes] = await Promise.all([
-    supabase
-      .from("audit_log")
-      .select(
-        "id, occurred_at, action_code, entity_type, entity_id, source, actor_user_id",
-      )
-      .eq("shop_id", currentShop.id)
-      .order("occurred_at", { ascending: false })
-      .limit(PAGE_LIMIT),
-    supabase.from("audit_action_code").select("code, description"),
-    // RLS gates user_profile to same-shop members so this returns
-    // only profiles we're allowed to display.
+    eventsQuery,
+    supabase.from("audit_action_code").select("code, description").order("code"),
     supabase.from("user_profile").select("user_id, display_name"),
     supabase.auth.getUser(),
   ]);
@@ -123,6 +151,22 @@ export default async function AuditPage() {
         </div>
         {canExport ? <ExportCsvButton href="/api/export/audit" /> : null}
       </div>
+      <AuditFilters
+        actions={
+          (
+            (actionsRes.data ?? []) as Array<{
+              code: string;
+              description: string | null;
+            }>
+          ).map<ActionOption>((r) => ({
+            code: r.code,
+            label: r.description ?? r.code,
+          }))
+        }
+        initialAction={actionCode ?? null}
+        initialFrom={from ?? null}
+        initialTo={to ?? null}
+      />
       <AuditTable rows={entries} locale={locale} />
     </div>
   );
