@@ -16,6 +16,7 @@ import {
 import {
   AuditFilters,
   type ActionOption,
+  type ActorOption,
 } from "@/components/audit/audit-filters";
 import { ExportCsvButton } from "@/components/shared/export-csv-button";
 
@@ -36,13 +37,23 @@ type ActionRow = { code: string; description: string | null };
 export default async function AuditPage({
   searchParams,
 }: {
-  searchParams: Promise<{ action?: string; from?: string; to?: string }>;
+  searchParams: Promise<{
+    action?: string;
+    from?: string;
+    to?: string;
+    actor?: string;
+  }>;
 }) {
   const t = await getTranslations("audit");
   const locale = await getLocale();
   const { currentShop, capabilities } = await getCurrentShop();
   const canExport = capabilities.includes("audit.export");
-  const { action: actionCode, from, to } = await searchParams;
+  const {
+    action: actionCode,
+    from,
+    to,
+    actor: actorUserId,
+  } = await searchParams;
 
   if (!currentShop) {
     return (
@@ -71,6 +82,9 @@ export default async function AuditPage({
   if (actionCode) {
     eventsQuery = eventsQuery.eq("action_code", actionCode);
   }
+  if (actorUserId) {
+    eventsQuery = eventsQuery.eq("actor_user_id", actorUserId);
+  }
   if (from) {
     eventsQuery = eventsQuery.gte("occurred_at", from);
   }
@@ -84,12 +98,21 @@ export default async function AuditPage({
     );
   }
 
-  const [eventsRes, actionsRes, profilesRes, userRes] = await Promise.all([
-    eventsQuery,
-    supabase.from("audit_action_code").select("code, description").order("code"),
-    supabase.from("user_profile").select("user_id, display_name"),
-    supabase.auth.getUser(),
-  ]);
+  const [eventsRes, actionsRes, profilesRes, membersRes, userRes] =
+    await Promise.all([
+      eventsQuery,
+      supabase
+        .from("audit_action_code")
+        .select("code, description")
+        .order("code"),
+      supabase.from("user_profile").select("user_id, display_name"),
+      supabase
+        .from("shop_membership")
+        .select("user_id, is_active")
+        .eq("shop_id", currentShop.id)
+        .eq("is_active", true),
+      supabase.auth.getUser(),
+    ]);
   const currentUserId = userRes.data.user?.id ?? null;
   if (eventsRes.error) {
     console.error("[audit] audit_log fetch failed:", eventsRes.error);
@@ -105,6 +128,10 @@ export default async function AuditPage({
   if (profilesRes.error) {
     console.error("[audit] user_profile fetch failed:", profilesRes.error);
     // Soft failure — keep rendering with UUID fallbacks.
+  }
+  if (membersRes.error) {
+    console.error("[audit] shop_membership fetch failed:", membersRes.error);
+    // Soft failure — actor dropdown will just be empty.
   }
 
   const descByCode = new Map(
@@ -163,7 +190,18 @@ export default async function AuditPage({
             label: r.description ?? r.code,
           }))
         }
+        actors={(
+          (membersRes.data ?? []) as Array<{ user_id: string }>
+        )
+          .map<ActorOption>((m) => ({
+            userId: m.user_id,
+            label:
+              nameByUserId.get(m.user_id) ??
+              `${t("actorUnnamed")} (${m.user_id.slice(0, 8)})`,
+          }))
+          .sort((a, b) => a.label.localeCompare(b.label, locale))}
         initialAction={actionCode ?? null}
+        initialActor={actorUserId ?? null}
         initialFrom={from ?? null}
         initialTo={to ?? null}
       />

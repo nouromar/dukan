@@ -6,6 +6,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, EmptyState } from "@/components/data-table";
@@ -42,6 +43,7 @@ export function AuditTable({
   locale: string;
 }) {
   const t = useTranslations("audit");
+  const router = useRouter();
 
   const fmt = useMemo(
     () =>
@@ -155,6 +157,7 @@ export function AuditTable({
         />
       }
       getRowId={(row) => row.id}
+      onRowClick={(row) => router.push(`/audit/${row.id}`)}
     />
   );
 }

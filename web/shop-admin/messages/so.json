@@ -96,6 +96,8 @@
     "filters": {
       "action": "Ficil",
       "anyAction": "Ficil kasta",
+      "actor": "Yaa",
+      "anyActor": "Qof kasta",
       "from": "Laga bilaabo",
       "to": "Ilaa",
       "clear": "Jooji shaandhayn"
@@ -109,6 +111,7 @@
     },
     "actorYouTag": "adi",
     "actorSystem": "—",
+    "actorUnnamed": "Magac la'aan",
     "sources": {
       "mobile": "Mobayl",
       "shop_admin_web": "Web",
@@ -123,6 +126,19 @@
     "noShop": {
       "title": "Wax dukaan ah lama dooran",
       "description": "Dooro ama dejiyaha dukaan si aad u aragto diiwaanka."
+    },
+    "detail": {
+      "back": "← Dhammaan diiwaanka",
+      "when": "Goorma",
+      "who": "Yaa",
+      "source": "Halka",
+      "entity": "Walax",
+      "reason": "Sababta",
+      "clientOpId": "Furaha aaladda",
+      "changes": "Waxa la bedelay",
+      "noChanges": "Diiwaankan ma uusan bedelin wax goob ah.",
+      "related": "Diiwaano kale ee walaxdan",
+      "noRelated": "Walaxdan diiwaan kale uma jiro."
     }
   },
   "productDetail": {
@@ -611,6 +627,11 @@
   "setup": {
     "title": "Hagaajinta",
     "subtitle": "Habaynta dukaanka iyo shaqaalaha",
+    "tabs": {
+      "general": "Guud",
+      "staff": "Shaqaale",
+      "invites": "Casuumaad sugaya"
+    },
     "shopSettings": {
       "title": "Dukaanka",
       "nameLabel": "Magaca dukaanka",

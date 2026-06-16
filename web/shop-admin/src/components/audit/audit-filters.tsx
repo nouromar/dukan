@@ -1,5 +1,4 @@
-// Audit filter bar — action + date range. URL-state-backed, same
-// pattern as SalesFilters.
+// Audit filter bar — action + actor + date range. URL-state-backed.
 
 "use client";
 
@@ -12,15 +11,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export type ActionOption = { code: string; label: string };
+export type ActorOption = { userId: string; label: string };
 
 export function AuditFilters({
   actions,
+  actors,
   initialAction,
+  initialActor,
   initialFrom,
   initialTo,
 }: {
   actions: ActionOption[];
+  actors: ActorOption[];
   initialAction: string | null;
+  initialActor: string | null;
   initialFrom: string | null;
   initialTo: string | null;
 }) {
@@ -44,7 +48,10 @@ export function AuditFilters({
   }
 
   const hasAny =
-    initialAction !== null || initialFrom !== null || initialTo !== null;
+    initialAction !== null ||
+    initialActor !== null ||
+    initialFrom !== null ||
+    initialTo !== null;
 
   return (
     <div className="flex flex-wrap items-end gap-3 rounded-md border bg-muted/20 p-3">
@@ -61,6 +68,24 @@ export function AuditFilters({
           <option value="">{t("anyAction")}</option>
           {actions.map((a) => (
             <option key={a.code} value={a.code}>
+              {a.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="audit-actor" className="text-xs">
+          {t("actor")}
+        </Label>
+        <select
+          id="audit-actor"
+          value={initialActor ?? ""}
+          onChange={(e) => setParam("actor", e.target.value || null)}
+          className="h-9 w-[14rem] rounded-md border border-input bg-background px-3 py-1 text-sm"
+        >
+          <option value="">{t("anyActor")}</option>
+          {actors.map((a) => (
+            <option key={a.userId} value={a.userId}>
               {a.label}
             </option>
           ))}

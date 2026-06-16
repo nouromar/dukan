@@ -96,6 +96,8 @@
     "filters": {
       "action": "Action",
       "anyAction": "Any action",
+      "actor": "Who",
+      "anyActor": "Anyone",
       "from": "From",
       "to": "To",
       "clear": "Clear filters"
@@ -109,6 +111,7 @@
     },
     "actorYouTag": "you",
     "actorSystem": "—",
+    "actorUnnamed": "Unnamed",
     "sources": {
       "mobile": "Mobile",
       "shop_admin_web": "Web",
@@ -123,6 +126,19 @@
     "noShop": {
       "title": "No shop selected",
       "description": "Pick or set up a shop to see its audit log."
+    },
+    "detail": {
+      "back": "← All activity",
+      "when": "When",
+      "who": "Who",
+      "source": "Source",
+      "entity": "Entity",
+      "reason": "Reason",
+      "clientOpId": "Idempotency key",
+      "changes": "What changed",
+      "noChanges": "This event recorded no field changes.",
+      "related": "Other activity on this entity",
+      "noRelated": "No other events for this entity."
     }
   },
   "productDetail": {
@@ -611,6 +627,11 @@
   "setup": {
     "title": "Setup",
     "subtitle": "Shop configuration and staff",
+    "tabs": {
+      "general": "General",
+      "staff": "Staff",
+      "invites": "Pending invites"
+    },
     "shopSettings": {
       "title": "Shop",
       "nameLabel": "Shop name",
