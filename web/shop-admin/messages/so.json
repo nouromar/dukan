@@ -412,6 +412,20 @@
     }
   },
   "people": {
+    "importButton": "Soo gali CSV",
+    "importDialog": {
+      "title": "Soo gali macaamiisha iyo qeybiyeyaasha",
+      "description": "Soo gali CSV oo leh columns: name, phone, type. Type waa customer ama supplier. Header rowga waa ikhtiyaari.",
+      "fileLabel": "Fayl CSV",
+      "cancel": "Jooji",
+      "confirm": "Soo gali",
+      "submitting": "Soo gelinta…",
+      "success": "La abuuray {created}. La booday {skipped}.",
+      "noFile": "Dooro fayl.",
+      "errorPermission": "Lama oggola.",
+      "errorGeneric": "Lama soo gelin karin.",
+      "errorPattern": "Row {row}: {reason}"
+    },
     "addButton": "Ku dar",
     "addDialog": {
       "title": "Ku dar macmiil ama qeybiye",

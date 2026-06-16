@@ -412,6 +412,20 @@
     }
   },
   "people": {
+    "importButton": "Import CSV",
+    "importDialog": {
+      "title": "Import customers and suppliers",
+      "description": "Upload a CSV with columns: name, phone, type. Type must be customer or supplier. Header row optional.",
+      "fileLabel": "CSV file",
+      "cancel": "Cancel",
+      "confirm": "Import",
+      "submitting": "Importing…",
+      "success": "Created {created}. Skipped {skipped}.",
+      "noFile": "Pick a file.",
+      "errorPermission": "Not allowed.",
+      "errorGeneric": "Couldn't import.",
+      "errorPattern": "Row {row}: {reason}"
+    },
     "addButton": "Add",
     "addDialog": {
       "title": "Add customer or supplier",
