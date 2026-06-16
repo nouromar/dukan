@@ -291,6 +291,38 @@
       "description": "Macmiil/qeybiye ma jiro."
     }
   },
+  "money": {
+    "tabPayments": "Bixinta",
+    "tabExpenses": "Kharashka",
+    "tabProfit": "Faaiido",
+    "tabCash": "Lacag",
+    "payments": {
+      "columns": {
+        "when": "Goorma",
+        "party": "Xubin",
+        "direction": "Jihada",
+        "amount": "Lacagta",
+        "method": "Habka",
+        "notes": "Qoraallo"
+      },
+      "directionIn": "Soo galay",
+      "directionOut": "Bixiyay",
+      "noParty": "—",
+      "search": "Raadi xubin…",
+      "empty": {
+        "title": "Wax bixin ah ma jirin",
+        "description": "Bixinta laga diiwaan geliyo mobaylka ayaa halkan ka muuqda."
+      }
+    },
+    "noShop": {
+      "title": "Wax dukaan ah lama dooran",
+      "description": "Dooro dukaan."
+    },
+    "comingSoon": {
+      "title": "Waxay imanaysaa",
+      "description": "Tabkaan weli lama dhisin."
+    }
+  },
   "people": {
     "addButton": "Ku dar",
     "addDialog": {

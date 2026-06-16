@@ -291,6 +291,38 @@
       "description": "This customer or supplier doesn't exist."
     }
   },
+  "money": {
+    "tabPayments": "Payments",
+    "tabExpenses": "Expenses",
+    "tabProfit": "P&L",
+    "tabCash": "Cash",
+    "payments": {
+      "columns": {
+        "when": "When",
+        "party": "Party",
+        "direction": "Direction",
+        "amount": "Amount",
+        "method": "Method",
+        "notes": "Notes"
+      },
+      "directionIn": "In",
+      "directionOut": "Out",
+      "noParty": "—",
+      "search": "Search by party…",
+      "empty": {
+        "title": "No payments yet",
+        "description": "Payments posted on mobile appear here."
+      }
+    },
+    "noShop": {
+      "title": "No shop selected",
+      "description": "Pick a shop."
+    },
+    "comingSoon": {
+      "title": "Coming soon",
+      "description": "This tab isn't built yet."
+    }
+  },
   "people": {
     "addButton": "Add",
     "addDialog": {
