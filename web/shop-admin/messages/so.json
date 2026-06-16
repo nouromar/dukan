@@ -148,6 +148,26 @@
     }
   },
   "inventory": {
+    "addButton": "Ku dar alaab",
+    "addDialog": {
+      "title": "Ku dar alaab",
+      "nameLabel": "Magaca",
+      "namePlaceholder": "Basmati Rice 25kg",
+      "baseUnitLabel": "Cabbirka asaasiga",
+      "categoryLabel": "Qaybta",
+      "categoryNone": "Qayb la'aan",
+      "salePriceLabel": "Qiimaha iibka",
+      "salePriceHelp": "Ikhtiyaari. Dabadeed waad badeli kartaa.",
+      "cancel": "Jooji",
+      "confirm": "Ku dar",
+      "submitting": "Lagu darayaa…",
+      "success": "Waxaa lagu daray {name}.",
+      "errorName": "Geli magac.",
+      "errorBaseUnit": "Dooro cabbir asaasi ah.",
+      "errorPermission": "Lama oggola.",
+      "errorDuplicate": "Horey ayuu u jiray.",
+      "errorGeneric": "Lama dari karin."
+    },
     "search": {
       "placeholder": "Raadi alaab magaca…"
     },

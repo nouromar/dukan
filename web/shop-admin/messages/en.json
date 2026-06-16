@@ -148,6 +148,26 @@
     }
   },
   "inventory": {
+    "addButton": "Add product",
+    "addDialog": {
+      "title": "Add product",
+      "nameLabel": "Name",
+      "namePlaceholder": "Basmati Rice 25kg",
+      "baseUnitLabel": "Base unit",
+      "categoryLabel": "Category",
+      "categoryNone": "No category",
+      "salePriceLabel": "Sale price",
+      "salePriceHelp": "Optional. You can set or change it later.",
+      "cancel": "Cancel",
+      "confirm": "Add",
+      "submitting": "Adding…",
+      "success": "Added {name}.",
+      "errorName": "Enter a name.",
+      "errorBaseUnit": "Pick a base unit.",
+      "errorPermission": "Not allowed.",
+      "errorDuplicate": "Already exists.",
+      "errorGeneric": "Couldn't add."
+    },
     "search": {
       "placeholder": "Search products by name…"
     },

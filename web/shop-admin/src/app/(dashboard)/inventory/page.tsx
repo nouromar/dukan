@@ -16,6 +16,12 @@ import {
   type Product,
 } from "@/components/inventory/products-table";
 import { ExportCsvButton } from "@/components/shared/export-csv-button";
+import {
+  AddProductDialog,
+  type UnitOption,
+  type CategoryOption,
+} from "@/components/inventory/add-product-dialog";
+import { Can } from "@/components/auth/can";
 
 type RpcRow = {
   shop_item_id: string;
@@ -50,21 +56,36 @@ export default async function InventoryPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("list_shop_items", {
-    p_shop_id: currentShop.id,
-    p_locale: locale,
-  });
-  if (error) {
-    // Surface to Vercel function logs so production diagnostics aren't
-    // a black box. Re-throw so Next renders the standard error page.
+  const [productsRes, unitsRes, categoriesRes] = await Promise.all([
+    supabase.rpc("list_shop_items", {
+      p_shop_id: currentShop.id,
+      p_locale: locale,
+    }),
+    // Reference tables — readable by authenticated; small fixed sets.
+    supabase.from("unit").select("code, default_label").order("code"),
+    supabase.from("category").select("id, name").order("name"),
+  ]);
+  if (productsRes.error) {
     console.error(
       "[inventory] list_shop_items failed:",
-      JSON.stringify(error),
+      JSON.stringify(productsRes.error),
     );
-    throw error;
+    throw productsRes.error;
+  }
+  if (unitsRes.error) {
+    console.error("[inventory] unit fetch failed:", unitsRes.error);
+  }
+  if (categoriesRes.error) {
+    console.error("[inventory] category fetch failed:", categoriesRes.error);
   }
 
-  const rows = (data as RpcRow[] | null) ?? [];
+  const rows = (productsRes.data as RpcRow[] | null) ?? [];
+  const units: UnitOption[] = (
+    (unitsRes.data ?? []) as Array<{ code: string; default_label: string }>
+  ).map((u) => ({ code: u.code, label: u.default_label }));
+  const categories: CategoryOption[] = (
+    (categoriesRes.data ?? []) as Array<{ id: string; name: string }>
+  ).map((c) => ({ id: c.id, name: c.name }));
   const products: Product[] = rows.map((r) => ({
     shop_item_id: r.shop_item_id,
     display_name: r.display_name,
@@ -90,7 +111,16 @@ export default async function InventoryPage() {
             {formatCount(products.length, locale)}
           </span>
         </div>
-        {canExport ? <ExportCsvButton href="/api/export/inventory" /> : null}
+        <div className="flex items-center gap-3">
+          {canExport ? <ExportCsvButton href="/api/export/inventory" /> : null}
+          <Can capability="inventory.product.create">
+            <AddProductDialog
+              shopId={currentShop.id}
+              units={units}
+              categories={categories}
+            />
+          </Can>
+        </div>
       </div>
       <ProductsTable
         rows={products}
