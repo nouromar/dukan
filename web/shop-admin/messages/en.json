@@ -272,6 +272,27 @@
     }
   },
   "people": {
+    "addButton": "Add",
+    "addDialog": {
+      "title": "Add customer or supplier",
+      "nameLabel": "Name",
+      "namePlaceholder": "Asha Mohamed",
+      "phoneLabel": "Phone",
+      "phonePlaceholder": "+252612345678",
+      "phoneHelp": "Optional.",
+      "typeLabel": "Type",
+      "typeCustomer": "Customer",
+      "typeSupplier": "Supplier",
+      "cancel": "Cancel",
+      "confirm": "Add",
+      "submitting": "Adding…",
+      "success": "Added {name}.",
+      "errorName": "Enter a name.",
+      "errorPhone": "Phone format invalid.",
+      "errorPermission": "Not allowed.",
+      "errorDuplicate": "Already exists.",
+      "errorGeneric": "Couldn't add."
+    },
     "tabCustomers": "Customers",
     "tabSuppliers": "Suppliers",
     "columns": {

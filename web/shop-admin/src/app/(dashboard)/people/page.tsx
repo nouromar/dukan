@@ -10,6 +10,8 @@ import Link from "next/link";
 import { getTranslations, getLocale } from "next-intl/server";
 import { getCurrentShop } from "@/lib/current-shop";
 import { ExportCsvButton } from "@/components/shared/export-csv-button";
+import { AddPartyDialog } from "@/components/people/add-party-dialog";
+import { Can } from "@/components/auth/can";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PeopleTabs } from "@/components/people/people-tabs";
 import type { Party } from "@/components/people/parties-table";
@@ -108,6 +110,9 @@ export default async function PeoplePage() {
           >
             {tAging("viewLink")}
           </Link>
+          <Can capability="people.party.create">
+            <AddPartyDialog shopId={currentShop.id} />
+          </Can>
         </div>
       </div>
       <PeopleTabs

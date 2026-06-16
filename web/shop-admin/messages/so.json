@@ -272,6 +272,27 @@
     }
   },
   "people": {
+    "addButton": "Ku dar",
+    "addDialog": {
+      "title": "Ku dar macmiil ama qeybiye",
+      "nameLabel": "Magaca",
+      "namePlaceholder": "Asha Mohamed",
+      "phoneLabel": "Taleefan",
+      "phonePlaceholder": "+252612345678",
+      "phoneHelp": "Ikhtiyaari.",
+      "typeLabel": "Nooca",
+      "typeCustomer": "Macmiil",
+      "typeSupplier": "Qeybiye",
+      "cancel": "Jooji",
+      "confirm": "Ku dar",
+      "submitting": "Lagu darayaa…",
+      "success": "Waxaa lagu daray {name}.",
+      "errorName": "Geli magac.",
+      "errorPhone": "Foomka taleefanka khaldan.",
+      "errorPermission": "Lama oggola.",
+      "errorDuplicate": "Horey ayuu u jiray.",
+      "errorGeneric": "Lama dari karin."
+    },
     "tabCustomers": "Macaamiisha",
     "tabSuppliers": "Qeybiyeyaasha",
     "columns": {
