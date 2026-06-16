@@ -58,6 +58,13 @@
     }
   },
   "sales": {
+    "filters": {
+      "from": "Laga bilaabo",
+      "to": "Ilaa",
+      "party": "Macmiil",
+      "anyParty": "Macmiil kasta",
+      "clear": "Jooji shaandhayn"
+    },
     "search": {
       "placeholder": "Raadi macmiil…"
     },

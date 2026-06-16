@@ -8,6 +8,10 @@ import { historyPageLimit } from "shared";
 import { getCurrentShop } from "@/lib/current-shop";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SalesTable, type Sale } from "@/components/sales/sales-table";
+import {
+  SalesFilters,
+  type PartyOption,
+} from "@/components/sales/sales-filters";
 import { ExportCsvButton } from "@/components/shared/export-csv-button";
 
 type SaleRow = {
@@ -24,11 +28,16 @@ type SaleRow = {
   voided_at: string | null;
 };
 
-export default async function SalesPage() {
+export default async function SalesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string; party?: string }>;
+}) {
   const t = await getTranslations("sales");
   const locale = await getLocale();
   const { currentShop, capabilities } = await getCurrentShop();
   const canExport = capabilities.includes("sales.export");
+  const { from, to, party: partyId } = await searchParams;
 
   if (!currentShop) {
     return (
@@ -42,14 +51,34 @@ export default async function SalesPage() {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("list_sales", {
-    p_shop_id: currentShop.id,
-    p_limit: historyPageLimit,
-  });
+  // Date strings from the form are 'YYYY-MM-DD'; Postgres parses
+  // those as midnight in its session timezone. Good enough for the
+  // filter granularity; server-side timezone handling lives in the
+  // RPC's per-row local_date computation.
+  const [{ data, error }, partiesRes] = await Promise.all([
+    supabase.rpc("list_sales", {
+      p_shop_id: currentShop.id,
+      p_limit: historyPageLimit,
+      p_date_from: from || null,
+      p_date_to: to || null,
+      p_party_id: partyId || null,
+    }),
+    // Customer list for the party-filter dropdown. Cap at active rows.
+    supabase
+      .from("party")
+      .select("id, name, type_id, party_type!inner(code)")
+      .eq("shop_id", currentShop.id)
+      .eq("is_active", true)
+      .eq("party_type.code", "customer")
+      .order("name"),
+  ]);
   if (error) {
     console.error("[sales] list_sales failed:", JSON.stringify(error));
     throw error;
   }
+  const parties: PartyOption[] = (
+    (partiesRes.data ?? []) as Array<{ id: string; name: string }>
+  ).map((p) => ({ id: p.id, name: p.name }));
 
   const rows = (data as SaleRow[] | null) ?? [];
   const sales: Sale[] = rows.map((r) => ({
@@ -74,6 +103,12 @@ export default async function SalesPage() {
         </div>
         {canExport ? <ExportCsvButton href="/api/export/sales" /> : null}
       </div>
+      <SalesFilters
+        parties={parties}
+        initialFrom={from ?? null}
+        initialTo={to ?? null}
+        initialPartyId={partyId ?? null}
+      />
       <SalesTable
         rows={sales}
         currencyCode={currentShop.currency_code}

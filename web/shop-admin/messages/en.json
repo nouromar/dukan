@@ -58,6 +58,13 @@
     }
   },
   "sales": {
+    "filters": {
+      "from": "From",
+      "to": "To",
+      "party": "Customer",
+      "anyParty": "Any customer",
+      "clear": "Clear filters"
+    },
     "search": {
       "placeholder": "Search by customer…"
     },
