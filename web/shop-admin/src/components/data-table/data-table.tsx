@@ -198,11 +198,27 @@ export function DataTable<T>({
                   onRowClick ? () => onRowClick(row.original) : undefined
                 }
               >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+                {row.getVisibleCells().map((cell) => {
+                  // The selection column wraps a Checkbox; clicks inside
+                  // this cell (including padding and Base-UI's internal
+                  // hit area) must never reach the row's onClick. The
+                  // Checkbox itself also stops propagation but that
+                  // doesn't cover everything the cell area absorbs.
+                  const isSelect = cell.column.id === "__select";
+                  return (
+                    <TableCell
+                      key={cell.id}
+                      onClick={
+                        isSelect ? (e) => e.stopPropagation() : undefined
+                      }
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>
