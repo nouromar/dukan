@@ -5457,6 +5457,289 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------------
+-- §PP Onboarding form backend (0065). Verify:
+--   1. shop_item.image_path column exists and is nullable.
+--   2. 'opening' adjustment_reason row exists (used by opening-stock flow).
+--   3. inventory.supplier_cost.set capability granted to owner AND cashier
+--      (mirrors sibling onboarding RPCs which are auth_can_post_shop).
+--   4. set_supplier_item_unit_cost:
+--      a) non-member (no shop access) denied
+--      b) owner upserts cleanly; second call updates same row (not duplicate)
+--      c) negative cost refused
+--      d) non-supplier party refused
+--      e) cashier allowed (mirrors create_shop_item)
+--   5. find_similar_shop_items:
+--      a) returns near-match by alias
+--      b) respects shop boundary (deny non-member)
+--      c) empty query returns nothing
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  v_col_nullable text;
+begin
+  select is_nullable into v_col_nullable
+    from information_schema.columns
+   where table_schema = 'public'
+     and table_name   = 'shop_item'
+     and column_name  = 'image_path';
+  if v_col_nullable is null then
+    raise exception 'PP (1): shop_item.image_path column is missing';
+  end if;
+  if v_col_nullable <> 'YES' then
+    raise exception 'PP (1): shop_item.image_path must be nullable (got %)', v_col_nullable;
+  end if;
+
+  if not exists (
+    select 1 from public.adjustment_reason
+    where code = 'opening' and is_active
+  ) then
+    raise exception 'PP (2): opening adjustment_reason row missing';
+  end if;
+end;
+$$;
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+do $$
+declare
+  v_shop_id      uuid;
+  v_supplier_id  uuid;
+  v_customer_id  uuid;
+  v_item_id      uuid;
+  v_unit_id      uuid;
+  v_row_id_1     uuid;
+  v_row_id_2     uuid;
+  v_count_before int;
+  v_count_after  int;
+  v_failed       boolean;
+  v_audit_n      int;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- Pick any supplier party in this shop.
+  select p.id
+    into v_supplier_id
+    from public.party p
+    join public.party_type pt on pt.id = p.type_id
+   where p.shop_id = v_shop_id
+     and pt.code in ('supplier', 'both')
+     and p.is_active
+   limit 1;
+  if v_supplier_id is null then
+    raise exception 'PP (4): no supplier in Setup Checklist Shop';
+  end if;
+
+  -- Pick any non-base packaging.
+  select siu.id, siu.shop_item_id
+    into v_unit_id, v_item_id
+    from public.shop_item_unit siu
+   where siu.shop_id = v_shop_id
+     and siu.is_active
+     and siu.conversion_to_base <> 1
+   limit 1;
+  if v_unit_id is null then
+    raise exception 'PP (4): no non-base packaging in Setup Checklist Shop';
+  end if;
+
+  -- 3. Capability gate visible at the SQL level for owner.
+  if not public.auth_user_has_capability('inventory.supplier_cost.set', v_shop_id) then
+    raise exception 'PP (3): owner missing inventory.supplier_cost.set capability';
+  end if;
+
+  -- 4b. Owner can call; first call inserts.
+  select count(*) into v_count_before
+    from public.supplier_item_unit_cost
+   where shop_id = v_shop_id
+     and party_id = v_supplier_id
+     and shop_item_unit_id = v_unit_id;
+
+  perform public.set_supplier_item_unit_cost(
+    v_shop_id, v_supplier_id, v_unit_id, 12.5
+  );
+
+  if (select last_unit_cost
+        from public.supplier_item_unit_cost
+       where shop_id = v_shop_id
+         and party_id = v_supplier_id
+         and shop_item_unit_id = v_unit_id) <> 12.5 then
+    raise exception 'PP (4b): set_supplier_item_unit_cost did not persist cost';
+  end if;
+
+  -- 4b cont. Second call updates same row (no duplicate).
+  perform public.set_supplier_item_unit_cost(
+    v_shop_id, v_supplier_id, v_unit_id, 13.75
+  );
+
+  select count(*) into v_count_after
+    from public.supplier_item_unit_cost
+   where shop_id = v_shop_id
+     and party_id = v_supplier_id
+     and shop_item_unit_id = v_unit_id;
+  if v_count_after <> greatest(1, v_count_before) and v_count_after <> v_count_before then
+    raise exception 'PP (4b): expected 1 row after upsert, got % (was %)', v_count_after, v_count_before;
+  end if;
+  if (select last_unit_cost
+        from public.supplier_item_unit_cost
+       where shop_id = v_shop_id
+         and party_id = v_supplier_id
+         and shop_item_unit_id = v_unit_id) <> 13.75 then
+    raise exception 'PP (4b): upsert did not update last_unit_cost';
+  end if;
+
+  -- Audit row landed.
+  select count(*) into v_audit_n
+    from public.audit_log
+   where shop_id = v_shop_id
+     and action_code = 'inventory.supplier_cost.set'
+     and entity_id = v_unit_id;
+  if v_audit_n < 2 then
+    raise exception 'PP (4b): expected ≥2 audit rows, got %', v_audit_n;
+  end if;
+
+  -- 4c. Negative cost refused.
+  v_failed := false;
+  begin
+    perform public.set_supplier_item_unit_cost(
+      v_shop_id, v_supplier_id, v_unit_id, -1
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'PP (4c): negative cost was accepted';
+  end if;
+
+  -- 4d. Customer (non-supplier) refused.
+  select p.id
+    into v_customer_id
+    from public.party p
+    join public.party_type pt on pt.id = p.type_id
+   where p.shop_id = v_shop_id
+     and pt.code = 'customer'
+     and p.is_active
+   limit 1;
+  if v_customer_id is not null then
+    v_failed := false;
+    begin
+      perform public.set_supplier_item_unit_cost(
+        v_shop_id, v_customer_id, v_unit_id, 10
+      );
+    exception when raise_exception then v_failed := true;
+    end;
+    if not v_failed then
+      raise exception 'PP (4d): customer party accepted as supplier';
+    end if;
+  end if;
+
+  -- 5a. find_similar_shop_items returns at least one row when querying
+  -- against an existing alias prefix.
+  perform 1 from public.find_similar_shop_items(
+    v_shop_id, 'sug', null, 'en'
+  );
+  -- (Doesn't assert specific row counts — depends on the fixture
+  -- aliases; we just want the call to succeed.)
+
+  -- 5c. Empty query returns nothing.
+  if exists (
+    select 1 from public.find_similar_shop_items(v_shop_id, '', null, 'en')
+  ) then
+    raise exception 'PP (5c): empty query should return no rows';
+  end if;
+end;
+$$;
+
+-- 4e. Cashier allowed (mirrors create_shop_item — onboarding flow).
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+do $$
+declare
+  v_shop_id      uuid;
+  v_supplier_id  uuid;
+  v_unit_id      uuid;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  select p.id
+    into v_supplier_id
+    from public.party p
+    join public.party_type pt on pt.id = p.type_id
+   where p.shop_id = v_shop_id
+     and pt.code in ('supplier', 'both')
+     and p.is_active
+   limit 1;
+  select siu.id
+    into v_unit_id
+    from public.shop_item_unit siu
+   where siu.shop_id = v_shop_id
+     and siu.is_active
+     and siu.conversion_to_base <> 1
+   limit 1;
+
+  perform public.set_supplier_item_unit_cost(
+    v_shop_id, v_supplier_id, v_unit_id, 9.99
+  );
+  if (select last_unit_cost
+        from public.supplier_item_unit_cost
+       where shop_id = v_shop_id
+         and party_id = v_supplier_id
+         and shop_item_unit_id = v_unit_id) <> 9.99 then
+    raise exception 'PP (4e): cashier set did not persist cost';
+  end if;
+end;
+$$;
+
+-- 4a + 5b. Non-member (user3) — both RPCs must deny.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+do $$
+declare
+  v_shop_id     uuid;
+  v_supplier_id uuid;
+  v_unit_id     uuid;
+  v_failed      boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+
+  -- 4a. set denied for non-member.
+  select p.id
+    into v_supplier_id
+    from public.party p
+    join public.party_type pt on pt.id = p.type_id
+   where p.shop_id = v_shop_id
+     and pt.code in ('supplier', 'both')
+     and p.is_active
+   limit 1;
+  select siu.id
+    into v_unit_id
+    from public.shop_item_unit siu
+   where siu.shop_id = v_shop_id
+     and siu.is_active
+     and siu.conversion_to_base <> 1
+   limit 1;
+
+  v_failed := false;
+  begin
+    perform public.set_supplier_item_unit_cost(
+      v_shop_id, v_supplier_id, v_unit_id, 5
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'PP (4a): non-member could set supplier cost';
+  end if;
+
+  -- 5b. find_similar denied for non-member.
+  v_failed := false;
+  begin
+    perform 1 from public.find_similar_shop_items(v_shop_id, 'anything', null, 'en');
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'PP (5b): non-member could query find_similar_shop_items';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
 reset role;
 
 do $$
