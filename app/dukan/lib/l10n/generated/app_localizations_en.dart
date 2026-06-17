@@ -1195,8 +1195,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleVoidedToast => 'Sale voided';
 
   @override
-  String get saleVoidFailedMessage =>
-      'Could not void this sale. Check your internet and try again.';
+  String get saleVoidFailedMessage => 'Could not void this sale. Try again.';
+
+  @override
+  String get saleVoidErrorOwnerOnly => 'Only the shop owner can void a sale.';
+
+  @override
+  String get saleVoidErrorWindowExpired =>
+      'Too late to void — sales can only be voided within 7 days of posting.';
+
+  @override
+  String get saleVoidErrorAlreadyVoided => 'This sale was already voided.';
+
+  @override
+  String get saleVoidErrorRefundNeedsCustomer =>
+      'Walk-in sales can\'t be refunded — there\'s no customer to refund to.';
+
+  @override
+  String get saleVoidErrorRefundExceedsPaid =>
+      'Refund can\'t be more than the cash paid at the till.';
+
+  @override
+  String get saleVoidErrorNotFound =>
+      'Sale not found. Pull to refresh and try again.';
 
   @override
   String get receiveHistoryTitle => 'Receives';

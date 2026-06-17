@@ -2128,8 +2128,44 @@ abstract class AppLocalizations {
   /// No description provided for @saleVoidFailedMessage.
   ///
   /// In en, this message translates to:
-  /// **'Could not void this sale. Check your internet and try again.'**
+  /// **'Could not void this sale. Try again.'**
   String get saleVoidFailedMessage;
+
+  /// No description provided for @saleVoidErrorOwnerOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the shop owner can void a sale.'**
+  String get saleVoidErrorOwnerOnly;
+
+  /// No description provided for @saleVoidErrorWindowExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Too late to void — sales can only be voided within 7 days of posting.'**
+  String get saleVoidErrorWindowExpired;
+
+  /// No description provided for @saleVoidErrorAlreadyVoided.
+  ///
+  /// In en, this message translates to:
+  /// **'This sale was already voided.'**
+  String get saleVoidErrorAlreadyVoided;
+
+  /// No description provided for @saleVoidErrorRefundNeedsCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk-in sales can\'t be refunded — there\'s no customer to refund to.'**
+  String get saleVoidErrorRefundNeedsCustomer;
+
+  /// No description provided for @saleVoidErrorRefundExceedsPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund can\'t be more than the cash paid at the till.'**
+  String get saleVoidErrorRefundExceedsPaid;
+
+  /// No description provided for @saleVoidErrorNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale not found. Pull to refresh and try again.'**
+  String get saleVoidErrorNotFound;
 
   /// No description provided for @receiveHistoryTitle.
   ///

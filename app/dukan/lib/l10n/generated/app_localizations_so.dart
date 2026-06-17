@@ -1199,7 +1199,30 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get saleVoidFailedMessage =>
-      'Iibka lagama noqo karin. Hubi internetka oo isku day mar kale.';
+      'Iibka lagama noqo karin. Isku day mar kale.';
+
+  @override
+  String get saleVoidErrorOwnerOnly =>
+      'Kaliya milkiilaha dukaanka ayaa joojin kara iibka.';
+
+  @override
+  String get saleVoidErrorWindowExpired =>
+      'Goorta way dhammaatay — iibyada waxaa la joojin karaa 7 maalmood gudahood.';
+
+  @override
+  String get saleVoidErrorAlreadyVoided => 'Iibkan hore ayaa loo joojiyay.';
+
+  @override
+  String get saleVoidErrorRefundNeedsCustomer =>
+      'Iibyada xayeysiis (walk-in) lama soo celin karo — macmiil aan loogu celiyo ma jiro.';
+
+  @override
+  String get saleVoidErrorRefundExceedsPaid =>
+      'Soo-celinta lagama wada-weynaan karo lacagta kaashka.';
+
+  @override
+  String get saleVoidErrorNotFound =>
+      'Iibka lama helin. Cusboonaysii oo isku day mar kale.';
 
   @override
   String get receiveHistoryTitle => 'Alaabtii La dajiyey';

@@ -213,19 +213,15 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
       );
       widget.onAfterVoid?.call();
     } on PostgrestException catch (error, stackTrace) {
-      _handleVoidFailure(error, stackTrace, l.saleVoidFailedMessage);
+      _handleVoidFailure(error, stackTrace);
     } catch (error, stackTrace) {
-      _handleVoidFailure(error, stackTrace, l.saleVoidFailedMessage);
+      _handleVoidFailure(error, stackTrace);
     } finally {
       if (mounted) setState(() => _voiding = false);
     }
   }
 
-  void _handleVoidFailure(
-    Object error,
-    StackTrace stackTrace,
-    String message,
-  ) {
+  void _handleVoidFailure(Object error, StackTrace stackTrace) {
     FlutterError.reportError(
       FlutterErrorDetails(
         exception: error,
@@ -235,7 +231,40 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
       ),
     );
     if (!mounted) return;
-    showError(context, message);
+    showError(context, _voidErrorMessage(error));
+  }
+
+  /// Translates an exception from `void_sale` into a user-friendly
+  /// snackbar string. Server-side business rules each have a known
+  /// exception message in 0010_posting_rpcs.sql; we map by substring
+  /// rather than coupling to error codes the RPC doesn't emit. The
+  /// generic fallback no longer mentions internet (every business
+  /// rule was landing there too, which was misleading).
+  String _voidErrorMessage(Object error) {
+    final l = tr(context);
+    if (error is PostgrestException) {
+      final msg = error.message.toLowerCase();
+      if (msg.contains('only the shop owner')) {
+        return l.saleVoidErrorOwnerOnly;
+      }
+      if (msg.contains('void window') || msg.contains('outside the')) {
+        return l.saleVoidErrorWindowExpired;
+      }
+      if (msg.contains('already') && msg.contains('void')) {
+        return l.saleVoidErrorAlreadyVoided;
+      }
+      if (msg.contains('refund requires a customer')) {
+        return l.saleVoidErrorRefundNeedsCustomer;
+      }
+      if (msg.contains('refund') && msg.contains('cannot exceed')) {
+        return l.saleVoidErrorRefundExceedsPaid;
+      }
+      if (msg.contains('not found') ||
+          msg.contains('only voids sale transactions')) {
+        return l.saleVoidErrorNotFound;
+      }
+    }
+    return l.saleVoidFailedMessage;
   }
 
   String _generateClientOpId() {
@@ -547,14 +576,19 @@ class _VoidConfirmDialogState extends State<_VoidConfirmDialog> {
   late bool _refundEnabled;
   String? _refundError;
 
-  bool get _hasCashPaid => widget.header.paidAmount > 0;
+  /// Refund is only offered when the sale was cash-paid AND attached
+  /// to a customer — the RPC refuses `Refund requires a customer
+  /// party on the sale` for walk-ins. Hiding the affordance up-front
+  /// stops the user from ever tripping that rule.
+  bool get _canOfferRefund =>
+      widget.header.paidAmount > 0 && widget.header.partyId != null;
 
   @override
   void initState() {
     super.initState();
-    _refundEnabled = _hasCashPaid;
+    _refundEnabled = _canOfferRefund;
     _refundController = TextEditingController(
-      text: _hasCashPaid ? _formatField(widget.header.paidAmount) : '',
+      text: _canOfferRefund ? _formatField(widget.header.paidAmount) : '',
     );
     _refundController.addListener(_onRefundChanged);
   }
@@ -631,7 +665,7 @@ class _VoidConfirmDialogState extends State<_VoidConfirmDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l.saleVoidConfirmBody),
-          if (_hasCashPaid) ...[
+          if (_canOfferRefund) ...[
             const SizedBox(height: 12),
             CheckboxListTile(
               value: _refundEnabled,
