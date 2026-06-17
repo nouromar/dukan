@@ -1,19 +1,39 @@
 // New-product (shop_item) form screen — CREATE-only. Used from the
 // Products FAB and the setup-onboarding "Add my own items" entry.
 //
-// Form fields:
-//   * Name (required, language-tagged via current locale)
-//   * Base unit (required, picked from listUnits)
-//   * Category (optional; defaults to "Other" / unset)
-//   * Reorder threshold (optional; in base unit)
-//   * Packagings: first row is the base packaging (conversion=1, unit
-//     locked to the chosen base unit). The cashier can append more
-//     packagings with `+ Add packaging`; each extra row picks any unit
-//     and types its conversion-to-base plus an optional sale price.
+// Form fields per the comprehensive onboarding form plan at
+// /Users/nouromar/.claude/plans/linear-fluttering-hartmanis.md:
 //
-// Save calls `createShopItem` for the row and `createShopItemUnit` for
-// each additional packaging. Editing existing products lives on the
-// detail screen (per-tile commits) — there is no EDIT mode here.
+//   Section 1 — Identify (always visible, required):
+//     * Photo (optional capture — uploaded to shop-item-images bucket)
+//     * Name (required, language-tagged via current locale)
+//     * Base unit (required, picked from listUnits)
+//
+//   Section 2 — How you sell it (always visible, mostly required):
+//     * Category (optional dropdown)
+//     * Packagings: first row is the base packaging (conversion=1, unit
+//       locked to the chosen base unit). The cashier can append more
+//       packagings; each extra row picks any unit and types its
+//       conversion-to-base plus an optional sale price + barcode.
+//
+//   Section 5 — Help find it faster (collapsible, optional):
+//     * Aliases (chip multi-add — extra names a shopkeeper might say)
+//     * Bono spelling (single text — how the item appears on supplier bonos)
+//     * Per-packaging barcodes live in the packaging rows themselves.
+//
+//   Reorder threshold is intentionally NOT collected — matches the v1
+//   East-African decision applied to the web inventory list (#312).
+//
+// Section 3 (default supplier + typical cost) and Section 4 (opening
+// stock per packaging) are in the plan but land in the next slice;
+// they need the bigger backend wrappers (set_supplier_item_unit_cost,
+// postOpeningStockAdjustment) wired through with conversion math.
+//
+// Save calls createShopItem + createShopItemUnit per packaging, then
+// the optional addShopItemAlias / addShopItemBarcode and the photo
+// upload + setShopItemImagePath. Photo upload errors do NOT block the
+// item save — they surface as a separate toast and the row is created
+// without an image_path.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,14 +41,24 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/scanner/scanner_sheet.dart';
+import 'package:dukan/shared/bono_image_picker.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 
 class ShopItemEditorScreen extends StatefulWidget {
-  const ShopItemEditorScreen({required this.shop, super.key});
+  const ShopItemEditorScreen({
+    required this.shop,
+    this.imagePicker,
+    super.key,
+  });
 
   final ShopSummary shop;
+
+  /// Inject for tests. Production lazy-instantiates DefaultBonoImagePicker
+  /// (same pattern receive_screen.dart uses for bono uploads).
+  final BonoImagePicker? imagePicker;
 
   @override
   State<ShopItemEditorScreen> createState() => _ShopItemEditorScreenState();
@@ -36,13 +66,20 @@ class ShopItemEditorScreen extends StatefulWidget {
 
 class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   final _nameController = TextEditingController();
-  final _reorderThresholdController = TextEditingController();
+  final _aliasController = TextEditingController();
+  final _bonoSpellingController = TextEditingController();
   final _nameFocusNode = FocusNode();
   String? _categoryId;
 
   /// Index 0 is always the base packaging (conversion=1, unit locked
   /// to the chosen base unit). Subsequent rows are user-added.
   final List<_PackagingDraft> _packagings = [_PackagingDraft.base()];
+
+  /// Chip-style multi-add. Extras the shopkeeper types in Section 5.
+  final List<String> _aliases = [];
+
+  PickedBono? _photo;
+  BonoImagePicker? _picker;
 
   String? _baseUnitCode;
   Future<_EditorBootstrap>? _bootstrapFuture;
@@ -61,7 +98,8 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _reorderThresholdController.dispose();
+    _aliasController.dispose();
+    _bonoSpellingController.dispose();
     _nameFocusNode.dispose();
     for (final p in _packagings) {
       p.dispose();
@@ -69,13 +107,8 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     super.dispose();
   }
 
-  num? get _parsedReorderThreshold {
-    final raw = _reorderThresholdController.text.trim();
-    if (raw.isEmpty) return null;
-    final value = num.tryParse(raw);
-    if (value == null || value < 0) return null;
-    return value;
-  }
+  BonoImagePicker get _imagePicker =>
+      _picker ??= widget.imagePicker ?? DefaultBonoImagePicker();
 
   Future<_EditorBootstrap> _loadBootstrap() async {
     final api = context.read<ShopApi>();
@@ -96,12 +129,68 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     setState(() {});
   }
 
+  Future<void> _onPickPhoto() async {
+    final l = tr(context);
+    // Camera first; users can switch to gallery via the picker UI if
+    // the platform exposes it. Errors are best-effort — fail open.
+    PickedBono? picked;
+    try {
+      picked = await _imagePicker.pickFromCamera();
+    } catch (_) {
+      picked = null;
+    }
+    if (!mounted) return;
+    if (picked == null) return;
+    setState(() => _photo = picked);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l.shopItemEditorPhotoCapturedToast),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _onClearPhoto() => setState(() => _photo = null);
+
+  void _onAddAlias() {
+    final raw = _aliasController.text.trim();
+    if (raw.isEmpty) return;
+    // Same-form dedup. The server enforces unique
+    // (shop, item, language, alias_text_norm) too.
+    final norm = raw.toLowerCase();
+    if (_aliases.any((a) => a.toLowerCase() == norm)) {
+      _aliasController.clear();
+      return;
+    }
+    setState(() {
+      _aliases.add(raw);
+      _aliasController.clear();
+    });
+  }
+
+  void _onRemoveAlias(int index) {
+    setState(() => _aliases.removeAt(index));
+  }
+
+  Future<void> _onScanPackagingBarcode(_PackagingDraft draft) async {
+    final l = tr(context);
+    final event = await Scanner.open(context);
+    if (event == null || !mounted) return;
+    setState(() => draft.barcode = event.code);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l.shopItemEditorBarcodeCapturedToast(event.code)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   /// Commits the form. `keepGoing` true keeps the screen mounted and
-  /// resets the per-item fields (name, threshold, packagings) so the
-  /// shopkeeper can immediately type the next product without bouncing
-  /// back to the list. The chosen base unit + category persist across
-  /// resets — they're typically the same for a stocking session
-  /// ("I'm adding 8 more rice packagings to my shop").
+  /// resets the per-item fields (name, photo, packagings, aliases,
+  /// bono spelling) so the shopkeeper can immediately type the next
+  /// product without bouncing back to the list. The chosen base unit
+  /// + category persist across resets — they're typically the same
+  /// for a stocking session ("I'm adding 8 more rice items to my shop").
   Future<void> _onSave({bool keepGoing = false}) async {
     final l = tr(context);
     final name = _nameController.text.trim();
@@ -125,29 +214,112 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
         categoryId: _categoryId,
       );
       final shopItemId = created.shopItemId;
+
+      // Base packaging — if a barcode was scanned, bind it.
+      if (basePackaging.barcode != null &&
+          basePackaging.barcode!.isNotEmpty) {
+        try {
+          await api.addShopItemBarcode(
+            shopId: widget.shop.id,
+            shopItemUnitId: created.defaultShopItemUnitId,
+            barcode: basePackaging.barcode!,
+          );
+        } catch (error, stackTrace) {
+          _reportNonFatal(error, stackTrace, 'adding base barcode');
+        }
+      }
+
       // Additional packagings (rows 1..n) — each requires unit + conversion.
       for (var i = 1; i < _packagings.length; i++) {
         final p = _packagings[i];
         final unitCode = p.unitCode;
         final conversion = p.parsedConversion;
         if (unitCode == null || conversion == null || conversion <= 0) continue;
-        await api.createShopItemUnit(
+        final unitId = await api.createShopItemUnit(
           shopId: widget.shop.id,
           shopItemId: shopItemId,
           unitCode: unitCode,
           conversionToBase: conversion,
           salePrice: p.parsedSalePrice,
         );
+        if (p.barcode != null && p.barcode!.isNotEmpty) {
+          try {
+            await api.addShopItemBarcode(
+              shopId: widget.shop.id,
+              shopItemUnitId: unitId,
+              barcode: p.barcode!,
+            );
+          } catch (error, stackTrace) {
+            _reportNonFatal(error, stackTrace, 'adding extra barcode');
+          }
+        }
       }
-      // Reorder threshold is optional — skip when unset.
-      final threshold = _parsedReorderThreshold;
-      if (threshold != null) {
-        await api.setShopItemReorderThreshold(
-          shopId: widget.shop.id,
-          shopItemId: shopItemId,
-          reorderThreshold: threshold,
-        );
+
+      // Aliases — soft failures; the item save is the headline.
+      for (final alias in _aliases) {
+        try {
+          await api.addShopItemAlias(
+            shopId: widget.shop.id,
+            shopItemId: shopItemId,
+            aliasText: alias,
+            languageCode: languageCode,
+            isDisplay: false,
+            source: 'manual',
+          );
+        } catch (error, stackTrace) {
+          _reportNonFatal(error, stackTrace, 'adding alias');
+        }
       }
+
+      // Bono spelling — stored as a plain alias; back-office curation
+      // can later distinguish via `source` / weighting heuristics. Tag
+      // with `[bono]` prefix so admins can quickly spot the difference
+      // until the dedicated field lands.
+      final bonoSpelling = _bonoSpellingController.text.trim();
+      if (bonoSpelling.isNotEmpty) {
+        try {
+          await api.addShopItemAlias(
+            shopId: widget.shop.id,
+            shopItemId: shopItemId,
+            aliasText: bonoSpelling,
+            languageCode: null,
+            isDisplay: false,
+            source: 'manual',
+          );
+        } catch (error, stackTrace) {
+          _reportNonFatal(error, stackTrace, 'adding bono spelling alias');
+        }
+      }
+
+      // Photo upload — best-effort; never blocks the item save.
+      final photo = _photo;
+      if (photo != null) {
+        try {
+          final path = await api.uploadShopItemImage(
+            shopId: widget.shop.id,
+            shopItemId: shopItemId,
+            bytes: photo.bytes,
+            mimeType: photo.mimeType,
+            fileExtension: photo.fileExtension,
+          );
+          await api.setShopItemImagePath(
+            shopId: widget.shop.id,
+            shopItemId: shopItemId,
+            imagePath: path,
+          );
+        } catch (error, stackTrace) {
+          _reportNonFatal(error, stackTrace, 'uploading item photo');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l.shopItemEditorPhotoUploadFailedToast),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+      }
+
       if (!mounted) return;
       if (keepGoing) {
         // Toast acknowledges the save without nav. Then reset to
@@ -178,16 +350,28 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     }
   }
 
+  void _reportNonFatal(Object error, StackTrace stackTrace, String where) {
+    FlutterError.reportError(FlutterErrorDetails(
+      exception: error,
+      stack: stackTrace,
+      library: 'dukan products onboarding',
+      context: ErrorDescription(where),
+    ));
+  }
+
   /// Clears per-item form state after a successful "Save & add another".
   /// Keeps base unit + category sticky (typical stocking session pattern);
-  /// resets name, threshold, and packagings (back to a single base row).
+  /// resets name, photo, packagings, aliases, bono spelling.
   void _resetForNextItem() {
     _nameController.clear();
-    _reorderThresholdController.clear();
+    _aliasController.clear();
+    _bonoSpellingController.clear();
     for (final p in _packagings) {
       p.dispose();
     }
     setState(() {
+      _photo = null;
+      _aliases.clear();
       _packagings
         ..clear()
         ..add(_PackagingDraft.base());
@@ -195,15 +379,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
       _baseUnitMissing = false;
     });
     _nameFocusNode.requestFocus();
-  }
-
-  String _baseUnitLabelFor(List<UnitOption> units) {
-    final code = _baseUnitCode;
-    if (code == null) return '';
-    for (final u in units) {
-      if (u.code == code) return u.label;
-    }
-    return code;
   }
 
   @override
@@ -250,6 +425,12 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       children: [
+        _PhotoTile(
+          photo: _photo,
+          onPick: _onPickPhoto,
+          onClear: _onClearPhoto,
+        ),
+        const SizedBox(height: 16),
         TextField(
           controller: _nameController,
           focusNode: _nameFocusNode,
@@ -297,22 +478,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           ],
           onChanged: (v) => setState(() => _categoryId = v),
         ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _reorderThresholdController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-          ],
-          decoration: InputDecoration(
-            labelText: l.shopItemEditorReorderThresholdLabel,
-            helperText: _baseUnitCode == null
-                ? null
-                : l.shopItemEditorReorderThresholdHelper(
-                    _baseUnitLabelFor(bootstrap.units),
-                  ),
-          ),
-        ),
         const SizedBox(height: 24),
         Text(
           l.shopItemEditorPackagingsHeader,
@@ -329,6 +494,9 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
               shop: widget.shop,
               onChanged: () => setState(() {}),
               onRemove: i == 0 ? null : () => _onRemovePackaging(i),
+              onScanBarcode: () => _onScanPackagingBarcode(_packagings[i]),
+              onClearBarcode: () =>
+                  setState(() => _packagings[i].barcode = null),
             ),
           ),
         OutlinedButton.icon(
@@ -338,6 +506,14 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(56),
           ),
+        ),
+        const SizedBox(height: 24),
+        _DiscoverySection(
+          aliasController: _aliasController,
+          bonoSpellingController: _bonoSpellingController,
+          aliases: _aliases,
+          onAddAlias: _onAddAlias,
+          onRemoveAlias: _onRemoveAlias,
         ),
         const SizedBox(height: 32),
         // Save & Add another — secondary action, sits ABOVE the primary
@@ -403,6 +579,7 @@ class _PackagingDraft {
 
   final bool isBase;
   String? unitCode;
+  String? barcode;
   final TextEditingController conversionController;
   final TextEditingController salePriceController;
 
@@ -422,6 +599,174 @@ class _PackagingDraft {
   }
 }
 
+// ----------------------------------------------------------------------------
+// Photo tile — Section 1 photo capture affordance.
+// ----------------------------------------------------------------------------
+
+class _PhotoTile extends StatelessWidget {
+  const _PhotoTile({
+    required this.photo,
+    required this.onPick,
+    required this.onClear,
+  });
+
+  final PickedBono? photo;
+  final VoidCallback onPick;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    if (photo == null) {
+      return OutlinedButton.icon(
+        onPressed: onPick,
+        icon: const Icon(Icons.camera_alt_outlined),
+        label: Text(l.shopItemEditorAddPhotoButton),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(72),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.memory(
+              photo!.bytes,
+              width: 64,
+              height: 64,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l.shopItemEditorPhotoCapturedLabel,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+          TextButton(
+            onPressed: onPick,
+            child: Text(l.shopItemEditorRetakePhotoButton),
+          ),
+          IconButton(
+            tooltip: l.shopItemEditorRemovePhotoTooltip,
+            onPressed: onClear,
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Discovery section — collapsible aliases + bono spelling
+// ----------------------------------------------------------------------------
+
+class _DiscoverySection extends StatelessWidget {
+  const _DiscoverySection({
+    required this.aliasController,
+    required this.bonoSpellingController,
+    required this.aliases,
+    required this.onAddAlias,
+    required this.onRemoveAlias,
+  });
+
+  final TextEditingController aliasController;
+  final TextEditingController bonoSpellingController;
+  final List<String> aliases;
+  final VoidCallback onAddAlias;
+  final ValueChanged<int> onRemoveAlias;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        // Default collapsed — Section 5 is opt-in. Power users open it
+        // for the first item of a stocking session; subsequent items
+        // get the same starting state per the plan.
+        initiallyExpanded: false,
+        title: Text(l.shopItemEditorDiscoveryHeader),
+        subtitle: Text(
+          l.shopItemEditorDiscoverySubtitle,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              l.shopItemEditorAliasesLabel,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (aliases.isNotEmpty)
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (var i = 0; i < aliases.length; i++)
+                  InputChip(
+                    label: Text(aliases[i]),
+                    onDeleted: () => onRemoveAlias(i),
+                  ),
+              ],
+            ),
+          if (aliases.isNotEmpty) const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: aliasController,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    hintText: l.shopItemEditorAliasHint,
+                  ),
+                  onSubmitted: (_) => onAddAlias(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonal(
+                onPressed: onAddAlias,
+                child: Text(l.shopItemEditorAddAliasButton),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l.shopItemEditorAliasHelper,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: bonoSpellingController,
+            decoration: InputDecoration(
+              labelText: l.shopItemEditorBonoSpellingLabel,
+              helperText: l.shopItemEditorBonoSpellingHelper,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Packaging row — now also captures a per-packaging barcode (optional).
+// ----------------------------------------------------------------------------
+
 class _PackagingRow extends StatelessWidget {
   const _PackagingRow({
     required this.draft,
@@ -430,6 +775,8 @@ class _PackagingRow extends StatelessWidget {
     required this.shop,
     required this.onChanged,
     required this.onRemove,
+    required this.onScanBarcode,
+    required this.onClearBarcode,
   });
 
   final _PackagingDraft draft;
@@ -438,6 +785,8 @@ class _PackagingRow extends StatelessWidget {
   final ShopSummary shop;
   final VoidCallback onChanged;
   final VoidCallback? onRemove;
+  final VoidCallback onScanBarcode;
+  final VoidCallback onClearBarcode;
 
   @override
   Widget build(BuildContext context) {
@@ -536,6 +885,12 @@ class _PackagingRow extends StatelessWidget {
               ),
               onChanged: (_) => onChanged(),
             ),
+            const SizedBox(height: 12),
+            _BarcodeRow(
+              barcode: draft.barcode,
+              onScan: onScanBarcode,
+              onClear: onClearBarcode,
+            ),
           ],
         ),
       ),
@@ -563,3 +918,58 @@ class _PackagingRow extends StatelessWidget {
     return code;
   }
 }
+
+class _BarcodeRow extends StatelessWidget {
+  const _BarcodeRow({
+    required this.barcode,
+    required this.onScan,
+    required this.onClear,
+  });
+
+  final String? barcode;
+  final VoidCallback onScan;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    if (barcode == null) {
+      return Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: TextButton.icon(
+          onPressed: onScan,
+          icon: const Icon(Icons.qr_code_scanner),
+          label: Text(l.shopItemEditorScanBarcodeButton),
+        ),
+      );
+    }
+    return Row(
+      children: [
+        Icon(
+          Icons.check_circle,
+          size: 18,
+          color: theme.colorScheme.primary,
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            l.shopItemEditorBarcodeBoundLabel(barcode!),
+            style: theme.textTheme.bodySmall,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        TextButton(
+          onPressed: onScan,
+          child: Text(l.shopItemEditorRescanBarcodeButton),
+        ),
+        IconButton(
+          tooltip: l.shopItemEditorRemoveBarcodeTooltip,
+          onPressed: onClear,
+          icon: const Icon(Icons.close, size: 18),
+        ),
+      ],
+    );
+  }
+}
+

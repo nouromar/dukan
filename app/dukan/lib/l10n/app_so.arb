@@ -659,9 +659,42 @@
       }
     }
   },
+  "shopItemEditorAddPhotoButton": "Ku dar sawir (ikhtiyaari)",
+  "shopItemEditorPhotoCapturedLabel": "Sawir diyaar",
+  "shopItemEditorRetakePhotoButton": "Mar kale qaad",
+  "shopItemEditorRemovePhotoTooltip": "Saar sawirka",
+  "shopItemEditorPhotoCapturedToast": "Sawir la qaaday — la soo dejin doonaa marka aad kaydiso.",
+  "shopItemEditorPhotoUploadFailedToast": "Alaabta waa la kaydiyay, laakiin sawir soo-dejin ma guulaysan. Waad ka qaadi kartaa bogga alaabta.",
   "shopItemEditorPackagingsHeader": "Baakado",
   "shopItemEditorAddPackagingButton": "Ku dar baakad",
   "shopItemEditorBaseBadge": "ASAAS",
+  "shopItemEditorScanBarcodeButton": "Sken garee barcode (ikhtiyaari)",
+  "shopItemEditorRescanBarcodeButton": "Mar kale sken",
+  "shopItemEditorRemoveBarcodeTooltip": "Saar barcode-ka",
+  "shopItemEditorBarcodeBoundLabel": "Barcode {code}",
+  "@shopItemEditorBarcodeBoundLabel": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorBarcodeCapturedToast": "Waa la qaaday {code}",
+  "@shopItemEditorBarcodeCapturedToast": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorDiscoveryHeader": "Ka caawi sida loo helo (ikhtiyaari)",
+  "shopItemEditorDiscoverySubtitle": "Magacyo kale + qoraalka qoraalka ayaa raadinta ka horumarinaya.",
+  "shopItemEditorAliasesLabel": "Magacyo kale",
+  "shopItemEditorAliasHint": "Ku dar magac kale",
+  "shopItemEditorAddAliasButton": "KU DAR",
+  "shopItemEditorAliasHelper": "Magacyada macmiilku oran karo. Riix shukaansiga si aad u saarto.",
+  "shopItemEditorBonoSpellingLabel": "Qoraalka qoraalka (ikhtiyaari)",
+  "shopItemEditorBonoSpellingHelper": "Sida alaabtan u soo muuqato qoraalka warqada keenaha (tusaale CCL 330x24).",
   "removePackagingTooltip": "Tirtir baakadda",
   "shopItemEditorItemSectionHeader": "Alaab",
   "removePackagingConfirmBody": "Ma tirtirayaa baakaddan? Mar dambe wad ku celin kartaa.",

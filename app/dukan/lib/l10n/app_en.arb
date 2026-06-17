@@ -659,9 +659,42 @@
       }
     }
   },
+  "shopItemEditorAddPhotoButton": "Add photo (optional)",
+  "shopItemEditorPhotoCapturedLabel": "Photo ready",
+  "shopItemEditorRetakePhotoButton": "Retake",
+  "shopItemEditorRemovePhotoTooltip": "Remove photo",
+  "shopItemEditorPhotoCapturedToast": "Photo captured — will upload when you save.",
+  "shopItemEditorPhotoUploadFailedToast": "Product saved, but photo upload failed. You can retake from the product page.",
   "shopItemEditorPackagingsHeader": "Packagings",
   "shopItemEditorAddPackagingButton": "Add packaging",
   "shopItemEditorBaseBadge": "BASE",
+  "shopItemEditorScanBarcodeButton": "Scan barcode (optional)",
+  "shopItemEditorRescanBarcodeButton": "Scan again",
+  "shopItemEditorRemoveBarcodeTooltip": "Remove barcode",
+  "shopItemEditorBarcodeBoundLabel": "Barcode {code}",
+  "@shopItemEditorBarcodeBoundLabel": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorBarcodeCapturedToast": "Captured {code}",
+  "@shopItemEditorBarcodeCapturedToast": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorDiscoveryHeader": "Help find it faster (optional)",
+  "shopItemEditorDiscoverySubtitle": "Extra names + bono spelling improve search later.",
+  "shopItemEditorAliasesLabel": "Other names",
+  "shopItemEditorAliasHint": "Add another name",
+  "shopItemEditorAddAliasButton": "ADD",
+  "shopItemEditorAliasHelper": "Names a customer might say. Tap a chip to remove it.",
+  "shopItemEditorBonoSpellingLabel": "Bono spelling (optional)",
+  "shopItemEditorBonoSpellingHelper": "How this item appears on supplier paper invoices (e.g. CCL 330x24).",
   "removePackagingTooltip": "Remove packaging",
   "shopItemEditorItemSectionHeader": "Item",
   "removePackagingConfirmBody": "Remove this packaging? You can add it back later.",

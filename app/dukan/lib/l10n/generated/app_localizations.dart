@@ -2796,6 +2796,42 @@ abstract class AppLocalizations {
   /// **'In {unit}. Leave blank for no warning.'**
   String shopItemEditorReorderThresholdHelper(String unit);
 
+  /// No description provided for @shopItemEditorAddPhotoButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo (optional)'**
+  String get shopItemEditorAddPhotoButton;
+
+  /// No description provided for @shopItemEditorPhotoCapturedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo ready'**
+  String get shopItemEditorPhotoCapturedLabel;
+
+  /// No description provided for @shopItemEditorRetakePhotoButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Retake'**
+  String get shopItemEditorRetakePhotoButton;
+
+  /// No description provided for @shopItemEditorRemovePhotoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get shopItemEditorRemovePhotoTooltip;
+
+  /// No description provided for @shopItemEditorPhotoCapturedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo captured — will upload when you save.'**
+  String get shopItemEditorPhotoCapturedToast;
+
+  /// No description provided for @shopItemEditorPhotoUploadFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Product saved, but photo upload failed. You can retake from the product page.'**
+  String get shopItemEditorPhotoUploadFailedToast;
+
   /// No description provided for @shopItemEditorPackagingsHeader.
   ///
   /// In en, this message translates to:
@@ -2813,6 +2849,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'BASE'**
   String get shopItemEditorBaseBadge;
+
+  /// No description provided for @shopItemEditorScanBarcodeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan barcode (optional)'**
+  String get shopItemEditorScanBarcodeButton;
+
+  /// No description provided for @shopItemEditorRescanBarcodeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan again'**
+  String get shopItemEditorRescanBarcodeButton;
+
+  /// No description provided for @shopItemEditorRemoveBarcodeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove barcode'**
+  String get shopItemEditorRemoveBarcodeTooltip;
+
+  /// No description provided for @shopItemEditorBarcodeBoundLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode {code}'**
+  String shopItemEditorBarcodeBoundLabel(String code);
+
+  /// No description provided for @shopItemEditorBarcodeCapturedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Captured {code}'**
+  String shopItemEditorBarcodeCapturedToast(String code);
+
+  /// No description provided for @shopItemEditorDiscoveryHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Help find it faster (optional)'**
+  String get shopItemEditorDiscoveryHeader;
+
+  /// No description provided for @shopItemEditorDiscoverySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra names + bono spelling improve search later.'**
+  String get shopItemEditorDiscoverySubtitle;
+
+  /// No description provided for @shopItemEditorAliasesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Other names'**
+  String get shopItemEditorAliasesLabel;
+
+  /// No description provided for @shopItemEditorAliasHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another name'**
+  String get shopItemEditorAliasHint;
+
+  /// No description provided for @shopItemEditorAddAliasButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD'**
+  String get shopItemEditorAddAliasButton;
+
+  /// No description provided for @shopItemEditorAliasHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Names a customer might say. Tap a chip to remove it.'**
+  String get shopItemEditorAliasHelper;
+
+  /// No description provided for @shopItemEditorBonoSpellingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono spelling (optional)'**
+  String get shopItemEditorBonoSpellingLabel;
+
+  /// No description provided for @shopItemEditorBonoSpellingHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'How this item appears on supplier paper invoices (e.g. CCL 330x24).'**
+  String get shopItemEditorBonoSpellingHelper;
 
   /// No description provided for @removePackagingTooltip.
   ///

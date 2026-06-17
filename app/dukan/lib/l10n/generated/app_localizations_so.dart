@@ -1628,6 +1628,26 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
+  String get shopItemEditorAddPhotoButton => 'Ku dar sawir (ikhtiyaari)';
+
+  @override
+  String get shopItemEditorPhotoCapturedLabel => 'Sawir diyaar';
+
+  @override
+  String get shopItemEditorRetakePhotoButton => 'Mar kale qaad';
+
+  @override
+  String get shopItemEditorRemovePhotoTooltip => 'Saar sawirka';
+
+  @override
+  String get shopItemEditorPhotoCapturedToast =>
+      'Sawir la qaaday — la soo dejin doonaa marka aad kaydiso.';
+
+  @override
+  String get shopItemEditorPhotoUploadFailedToast =>
+      'Alaabta waa la kaydiyay, laakiin sawir soo-dejin ma guulaysan. Waad ka qaadi kartaa bogga alaabta.';
+
+  @override
   String get shopItemEditorPackagingsHeader => 'Baakado';
 
   @override
@@ -1635,6 +1655,55 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get shopItemEditorBaseBadge => 'ASAAS';
+
+  @override
+  String get shopItemEditorScanBarcodeButton =>
+      'Sken garee barcode (ikhtiyaari)';
+
+  @override
+  String get shopItemEditorRescanBarcodeButton => 'Mar kale sken';
+
+  @override
+  String get shopItemEditorRemoveBarcodeTooltip => 'Saar barcode-ka';
+
+  @override
+  String shopItemEditorBarcodeBoundLabel(String code) {
+    return 'Barcode $code';
+  }
+
+  @override
+  String shopItemEditorBarcodeCapturedToast(String code) {
+    return 'Waa la qaaday $code';
+  }
+
+  @override
+  String get shopItemEditorDiscoveryHeader =>
+      'Ka caawi sida loo helo (ikhtiyaari)';
+
+  @override
+  String get shopItemEditorDiscoverySubtitle =>
+      'Magacyo kale + qoraalka qoraalka ayaa raadinta ka horumarinaya.';
+
+  @override
+  String get shopItemEditorAliasesLabel => 'Magacyo kale';
+
+  @override
+  String get shopItemEditorAliasHint => 'Ku dar magac kale';
+
+  @override
+  String get shopItemEditorAddAliasButton => 'KU DAR';
+
+  @override
+  String get shopItemEditorAliasHelper =>
+      'Magacyada macmiilku oran karo. Riix shukaansiga si aad u saarto.';
+
+  @override
+  String get shopItemEditorBonoSpellingLabel =>
+      'Qoraalka qoraalka (ikhtiyaari)';
+
+  @override
+  String get shopItemEditorBonoSpellingHelper =>
+      'Sida alaabtan u soo muuqato qoraalka warqada keenaha (tusaale CCL 330x24).';
 
   @override
   String get removePackagingTooltip => 'Tirtir baakadda';

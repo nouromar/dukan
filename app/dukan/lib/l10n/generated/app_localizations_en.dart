@@ -1618,6 +1618,26 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get shopItemEditorAddPhotoButton => 'Add photo (optional)';
+
+  @override
+  String get shopItemEditorPhotoCapturedLabel => 'Photo ready';
+
+  @override
+  String get shopItemEditorRetakePhotoButton => 'Retake';
+
+  @override
+  String get shopItemEditorRemovePhotoTooltip => 'Remove photo';
+
+  @override
+  String get shopItemEditorPhotoCapturedToast =>
+      'Photo captured — will upload when you save.';
+
+  @override
+  String get shopItemEditorPhotoUploadFailedToast =>
+      'Product saved, but photo upload failed. You can retake from the product page.';
+
+  @override
   String get shopItemEditorPackagingsHeader => 'Packagings';
 
   @override
@@ -1625,6 +1645,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shopItemEditorBaseBadge => 'BASE';
+
+  @override
+  String get shopItemEditorScanBarcodeButton => 'Scan barcode (optional)';
+
+  @override
+  String get shopItemEditorRescanBarcodeButton => 'Scan again';
+
+  @override
+  String get shopItemEditorRemoveBarcodeTooltip => 'Remove barcode';
+
+  @override
+  String shopItemEditorBarcodeBoundLabel(String code) {
+    return 'Barcode $code';
+  }
+
+  @override
+  String shopItemEditorBarcodeCapturedToast(String code) {
+    return 'Captured $code';
+  }
+
+  @override
+  String get shopItemEditorDiscoveryHeader => 'Help find it faster (optional)';
+
+  @override
+  String get shopItemEditorDiscoverySubtitle =>
+      'Extra names + bono spelling improve search later.';
+
+  @override
+  String get shopItemEditorAliasesLabel => 'Other names';
+
+  @override
+  String get shopItemEditorAliasHint => 'Add another name';
+
+  @override
+  String get shopItemEditorAddAliasButton => 'ADD';
+
+  @override
+  String get shopItemEditorAliasHelper =>
+      'Names a customer might say. Tap a chip to remove it.';
+
+  @override
+  String get shopItemEditorBonoSpellingLabel => 'Bono spelling (optional)';
+
+  @override
+  String get shopItemEditorBonoSpellingHelper =>
+      'How this item appears on supplier paper invoices (e.g. CCL 330x24).';
 
   @override
   String get removePackagingTooltip => 'Remove packaging';
