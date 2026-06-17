@@ -84,16 +84,17 @@ void main() {
       await tester.tap(find.text('Staples').last);
       await tester.pumpAndSettle();
 
-      // Drag the form ListView up to bring SAVE & ADD ANOTHER (near
-      // the bottom) into view, then tap.
-      await tester.drag(
-        find
+      // SAVE & ADD ANOTHER is below the optional sections; scroll the
+      // ListView until the button is in view, then tap.
+      await tester.scrollUntilVisible(
+        find.text(en.shopItemEditorSaveAndAddAnotherButton),
+        300,
+        scrollable: find
             .descendant(
               of: find.byType(ShopItemEditorScreen),
               matching: find.byType(Scrollable),
             )
             .first,
-        const Offset(0, -800),
       );
       await tester.pumpAndSettle();
       await tester.tap(

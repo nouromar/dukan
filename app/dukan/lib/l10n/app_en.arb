@@ -659,6 +659,74 @@
       }
     }
   },
+  "shopItemEditorScanIdentifyButton": "Scan",
+  "shopItemEditorBarcodeNoMatchToast": "Code {code} isn't in our catalog yet. Fill in the rest and SAVE.",
+  "@shopItemEditorBarcodeNoMatchToast": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorPrefillBanner": "Found '{name}' in the catalog — review and tweak anything that's different.",
+  "@shopItemEditorPrefillBanner": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorSuggestionInShop": "Already in your shop — tap to open",
+  "shopItemEditorSuggestionInCatalog": "From global catalog — tap to use",
+  "shopItemEditorSessionCounter": "{count, plural, one {1 added} other {# added}}",
+  "@shopItemEditorSessionCounter": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopItemEditorSessionSheetTitle": "Added this session",
+  "shopItemEditorSessionSheetViewAll": "View all products →",
+  "shopItemEditorBuyHeader": "How you buy it (optional)",
+  "shopItemEditorBuySubtitle": "Default supplier + typical cost — pre-fills Receive later.",
+  "shopItemEditorPickSupplierButton": "Pick supplier",
+  "shopItemEditorNewSupplierButton": "NEW",
+  "shopItemEditorRemoveSupplierTooltip": "Remove supplier",
+  "shopItemEditorTypicalCostHeader": "Typical cost",
+  "shopItemEditorCostPerPackLabel": "Cost per {pack}",
+  "@shopItemEditorCostPerPackLabel": {
+    "placeholders": {
+      "pack": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorOpeningHeader": "What you have right now (optional)",
+  "shopItemEditorOpeningSubtitle": "Enter current stock per packaging so reports are right from day one.",
+  "shopItemEditorOpeningPickBaseUnitFirst": "Pick a base unit above to enable this section.",
+  "shopItemEditorOpeningQtyLabel": "Quantity in {unit}",
+  "@shopItemEditorOpeningQtyLabel": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorOpeningAsOf": "As of {date}",
+  "@shopItemEditorOpeningAsOf": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorChangeDateButton": "Change",
+  "shopItemEditorOpeningStockNote": "Opening stock recorded during onboarding.",
+  "shopItemEditorDedupTitle": "You may already have this",
+  "shopItemEditorDedupBody": "Your shop has similar items. Open one to edit, or keep going if it's something different:",
+  "shopItemEditorDedupKeepGoing": "IT'S DIFFERENT",
+  "shopItemEditorDedupOpenExisting": "OPEN EXISTING",
   "shopItemEditorAddPhotoButton": "Add photo (optional)",
   "shopItemEditorPhotoCapturedLabel": "Photo ready",
   "shopItemEditorRetakePhotoButton": "Retake",

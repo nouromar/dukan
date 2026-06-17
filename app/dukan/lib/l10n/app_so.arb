@@ -659,6 +659,74 @@
       }
     }
   },
+  "shopItemEditorScanIdentifyButton": "Sken",
+  "shopItemEditorBarcodeNoMatchToast": "Koodhka {code} weli kuma jiro cataloga. Buuxi qaybaha kale, ka dibna KAYDI.",
+  "@shopItemEditorBarcodeNoMatchToast": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorPrefillBanner": "Waxaan ka helay '{name}' cataloga — fiiri oo wax ka beddel haddii uu jiro waxa kala duwan.",
+  "@shopItemEditorPrefillBanner": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorSuggestionInShop": "Horey ayuu dukaankaaga ugu jiray — taabo si aad u furto",
+  "shopItemEditorSuggestionInCatalog": "Catalog guud — taabo si aad u isticmaasho",
+  "shopItemEditorSessionCounter": "{count, plural, one {1 la daray} other {# la daray}}",
+  "@shopItemEditorSessionCounter": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shopItemEditorSessionSheetTitle": "Lagu daray fadhigan",
+  "shopItemEditorSessionSheetViewAll": "Eeg dhammaan alaabta →",
+  "shopItemEditorBuyHeader": "Sida aad u qaadato (ikhtiyaari)",
+  "shopItemEditorBuySubtitle": "Alaab keene asaasi + qiimaha caadiga — wuxuu hore u buuxinayaa Qaadasho.",
+  "shopItemEditorPickSupplierButton": "Dooro alaab keene",
+  "shopItemEditorNewSupplierButton": "CUSUB",
+  "shopItemEditorRemoveSupplierTooltip": "Saar alaab keenaha",
+  "shopItemEditorTypicalCostHeader": "Qiimaha caadiga",
+  "shopItemEditorCostPerPackLabel": "Qiimaha {pack}",
+  "@shopItemEditorCostPerPackLabel": {
+    "placeholders": {
+      "pack": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorOpeningHeader": "Waxa aad hadda haysato (ikhtiyaari)",
+  "shopItemEditorOpeningSubtitle": "Geli kayd hadda baakad walba si warbixinada saxda u shaqeeyaan maalintaa.",
+  "shopItemEditorOpeningPickBaseUnitFirst": "Marka hore dooro cabbir asaasi ah si aad u isticmaasho qaybtan.",
+  "shopItemEditorOpeningQtyLabel": "Tirada {unit}",
+  "@shopItemEditorOpeningQtyLabel": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorOpeningAsOf": "Laga bilaabo {date}",
+  "@shopItemEditorOpeningAsOf": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "shopItemEditorChangeDateButton": "Bedel",
+  "shopItemEditorOpeningStockNote": "Kayd furitaan oo la diiwaan geliyay xilliga hagaajinta.",
+  "shopItemEditorDedupTitle": "Waxaa laga yaabaa inaad horey u haysatay",
+  "shopItemEditorDedupBody": "Dukaankaaga wuxuu leeyahay alaab la mid ah. Mid ka fur si aad u tafatirto, ama sii wad haddii uu kala duwan yahay:",
+  "shopItemEditorDedupKeepGoing": "WAA KALA DUWAN",
+  "shopItemEditorDedupOpenExisting": "FUR KII HORE",
   "shopItemEditorAddPhotoButton": "Ku dar sawir (ikhtiyaari)",
   "shopItemEditorPhotoCapturedLabel": "Sawir diyaar",
   "shopItemEditorRetakePhotoButton": "Mar kale qaad",

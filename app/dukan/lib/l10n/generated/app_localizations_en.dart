@@ -1618,6 +1618,110 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get shopItemEditorScanIdentifyButton => 'Scan';
+
+  @override
+  String shopItemEditorBarcodeNoMatchToast(String code) {
+    return 'Code $code isn\'t in our catalog yet. Fill in the rest and SAVE.';
+  }
+
+  @override
+  String shopItemEditorPrefillBanner(String name) {
+    return 'Found \'$name\' in the catalog — review and tweak anything that\'s different.';
+  }
+
+  @override
+  String get shopItemEditorSuggestionInShop =>
+      'Already in your shop — tap to open';
+
+  @override
+  String get shopItemEditorSuggestionInCatalog =>
+      'From global catalog — tap to use';
+
+  @override
+  String shopItemEditorSessionCounter(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# added',
+      one: '1 added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shopItemEditorSessionSheetTitle => 'Added this session';
+
+  @override
+  String get shopItemEditorSessionSheetViewAll => 'View all products →';
+
+  @override
+  String get shopItemEditorBuyHeader => 'How you buy it (optional)';
+
+  @override
+  String get shopItemEditorBuySubtitle =>
+      'Default supplier + typical cost — pre-fills Receive later.';
+
+  @override
+  String get shopItemEditorPickSupplierButton => 'Pick supplier';
+
+  @override
+  String get shopItemEditorNewSupplierButton => 'NEW';
+
+  @override
+  String get shopItemEditorRemoveSupplierTooltip => 'Remove supplier';
+
+  @override
+  String get shopItemEditorTypicalCostHeader => 'Typical cost';
+
+  @override
+  String shopItemEditorCostPerPackLabel(String pack) {
+    return 'Cost per $pack';
+  }
+
+  @override
+  String get shopItemEditorOpeningHeader =>
+      'What you have right now (optional)';
+
+  @override
+  String get shopItemEditorOpeningSubtitle =>
+      'Enter current stock per packaging so reports are right from day one.';
+
+  @override
+  String get shopItemEditorOpeningPickBaseUnitFirst =>
+      'Pick a base unit above to enable this section.';
+
+  @override
+  String shopItemEditorOpeningQtyLabel(String unit) {
+    return 'Quantity in $unit';
+  }
+
+  @override
+  String shopItemEditorOpeningAsOf(String date) {
+    return 'As of $date';
+  }
+
+  @override
+  String get shopItemEditorChangeDateButton => 'Change';
+
+  @override
+  String get shopItemEditorOpeningStockNote =>
+      'Opening stock recorded during onboarding.';
+
+  @override
+  String get shopItemEditorDedupTitle => 'You may already have this';
+
+  @override
+  String get shopItemEditorDedupBody =>
+      'Your shop has similar items. Open one to edit, or keep going if it\'s something different:';
+
+  @override
+  String get shopItemEditorDedupKeepGoing => 'IT\'S DIFFERENT';
+
+  @override
+  String get shopItemEditorDedupOpenExisting => 'OPEN EXISTING';
+
+  @override
   String get shopItemEditorAddPhotoButton => 'Add photo (optional)';
 
   @override

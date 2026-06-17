@@ -1628,6 +1628,111 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
+  String get shopItemEditorScanIdentifyButton => 'Sken';
+
+  @override
+  String shopItemEditorBarcodeNoMatchToast(String code) {
+    return 'Koodhka $code weli kuma jiro cataloga. Buuxi qaybaha kale, ka dibna KAYDI.';
+  }
+
+  @override
+  String shopItemEditorPrefillBanner(String name) {
+    return 'Waxaan ka helay \'$name\' cataloga — fiiri oo wax ka beddel haddii uu jiro waxa kala duwan.';
+  }
+
+  @override
+  String get shopItemEditorSuggestionInShop =>
+      'Horey ayuu dukaankaaga ugu jiray — taabo si aad u furto';
+
+  @override
+  String get shopItemEditorSuggestionInCatalog =>
+      'Catalog guud — taabo si aad u isticmaasho';
+
+  @override
+  String shopItemEditorSessionCounter(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# la daray',
+      one: '1 la daray',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shopItemEditorSessionSheetTitle => 'Lagu daray fadhigan';
+
+  @override
+  String get shopItemEditorSessionSheetViewAll => 'Eeg dhammaan alaabta →';
+
+  @override
+  String get shopItemEditorBuyHeader => 'Sida aad u qaadato (ikhtiyaari)';
+
+  @override
+  String get shopItemEditorBuySubtitle =>
+      'Alaab keene asaasi + qiimaha caadiga — wuxuu hore u buuxinayaa Qaadasho.';
+
+  @override
+  String get shopItemEditorPickSupplierButton => 'Dooro alaab keene';
+
+  @override
+  String get shopItemEditorNewSupplierButton => 'CUSUB';
+
+  @override
+  String get shopItemEditorRemoveSupplierTooltip => 'Saar alaab keenaha';
+
+  @override
+  String get shopItemEditorTypicalCostHeader => 'Qiimaha caadiga';
+
+  @override
+  String shopItemEditorCostPerPackLabel(String pack) {
+    return 'Qiimaha $pack';
+  }
+
+  @override
+  String get shopItemEditorOpeningHeader =>
+      'Waxa aad hadda haysato (ikhtiyaari)';
+
+  @override
+  String get shopItemEditorOpeningSubtitle =>
+      'Geli kayd hadda baakad walba si warbixinada saxda u shaqeeyaan maalintaa.';
+
+  @override
+  String get shopItemEditorOpeningPickBaseUnitFirst =>
+      'Marka hore dooro cabbir asaasi ah si aad u isticmaasho qaybtan.';
+
+  @override
+  String shopItemEditorOpeningQtyLabel(String unit) {
+    return 'Tirada $unit';
+  }
+
+  @override
+  String shopItemEditorOpeningAsOf(String date) {
+    return 'Laga bilaabo $date';
+  }
+
+  @override
+  String get shopItemEditorChangeDateButton => 'Bedel';
+
+  @override
+  String get shopItemEditorOpeningStockNote =>
+      'Kayd furitaan oo la diiwaan geliyay xilliga hagaajinta.';
+
+  @override
+  String get shopItemEditorDedupTitle =>
+      'Waxaa laga yaabaa inaad horey u haysatay';
+
+  @override
+  String get shopItemEditorDedupBody =>
+      'Dukaankaaga wuxuu leeyahay alaab la mid ah. Mid ka fur si aad u tafatirto, ama sii wad haddii uu kala duwan yahay:';
+
+  @override
+  String get shopItemEditorDedupKeepGoing => 'WAA KALA DUWAN';
+
+  @override
+  String get shopItemEditorDedupOpenExisting => 'FUR KII HORE';
+
+  @override
   String get shopItemEditorAddPhotoButton => 'Ku dar sawir (ikhtiyaari)';
 
   @override

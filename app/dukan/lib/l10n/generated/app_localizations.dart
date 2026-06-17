@@ -2796,6 +2796,162 @@ abstract class AppLocalizations {
   /// **'In {unit}. Leave blank for no warning.'**
   String shopItemEditorReorderThresholdHelper(String unit);
 
+  /// No description provided for @shopItemEditorScanIdentifyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get shopItemEditorScanIdentifyButton;
+
+  /// No description provided for @shopItemEditorBarcodeNoMatchToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Code {code} isn\'t in our catalog yet. Fill in the rest and SAVE.'**
+  String shopItemEditorBarcodeNoMatchToast(String code);
+
+  /// No description provided for @shopItemEditorPrefillBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Found \'{name}\' in the catalog — review and tweak anything that\'s different.'**
+  String shopItemEditorPrefillBanner(String name);
+
+  /// No description provided for @shopItemEditorSuggestionInShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Already in your shop — tap to open'**
+  String get shopItemEditorSuggestionInShop;
+
+  /// No description provided for @shopItemEditorSuggestionInCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'From global catalog — tap to use'**
+  String get shopItemEditorSuggestionInCatalog;
+
+  /// No description provided for @shopItemEditorSessionCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one {1 added} other {# added}}'**
+  String shopItemEditorSessionCounter(int count);
+
+  /// No description provided for @shopItemEditorSessionSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Added this session'**
+  String get shopItemEditorSessionSheetTitle;
+
+  /// No description provided for @shopItemEditorSessionSheetViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all products →'**
+  String get shopItemEditorSessionSheetViewAll;
+
+  /// No description provided for @shopItemEditorBuyHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'How you buy it (optional)'**
+  String get shopItemEditorBuyHeader;
+
+  /// No description provided for @shopItemEditorBuySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default supplier + typical cost — pre-fills Receive later.'**
+  String get shopItemEditorBuySubtitle;
+
+  /// No description provided for @shopItemEditorPickSupplierButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick supplier'**
+  String get shopItemEditorPickSupplierButton;
+
+  /// No description provided for @shopItemEditorNewSupplierButton.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW'**
+  String get shopItemEditorNewSupplierButton;
+
+  /// No description provided for @shopItemEditorRemoveSupplierTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove supplier'**
+  String get shopItemEditorRemoveSupplierTooltip;
+
+  /// No description provided for @shopItemEditorTypicalCostHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Typical cost'**
+  String get shopItemEditorTypicalCostHeader;
+
+  /// No description provided for @shopItemEditorCostPerPackLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost per {pack}'**
+  String shopItemEditorCostPerPackLabel(String pack);
+
+  /// No description provided for @shopItemEditorOpeningHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'What you have right now (optional)'**
+  String get shopItemEditorOpeningHeader;
+
+  /// No description provided for @shopItemEditorOpeningSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter current stock per packaging so reports are right from day one.'**
+  String get shopItemEditorOpeningSubtitle;
+
+  /// No description provided for @shopItemEditorOpeningPickBaseUnitFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a base unit above to enable this section.'**
+  String get shopItemEditorOpeningPickBaseUnitFirst;
+
+  /// No description provided for @shopItemEditorOpeningQtyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity in {unit}'**
+  String shopItemEditorOpeningQtyLabel(String unit);
+
+  /// No description provided for @shopItemEditorOpeningAsOf.
+  ///
+  /// In en, this message translates to:
+  /// **'As of {date}'**
+  String shopItemEditorOpeningAsOf(String date);
+
+  /// No description provided for @shopItemEditorChangeDateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get shopItemEditorChangeDateButton;
+
+  /// No description provided for @shopItemEditorOpeningStockNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening stock recorded during onboarding.'**
+  String get shopItemEditorOpeningStockNote;
+
+  /// No description provided for @shopItemEditorDedupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You may already have this'**
+  String get shopItemEditorDedupTitle;
+
+  /// No description provided for @shopItemEditorDedupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shop has similar items. Open one to edit, or keep going if it\'s something different:'**
+  String get shopItemEditorDedupBody;
+
+  /// No description provided for @shopItemEditorDedupKeepGoing.
+  ///
+  /// In en, this message translates to:
+  /// **'IT\'S DIFFERENT'**
+  String get shopItemEditorDedupKeepGoing;
+
+  /// No description provided for @shopItemEditorDedupOpenExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'OPEN EXISTING'**
+  String get shopItemEditorDedupOpenExisting;
+
   /// No description provided for @shopItemEditorAddPhotoButton.
   ///
   /// In en, this message translates to:

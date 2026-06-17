@@ -6,7 +6,11 @@
 //
 //   Section 1 — Identify (always visible, required):
 //     * Photo (optional capture — uploaded to shop-item-images bucket)
-//     * Name (required, language-tagged via current locale)
+//     * Scan barcode (optional — in-shop hit routes to that item's
+//       editor; global hit prefills the form; miss leaves the code
+//       bound to the base packaging)
+//     * Name (required, language-tagged via current locale; debounced
+//       search_items inline suggestions: shop-tier ranked first)
 //     * Base unit (required, picked from listUnits)
 //
 //   Section 2 — How you sell it (always visible, mostly required):
@@ -16,24 +20,34 @@
 //       packagings; each extra row picks any unit and types its
 //       conversion-to-base plus an optional sale price + barcode.
 //
-//   Section 5 — Help find it faster (collapsible, optional):
+//   Section 3 — How you buy it (optional, collapsible):
+//     * Default supplier (party picker)
+//     * Typical cost per pack — one input per packaging declared
+//
+//   Section 4 — What you have right now (optional, collapsible):
+//     * Opening stock per packaging (converted to base units on save
+//       and batched into a single post_inventory_adjustment with
+//       reason='opening')
+//     * As-of date (defaults to today)
+//
+//   Section 5 — Help find it faster (optional, collapsible):
 //     * Aliases (chip multi-add — extra names a shopkeeper might say)
-//     * Bono spelling (single text — how the item appears on supplier bonos)
+//     * Bono spelling (single text — how the item appears on supplier
+//       bonos)
 //     * Per-packaging barcodes live in the packaging rows themselves.
 //
-//   Reorder threshold is intentionally NOT collected — matches the v1
-//   East-African decision applied to the web inventory list (#312).
+// Save dedup soft-warn fires only on the "typed and never tapped a
+// suggestion" path. Tapping any inline suggestion (shop or global)
+// is an explicit choice — route or prefill silently.
 //
-// Section 3 (default supplier + typical cost) and Section 4 (opening
-// stock per packaging) are in the plan but land in the next slice;
-// they need the bigger backend wrappers (set_supplier_item_unit_cost,
-// postOpeningStockAdjustment) wired through with conversion math.
+// Reorder threshold is intentionally NOT collected — matches the v1
+// East-African decision applied to the web inventory list (#312).
 //
-// Save calls createShopItem + createShopItemUnit per packaging, then
-// the optional addShopItemAlias / addShopItemBarcode and the photo
-// upload + setShopItemImagePath. Photo upload errors do NOT block the
-// item save — they surface as a separate toast and the row is created
-// without an image_path.
+// Session counter chip in the AppBar surfaces a bottom sheet of items
+// added during this editor mount; rows jump to the product detail for
+// quick fixes without leaving the editor.
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,11 +55,15 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/products/shop_item_detail_screen.dart';
+import 'package:dukan/products/products_screen.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
+import 'package:dukan/shared/add_party_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/party_picker_sheet.dart';
 
 class ShopItemEditorScreen extends StatefulWidget {
   const ShopItemEditorScreen({
@@ -87,6 +105,43 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   bool _nameMissing = false;
   bool _baseUnitMissing = false;
 
+  // ----- Section 1 auto-suggest state ----------------------------------------
+
+  /// Debounce timer for name typing.
+  Timer? _suggestDebounce;
+  String _lastSuggestionQuery = '';
+  List<ItemSearchResult> _suggestions = const [];
+  bool _suggestionsLoading = false;
+
+  /// True when the form was populated by an explicit user tap on an
+  /// auto-suggestion (global catalog hit) or a barcode prefill. The
+  /// save flow uses this to skip the save-time fuzzy dedup warn —
+  /// per plan, that dialog only fires on the typed-and-never-tapped
+  /// path.
+  bool _formPrefilled = false;
+
+  /// Optional banner copy shown above the form after a prefill so the
+  /// owner knows the form was auto-populated.
+  String? _prefillBanner;
+
+  // ----- Section 3 (How you buy it) state ------------------------------------
+
+  PartySearchResult? _supplier;
+
+  // ----- Section 4 (Opening stock) state -------------------------------------
+
+  DateTime _openingDate = DateTime.now();
+
+  // ----- Session counter -----------------------------------------------------
+
+  final List<_SessionAdd> _sessionAdds = [];
+
+  /// First-item-of-session toggle. The optional sections (3/4/5) start
+  /// expanded for the first item so the owner sees what's possible;
+  /// subsequent items in the same session start collapsed to keep the
+  /// muscle-memory path short.
+  bool _firstItemOfSession = true;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -101,6 +156,7 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     _aliasController.dispose();
     _bonoSpellingController.dispose();
     _nameFocusNode.dispose();
+    _suggestDebounce?.cancel();
     for (final p in _packagings) {
       p.dispose();
     }
@@ -131,8 +187,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
 
   Future<void> _onPickPhoto() async {
     final l = tr(context);
-    // Camera first; users can switch to gallery via the picker UI if
-    // the platform exposes it. Errors are best-effort — fail open.
     PickedBono? picked;
     try {
       picked = await _imagePicker.pickFromCamera();
@@ -155,8 +209,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   void _onAddAlias() {
     final raw = _aliasController.text.trim();
     if (raw.isEmpty) return;
-    // Same-form dedup. The server enforces unique
-    // (shop, item, language, alias_text_norm) too.
     final norm = raw.toLowerCase();
     if (_aliases.any((a) => a.toLowerCase() == norm)) {
       _aliasController.clear();
@@ -185,12 +237,206 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     );
   }
 
-  /// Commits the form. `keepGoing` true keeps the screen mounted and
-  /// resets the per-item fields (name, photo, packagings, aliases,
-  /// bono spelling) so the shopkeeper can immediately type the next
-  /// product without bouncing back to the list. The chosen base unit
-  /// + category persist across resets — they're typically the same
-  /// for a stocking session ("I'm adding 8 more rice items to my shop").
+  // --- Section 1: identify (scan + name search + prefill) -------------------
+
+  Future<void> _onSection1Scan() async {
+    final l = tr(context);
+    final event = await Scanner.open(context);
+    if (event == null || !mounted) return;
+    final api = context.read<ShopApi>();
+    final locale = Localizations.localeOf(context).languageCode;
+    final results = await api.searchItems(
+      shopId: widget.shop.id,
+      query: event.code,
+      screen: 'sale',
+      locale: locale,
+    );
+    if (!mounted) return;
+    if (results.isEmpty) {
+      // Bind the scanned code to the base packaging as a hint and
+      // tell the owner we didn't find anything to prefill.
+      setState(() => _packagings.first.barcode = event.code);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l.shopItemEditorBarcodeNoMatchToast(event.code),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final hit = results.first;
+    if (hit.isActivated && hit.shopItemId != null) {
+      // In-shop hit: it's the same physical product. Route to the
+      // existing item's editor — the owner is editing, not creating.
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ShopItemDetailScreen(
+            shop: widget.shop,
+            shopItemId: hit.shopItemId!,
+            displayName: hit.displayName,
+          ),
+        ),
+      );
+      return;
+    }
+    // Global catalog hit (not yet in this shop). Auto-prefill — owner
+    // can still override anything; SAVE will call ensureShopItem on
+    // commit to link the new shop_item to the global catalog.
+    _applyPrefillFromSearch(hit, barcode: event.code);
+  }
+
+  void _onNameChanged(String value) {
+    if (_nameMissing) setState(() => _nameMissing = false);
+    // Typing manually invalidates any prior prefill — the owner is
+    // typing a NEW name, so we shouldn't claim it was prefilled.
+    if (_formPrefilled && _nameController.text != _lastSuggestionQuery) {
+      _formPrefilled = false;
+      _prefillBanner = null;
+    }
+    _suggestDebounce?.cancel();
+    final query = value.trim();
+    if (query.length < 2) {
+      setState(() {
+        _suggestions = const [];
+        _suggestionsLoading = false;
+      });
+      return;
+    }
+    _suggestDebounce = Timer(const Duration(milliseconds: 250), () {
+      _fetchSuggestions(query);
+    });
+  }
+
+  Future<void> _fetchSuggestions(String query) async {
+    if (!mounted) return;
+    setState(() {
+      _suggestionsLoading = true;
+      _lastSuggestionQuery = query;
+    });
+    final api = context.read<ShopApi>();
+    final locale = Localizations.localeOf(context).languageCode;
+    try {
+      final results = await api.searchItems(
+        shopId: widget.shop.id,
+        query: query,
+        screen: 'sale',
+        locale: locale,
+      );
+      if (!mounted) return;
+      // Drop results if the query has moved on while we were waiting.
+      if (query != _nameController.text.trim()) return;
+      setState(() {
+        _suggestions = results.take(5).toList(growable: false);
+        _suggestionsLoading = false;
+      });
+    } catch (error, stackTrace) {
+      _reportNonFatal(error, stackTrace, 'fetching name suggestions');
+      if (!mounted) return;
+      setState(() {
+        _suggestions = const [];
+        _suggestionsLoading = false;
+      });
+    }
+  }
+
+  void _onTapSuggestion(ItemSearchResult hit) {
+    if (hit.isActivated && hit.shopItemId != null) {
+      // Shop hit: route to that item. Editor stays mounted; if owner
+      // backs out, the form is still here.
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ShopItemDetailScreen(
+            shop: widget.shop,
+            shopItemId: hit.shopItemId!,
+            displayName: hit.displayName,
+          ),
+        ),
+      );
+      return;
+    }
+    // Global catalog hit — apply prefill.
+    _applyPrefillFromSearch(hit);
+  }
+
+  void _applyPrefillFromSearch(ItemSearchResult hit, {String? barcode}) {
+    final l = tr(context);
+    setState(() {
+      _nameController.text = hit.displayName;
+      _baseUnitCode = hit.baseUnitCode;
+      _baseUnitMissing = false;
+      _nameMissing = false;
+      _formPrefilled = true;
+      _lastSuggestionQuery = hit.displayName.toLowerCase();
+      _suggestions = const [];
+      _prefillBanner = l.shopItemEditorPrefillBanner(hit.displayName);
+      if (barcode != null) {
+        _packagings.first.barcode = barcode;
+      }
+    });
+  }
+
+  void _dismissPrefillBanner() {
+    setState(() {
+      _prefillBanner = null;
+      // Banner dismissal alone doesn't invalidate prefill — owner
+      // might just want the chrome out of the way.
+    });
+  }
+
+  // --- Section 3: supplier picker -------------------------------------------
+
+  Future<void> _onPickSupplier() async {
+    final picked = await showPartyPicker(
+      context,
+      shop: widget.shop,
+      typeCode: 'supplier',
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _supplier = picked);
+  }
+
+  Future<void> _onAddSupplierInline() async {
+    final created = await showAddPartySheet(
+      context,
+      shopId: widget.shop.id,
+      typeCode: 'supplier',
+    );
+    if (created == null || !mounted) return;
+    setState(() => _supplier = created);
+  }
+
+  void _onClearSupplier() => setState(() => _supplier = null);
+
+  // --- Section 4: opening date ----------------------------------------------
+
+  Future<void> _onPickOpeningDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _openingDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _openingDate = picked);
+  }
+
+  // --- Session counter sheet ------------------------------------------------
+
+  void _onTapSessionCounter() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _SessionAddsSheet(
+        shop: widget.shop,
+        adds: List.of(_sessionAdds.reversed),
+      ),
+    );
+  }
+
+  // --- Save -----------------------------------------------------------------
+
   Future<void> _onSave({bool keepGoing = false}) async {
     final l = tr(context);
     final name = _nameController.text.trim();
@@ -200,6 +446,48 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
       _baseUnitMissing = baseUnit == null;
     });
     if (name.isEmpty || baseUnit == null) return;
+
+    // Save-time dedup soft-warn — only fires when the form WAS NOT
+    // populated by tapping a suggestion (per the agreed UX). Suggestion-
+    // driven saves already had the owner's explicit ack, so we skip
+    // the check.
+    if (!_formPrefilled) {
+      final api = context.read<ShopApi>();
+      try {
+        final similar = await api.findSimilarShopItems(
+          shopId: widget.shop.id,
+          query: name,
+          baseUnitCode: baseUnit,
+        );
+        if (similar.isNotEmpty && mounted) {
+          final outcome = await _showSoftWarnDialog(similar);
+          if (!mounted) return;
+          if (outcome == _SoftWarnOutcome.openExisting) {
+            // Route to the first match; nothing else to do here.
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => ShopItemDetailScreen(
+                  shop: widget.shop,
+                  shopItemId: similar.first.shopItemId,
+                  displayName: similar.first.displayName,
+                ),
+              ),
+            );
+            return;
+          }
+          if (outcome == _SoftWarnOutcome.cancelled) {
+            // User dismissed the dialog without choosing — abort save.
+            return;
+          }
+          // _SoftWarnOutcome.keepGoing falls through to save.
+        }
+      } catch (error, stackTrace) {
+        _reportNonFatal(error, stackTrace, 'find_similar_shop_items');
+        // Soft-fail: never block save on a check that itself failed.
+      }
+    }
+
+    if (!mounted) return;
     setState(() => _saving = true);
     final api = context.read<ShopApi>();
     final languageCode = Localizations.localeOf(context).languageCode;
@@ -214,14 +502,14 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
         categoryId: _categoryId,
       );
       final shopItemId = created.shopItemId;
+      final baseUnitId = created.defaultShopItemUnitId;
 
       // Base packaging — if a barcode was scanned, bind it.
-      if (basePackaging.barcode != null &&
-          basePackaging.barcode!.isNotEmpty) {
+      if (basePackaging.barcode != null && basePackaging.barcode!.isNotEmpty) {
         try {
           await api.addShopItemBarcode(
             shopId: widget.shop.id,
-            shopItemUnitId: created.defaultShopItemUnitId,
+            shopItemUnitId: baseUnitId,
             barcode: basePackaging.barcode!,
           );
         } catch (error, stackTrace) {
@@ -229,7 +517,25 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
         }
       }
 
+      // Supplier cost on the base packaging if the owner entered one.
+      final supplier = _supplier;
+      final baseCost = basePackaging.parsedCost;
+      if (supplier != null && baseCost != null) {
+        try {
+          await api.setSupplierItemUnitCost(
+            shopId: widget.shop.id,
+            partyId: supplier.id,
+            shopItemUnitId: baseUnitId,
+            unitCost: baseCost,
+          );
+        } catch (error, stackTrace) {
+          _reportNonFatal(error, stackTrace, 'set supplier cost (base)');
+        }
+      }
+
       // Additional packagings (rows 1..n) — each requires unit + conversion.
+      final perUnitIds = <_PackagingDraft, String>{};
+      perUnitIds[basePackaging] = baseUnitId;
       for (var i = 1; i < _packagings.length; i++) {
         final p = _packagings[i];
         final unitCode = p.unitCode;
@@ -242,6 +548,7 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           conversionToBase: conversion,
           salePrice: p.parsedSalePrice,
         );
+        perUnitIds[p] = unitId;
         if (p.barcode != null && p.barcode!.isNotEmpty) {
           try {
             await api.addShopItemBarcode(
@@ -252,6 +559,48 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           } catch (error, stackTrace) {
             _reportNonFatal(error, stackTrace, 'adding extra barcode');
           }
+        }
+        // Per-packaging supplier cost.
+        final cost = p.parsedCost;
+        if (supplier != null && cost != null) {
+          try {
+            await api.setSupplierItemUnitCost(
+              shopId: widget.shop.id,
+              partyId: supplier.id,
+              shopItemUnitId: unitId,
+              unitCost: cost,
+            );
+          } catch (error, stackTrace) {
+            _reportNonFatal(
+              error,
+              stackTrace,
+              'set supplier cost (extra)',
+            );
+          }
+        }
+      }
+
+      // Opening stock — sum per-packaging base-unit quantities into a
+      // single adjustment call with reason='opening'.
+      var openingBase = 0.0;
+      for (final entry in perUnitIds.entries) {
+        final p = entry.key;
+        final qty = p.parsedOpeningQty;
+        if (qty == null || qty <= 0) continue;
+        final conversion =
+            p.isBase ? 1.0 : (p.parsedConversion?.toDouble() ?? 1.0);
+        openingBase += qty.toDouble() * conversion;
+      }
+      if (openingBase > 0) {
+        try {
+          await api.postOpeningStockAdjustment(
+            shopId: widget.shop.id,
+            shopItemId: shopItemId,
+            baseQuantity: openingBase,
+            notes: l.shopItemEditorOpeningStockNote,
+          );
+        } catch (error, stackTrace) {
+          _reportNonFatal(error, stackTrace, 'opening stock adjustment');
         }
       }
 
@@ -271,10 +620,7 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
         }
       }
 
-      // Bono spelling — stored as a plain alias; back-office curation
-      // can later distinguish via `source` / weighting heuristics. Tag
-      // with `[bono]` prefix so admins can quickly spot the difference
-      // until the dedicated field lands.
+      // Bono spelling — stored as a plain alias.
       final bonoSpelling = _bonoSpellingController.text.trim();
       if (bonoSpelling.isNotEmpty) {
         try {
@@ -320,10 +666,18 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
         }
       }
 
+      // Record in the session list so the counter chip + sheet reflect
+      // it without any re-fetch.
+      _sessionAdds.add(
+        _SessionAdd(
+          shopItemId: shopItemId,
+          displayName: name,
+          baseUnitCode: baseUnit,
+        ),
+      );
+
       if (!mounted) return;
       if (keepGoing) {
-        // Toast acknowledges the save without nav. Then reset to
-        // blank for the next product so the cashier keeps typing.
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l.shopItemEditorSavedAndContinueToast(name)),
@@ -350,6 +704,49 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     }
   }
 
+  Future<_SoftWarnOutcome> _showSoftWarnDialog(
+    List<SimilarShopItem> matches,
+  ) async {
+    final l = tr(context);
+    final result = await showDialog<_SoftWarnOutcome>(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          title: Text(l.shopItemEditorDedupTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l.shopItemEditorDedupBody),
+              const SizedBox(height: 8),
+              for (final m in matches.take(3))
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text(
+                    '• ${m.displayName}',
+                    style: Theme.of(dialogCtx).textTheme.bodyMedium,
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(dialogCtx).pop(_SoftWarnOutcome.keepGoing),
+              child: Text(l.shopItemEditorDedupKeepGoing),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.of(dialogCtx).pop(_SoftWarnOutcome.openExisting),
+              child: Text(l.shopItemEditorDedupOpenExisting),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? _SoftWarnOutcome.cancelled;
+  }
+
   void _reportNonFatal(Object error, StackTrace stackTrace, String where) {
     FlutterError.reportError(FlutterErrorDetails(
       exception: error,
@@ -359,9 +756,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     ));
   }
 
-  /// Clears per-item form state after a successful "Save & add another".
-  /// Keeps base unit + category sticky (typical stocking session pattern);
-  /// resets name, photo, packagings, aliases, bono spelling.
   void _resetForNextItem() {
     _nameController.clear();
     _aliasController.clear();
@@ -377,6 +771,15 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
         ..add(_PackagingDraft.base());
       _nameMissing = false;
       _baseUnitMissing = false;
+      _formPrefilled = false;
+      _prefillBanner = null;
+      _suggestions = const [];
+      _lastSuggestionQuery = '';
+      _openingDate = DateTime.now();
+      // Optional sections (3/4/5) collapse for items 2+ of a session
+      // so the muscle-memory path stays short.
+      _firstItemOfSession = false;
+      // Supplier sticks across resets — typical stocking session.
     });
     _nameFocusNode.requestFocus();
   }
@@ -385,7 +788,20 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   Widget build(BuildContext context) {
     final l = tr(context);
     return Scaffold(
-      appBar: dukanAppBar(context, l.shopItemEditorTitleCreate),
+      appBar: dukanAppBar(
+        context,
+        l.shopItemEditorTitleCreate,
+        actions: [
+          if (_sessionAdds.isNotEmpty)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 8),
+              child: _SessionCounterChip(
+                count: _sessionAdds.length,
+                onTap: _onTapSessionCounter,
+              ),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: FutureBuilder<_EditorBootstrap>(
           future: _bootstrapFuture,
@@ -422,13 +838,29 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   Widget _buildForm(_EditorBootstrap bootstrap) {
     final l = tr(context);
     final units = bootstrap.units;
+    final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       children: [
+        if (_prefillBanner != null)
+          _PrefillBanner(
+            text: _prefillBanner!,
+            onDismiss: _dismissPrefillBanner,
+          ),
+        if (_prefillBanner != null) const SizedBox(height: 12),
         _PhotoTile(
           photo: _photo,
           onPick: _onPickPhoto,
           onClear: _onClearPhoto,
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: _onSection1Scan,
+          icon: const Icon(Icons.qr_code_scanner),
+          label: Text(l.shopItemEditorScanIdentifyButton),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(56),
+          ),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -438,11 +870,27 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           decoration: InputDecoration(
             labelText: l.shopItemEditorNameLabel,
             errorText: _nameMissing ? l.addNewItemMissingNameMessage : null,
+            suffixIcon: _suggestionsLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : null,
           ),
-          onChanged: (_) {
-            if (_nameMissing) setState(() => _nameMissing = false);
-          },
+          onChanged: _onNameChanged,
         ),
+        if (_suggestions.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: _SuggestionList(
+              suggestions: _suggestions,
+              onTap: _onTapSuggestion,
+            ),
+          ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           initialValue: _baseUnitCode,
@@ -481,7 +929,7 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
         const SizedBox(height: 24),
         Text(
           l.shopItemEditorPackagingsHeader,
-          style: Theme.of(context).textTheme.titleMedium,
+          style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         for (var i = 0; i < _packagings.length; i++)
@@ -507,18 +955,36 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
             minimumSize: const Size.fromHeight(56),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        _SupplierSection(
+          shop: widget.shop,
+          packagings: _packagings,
+          supplier: _supplier,
+          initiallyExpanded: _firstItemOfSession,
+          onPick: _onPickSupplier,
+          onAddInline: _onAddSupplierInline,
+          onClear: _onClearSupplier,
+          onChanged: () => setState(() {}),
+        ),
+        const SizedBox(height: 12),
+        _OpeningStockSection(
+          packagings: _packagings,
+          baseUnitCode: _baseUnitCode,
+          openingDate: _openingDate,
+          onPickDate: _onPickOpeningDate,
+          initiallyExpanded: _firstItemOfSession,
+          onChanged: () => setState(() {}),
+        ),
+        const SizedBox(height: 12),
         _DiscoverySection(
           aliasController: _aliasController,
           bonoSpellingController: _bonoSpellingController,
           aliases: _aliases,
           onAddAlias: _onAddAlias,
           onRemoveAlias: _onRemoveAlias,
+          initiallyExpanded: _firstItemOfSession,
         ),
         const SizedBox(height: 32),
-        // Save & Add another — secondary action, sits ABOVE the primary
-        // SAVE so the cashier sees it during a stocking session but
-        // SAVE remains the muscle-memory bottom button.
         OutlinedButton.icon(
           onPressed: _saving ? null : () => _onSave(keepGoing: true),
           icon: const Icon(Icons.add),
@@ -546,6 +1012,10 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   }
 }
 
+// ----------------------------------------------------------------------------
+// Data shapes
+// ----------------------------------------------------------------------------
+
 class _EditorBootstrap {
   const _EditorBootstrap({required this.units, required this.categories});
   final List<UnitOption> units;
@@ -561,7 +1031,9 @@ class _PackagingDraft {
   })  : conversionController =
             TextEditingController(text: conversionInitial),
         salePriceController =
-            TextEditingController(text: salePriceInitial);
+            TextEditingController(text: salePriceInitial),
+        costController = TextEditingController(),
+        openingStockController = TextEditingController();
 
   factory _PackagingDraft.base() => _PackagingDraft._(
         isBase: true,
@@ -582,6 +1054,8 @@ class _PackagingDraft {
   String? barcode;
   final TextEditingController conversionController;
   final TextEditingController salePriceController;
+  final TextEditingController costController;
+  final TextEditingController openingStockController;
 
   num? get parsedConversion {
     final raw = conversionController.text.trim();
@@ -593,9 +1067,208 @@ class _PackagingDraft {
     return raw.isEmpty ? null : num.tryParse(raw);
   }
 
+  num? get parsedCost {
+    final raw = costController.text.trim();
+    return raw.isEmpty ? null : num.tryParse(raw);
+  }
+
+  num? get parsedOpeningQty {
+    final raw = openingStockController.text.trim();
+    return raw.isEmpty ? null : num.tryParse(raw);
+  }
+
   void dispose() {
     conversionController.dispose();
     salePriceController.dispose();
+    costController.dispose();
+    openingStockController.dispose();
+  }
+}
+
+class _SessionAdd {
+  const _SessionAdd({
+    required this.shopItemId,
+    required this.displayName,
+    required this.baseUnitCode,
+  });
+
+  final String shopItemId;
+  final String displayName;
+  final String baseUnitCode;
+}
+
+enum _SoftWarnOutcome { openExisting, keepGoing, cancelled }
+
+// ----------------------------------------------------------------------------
+// AppBar session-counter chip
+// ----------------------------------------------------------------------------
+
+class _SessionCounterChip extends StatelessWidget {
+  const _SessionCounterChip({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.list_alt,
+              size: 18,
+              color: theme.colorScheme.onPrimary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              l.shopItemEditorSessionCounter(count),
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Prefill banner — shown after a global-catalog match populates the form.
+// ----------------------------------------------------------------------------
+
+class _PrefillBanner extends StatelessWidget {
+  const _PrefillBanner({required this.text, required this.onDismiss});
+
+  final String text;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsetsDirectional.only(start: 12, end: 4, top: 8, bottom: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.auto_awesome,
+            color: theme.colorScheme.onPrimaryContainer,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: onDismiss,
+            icon: Icon(
+              Icons.close,
+              size: 18,
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Section 1 — Name suggestion list
+// ----------------------------------------------------------------------------
+
+class _SuggestionList extends StatelessWidget {
+  const _SuggestionList({required this.suggestions, required this.onTap});
+
+  final List<ItemSearchResult> suggestions;
+  final void Function(ItemSearchResult) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    // Shop matches rise to the top so familiarity wins.
+    final ordered = [...suggestions]..sort((a, b) {
+        if (a.isActivated == b.isActivated) return 0;
+        return a.isActivated ? -1 : 1;
+      });
+    return Material(
+      elevation: 1,
+      borderRadius: BorderRadius.circular(8),
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final hit in ordered)
+            InkWell(
+              onTap: () => onTap(hit),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(
+                      hit.isActivated
+                          ? Icons.store
+                          : Icons.public,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            hit.displayName,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            hit.isActivated
+                                ? l.shopItemEditorSuggestionInShop
+                                : l.shopItemEditorSuggestionInCatalog,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      hit.isActivated
+                          ? Icons.arrow_forward
+                          : Icons.auto_awesome,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -640,8 +1313,8 @@ class _PhotoTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: Image.memory(
               photo!.bytes,
-              width: 64,
-              height: 64,
+              width: 56,
+              height: 56,
               fit: BoxFit.cover,
             ),
           ),
@@ -668,7 +1341,211 @@ class _PhotoTile extends StatelessWidget {
 }
 
 // ----------------------------------------------------------------------------
-// Discovery section — collapsible aliases + bono spelling
+// Section 3 — Supplier picker + per-packaging typical cost.
+// ----------------------------------------------------------------------------
+
+class _SupplierSection extends StatelessWidget {
+  const _SupplierSection({
+    required this.shop,
+    required this.packagings,
+    required this.supplier,
+    required this.initiallyExpanded,
+    required this.onPick,
+    required this.onAddInline,
+    required this.onClear,
+    required this.onChanged,
+  });
+
+  final ShopSummary shop;
+  final List<_PackagingDraft> packagings;
+  final PartySearchResult? supplier;
+  final bool initiallyExpanded;
+  final VoidCallback onPick;
+  final VoidCallback onAddInline;
+  final VoidCallback onClear;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        title: Text(l.shopItemEditorBuyHeader),
+        subtitle: Text(
+          l.shopItemEditorBuySubtitle,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          if (supplier == null)
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onPick,
+                    icon: const Icon(Icons.search),
+                    label: Text(l.shopItemEditorPickSupplierButton),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.tonalIcon(
+                  onPressed: onAddInline,
+                  icon: const Icon(Icons.add),
+                  label: Text(l.shopItemEditorNewSupplierButton),
+                ),
+              ],
+            )
+          else
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.local_shipping),
+              title: Text(supplier!.name),
+              trailing: IconButton(
+                tooltip: l.shopItemEditorRemoveSupplierTooltip,
+                onPressed: onClear,
+                icon: const Icon(Icons.close),
+              ),
+              onTap: onPick,
+            ),
+          if (supplier != null) const SizedBox(height: 8),
+          if (supplier != null)
+            Text(
+              l.shopItemEditorTypicalCostHeader,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          if (supplier != null) const SizedBox(height: 4),
+          if (supplier != null)
+            for (final p in packagings)
+              if (p.unitCode != null || p.isBase)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: TextField(
+                    controller: p.costController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: l.shopItemEditorCostPerPackLabel(
+                        _packagingDescription(p),
+                      ),
+                      prefixText: '${shop.currencySymbol} ',
+                    ),
+                    onChanged: (_) => onChanged(),
+                  ),
+                ),
+        ],
+      ),
+    );
+  }
+
+  String _packagingDescription(_PackagingDraft p) {
+    if (p.isBase) return '1 ${p.unitCode ?? '?'}';
+    final conv = p.parsedConversion;
+    final code = p.unitCode ?? '?';
+    return conv == null ? code : '$conv per $code';
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Section 4 — Opening stock per packaging.
+// ----------------------------------------------------------------------------
+
+class _OpeningStockSection extends StatelessWidget {
+  const _OpeningStockSection({
+    required this.packagings,
+    required this.baseUnitCode,
+    required this.openingDate,
+    required this.onPickDate,
+    required this.initiallyExpanded,
+    required this.onChanged,
+  });
+
+  final List<_PackagingDraft> packagings;
+  final String? baseUnitCode;
+  final DateTime openingDate;
+  final VoidCallback onPickDate;
+  final bool initiallyExpanded;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    final dateLabel = MaterialLocalizations.of(context)
+        .formatMediumDate(openingDate);
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        title: Text(l.shopItemEditorOpeningHeader),
+        subtitle: Text(
+          l.shopItemEditorOpeningSubtitle,
+          style: theme.textTheme.bodySmall,
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          if (baseUnitCode == null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                l.shopItemEditorOpeningPickBaseUnitFirst,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          else
+            for (final p in packagings)
+              if (p.unitCode != null || p.isBase)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: TextField(
+                    controller: p.openingStockController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: l.shopItemEditorOpeningQtyLabel(
+                        p.unitCode ?? baseUnitCode ?? '?',
+                      ),
+                    ),
+                    onChanged: (_) => onChanged(),
+                  ),
+                ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.shopItemEditorOpeningAsOf(dateLabel),
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+              TextButton(
+                onPressed: onPickDate,
+                child: Text(l.shopItemEditorChangeDateButton),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Section 5 — Discovery (aliases + bono spelling).
 // ----------------------------------------------------------------------------
 
 class _DiscoverySection extends StatelessWidget {
@@ -678,6 +1555,7 @@ class _DiscoverySection extends StatelessWidget {
     required this.aliases,
     required this.onAddAlias,
     required this.onRemoveAlias,
+    required this.initiallyExpanded,
   });
 
   final TextEditingController aliasController;
@@ -685,6 +1563,7 @@ class _DiscoverySection extends StatelessWidget {
   final List<String> aliases;
   final VoidCallback onAddAlias;
   final ValueChanged<int> onRemoveAlias;
+  final bool initiallyExpanded;
 
   @override
   Widget build(BuildContext context) {
@@ -693,10 +1572,7 @@ class _DiscoverySection extends StatelessWidget {
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        // Default collapsed — Section 5 is opt-in. Power users open it
-        // for the first item of a stocking session; subsequent items
-        // get the same starting state per the plan.
-        initiallyExpanded: false,
+        initiallyExpanded: initiallyExpanded,
         title: Text(l.shopItemEditorDiscoveryHeader),
         subtitle: Text(
           l.shopItemEditorDiscoverySubtitle,
@@ -764,7 +1640,9 @@ class _DiscoverySection extends StatelessWidget {
 }
 
 // ----------------------------------------------------------------------------
-// Packaging row — now also captures a per-packaging barcode (optional).
+// Packaging row — captures sale price + optional barcode per packaging.
+// Cost + opening stock are captured in their respective sections so the
+// row stays scannable for the daily use case (most rows have just price).
 // ----------------------------------------------------------------------------
 
 class _PackagingRow extends StatelessWidget {
@@ -864,7 +1742,6 @@ class _PackagingRow extends StatelessWidget {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               ],
-              // Base packaging conversion is always 1.
               enabled: !draft.isBase,
               decoration: InputDecoration(
                 labelText: _conversionLabel(context),
@@ -973,3 +1850,76 @@ class _BarcodeRow extends StatelessWidget {
   }
 }
 
+// ----------------------------------------------------------------------------
+// Session adds — bottom sheet.
+// ----------------------------------------------------------------------------
+
+class _SessionAddsSheet extends StatelessWidget {
+  const _SessionAddsSheet({required this.shop, required this.adds});
+
+  final ShopSummary shop;
+  final List<_SessionAdd> adds;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                l.shopItemEditorSessionSheetTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: adds.length,
+                itemBuilder: (_, i) {
+                  final add = adds[i];
+                  return ListTile(
+                    leading: const Icon(Icons.inventory_2_outlined),
+                    title: Text(add.displayName),
+                    subtitle: Text(add.baseUnitCode),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ShopItemDetailScreen(
+                            shop: shop,
+                            shopItemId: add.shopItemId,
+                            displayName: add.displayName,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            const Divider(height: 1),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => ProductsScreen(shop: shop),
+                  ),
+                );
+              },
+              child: Text(l.shopItemEditorSessionSheetViewAll),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
