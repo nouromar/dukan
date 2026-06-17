@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   Receipt,
+  PackagePlus,
   Boxes,
   Users,
   Wallet,
@@ -27,6 +28,7 @@ type NavItem = {
   i18nKey:
     | "overview"
     | "sales"
+    | "receives"
     | "inventory"
     | "people"
     | "money"
@@ -40,6 +42,7 @@ type NavItem = {
 const NAV_ITEMS: readonly NavItem[] = [
   { href: "/overview", i18nKey: "overview", icon: LayoutDashboard, capability: "dashboard.view" },
   { href: "/sales", i18nKey: "sales", icon: Receipt, capability: "sales.history.view" },
+  { href: "/receives", i18nKey: "receives", icon: PackagePlus, capability: "receive.history.view" },
   { href: "/inventory", i18nKey: "inventory", icon: Boxes, capability: "inventory.product.view" },
   { href: "/people", i18nKey: "people", icon: Users, capability: "people.party.view" },
   { href: "/money", i18nKey: "money", icon: Wallet, capability: "money.payment.view" },

@@ -1,8 +1,9 @@
 // Single Route Handler for CSV export. /api/export/<module>?
 //
-// Modules: sales | inventory | customers | suppliers | audit | aging
+// Modules: sales | receives | inventory | customers | suppliers | audit | aging
 // Capability gating per-module:
 //   sales      → sales.export
+//   receives   → receive.history.view (no separate export cap in v1)
 //   inventory  → inventory.product.view (read-only export of own data)
 //   customers  → people.statement.export
 //   suppliers  → people.statement.export
@@ -19,10 +20,18 @@ import { getCurrentShop } from "@/lib/current-shop";
 import { historyPageLimit, formatMoney, formatCount } from "shared";
 import { toCsv, csvFilename } from "@/lib/csv";
 
-type Module = "sales" | "inventory" | "customers" | "suppliers" | "audit" | "aging";
+type Module =
+  | "sales"
+  | "receives"
+  | "inventory"
+  | "customers"
+  | "suppliers"
+  | "audit"
+  | "aging";
 
 const CAPABILITY_FOR_MODULE: Record<Module, string> = {
   sales: "sales.export",
+  receives: "receive.history.view",
   inventory: "inventory.product.view",
   customers: "people.statement.export",
   suppliers: "people.statement.export",
@@ -55,6 +64,9 @@ export async function GET(
     switch (m) {
       case "sales":
         body = await exportSales(supabase, currentShop.id, currentShop.currency_code);
+        break;
+      case "receives":
+        body = await exportReceives(supabase, currentShop.id, currentShop.currency_code);
         break;
       case "inventory":
         body = await exportInventory(supabase, currentShop.id, currentShop.currency_code);
@@ -110,6 +122,39 @@ async function exportSales(
     "txn_id",
     "occurred_at",
     "customer_name",
+    "total",
+    "paid",
+    "payment_method",
+    "is_voided",
+    "currency",
+  ];
+  const rows = ((data ?? []) as Array<Record<string, unknown>>).map((r) => [
+    r.txn_id,
+    r.occurred_at,
+    r.party_name ?? "",
+    formatMoney(Number(r.total_amount ?? 0), currency, "en"),
+    formatMoney(Number(r.paid_amount ?? 0), currency, "en"),
+    r.payment_method_code ?? "",
+    r.is_voided,
+    currency,
+  ]);
+  return toCsv(headers, rows);
+}
+
+async function exportReceives(
+  supabase: SupabaseClient,
+  shopId: string,
+  currency: string,
+): Promise<string> {
+  const { data, error } = await supabase.rpc("list_receives", {
+    p_shop_id: shopId,
+    p_limit: historyPageLimit,
+  });
+  if (error) throw error;
+  const headers = [
+    "txn_id",
+    "occurred_at",
+    "supplier_name",
     "total",
     "paid",
     "payment_method",

@@ -6,6 +6,7 @@
   "nav": {
     "overview": "Overview",
     "sales": "Sales",
+    "receives": "Receives",
     "inventory": "Inventory",
     "people": "People",
     "money": "Money",
@@ -86,6 +87,126 @@
     "noShop": {
       "title": "No shop selected",
       "description": "Pick a shop."
+    }
+  },
+  "receives": {
+    "recordButton": "Record receive",
+    "filters": {
+      "from": "From",
+      "to": "To",
+      "supplier": "Supplier",
+      "anySupplier": "Any supplier",
+      "clear": "Clear filters"
+    },
+    "search": {
+      "placeholder": "Search by supplier…"
+    },
+    "columns": {
+      "when": "When",
+      "supplier": "Supplier",
+      "total": "Total",
+      "paid": "Paid",
+      "status": "Status"
+    },
+    "unknownSupplier": "Unknown",
+    "statusPosted": "Posted",
+    "statusVoided": "Voided",
+    "creditMarker": "owed",
+    "empty": {
+      "title": "No receives yet",
+      "description": "Record what came in from your suppliers to keep stock and cost correct."
+    },
+    "noShop": {
+      "title": "No shop selected",
+      "description": "Pick a shop."
+    }
+  },
+  "receiveDetail": {
+    "back": "← All receives",
+    "unknownSupplier": "Unknown supplier",
+    "statusPosted": "Posted",
+    "statusVoided": "Voided",
+    "linesTitle": "What came in",
+    "linesEmpty": "No lines.",
+    "lines": {
+      "number": "#",
+      "item": "Item",
+      "packaging": "Pack",
+      "quantity": "Qty",
+      "unitCost": "Unit cost",
+      "lineTotal": "Line total"
+    },
+    "kpis": {
+      "total": "Total",
+      "paid": "Paid",
+      "outstanding": "Owed",
+      "method": "Method"
+    },
+    "voidButton": "Void receive",
+    "voidSuccess": "Receive voided.",
+    "voidDialog": {
+      "title": "Void this receive?",
+      "description": "Reverses stock and supplier balance. Owners only; allowed within 7 days of posting.",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "Why are you voiding this receive?",
+      "cancel": "Cancel",
+      "confirm": "Void",
+      "submitting": "Voiding…",
+      "reasonRequired": "Add a reason first.",
+      "ownerOnly": "Owners only.",
+      "windowExpired": "Past the 7-day void window.",
+      "alreadyVoided": "Already voided.",
+      "errorGeneric": "Couldn't void."
+    }
+  },
+  "recordReceive": {
+    "back": "← Receives",
+    "title": "Record receive",
+    "supplierLabel": "Supplier",
+    "supplierPlaceholder": "Pick a supplier",
+    "dateLabel": "Date",
+    "paymentLabel": "Payment",
+    "paymentCredit": "On credit",
+    "paymentCash": "Cash now",
+    "paymentCreditHelp": "Owed to the supplier — appears in their balance.",
+    "paymentCashHelp": "Paid in full at delivery.",
+    "costModeLabel": "Cost on the bono",
+    "costModeUnit": "Per pack",
+    "costModeLineTotal": "Per line",
+    "costModeUnitHelp": "Bono lists cost per pack (e.g. $50 per sack).",
+    "costModeLineTotalHelp": "Bono lists the total for the whole line (e.g. $200 for 4 sacks).",
+    "linesTitle": "Lines",
+    "lineColumns": {
+      "product": "Product",
+      "packaging": "Pack",
+      "quantity": "Qty",
+      "unitCost": "Cost per pack",
+      "lineTotalCost": "Line total",
+      "subtotal": "Subtotal"
+    },
+    "productPlaceholder": "Pick a product",
+    "addLine": "Add line",
+    "removeLine": "Remove line",
+    "grandTotal": "Total",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Optional — bono number, delivery driver, anything you want to remember.",
+    "cancel": "Cancel",
+    "save": "Save receive",
+    "saving": "Saving…",
+    "success": "Receive saved.",
+    "errorIncomplete": "Pick a product + pack and enter qty and cost on every line.",
+    "errorValidation": "Check the values.",
+    "errorPermission": "Not allowed to record receives.",
+    "errorSupplier": "Supplier issue — refresh and try again.",
+    "errorGeneric": "Couldn't save.",
+    "noSuppliers": {
+      "title": "Add a supplier first",
+      "description": "You need at least one supplier on file to record a receive.",
+      "cta": "Add supplier →"
+    },
+    "forbidden": {
+      "title": "Not allowed",
+      "description": "Only owners and cashiers with receive permission can record receives."
     }
   },
   "export": {

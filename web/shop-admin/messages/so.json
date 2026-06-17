@@ -6,6 +6,7 @@
   "nav": {
     "overview": "Guudmar",
     "sales": "Iibyada",
+    "receives": "Qaadasho",
     "inventory": "Alaabta",
     "people": "Dadka",
     "money": "Lacagta",
@@ -86,6 +87,126 @@
     "noShop": {
       "title": "Wax dukaan ah lama dooran",
       "description": "Dooro dukaan."
+    }
+  },
+  "receives": {
+    "recordButton": "Diiwaan geli qaadasho",
+    "filters": {
+      "from": "Laga bilaabo",
+      "to": "Ilaa",
+      "supplier": "Alaab keene",
+      "anySupplier": "Alaab keene kasta",
+      "clear": "Jooji shaandhayn"
+    },
+    "search": {
+      "placeholder": "Magaca alaab keenaha raadi…"
+    },
+    "columns": {
+      "when": "Goorma",
+      "supplier": "Alaab keene",
+      "total": "Wadarta",
+      "paid": "La bixiyay",
+      "status": "Xaalad"
+    },
+    "unknownSupplier": "Lama garanayo",
+    "statusPosted": "La diiwaan geliyay",
+    "statusVoided": "Waa la baajiyay",
+    "creditMarker": "deyn",
+    "empty": {
+      "title": "Qaadasho weli ma jirto",
+      "description": "Diiwaan geli waxa aad ka qaadatay alaab keenayaasha si aad u ilaaliso kayd iyo qarash sax ah."
+    },
+    "noShop": {
+      "title": "Wax dukaan ah lama dooran",
+      "description": "Dooro dukaan."
+    }
+  },
+  "receiveDetail": {
+    "back": "← Dhammaan qaadashada",
+    "unknownSupplier": "Alaab keene aan la garanayn",
+    "statusPosted": "La diiwaan geliyay",
+    "statusVoided": "Waa la baajiyay",
+    "linesTitle": "Waxa la qaaday",
+    "linesEmpty": "Xariiqyo ma jiraan.",
+    "lines": {
+      "number": "#",
+      "item": "Alaab",
+      "packaging": "Xidhmo",
+      "quantity": "Tirada",
+      "unitCost": "Qiimaha xidhmo",
+      "lineTotal": "Wadarta xariiqda"
+    },
+    "kpis": {
+      "total": "Wadarta",
+      "paid": "La bixiyay",
+      "outstanding": "Deyn",
+      "method": "Habka"
+    },
+    "voidButton": "Baaji qaadasho",
+    "voidSuccess": "Qaadashada waa la baajiyay.",
+    "voidDialog": {
+      "title": "Baajinta qaadashada?",
+      "description": "Ka noqonayaa kayd iyo deyn alaab keene. Milkiilo kaliya; oggol 7 maalmood gudahood.",
+      "reasonLabel": "Sababta",
+      "reasonPlaceholder": "Maxaad u baajinaysaa qaadashadan?",
+      "cancel": "Jooji",
+      "confirm": "Baaji",
+      "submitting": "Baajinta…",
+      "reasonRequired": "Geli sabab marka hore.",
+      "ownerOnly": "Milkiilo kaliya.",
+      "windowExpired": "7-da maalmood ee baajinta way dhaaftay.",
+      "alreadyVoided": "Horey ayaa loo baajiyay.",
+      "errorGeneric": "Lama baajin karin."
+    }
+  },
+  "recordReceive": {
+    "back": "← Qaadashada",
+    "title": "Diiwaan geli qaadasho",
+    "supplierLabel": "Alaab keene",
+    "supplierPlaceholder": "Dooro alaab keene",
+    "dateLabel": "Taariikhda",
+    "paymentLabel": "Bixinta",
+    "paymentCredit": "Deyn",
+    "paymentCash": "Caddaan hadda",
+    "paymentCreditHelp": "Loo leeyahay alaab keenaha — wuxuu ku darayaa baalka isaga.",
+    "paymentCashHelp": "Si buuxda loo bixiyay markaa keenay.",
+    "costModeLabel": "Qiimaha qoraalka",
+    "costModeUnit": "Xidhmo kasta",
+    "costModeLineTotal": "Xariiq kasta",
+    "costModeUnitHelp": "Qoraalka wuxuu muujinayaa qiimaha xidhmo kasta (tusaale $50 joonyo kasta).",
+    "costModeLineTotalHelp": "Qoraalka wuxuu muujinayaa wadarta xariiqda (tusaale $200 oo 4 joonyo ah).",
+    "linesTitle": "Xariiqyada",
+    "lineColumns": {
+      "product": "Alaab",
+      "packaging": "Xidhmo",
+      "quantity": "Tirada",
+      "unitCost": "Qiimaha xidhmo",
+      "lineTotalCost": "Wadarta xariiqda",
+      "subtotal": "Wadarta hoose"
+    },
+    "productPlaceholder": "Dooro alaab",
+    "addLine": "Ku dar xariiq",
+    "removeLine": "Ka saar xariiq",
+    "grandTotal": "Wadarta",
+    "notesLabel": "Qoraallo",
+    "notesPlaceholder": "Ikhtiyaari — lambarka qoraalka, magaca darawalka, wax kasta oo aad rabto inaad xasuusato.",
+    "cancel": "Jooji",
+    "save": "Kaydi qaadashada",
+    "saving": "Kaydinta…",
+    "success": "Qaadashada waa la kaydiyay.",
+    "errorIncomplete": "Dooro alaab + xidhmo, kuna geli tirada iyo qiimaha xariiq kasta.",
+    "errorValidation": "Hubi qiyamka.",
+    "errorPermission": "Lama oggola inaad diiwaan geliso qaadasho.",
+    "errorSupplier": "Khalad alaab keene — cusboonaysii markaa isku day mar kale.",
+    "errorGeneric": "Lama kaydin karin.",
+    "noSuppliers": {
+      "title": "Marka hore ku dar alaab keene",
+      "description": "Waxaad u baahan tahay ugu yaraan hal alaab keene oo diiwaan ah si aad u diiwaan geliso qaadasho.",
+      "cta": "Ku dar alaab keene →"
+    },
+    "forbidden": {
+      "title": "Lama oggola",
+      "description": "Kaliya milkiileyaasha iyo kaashiyeyaasha leh oggolaanshaha qaadashada ayaa diiwaan geli kara qaadasho."
     }
   },
   "export": {
