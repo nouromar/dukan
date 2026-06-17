@@ -44,6 +44,31 @@ class PackagingSuggestion {
   final String source;
 }
 
+/// One row from `find_similar_shop_items` — drives the same-shop
+/// dedup soft-warn dialog in the onboarding form. Returned rows are
+/// ranked by [similarity] (trigram, 0–1).
+class SimilarShopItem {
+  const SimilarShopItem({
+    required this.shopItemId,
+    required this.displayName,
+    required this.baseUnitCode,
+    required this.similarity,
+  });
+
+  factory SimilarShopItem.fromJson(Map<String, dynamic> json) =>
+      SimilarShopItem(
+        shopItemId: json['shop_item_id'] as String,
+        displayName: json['display_name'] as String? ?? '',
+        baseUnitCode: json['base_unit_code'] as String,
+        similarity: (json['similarity'] as num).toDouble(),
+      );
+
+  final String shopItemId;
+  final String displayName;
+  final String baseUnitCode;
+  final double similarity;
+}
+
 /// One row from `suggest_category_units` — drives the "How is it sold?"
 /// list in the Add new item sheet.
 class CategoryUnitSuggestion {
@@ -1393,6 +1418,119 @@ class ShopApi {
     );
     return result as String;
   }
+
+  // ----- Onboarding form (0065 + 0066) -------------------------------------
+
+  /// Owner OR cashier: records a typical per-pack cost from a supplier
+  /// without forcing a real receive. Upserts on
+  /// `(shop_id, party_id, shop_item_unit_id)`; second call updates the
+  /// existing row.
+  Future<void> setSupplierItemUnitCost({
+    required String shopId,
+    required String partyId,
+    required String shopItemUnitId,
+    required num unitCost,
+  }) async {
+    await _client.rpc(
+      'set_supplier_item_unit_cost',
+      params: {
+        'p_shop_id': shopId,
+        'p_party_id': partyId,
+        'p_shop_item_unit_id': shopItemUnitId,
+        'p_unit_cost': unitCost,
+      },
+    );
+  }
+
+  /// Up to 5 near-matches in the caller's shop, ranked by trigram
+  /// similarity over alias_text_norm. Drives the same-shop dedup
+  /// soft-warn dialog in the onboarding form. Returns an empty list
+  /// for empty queries or shops the caller can't access.
+  Future<List<SimilarShopItem>> findSimilarShopItems({
+    required String shopId,
+    required String query,
+    String? baseUnitCode,
+    String locale = 'en',
+  }) async {
+    if (query.trim().isEmpty) return const [];
+    final result = await _client.rpc(
+      'find_similar_shop_items',
+      params: {
+        'p_shop_id': shopId,
+        'p_query': query,
+        'p_base_unit_code': baseUnitCode,
+        'p_locale': locale,
+      },
+    );
+    final rows = (result as List?) ?? const [];
+    return rows
+        .map<SimilarShopItem>(
+          (r) => SimilarShopItem.fromJson(Map<String, dynamic>.from(r)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Sets (or clears, when [imagePath] is null) the image_path on a
+  /// shop_item. Cashier-accessible. The path must conform to the
+  /// shop-item-images bucket shape:
+  ///   {shop_id}/items/{shop_item_id}/image.<ext>
+  Future<void> setShopItemImagePath({
+    required String shopId,
+    required String shopItemId,
+    required String? imagePath,
+  }) async {
+    await _client.rpc(
+      'set_shop_item_image_path',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_id': shopItemId,
+        'p_image_path': imagePath,
+      },
+    );
+  }
+
+  /// Uploads bytes to the `shop-item-images` bucket and returns the
+  /// canonical storage path. Path layout is fixed by the bucket's RLS
+  /// helpers: `{shopId}/items/{shopItemId}/image.<ext>`. Caller is
+  /// responsible for calling [setShopItemImagePath] afterward so the
+  /// shop_item row points at the uploaded object.
+  Future<String> uploadShopItemImage({
+    required String shopId,
+    required String shopItemId,
+    required Uint8List bytes,
+    required String mimeType,
+    required String fileExtension,
+  }) async {
+    final path = '$shopId/items/$shopItemId/image.$fileExtension';
+    await _client.storage.from('shop-item-images').uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(contentType: mimeType, upsert: true),
+        );
+    return path;
+  }
+
+  /// Convenience wrapper: records an opening-stock adjustment. Calls
+  /// the existing post_inventory_adjustment RPC with the seeded
+  /// `opening` reason code (see 0002 reference_data). [baseQuantity]
+  /// is positive — opening stock can't be negative.
+  Future<String> postOpeningStockAdjustment({
+    required String shopId,
+    required String shopItemId,
+    required num baseQuantity,
+    num? unitCost,
+    String? clientOpId,
+    String? notes,
+  }) =>
+      postInventoryAdjustment(
+        shopId: shopId,
+        reasonCode: 'opening',
+        shopItemId: shopItemId,
+        quantityDelta: baseQuantity,
+        unitCost: unitCost,
+        clientOpId: clientOpId,
+        notes: notes,
+      );
 
   // ----- Reference / settings -----------------------------------------------
 

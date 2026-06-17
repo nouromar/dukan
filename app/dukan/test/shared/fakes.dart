@@ -1522,6 +1522,143 @@ class FakeShopApi implements ShopApi {
     }
     return 'fake-adj-${shopItemId.hashCode}';
   }
+
+  // ----- Onboarding-form RPCs (0065 + 0066) ---------------------------------
+  // Default stubs; tests can override the on... hooks below.
+
+  Future<void> Function({
+    required String shopId,
+    required String partyId,
+    required String shopItemUnitId,
+    required num unitCost,
+  })?
+  onSetSupplierItemUnitCost;
+  final List<({String partyId, String shopItemUnitId, num unitCost})>
+  setSupplierItemUnitCostCalls = [];
+
+  @override
+  Future<void> setSupplierItemUnitCost({
+    required String shopId,
+    required String partyId,
+    required String shopItemUnitId,
+    required num unitCost,
+  }) async {
+    setSupplierItemUnitCostCalls.add((
+      partyId: partyId,
+      shopItemUnitId: shopItemUnitId,
+      unitCost: unitCost,
+    ));
+    if (onSetSupplierItemUnitCost != null) {
+      await onSetSupplierItemUnitCost!(
+        shopId: shopId,
+        partyId: partyId,
+        shopItemUnitId: shopItemUnitId,
+        unitCost: unitCost,
+      );
+    }
+  }
+
+  Future<List<SimilarShopItem>> Function({
+    required String shopId,
+    required String query,
+    String? baseUnitCode,
+    String locale,
+  })?
+  onFindSimilarShopItems;
+
+  @override
+  Future<List<SimilarShopItem>> findSimilarShopItems({
+    required String shopId,
+    required String query,
+    String? baseUnitCode,
+    String locale = 'en',
+  }) async {
+    if (onFindSimilarShopItems != null) {
+      return onFindSimilarShopItems!(
+        shopId: shopId,
+        query: query,
+        baseUnitCode: baseUnitCode,
+        locale: locale,
+      );
+    }
+    return const [];
+  }
+
+  Future<void> Function({
+    required String shopId,
+    required String shopItemId,
+    required String? imagePath,
+  })?
+  onSetShopItemImagePath;
+  final List<({String shopItemId, String? imagePath})>
+  setShopItemImagePathCalls = [];
+
+  @override
+  Future<void> setShopItemImagePath({
+    required String shopId,
+    required String shopItemId,
+    required String? imagePath,
+  }) async {
+    setShopItemImagePathCalls.add((
+      shopItemId: shopItemId,
+      imagePath: imagePath,
+    ));
+    if (onSetShopItemImagePath != null) {
+      await onSetShopItemImagePath!(
+        shopId: shopId,
+        shopItemId: shopItemId,
+        imagePath: imagePath,
+      );
+    }
+  }
+
+  Future<String> Function({
+    required String shopId,
+    required String shopItemId,
+    required Uint8List bytes,
+    required String mimeType,
+    required String fileExtension,
+  })?
+  onUploadShopItemImage;
+
+  @override
+  Future<String> uploadShopItemImage({
+    required String shopId,
+    required String shopItemId,
+    required Uint8List bytes,
+    required String mimeType,
+    required String fileExtension,
+  }) async {
+    if (onUploadShopItemImage != null) {
+      return onUploadShopItemImage!(
+        shopId: shopId,
+        shopItemId: shopItemId,
+        bytes: bytes,
+        mimeType: mimeType,
+        fileExtension: fileExtension,
+      );
+    }
+    return '$shopId/items/$shopItemId/image.$fileExtension';
+  }
+
+  @override
+  Future<String> postOpeningStockAdjustment({
+    required String shopId,
+    required String shopItemId,
+    required num baseQuantity,
+    num? unitCost,
+    String? clientOpId,
+    String? notes,
+  }) =>
+      postInventoryAdjustment(
+        shopId: shopId,
+        reasonCode: 'opening',
+        shopItemId: shopItemId,
+        quantityDelta: baseQuantity,
+        unitCost: unitCost,
+        clientOpId: clientOpId,
+        notes: notes,
+      );
 }
 
 // --- Fixture builders -----------------------------------------------------
