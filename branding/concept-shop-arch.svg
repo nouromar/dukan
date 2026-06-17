@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    Concept "shop-arch" — minimalist storefront silhouette.
+    Pitched roof + body + arched doorway. The doorway is the
+    negative space and is the most distinctive bit — reads as a
+    shop universally, plus the arch is warm rather than corporate.
+    Single colour. Inside adaptive-icon safe zone.
+    Swap fill to your brand colour. Terracotta (#C84B31) shown.
+  -->
+  <path fill="#C84B31" fill-rule="evenodd"
+        d="M 96 432
+           L 96 192
+           L 256 112
+           L 416 192
+           L 416 432
+           Z
+           M 224 432
+           L 224 288
+           A 64 64 0 0 1 352 288
+           L 352 432
+           Z" />
+</svg>

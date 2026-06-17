@@ -97,7 +97,13 @@ class _StockAdjustBody extends StatefulWidget {
 }
 
 class _StockAdjustBodyState extends State<_StockAdjustBody> {
-  StockAdjustMode _mode = StockAdjustMode.opening;
+  // Default to "Set exact" — most intuitive for the common case
+  // ("stock is -2, I want it to be 100"). The 'opening' mode is
+  // server-rejected once setup_status leaves the opening window,
+  // so it's hidden from the chip set below; opening-stock during
+  // onboarding goes through the comprehensive editor's Section 4
+  // instead (postOpeningStockAdjustment).
+  StockAdjustMode _mode = StockAdjustMode.setExact;
   final _amountController = TextEditingController();
   final _notesController = TextEditingController();
   bool _saving = false;
@@ -182,6 +188,10 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
             formatQty(widget.currentStock + preview.delta),
             widget.baseUnitLabel,
           );
+    // Wrap the body in a SingleChildScrollView so the SAVE button
+    // stays reachable when the keyboard is up. Without it the
+    // amount/notes fields + helper text + preview can push SAVE
+    // below the visible area (iPhone 14: ~290px keyboard).
     return SafeArea(
       top: false,
       child: Padding(
@@ -191,46 +201,51 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
           16,
           16 + MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l.stockAdjustTitle(widget.productName),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l.stockAdjustTitle(widget.productName),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              l.stockAdjustCurrentLabel(
-                formatQty(widget.currentStock),
-                widget.baseUnitLabel,
+              const SizedBox(height: 6),
+              Text(
+                l.stockAdjustCurrentLabel(
+                  formatQty(widget.currentStock),
+                  widget.baseUnitLabel,
+                ),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(height: 12),
+              // Mode picker — Opening is hidden post-onboarding because
+              // the RPC refuses it once setup_status leaves the
+              // opening window. Add / Subtract / Set exact cover every
+              // daily case.
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final m in StockAdjustMode.values)
+                    if (m != StockAdjustMode.opening)
+                      ChoiceChip(
+                        label: Text(m.label(context)),
+                        selected: _mode == m,
+                        onSelected: (sel) {
+                          if (!sel) return;
+                          setState(() {
+                            _mode = m;
+                            _amountController.clear();
+                          });
+                        },
+                      ),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            // Mode picker — segmented buttons keep all four visible.
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final m in StockAdjustMode.values)
-                  ChoiceChip(
-                    label: Text(m.label(context)),
-                    selected: _mode == m,
-                    onSelected: (sel) {
-                      if (!sel) return;
-                      setState(() {
-                        _mode = m;
-                        _amountController.clear();
-                      });
-                    },
-                  ),
-              ],
-            ),
             const SizedBox(height: 8),
             Text(
               _mode.helper(context),
@@ -291,6 +306,7 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
                   : Text(l.stockAdjustSaveButton),
             ),
           ],
+        ),
         ),
       ),
     );

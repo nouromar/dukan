@@ -247,8 +247,11 @@ void main() {
     await tester.tap(find.text('50 Kg'));
     await tester.pumpAndSettle();
 
-    // Default mode is "Opening". Enter 20 + save.
-    await tester.enterText(find.byType(TextField).first, '20');
+    // Default mode is "Set exact" (Opening is hidden post-onboarding
+    // because the RPC refuses it once setup leaves the opening
+    // window). Current stock = 50 in this fixture; typing 70 makes
+    // delta = +20 against reason='correction'.
+    await tester.enterText(find.byType(TextField).first, '70');
     await tester.pumpAndSettle();
     await tester.tap(
       find.widgetWithText(FilledButton, en.stockAdjustSaveButton),
@@ -256,7 +259,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(api.postInventoryAdjustmentCalls, hasLength(1));
-    expect(api.postInventoryAdjustmentCalls.first.reasonCode, 'opening');
+    expect(api.postInventoryAdjustmentCalls.first.reasonCode, 'correction');
     expect(api.postInventoryAdjustmentCalls.first.quantityDelta, 20);
     expect(api.postInventoryAdjustmentCalls.first.shopItemId, 'si-1');
   });
