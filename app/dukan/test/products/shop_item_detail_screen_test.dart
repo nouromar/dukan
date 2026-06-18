@@ -250,8 +250,11 @@ void main() {
     // Default mode is "Set exact" (Opening is hidden post-onboarding
     // because the RPC refuses it once setup leaves the opening
     // window). Current stock = 50 in this fixture; typing 70 makes
-    // delta = +20 against reason='correction'.
-    await tester.enterText(find.byType(TextField).first, '70');
+    // delta = +20 against reason='correction'. Positive delta means
+    // the unit-cost field appears and the server requires it (#340).
+    await tester.enterText(find.byType(TextField).at(0), '70');
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(1), '5');
     await tester.pumpAndSettle();
     await tester.tap(
       find.widgetWithText(FilledButton, en.stockAdjustSaveButton),
@@ -262,6 +265,7 @@ void main() {
     expect(api.postInventoryAdjustmentCalls.first.reasonCode, 'correction');
     expect(api.postInventoryAdjustmentCalls.first.quantityDelta, 20);
     expect(api.postInventoryAdjustmentCalls.first.shopItemId, 'si-1');
+    expect(api.postInventoryAdjustmentCalls.first.unitCost, 5);
   });
 
   testWidgets(
@@ -276,8 +280,10 @@ void main() {
       await tester.tap(find.widgetWithText(
           ChoiceChip, en.stockAdjustModeSetExact));
       await tester.pumpAndSettle();
-      // New total 80 → delta +30.
-      await tester.enterText(find.byType(TextField).first, '80');
+      // New total 80 → delta +30. Positive delta requires unit_cost.
+      await tester.enterText(find.byType(TextField).at(0), '80');
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).at(1), '4');
       await tester.pumpAndSettle();
       await tester.tap(
         find.widgetWithText(FilledButton, en.stockAdjustSaveButton),
@@ -286,6 +292,7 @@ void main() {
 
       expect(api.postInventoryAdjustmentCalls.last.reasonCode, 'correction');
       expect(api.postInventoryAdjustmentCalls.last.quantityDelta, 30);
+      expect(api.postInventoryAdjustmentCalls.last.unitCost, 4);
     },
   );
 

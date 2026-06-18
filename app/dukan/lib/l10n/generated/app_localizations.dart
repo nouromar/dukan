@@ -800,6 +800,18 @@ abstract class AppLocalizations {
   /// **'Amount ({unit})'**
   String stockAdjustAmountLabel(String unit);
 
+  /// No description provided for @stockAdjustUnitCostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost per {unit} ({currency})'**
+  String stockAdjustUnitCostLabel(String unit, String currency);
+
+  /// No description provided for @stockAdjustUnitCostRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the cost per unit so average cost stays correct.'**
+  String get stockAdjustUnitCostRequiredMessage;
+
   /// No description provided for @stockAdjustNotesLabel.
   ///
   /// In en, this message translates to:

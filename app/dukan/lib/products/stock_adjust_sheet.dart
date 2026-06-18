@@ -104,6 +104,7 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
   // instead (postOpeningStockAdjustment).
   StockAdjustMode _mode = StockAdjustMode.setExact;
   final _amountController = TextEditingController();
+  final _unitCostController = TextEditingController();
   final _notesController = TextEditingController();
   bool _saving = false;
   // Inline error banner. Toasts/SnackBars fire on the parent
@@ -115,6 +116,7 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
   @override
   void dispose() {
     _amountController.dispose();
+    _unitCostController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -126,6 +128,16 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
     if (v == null || v < 0) return null;
     // setExact accepts 0 (clearing); others require > 0.
     if (v == 0 && _mode != StockAdjustMode.setExact) return null;
+    return v;
+  }
+
+  /// Parsed unit cost from the cost field, or null when the field is
+  /// empty / non-numeric / negative.
+  num? get _parsedUnitCost {
+    final raw = _unitCostController.text.trim();
+    if (raw.isEmpty) return null;
+    final v = num.tryParse(raw);
+    if (v == null || v < 0) return null;
     return v;
   }
 
@@ -155,6 +167,18 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
       setState(() => _errorMessage = l.stockAdjustInvalidAmountMessage);
       return;
     }
+    // Positive deltas need a unit cost so the server can update
+    // avg_cost correctly (the RPC rejects increases without it).
+    // Negative deltas use the running ledger's existing avg_cost.
+    num? unitCost;
+    if (change.delta > 0) {
+      unitCost = _parsedUnitCost;
+      if (unitCost == null) {
+        setState(() =>
+            _errorMessage = l.stockAdjustUnitCostRequiredMessage);
+        return;
+      }
+    }
     setState(() {
       _saving = true;
       _errorMessage = null;
@@ -165,6 +189,7 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
             reasonCode: change.reason,
             shopItemId: widget.shopItemId,
             quantityDelta: change.delta,
+            unitCost: unitCost,
             notes: _notesController.text.trim().isEmpty
                 ? null
                 : _notesController.text.trim(),
@@ -267,6 +292,14 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
                           setState(() {
                             _mode = m;
                             _amountController.clear();
+                            // Switching modes also resets the unit
+                            // cost field — it's only relevant on the
+                            // ADD path (and the new mode might not
+                            // need it at all).
+                            _unitCostController.clear();
+                            if (_errorMessage != null) {
+                              _errorMessage = null;
+                            }
                           });
                         },
                       ),
@@ -296,6 +329,30 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
                 labelText: l.stockAdjustAmountLabel(widget.baseUnitLabel),
               ),
             ),
+            // Unit cost — shown only when the resulting delta is
+            // positive. The server's post_inventory_adjustment requires
+            // unit_cost on stock INCREASES so it can keep avg_cost
+            // correct; subtractions/spoilage use the existing
+            // ledger-resolved avg_cost and don't need the field.
+            if (preview != null && preview.delta > 0) ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: _unitCostController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                textDirection: TextDirection.ltr,
+                inputFormatters: const [DecimalDigitsInputFormatter()],
+                onChanged: (_) => setState(() {
+                  if (_errorMessage != null) _errorMessage = null;
+                }),
+                decoration: InputDecoration(
+                  labelText: l.stockAdjustUnitCostLabel(
+                    widget.shop.currencySymbol,
+                    widget.baseUnitLabel,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             TextField(
               controller: _notesController,

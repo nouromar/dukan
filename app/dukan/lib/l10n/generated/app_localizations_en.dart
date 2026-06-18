@@ -408,6 +408,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String stockAdjustUnitCostLabel(String unit, String currency) {
+    return 'Cost per $unit ($currency)';
+  }
+
+  @override
+  String get stockAdjustUnitCostRequiredMessage =>
+      'Enter the cost per unit so average cost stays correct.';
+
+  @override
   String get stockAdjustNotesLabel => 'Note (optional)';
 
   @override

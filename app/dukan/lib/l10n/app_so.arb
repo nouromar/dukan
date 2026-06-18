@@ -183,6 +183,8 @@
       }
     }
   },
+  "stockAdjustUnitCostLabel": "Qiimaha {unit} ({currency})",
+  "stockAdjustUnitCostRequiredMessage": "Geli qiimaha xidhmadda si qiimaha celceliska u sii saxo.",
   "stockAdjustNotesLabel": "Faallo (ikhtiyaari)",
   "stockAdjustPreview": "Kaydka cusub: {amount} {unit}",
   "@stockAdjustPreview": {

@@ -409,6 +409,15 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
+  String stockAdjustUnitCostLabel(String unit, String currency) {
+    return 'Qiimaha $unit ($currency)';
+  }
+
+  @override
+  String get stockAdjustUnitCostRequiredMessage =>
+      'Geli qiimaha xidhmadda si qiimaha celceliska u sii saxo.';
+
+  @override
   String get stockAdjustNotesLabel => 'Faallo (ikhtiyaari)';
 
   @override

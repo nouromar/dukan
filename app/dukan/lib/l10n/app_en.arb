@@ -183,6 +183,18 @@
       }
     }
   },
+  "stockAdjustUnitCostLabel": "Cost per {unit} ({currency})",
+  "@stockAdjustUnitCostLabel": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      },
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "stockAdjustUnitCostRequiredMessage": "Enter the cost per unit so average cost stays correct.",
   "stockAdjustNotesLabel": "Note (optional)",
   "stockAdjustPreview": "New stock: {amount} {unit}",
   "@stockAdjustPreview": {
