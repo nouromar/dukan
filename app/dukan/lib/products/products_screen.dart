@@ -267,10 +267,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   // small shop scale (≤ a few hundred) are cheap.
                   final results = loaded.where((r) {
                     if (_filters.lowStockOnly &&
-                        !isLowStock(
-                          currentStock: r.currentStock,
-                          reorderThreshold: r.reorderThreshold,
-                        )) {
+                        !isLowStock(currentStock: r.currentStock)) {
                       return false;
                     }
                     if (_filters.noPriceOnly && r.anyPriceSet) return false;
@@ -354,10 +351,7 @@ class _HeadlineTile extends StatelessWidget {
     final theme = Theme.of(context);
     final total = rows.length;
     final lowCount = rows
-        .where((r) => isLowStock(
-              currentStock: r.currentStock,
-              reorderThreshold: r.reorderThreshold,
-            ))
+        .where((r) => isLowStock(currentStock: r.currentStock))
         .length;
     final noPriceCount = rows.where((r) => !r.anyPriceSet).length;
     return Padding(
@@ -441,10 +435,7 @@ class _ShopItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     final theme = Theme.of(context);
-    final low = isLowStock(
-      currentStock: row.currentStock,
-      reorderThreshold: row.reorderThreshold,
-    );
+    final low = isLowStock(currentStock: row.currentStock);
     final stockText = formatCompoundStock(
       stock: row.currentStock,
       baseLabel: row.baseUnitLabel,

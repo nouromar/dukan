@@ -469,36 +469,6 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     }
   }
 
-  /// Reorder threshold — numeric dialog → setShopItemReorderThreshold.
-  /// Empty input clears.
-  Future<void> _onSetThreshold(num? current) async {
-    final l = tr(context);
-    final newValue = await _showSingleFieldDialog(
-      title: l.shopItemEditorReorderThresholdLabel,
-      initial: current == null ? '' : _trimNumber(current),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      digitsOnlyPlusDot: true,
-      allowEmpty: true,
-    );
-    if (newValue == null || !mounted) return;
-    final trimmed = newValue.trim();
-    final parsed = trimmed.isEmpty ? null : num.tryParse(trimmed);
-    if (trimmed.isNotEmpty && (parsed == null || parsed < 0)) return;
-    if (parsed == current) return;
-    try {
-      await context.read<ShopApi>().setShopItemReorderThreshold(
-            shopId: widget.shop.id,
-            shopItemId: widget.shopItemId,
-            reorderThreshold: parsed,
-          );
-      if (!mounted) return;
-      _reload();
-      _showSaved();
-    } catch (error, stackTrace) {
-      _reportAndShow(error, stackTrace, 'setting reorder threshold');
-    }
-  }
-
   /// Delete a packaging — confirm dialog → deactivateShopItemUnit.
   Future<void> _onDeletePackaging(ShopItemUnitDetail unit) async {
     final l = tr(context);
@@ -618,7 +588,6 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
               onToggleDefault: _onToggleDefault,
               onRename: _onRename,
               onChangeCategory: _onChangeCategory,
-              onSetThreshold: _onSetThreshold,
               onDeletePackaging: _onDeletePackaging,
               onAdjustStock: () => _onAdjustStock(snapshot.data!.detail),
               onAddAlias: _onAddAlias,
@@ -662,7 +631,6 @@ class _DetailBody extends StatelessWidget {
     required this.onToggleDefault,
     required this.onRename,
     required this.onChangeCategory,
-    required this.onSetThreshold,
     required this.onDeletePackaging,
     required this.onAdjustStock,
     required this.onAddAlias,
@@ -684,7 +652,6 @@ class _DetailBody extends StatelessWidget {
   final Future<void> Function(String currentName) onRename;
   final Future<void> Function(
       List<CategoryOption> categories, String? currentId) onChangeCategory;
-  final Future<void> Function(num? current) onSetThreshold;
   final Future<void> Function(ShopItemUnitDetail unit) onDeletePackaging;
   final VoidCallback onAdjustStock;
   final VoidCallback onAddAlias;
@@ -714,10 +681,7 @@ class _DetailBody extends StatelessWidget {
         orElse: () => units.first,
       ),
     );
-    final low = isLowStock(
-      currentStock: header.currentStock,
-      reorderThreshold: header.reorderThreshold,
-    );
+    final low = isLowStock(currentStock: header.currentStock);
     final stockText = formatCompoundStock(
       stock: header.currentStock,
       baseLabel: header.baseUnitLabel,
@@ -752,16 +716,6 @@ class _DetailBody extends StatelessWidget {
               ? () => onChangeCategory(
                   bootstrap.categories, _categoryIdFor(detail))
               : null,
-        ),
-        _SettingsTile(
-          label: l.shopItemEditorReorderThresholdLabel,
-          value: header.reorderThreshold == null
-              ? '—'
-              : l.shopItemDetailReorderBelowLabel(
-                  _trimNumber(header.reorderThreshold!),
-                  header.baseUnitLabel,
-                ),
-          onTap: canEdit ? () => onSetThreshold(header.reorderThreshold) : null,
         ),
         _SettingsTile(
           label: l.shopItemEditorBaseUnitLabel,
@@ -1237,15 +1191,6 @@ class _ErrorView extends StatelessWidget {
       ),
     );
   }
-}
-
-String _trimNumber(num value) {
-  final d = value.toDouble();
-  if (d == d.roundToDouble()) return d.toStringAsFixed(0);
-  return d
-      .toStringAsFixed(3)
-      .replaceFirst(RegExp(r'0+$'), '')
-      .replaceFirst(RegExp(r'\.$'), '');
 }
 
 class _SectionLabel extends StatelessWidget {

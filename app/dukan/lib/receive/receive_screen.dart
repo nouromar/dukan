@@ -926,10 +926,7 @@ class _ReceiveItemTile extends StatelessWidget {
         : formatMoney(item.defaultUnitLastCost!, shop);
     final packaging =
         item.packagingLabel ?? item.defaultUnitLabel ?? item.baseUnitLabel;
-    final low = isLowStock(
-      currentStock: item.currentStock,
-      reorderThreshold: item.reorderThreshold,
-    );
+    final low = isLowStock(currentStock: item.currentStock);
     final stockText = item.currentStock == null
         ? null
         : formatCompoundStock(

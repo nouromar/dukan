@@ -1003,10 +1003,7 @@ class _SaleItemTile extends StatelessWidget {
     // tapping); fall back to the base unit otherwise so single-pack
     // items still show "kg · $20".
     final unitLabel = item.packagingLabel ?? item.baseUnitLabel;
-    final low = isLowStock(
-      currentStock: item.currentStock,
-      reorderThreshold: item.reorderThreshold,
-    );
+    final low = isLowStock(currentStock: item.currentStock);
     final stockText = item.currentStock == null
         ? null
         : formatCompoundStock(

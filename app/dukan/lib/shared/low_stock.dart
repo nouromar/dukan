@@ -1,10 +1,10 @@
 // Shared low-stock predicate + indicator widget.
 //
-// Trigger: red when `currentStock < 1` OR (a per-item threshold is set
-// AND `currentStock <= threshold`). The first rule is the floor — even
-// without a per-item threshold, hitting zero counts as low. The second
-// gives the shopkeeper a knob to flag earlier (e.g., "warn rice at
-// 25 kg = one bag").
+// v1 rule: red when `currentStock < 1` — i.e. you're out of stock (or
+// oversold into the negative). The per-item reorder threshold knob is
+// not supported in v1 (the column stays on shop_item for forward
+// compat but no UI sets or reads it). Reintroduce a threshold-aware
+// branch here if/when reorder/replenishment lands.
 //
 // All numbers are in the item's base unit. Stock can be negative
 // internally (ledger preserves true balance per docs/plan); the
@@ -12,11 +12,9 @@
 
 import 'package:flutter/material.dart';
 
-bool isLowStock({required num? currentStock, required num? reorderThreshold}) {
+bool isLowStock({required num? currentStock}) {
   if (currentStock == null) return false;
-  if (currentStock < 1) return true;
-  if (reorderThreshold != null && currentStock <= reorderThreshold) return true;
-  return false;
+  return currentStock < 1;
 }
 
 /// Compact filled red circle for placing in the top-right corner of an

@@ -349,12 +349,16 @@ void main() {
     api.onGetShopItem = (_, _, _) async => _detail();
     await pumpDetail(tester);
 
-    // Aliases chip strip is below the packagings — scroll to it.
-    await tester.scrollUntilVisible(
-      find.widgetWithText(ActionChip, en.aliasAddTooltip),
-      100,
-    );
-    await tester.tap(find.widgetWithText(ActionChip, en.aliasAddTooltip));
+    // Aliases chip strip is below the packagings — scroll into view,
+    // then ensureVisible so the chip's tap center isn't outside the
+    // viewport (scrollUntilVisible stops at the chip's edge; a small
+    // layout shift above can leave the center off-screen).
+    final aliasChipFinder =
+        find.widgetWithText(ActionChip, en.aliasAddTooltip);
+    await tester.scrollUntilVisible(aliasChipFinder, 100);
+    await tester.ensureVisible(aliasChipFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(aliasChipFinder);
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'Riis');
