@@ -1679,7 +1679,7 @@ abstract class AppLocalizations {
   /// No description provided for @partyNewPhoneLabel.
   ///
   /// In en, this message translates to:
-  /// **'Phone (optional)'**
+  /// **'Phone'**
   String get partyNewPhoneLabel;
 
   /// No description provided for @partyNewSaveButton.

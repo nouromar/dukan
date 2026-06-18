@@ -918,7 +918,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partyNewNameLabel => 'Name';
 
   @override
-  String get partyNewPhoneLabel => 'Phone (optional)';
+  String get partyNewPhoneLabel => 'Phone';
 
   @override
   String get partyNewSaveButton => 'ADD';

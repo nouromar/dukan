@@ -376,7 +376,7 @@
   "partyNewCustomerTitle": "New customer",
   "partyNewSupplierTitle": "New supplier",
   "partyNewNameLabel": "Name",
-  "partyNewPhoneLabel": "Phone (optional)",
+  "partyNewPhoneLabel": "Phone",
   "partyNewSaveButton": "ADD",
   "partyNewNameRequiredMessage": "Enter a name",
   "partyNewSaveFailedMessage": "Could not add. Check your internet and try again.",

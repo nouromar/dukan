@@ -921,7 +921,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get partyNewNameLabel => 'Magaca';
 
   @override
-  String get partyNewPhoneLabel => 'Telefoonka (haddii la rabo)';
+  String get partyNewPhoneLabel => 'Telefoonka';
 
   @override
   String get partyNewSaveButton => 'KU DAR';
