@@ -27,7 +27,6 @@ type ProductDetail = {
     base_unit_code: string;
     base_unit_label: string;
     current_stock: number | string;
-    reorder_threshold: number | string | null;
     unit_count: number;
     is_active: boolean;
   };

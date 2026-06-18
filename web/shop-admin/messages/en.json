@@ -293,8 +293,6 @@
       "statusActiveHelp": "Visible in sales and receives.",
       "statusHidden": "Hidden",
       "statusHiddenHelp": "Won't appear when adding sale or receive lines.",
-      "fieldThreshold": "Reorder threshold",
-      "fieldThresholdHelp": "Warns when stock drops to this level. Leave blank for none.",
       "fieldPrice": "Price",
       "cancel": "Cancel",
       "save": "Save changes",
@@ -306,8 +304,7 @@
     "inactive": "Inactive",
     "stock": {
       "label": "In stock",
-      "outBadge": "Out",
-      "lowBadge": "Low (≤ {threshold} {unit})"
+      "outBadge": "Out"
     },
     "sections": {
       "packaging": "Packaging",
@@ -401,7 +398,6 @@
     },
     "bulk": {
       "setPrice": "Set price",
-      "setThreshold": "Set threshold",
       "priceDialog": {
         "title": "Set price",
         "description": "Updates {count, plural, one {# product} other {# products}}.",
@@ -410,17 +406,8 @@
         "confirm": "Apply",
         "submitting": "Applying…"
       },
-      "thresholdDialog": {
-        "title": "Set threshold",
-        "description": "Updates {count, plural, one {# product} other {# products}}. Empty = no threshold.",
-        "label": "Reorder at",
-        "placeholder": "10",
-        "confirm": "Apply",
-        "submitting": "Applying…"
-      },
       "cancel": "Cancel",
       "successPrice": "{count, plural, one {Updated # product.} other {Updated # products.}}",
-      "successThreshold": "{count, plural, one {Updated # product.} other {Updated # products.}}",
       "errorPermission": "Owners only.",
       "errorGeneric": "Couldn't update."
     },

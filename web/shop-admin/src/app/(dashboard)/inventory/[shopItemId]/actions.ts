@@ -123,26 +123,6 @@ export async function setProductCategoryAction(input: {
   return { ok: true };
 }
 
-export async function setProductThresholdAction(input: {
-  shopId: string;
-  shopItemId: string;
-  threshold: number | null;
-}): Promise<FieldUpdateResult> {
-  if (input.threshold !== null && (Number.isNaN(input.threshold) || input.threshold < 0)) {
-    return { ok: false, code: "generic", message: "invalid threshold" };
-  }
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc("set_shop_item_reorder_threshold", {
-    p_shop_id: input.shopId,
-    p_shop_item_id: input.shopItemId,
-    p_reorder_threshold: input.threshold,
-  });
-  if (error) return classifyFieldError(error.message ?? "");
-  revalidatePath(`/inventory/${input.shopItemId}`);
-  revalidatePath("/inventory");
-  return { ok: true };
-}
-
 export async function setProductActiveAction(input: {
   shopId: string;
   shopItemId: string;

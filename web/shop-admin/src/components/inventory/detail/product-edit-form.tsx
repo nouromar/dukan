@@ -5,12 +5,15 @@
 // page between view and edit modes:
 //
 //   * View mode: clean read-only display. Header (name + category +
-//     status chips), stock + threshold cards, packaging table with
-//     read-only prices.
+//     status chips), stock card, packaging table with read-only
+//     prices.
 //   * Edit mode: a single form Card with labeled inputs for the
-//     header fields + threshold, and the packaging price column
-//     swaps to editable number inputs. Add/Remove packaging are
-//     hidden in edit mode to avoid losing in-flight changes.
+//     header fields, and the packaging price column swaps to
+//     editable number inputs. Add/Remove packaging are hidden in
+//     edit mode to avoid losing in-flight changes.
+//
+// (v1 doesn't ship per-item reorder thresholds — #334. The form's
+// stale "threshold" wording was scrubbed in the same commit.)
 //
 // Save fires the RPCs only for fields whose values changed since
 // entering edit mode (parallel). On success the form exits to view
@@ -385,7 +388,7 @@ function ViewHeader({
 }
 
 // ----------------------------------------------------------------------------
-// Edit mode fields card — labeled inputs for the header fields + threshold
+// Edit mode fields card — labeled inputs for the header fields
 // ----------------------------------------------------------------------------
 
 function EditFieldsCard({
@@ -511,7 +514,7 @@ function StatusRadio({
 }
 
 // ----------------------------------------------------------------------------
-// Stock summary — current + threshold side-by-side
+// Stock summary — current stock in the base unit
 // ----------------------------------------------------------------------------
 
 function StockSummary({

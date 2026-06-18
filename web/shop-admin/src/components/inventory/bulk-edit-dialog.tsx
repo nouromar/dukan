@@ -1,7 +1,8 @@
-// Shared dialog used by both "Set price" and "Set threshold" bulk
-// actions. The two flows differ only in label / action callable; one
-// dialog with a variant prop keeps the UX consistent and the markup
-// in one place.
+// "Set price" bulk-edit dialog. The dialog used to multiplex price /
+// threshold via a `variant` prop; per #334 v1 doesn't support
+// per-item reorder thresholds, so the dialog is now price-only.
+// (The threshold branch can be re-added when reorder lands —
+// bulkSetThresholdAction needs restoring first.)
 
 "use client";
 
@@ -20,22 +21,14 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  bulkSetPriceAction,
-  bulkSetThresholdAction,
-  type BulkResult,
-} from "@/app/(dashboard)/inventory/actions";
-
-export type BulkVariant = "price" | "threshold";
+import { bulkSetPriceAction } from "@/app/(dashboard)/inventory/actions";
 
 export function BulkEditDialog({
-  variant,
   open,
   onOpenChange,
   shopId,
   shopItemIds,
 }: {
-  variant: BulkVariant;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   shopId: string;
@@ -46,53 +39,28 @@ export function BulkEditDialog({
   const [value, setValue] = useState("");
   const [pending, startTransition] = useTransition();
 
-  const isPrice = variant === "price";
-  const dialogKey = isPrice ? "priceDialog" : "thresholdDialog";
-
   function handleConfirm() {
     startTransition(async () => {
-      let result: BulkResult;
-      if (isPrice) {
-        const price = Number(value);
-        if (Number.isNaN(price) || price < 0) {
-          toast.error(t("errorGeneric"));
-          return;
-        }
-        result = await bulkSetPriceAction({
-          shopId,
-          shopItemIds,
-          price,
-        });
-      } else {
-        // Empty → null (clear the threshold). Otherwise must be a non-negative number.
-        const raw = value.trim();
-        const threshold = raw === "" ? null : Number(raw);
-        if (threshold !== null && (Number.isNaN(threshold) || threshold < 0)) {
-          toast.error(t("errorGeneric"));
-          return;
-        }
-        result = await bulkSetThresholdAction({
-          shopId,
-          shopItemIds,
-          threshold,
-        });
+      const price = Number(value);
+      if (Number.isNaN(price) || price < 0) {
+        toast.error(t("errorGeneric"));
+        return;
       }
+      const result = await bulkSetPriceAction({
+        shopId,
+        shopItemIds,
+        price,
+      });
 
       if (result.ok) {
-        toast.success(
-          t(
-            isPrice
-              ? "successPrice"
-              : ("successThreshold" as const),
-            { count: result.count },
-          ),
-        );
+        toast.success(t("successPrice", { count: result.count }));
         onOpenChange(false);
         setValue("");
         router.refresh();
         return;
       }
-      const errorKey = result.code === "permission" ? "errorPermission" : "errorGeneric";
+      const errorKey =
+        result.code === "permission" ? "errorPermission" : "errorGeneric";
       toast.error(t(errorKey as "errorGeneric"));
     });
   }
@@ -101,28 +69,22 @@ export function BulkEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {t(`${dialogKey}.title` as "priceDialog.title")}
-          </DialogTitle>
+          <DialogTitle>{t("priceDialog.title")}</DialogTitle>
           <DialogDescription>
-            {t(`${dialogKey}.description` as "priceDialog.description", {
-              count: shopItemIds.length,
-            })}
+            {t("priceDialog.description", { count: shopItemIds.length })}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor={`bulk-${variant}`}>
-            {t(`${dialogKey}.label` as "priceDialog.label")}
-          </Label>
+          <Label htmlFor="bulk-price">{t("priceDialog.label")}</Label>
           <Input
-            id={`bulk-${variant}`}
+            id="bulk-price"
             type="number"
             inputMode="decimal"
             step="any"
             min={0}
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder={t(`${dialogKey}.placeholder` as "priceDialog.placeholder")}
+            placeholder={t("priceDialog.placeholder")}
             autoFocus
           />
         </div>
@@ -136,11 +98,9 @@ export function BulkEditDialog({
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={pending || (isPrice && value.trim() === "")}
+            disabled={pending || value.trim() === ""}
           >
-            {pending
-              ? t(`${dialogKey}.submitting` as "priceDialog.submitting")
-              : t(`${dialogKey}.confirm` as "priceDialog.confirm")}
+            {pending ? t("priceDialog.submitting") : t("priceDialog.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

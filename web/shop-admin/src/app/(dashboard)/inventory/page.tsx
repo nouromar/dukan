@@ -3,9 +3,9 @@
 // so the two surfaces never drift on display names, category labels,
 // or default-sale-price resolution.
 //
-// Inline edits for reorder_threshold + sale_price are tracked as
-// the #278 follow-on (need to agree on the optimistic-update pattern
-// + audit-log surfacing first).
+// Inline price + bulk-set-price are wired (#286 / #289). Per-item
+// reorder thresholds are not a thing in v1 (#334) — the RPC still
+// returns reorder_threshold in the row but it's ignored here.
 
 import { getTranslations, getLocale } from "next-intl/server";
 import { formatCount } from "shared";
@@ -32,7 +32,6 @@ type RpcRow = {
   base_unit_code: string;
   base_unit_label: string;
   current_stock: number | string;
-  reorder_threshold: number | string | null;
   unit_count: number;
   is_active: boolean;
   default_sale_price: number | string | null;

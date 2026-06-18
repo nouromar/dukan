@@ -2,12 +2,11 @@
 //
 //   - search filters in-memory (will move to server-side via
 //     list_shop_items(p_query) once shops grow real catalogs).
-//   - Out-of-stock badge when current_stock <= 0. No low-stock /
-//     reorder badge in v1 — reorder thresholds aren't a thing in the
-//     v1 East African market.
+//   - Out-of-stock badge when current_stock <= 0. v1 has no
+//     per-item reorder threshold and no low-stock badge (#334).
 //   - Cost + price render side-by-side in the same packaging unit
 //     (the default sale packaging) so margin is obvious at a glance.
-//   - Bulk action: set price only (no bulk-threshold in v1).
+//   - Bulk action: set price only.
 
 "use client";
 
@@ -21,10 +20,7 @@ import { DataTable, EmptyState, type BulkAction } from "@/components/data-table"
 import { Input } from "@/components/ui/input";
 import { useShopContext } from "@/lib/shop-context";
 import { cn } from "@/lib/utils";
-import {
-  BulkEditDialog,
-  type BulkVariant,
-} from "./bulk-edit-dialog";
+import { BulkEditDialog } from "./bulk-edit-dialog";
 
 export type Product = {
   shop_item_id: string;
@@ -55,7 +51,7 @@ export function ProductsTable({
   const router = useRouter();
   const { currentShop, capabilities } = useShopContext();
   const [query, setQuery] = useState("");
-  const [bulkVariant, setBulkVariant] = useState<BulkVariant | null>(null);
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
   const [selectedIdsForDialog, setSelectedIdsForDialog] = useState<string[]>(
     [],
   );
@@ -188,7 +184,7 @@ export function ProductsTable({
                     icon: DollarSign,
                     onClick: () => {
                       setSelectedIdsForDialog(ids);
-                      setBulkVariant("price");
+                      setBulkPriceOpen(true);
                     },
                   },
                 ];
@@ -196,13 +192,10 @@ export function ProductsTable({
             : undefined
         }
       />
-      {currentShop && bulkVariant !== null ? (
+      {currentShop && bulkPriceOpen ? (
         <BulkEditDialog
-          variant={bulkVariant}
-          open={bulkVariant !== null}
-          onOpenChange={(open) => {
-            if (!open) setBulkVariant(null);
-          }}
+          open={bulkPriceOpen}
+          onOpenChange={setBulkPriceOpen}
           shopId={currentShop.id}
           shopItemIds={selectedIdsForDialog}
         />

@@ -1,7 +1,12 @@
-// Server Actions for /inventory. Three actions live here today:
-//   - addProductAction      (this commit)
-//   - bulkSetPriceAction    (from #289)
-//   - bulkSetThresholdAction (from #289)
+// Server Actions for /inventory. Two actions live here today:
+//   - addProductAction
+//   - bulkSetPriceAction
+//
+// (Reorder-threshold bulk edit was removed in #334 — v1 doesn't
+// support per-item reorder thresholds. The bulk_set_reorder_threshold
+// RPC + shop_item.reorder_threshold column remain in the database for
+// forward-compat; reintroducing the feature only needs restoring UI
+// and the wrapper action.)
 
 "use server";
 
@@ -260,32 +265,3 @@ export async function bulkSetPriceAction(input: {
   return { ok: true, count: Number(data ?? 0) };
 }
 
-export async function bulkSetThresholdAction(input: {
-  shopId: string;
-  shopItemIds: string[];
-  /** null = clear the threshold. */
-  threshold: number | null;
-}): Promise<BulkResult> {
-  if (input.shopItemIds.length === 0) {
-    return { ok: false, code: "validation" };
-  }
-  if (input.threshold !== null && (input.threshold < 0 || Number.isNaN(input.threshold))) {
-    return { ok: false, code: "validation" };
-  }
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("bulk_set_reorder_threshold", {
-    p_shop_id: input.shopId,
-    p_shop_item_ids: input.shopItemIds,
-    p_threshold: input.threshold,
-  });
-  if (error) {
-    console.error("[inventory] bulk_set_reorder_threshold failed:", error);
-    return {
-      ok: false,
-      code: classifyBulkError(error.message ?? ""),
-      message: error.message,
-    };
-  }
-  revalidatePath("/inventory");
-  return { ok: true, count: Number(data ?? 0) };
-}

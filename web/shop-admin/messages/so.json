@@ -293,8 +293,6 @@
       "statusActiveHelp": "Ka muuqda iibka iyo qaadashada.",
       "statusHidden": "La qariyay",
       "statusHiddenHelp": "Ma soo muuqan doonto markaad iib ama qaadasho gelinayso.",
-      "fieldThreshold": "Xadka dalbashada",
-      "fieldThresholdHelp": "Wuxuu ku digayaa marka kaydku gaaro xadkan. Faaruji haddii aanad rabin.",
       "fieldPrice": "Qiimaha",
       "cancel": "Jooji",
       "save": "Kaydi bedelkii",
@@ -306,8 +304,7 @@
     "inactive": "Aan firfircoonayn",
     "stock": {
       "label": "Kayd",
-      "outBadge": "Dhammaaday",
-      "lowBadge": "Yar (≤ {threshold} {unit})"
+      "outBadge": "Dhammaaday"
     },
     "sections": {
       "packaging": "Xidhmaynta",
@@ -401,7 +398,6 @@
     },
     "bulk": {
       "setPrice": "Dejiyi qiimaha",
-      "setThreshold": "Dejiyi xadka",
       "priceDialog": {
         "title": "Dejiyi qiimaha",
         "description": "Cusbooneysii {count, plural, one {# alaab} other {# alaab}}.",
@@ -410,17 +406,8 @@
         "confirm": "Codso",
         "submitting": "Lagu dabaqayaa…"
       },
-      "thresholdDialog": {
-        "title": "Dejiyi xadka",
-        "description": "Cusbooneysii {count, plural, one {# alaab} other {# alaab}}. Faaruji = xad ma jiro.",
-        "label": "Dalbo marka",
-        "placeholder": "10",
-        "confirm": "Codso",
-        "submitting": "Lagu dabaqayaa…"
-      },
       "cancel": "Jooji",
       "successPrice": "{count, plural, one {# alaab la cusbooneysiiyay.} other {# alaab la cusbooneysiiyay.}}",
-      "successThreshold": "{count, plural, one {# alaab la cusbooneysiiyay.} other {# alaab la cusbooneysiiyay.}}",
       "errorPermission": "Milkiilo kaliya.",
       "errorGeneric": "Lama cusbooneysiin karin."
     },
