@@ -17,7 +17,6 @@ import 'package:provider/provider.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/shared/digit_input.dart';
-import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/quantity_format.dart';
 
@@ -107,6 +106,11 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
   final _amountController = TextEditingController();
   final _notesController = TextEditingController();
   bool _saving = false;
+  // Inline error banner. Toasts/SnackBars fire on the parent
+  // ScaffoldMessenger which sits BEHIND this modal sheet on iPhone,
+  // so the cashier doesn't see them. Rendering the message inline
+  // is the only reliable way to surface a save failure.
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -148,10 +152,13 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
     final l = tr(context);
     final change = _computeChange();
     if (change == null) {
-      showError(context, l.stockAdjustInvalidAmountMessage);
+      setState(() => _errorMessage = l.stockAdjustInvalidAmountMessage);
       return;
     }
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _errorMessage = null;
+    });
     try {
       await context.read<ShopApi>().postInventoryAdjustment(
             shopId: widget.shop.id,
@@ -171,10 +178,29 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
         library: 'dukan products',
         context: ErrorDescription('post_inventory_adjustment'),
       ));
-      if (mounted) showError(context, l.stockAdjustFailedMessage);
+      if (!mounted) return;
+      // Render the server message inline when present (PostgrestException
+      // surfaces a useful message most of the time — e.g. "permission
+      // denied", "reason_code 'opening' not allowed after setup"). Fall
+      // back to the generic copy when the message is empty.
+      final raw = _errorDetail(error);
+      setState(() {
+        _errorMessage =
+            raw == null ? l.stockAdjustFailedMessage : '${l.stockAdjustFailedMessage}\n$raw';
+      });
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Extract a one-line server message from common error shapes so the
+  /// inline banner shows something more informative than the generic
+  /// copy. Returns null for opaque errors.
+  static String? _errorDetail(Object error) {
+    final msg = error.toString();
+    if (msg.isEmpty) return null;
+    final trimmed = msg.replaceFirst('Exception: ', '').trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   @override
@@ -261,7 +287,11 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
                   const TextInputType.numberWithOptions(decimal: true),
               textDirection: TextDirection.ltr,
               inputFormatters: const [DecimalDigitsInputFormatter()],
-              onChanged: (_) => setState(() {}),
+              onChanged: (_) => setState(() {
+                // Typing should clear any stale error banner so the
+                // cashier can retry without confusion.
+                if (_errorMessage != null) _errorMessage = null;
+              }),
               decoration: InputDecoration(
                 labelText: l.stockAdjustAmountLabel(widget.baseUnitLabel),
               ),
@@ -291,19 +321,60 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _saving || preview == null ? null : _onSave,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  _errorMessage!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onErrorContainer,
+                  ),
+                ),
               ),
-              child: _saving
-                  ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2.5),
-                    )
-                  : Text(l.stockAdjustSaveButton),
+            ],
+            const SizedBox(height: 16),
+            // CANCEL + SAVE side-by-side. Without a Cancel button the
+            // shopkeeper had no way back to the product screen when
+            // the keyboard covered the drag handle on iPhone — the
+            // sheet read as a dead end.
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _saving
+                        ? null
+                        : () => Navigator.of(context).pop(false),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    child: Text(l.cancel),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton(
+                    onPressed: _saving || preview == null ? null : _onSave,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    child: _saving
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child:
+                                CircularProgressIndicator(strokeWidth: 2.5),
+                          )
+                        : Text(l.stockAdjustSaveButton),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
