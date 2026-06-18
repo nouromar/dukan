@@ -185,11 +185,23 @@ class AuthRouter extends StatelessWidget {
           : const LoginScreen();
     }
 
-    if (auth.shopsLoading) {
+    // Only fall back to the LoadingScreen when there's nothing cached
+    // to render. After #329 the SWR auth cache populates `auth.shops`
+    // + `auth.selectedShop` synchronously on warm-cache cold starts;
+    // the unawaited background loadShops then flips `shopsLoading` to
+    // true. Without the guard below the AuthRouter would flash back to
+    // LoadingScreen for the duration of that background fetch, then
+    // back to HomeScreen — visible as a "double flash" on launch.
+    if (auth.shopsLoading && auth.shops.isEmpty) {
       return const LoadingScreen();
     }
 
-    if (auth.shopLoadFailed) {
+    // Same guard: if the background refresh fails but we already have
+    // cached shops, keep rendering them rather than masking the whole
+    // screen with the error UI. (A future enhancement could surface a
+    // small "couldn't refresh" banner; for now the cached state is the
+    // right user-facing default.)
+    if (auth.shopLoadFailed && auth.shops.isEmpty) {
       return FriendlyErrorScreen(
         title: tr(context).shopLoadFailedTitle,
         message: tr(context).shopLoadFailedMessage,
