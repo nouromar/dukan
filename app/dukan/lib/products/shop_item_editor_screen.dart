@@ -1374,10 +1374,9 @@ class _SupplierSection extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         initiallyExpanded: initiallyExpanded,
-        title: Text(l.shopItemEditorBuyHeader),
-        subtitle: Text(
-          l.shopItemEditorBuySubtitle,
-          style: Theme.of(context).textTheme.bodySmall,
+        title: Text(
+          l.shopItemEditorBuyHeader,
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
@@ -1487,10 +1486,9 @@ class _OpeningStockSection extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         initiallyExpanded: initiallyExpanded,
-        title: Text(l.shopItemEditorOpeningHeader),
-        subtitle: Text(
-          l.shopItemEditorOpeningSubtitle,
-          style: theme.textTheme.bodySmall,
+        title: Text(
+          l.shopItemEditorOpeningHeader,
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
@@ -1574,10 +1572,9 @@ class _DiscoverySection extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         initiallyExpanded: initiallyExpanded,
-        title: Text(l.shopItemEditorDiscoveryHeader),
-        subtitle: Text(
-          l.shopItemEditorDiscoverySubtitle,
-          style: Theme.of(context).textTheme.bodySmall,
+        title: Text(
+          l.shopItemEditorDiscoveryHeader,
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
