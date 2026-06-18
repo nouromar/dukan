@@ -558,7 +558,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clear => 'CLEAR';
 
   @override
-  String get paymentTitle => 'Customer payment';
+  String get paymentTitle => 'Payment';
 
   @override
   String get amount => 'Amount';
