@@ -28,8 +28,13 @@ class SaleHistoryFilters {
     this.hideVoided = false,
   });
 
+  /// Defaults to "all dates" so opening Sale history surfaces the
+  /// latest activity immediately (capped at historyPageLimit by the
+  /// RPC). A "today" preset is still one tap away in the filter
+  /// sheet for shopkeepers who want the day's view — that's the
+  /// minority case; the common ask is "where's my data?".
   factory SaleHistoryFilters.initial() =>
-      SaleHistoryFilters(dateRange: DateRange.today());
+      const SaleHistoryFilters(dateRange: DateRange.all);
 
   final DateRange dateRange;
   final String? partyId;

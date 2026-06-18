@@ -88,14 +88,16 @@ void main() {
     expect(find.text(en.saleHistoryEmptyMessage), findsOneWidget);
   });
 
-  testWidgets('default scope is Today — subtitle reflects it', (tester) async {
+  testWidgets('default scope is All time — subtitle reflects it', (tester) async {
     api.onListSales = (_, _, _) async => const [];
 
     await pumpHistory(tester);
     await tester.pumpAndSettle();
 
-    // The app-bar subtitle shows the active date range.
-    expect(find.text(en.dateRangeToday), findsOneWidget);
+    // The app-bar subtitle shows the active date range. Default is
+    // "All time" so opening history surfaces the latest activity
+    // immediately (capped at historyPageLimit by the RPC).
+    expect(find.text(en.dateRangeAll), findsOneWidget);
   });
 
   testWidgets('voided rows show by default; "Hide voided" chip removes them',

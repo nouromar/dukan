@@ -17,8 +17,13 @@ class ReceiveHistoryFilters {
     this.hideVoided = false,
   });
 
+  /// Defaults to "all dates" so opening Receive history surfaces the
+  /// latest activity immediately (capped at historyPageLimit by the
+  /// RPC). The "today" preset is still one tap away in the filter
+  /// sheet — common ask is "where's my data?", not "what came in
+  /// just today".
   factory ReceiveHistoryFilters.initial() =>
-      ReceiveHistoryFilters(dateRange: DateRange.today());
+      const ReceiveHistoryFilters(dateRange: DateRange.all);
 
   final DateRange dateRange;
   final String? supplierId;
