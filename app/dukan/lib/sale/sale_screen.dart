@@ -727,18 +727,20 @@ class _SaleScreenState extends State<SaleScreen> {
       );
     }
 
-    // Open the receipt sheet on the next frame so the cart-clear
-    // rebuild lands first. Fire-and-forget — the cashier dismisses the
-    // sheet at their pace; this method returns immediately so callers
-    // (and tests) aren't blocked on manual dismissal.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(showSaleReceiptSheet(
-        context,
-        shop: widget.shop,
-        txnId: txnId,
-      ));
-    });
+    // Open the receipt sheet directly. The earlier cart-clear
+    // setState (synchronous, before the network await) plus the
+    // round-trip latency mean the cart-clear frame has already
+    // landed. A previous `addPostFrameCallback` wrapper deferred
+    // the open to "the next frame," but on iOS in release mode the
+    // engine had no reason to schedule a frame once the UI was
+    // stable — the sheet only appeared when the user touched
+    // somewhere and forced one. Fire-and-forget — the cashier
+    // dismisses the sheet at their pace.
+    unawaited(showSaleReceiptSheet(
+      context,
+      shop: widget.shop,
+      txnId: txnId,
+    ));
   }
 
   void _handleOptimisticSaveFailure(
