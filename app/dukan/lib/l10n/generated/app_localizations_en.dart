@@ -965,6 +965,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentSaveButton => 'SAVE';
 
   @override
+  String get paymentNotesLabel => 'Note';
+
+  @override
   String get paymentSavedToast => 'Payment saved';
 
   @override
@@ -1059,6 +1062,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseSaveButton => 'SAVE';
+
+  @override
+  String get expenseNotesLabel => 'Note';
 
   @override
   String get expenseSavedToast => 'Expense saved';

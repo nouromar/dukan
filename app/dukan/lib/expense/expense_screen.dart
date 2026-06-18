@@ -33,6 +33,7 @@ class ExpenseScreen extends StatefulWidget {
 
 class _ExpenseScreenState extends State<ExpenseScreen> {
   final _amountController = TextEditingController();
+  final _notesController = TextEditingController();
   late Future<List<ExpenseCategoryOption>> _categoriesFuture;
   String? _locale;
 
@@ -58,6 +59,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   @override
   void dispose() {
     _amountController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -102,6 +104,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     final amount = controller.amount;
     final clientOpId = generateClientOpId('expense');
     final failureMessage = l.expensePostFailedMessage;
+    final rawNotes = _notesController.text.trim();
+    final notes = rawNotes.isEmpty ? null : rawNotes;
 
     final messenger = runOptimisticSaveShell(
       context: context,
@@ -109,6 +113,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       onClear: () {
         controller.clearAll();
         _amountController.clear();
+        _notesController.clear();
       },
     );
 
@@ -118,6 +123,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         categoryId: categoryId,
         amount: amount,
         clientOpId: clientOpId,
+        notes: notes,
         messenger: messenger,
         failureMessage: failureMessage,
       ),
@@ -129,6 +135,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     required String categoryId,
     required num amount,
     required String clientOpId,
+    required String? notes,
     required ScaffoldMessengerState messenger,
     required String failureMessage,
   }) async {
@@ -139,6 +146,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         amount: amount,
         paymentMethodCode: 'cash',
         clientOpId: clientOpId,
+        notes: notes,
       );
     } catch (error, stackTrace) {
       reportBackgroundFailure(
@@ -230,6 +238,16 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                 decoration: InputDecoration(
                   labelText:
                       '${widget.shop.currencySymbol} ${l.expenseAmountLabel}',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _notesController,
+                textInputAction: TextInputAction.done,
+                maxLines: 2,
+                minLines: 1,
+                decoration: InputDecoration(
+                  labelText: l.expenseNotesLabel,
                 ),
               ),
               const SizedBox(height: 16),

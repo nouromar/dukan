@@ -1760,6 +1760,12 @@ abstract class AppLocalizations {
   /// **'SAVE'**
   String get paymentSaveButton;
 
+  /// No description provided for @paymentNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get paymentNotesLabel;
+
   /// No description provided for @paymentSavedToast.
   ///
   /// In en, this message translates to:
@@ -1891,6 +1897,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SAVE'**
   String get expenseSaveButton;
+
+  /// No description provided for @expenseNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get expenseNotesLabel;
 
   /// No description provided for @expenseSavedToast.
   ///

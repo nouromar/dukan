@@ -32,6 +32,7 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   final _amountController = TextEditingController();
+  final _notesController = TextEditingController();
 
   @override
   void initState() {
@@ -45,6 +46,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void dispose() {
     _amountController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -127,6 +129,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final allocations = controller.allocations;
     final clientOpId = generateClientOpId('payment');
     final failureMessage = l.paymentPostFailedMessage;
+    final rawNotes = _notesController.text.trim();
+    final notes = rawNotes.isEmpty ? null : rawNotes;
 
     final messenger = runOptimisticSaveShell(
       context: context,
@@ -134,6 +138,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       onClear: () {
         controller.clearAll();
         _amountController.clear();
+        _notesController.clear();
       },
     );
 
@@ -145,6 +150,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         amount: amount,
         clientOpId: clientOpId,
         allocations: allocations,
+        notes: notes,
         messenger: messenger,
         failureMessage: failureMessage,
       ),
@@ -158,6 +164,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     required num amount,
     required String clientOpId,
     required List<PaymentAllocationInput>? allocations,
+    required String? notes,
     required ScaffoldMessengerState messenger,
     required String failureMessage,
   }) async {
@@ -170,6 +177,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         paymentMethodCode: 'cash',
         clientOpId: clientOpId,
         allocations: allocations,
+        notes: notes,
       );
     } catch (error, stackTrace) {
       reportBackgroundFailure(
@@ -281,6 +289,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 decoration: InputDecoration(
                   labelText:
                       '${widget.shop.currencySymbol} ${l.paymentAmountLabel}',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _notesController,
+                textInputAction: TextInputAction.done,
+                maxLines: 2,
+                minLines: 1,
+                decoration: InputDecoration(
+                  labelText: l.paymentNotesLabel,
                 ),
               ),
               if (canSave && controller.outstandingBalance > 0) ...[

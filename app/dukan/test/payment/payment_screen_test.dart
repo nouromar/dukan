@@ -89,7 +89,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Type the amount (\$20 of the \$40 they owe).
-      await tester.enterText(find.byType(TextField), '20');
+      await tester.enterText(find.byType(TextField).first, '20');
       await tester.pump();
 
       await tester.tap(find.widgetWithText(FilledButton, en.paymentSaveButton));
@@ -137,7 +137,7 @@ void main() {
       await tester.tap(find.text('Hassan'));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), '50');
+      await tester.enterText(find.byType(TextField).first, '50');
       await tester.pump();
       await tester.tap(find.widgetWithText(FilledButton, en.paymentSaveButton));
       await tester.pumpAndSettle();
@@ -179,7 +179,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Type more than Ahmed's \$40 balance.
-      await tester.enterText(find.byType(TextField), '100');
+      await tester.enterText(find.byType(TextField).first, '100');
       await tester.pump();
 
       // SAVE should be disabled because amount > balance.
@@ -217,7 +217,7 @@ void main() {
       // Party picked but amount = 0 → still no chip.
       expect(find.text(en.paymentChooseInvoicesChip), findsNothing);
 
-      await tester.enterText(find.byType(TextField), '20');
+      await tester.enterText(find.byType(TextField).first, '20');
       await tester.pump();
       expect(find.text(en.paymentChooseInvoicesChip), findsOneWidget);
     },

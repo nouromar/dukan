@@ -968,6 +968,9 @@ class AppLocalizationsSo extends AppLocalizations {
   String get paymentSaveButton => 'KEYDI';
 
   @override
+  String get paymentNotesLabel => 'Qoraal';
+
+  @override
   String get paymentSavedToast => 'Lacag bixinta waa la keydiyay';
 
   @override
@@ -1062,6 +1065,9 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get expenseSaveButton => 'KEYDI';
+
+  @override
+  String get expenseNotesLabel => 'Qoraal';
 
   @override
   String get expenseSavedToast => 'Qarashka waa la keydiyay';

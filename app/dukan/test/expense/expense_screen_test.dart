@@ -74,7 +74,7 @@ void main() {
     expect(stillDisabled.onPressed, isNull);
 
     // Type amount.
-    await tester.enterText(find.byType(TextField), '50');
+    await tester.enterText(find.byType(TextField).first, '50');
     await tester.pump();
     final enabled = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, en.expenseSaveButton),
@@ -111,7 +111,7 @@ void main() {
 
     await tester.tap(find.text('Rent'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), '120');
+    await tester.enterText(find.byType(TextField).first, '120');
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, en.expenseSaveButton));
     await tester.pumpAndSettle();
