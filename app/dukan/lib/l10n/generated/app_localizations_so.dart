@@ -1698,7 +1698,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorSessionSheetViewAll => 'Eeg dhammaan alaabta →';
 
   @override
-  String get shopItemEditorBuyHeader => 'Sida aad u qaadato (ikhtiyaari)';
+  String get shopItemEditorBuyHeader => 'Alaab-qeybiyeyaasha';
 
   @override
   String get shopItemEditorBuySubtitle =>
@@ -1722,8 +1722,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get shopItemEditorOpeningHeader =>
-      'Waxa aad hadda haysato (ikhtiyaari)';
+  String get shopItemEditorOpeningHeader => 'Bakhaarka';
 
   @override
   String get shopItemEditorOpeningSubtitle =>
@@ -1814,8 +1813,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get shopItemEditorDiscoveryHeader =>
-      'Ka caawi sida loo helo (ikhtiyaari)';
+  String get shopItemEditorDiscoveryHeader => 'Magacyo kale';
 
   @override
   String get shopItemEditorDiscoverySubtitle =>

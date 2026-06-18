@@ -697,7 +697,7 @@
   },
   "shopItemEditorSessionSheetTitle": "Lagu daray fadhigan",
   "shopItemEditorSessionSheetViewAll": "Eeg dhammaan alaabta →",
-  "shopItemEditorBuyHeader": "Sida aad u qaadato (ikhtiyaari)",
+  "shopItemEditorBuyHeader": "Alaab-qeybiyeyaasha",
   "shopItemEditorBuySubtitle": "Alaab keene asaasi + qiimaha caadiga — wuxuu hore u buuxinayaa Qaadasho.",
   "shopItemEditorPickSupplierButton": "Dooro alaab keene",
   "shopItemEditorNewSupplierButton": "CUSUB",
@@ -711,7 +711,7 @@
       }
     }
   },
-  "shopItemEditorOpeningHeader": "Waxa aad hadda haysato (ikhtiyaari)",
+  "shopItemEditorOpeningHeader": "Bakhaarka",
   "shopItemEditorOpeningSubtitle": "Geli kayd hadda baakad walba si warbixinada saxda u shaqeeyaan maalintaa.",
   "shopItemEditorOpeningPickBaseUnitFirst": "Marka hore dooro cabbir asaasi ah si aad u isticmaasho qaybtan.",
   "shopItemEditorOpeningQtyLabel": "Tirada {unit}",
@@ -764,7 +764,7 @@
       }
     }
   },
-  "shopItemEditorDiscoveryHeader": "Ka caawi sida loo helo (ikhtiyaari)",
+  "shopItemEditorDiscoveryHeader": "Magacyo kale",
   "shopItemEditorDiscoverySubtitle": "Magacyo kale + qoraalka qoraalka ayaa raadinta ka horumarinaya.",
   "shopItemEditorAliasesLabel": "Magacyo kale",
   "shopItemEditorAliasHint": "Ku dar magac kale",

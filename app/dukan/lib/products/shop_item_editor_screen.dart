@@ -136,12 +136,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
 
   final List<_SessionAdd> _sessionAdds = [];
 
-  /// First-item-of-session toggle. The optional sections (3/4/5) start
-  /// expanded for the first item so the owner sees what's possible;
-  /// subsequent items in the same session start collapsed to keep the
-  /// muscle-memory path short.
-  bool _firstItemOfSession = true;
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -777,9 +771,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
       _suggestions = const [];
       _lastSuggestionQuery = '';
       _openingDate = DateTime.now();
-      // Optional sections (3/4/5) collapse for items 2+ of a session
-      // so the muscle-memory path stays short.
-      _firstItemOfSession = false;
       // Supplier sticks across resets — typical stocking session.
     });
     _nameFocusNode.requestFocus();
@@ -961,7 +952,7 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           shop: widget.shop,
           packagings: _packagings,
           supplier: _supplier,
-          initiallyExpanded: _firstItemOfSession,
+          initiallyExpanded: false,
           onPick: _onPickSupplier,
           onAddInline: _onAddSupplierInline,
           onClear: _onClearSupplier,
@@ -973,7 +964,7 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           baseUnitCode: _baseUnitCode,
           openingDate: _openingDate,
           onPickDate: _onPickOpeningDate,
-          initiallyExpanded: _firstItemOfSession,
+          initiallyExpanded: false,
           onChanged: () => setState(() {}),
         ),
         const SizedBox(height: 12),
@@ -983,7 +974,7 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           aliases: _aliases,
           onAddAlias: _onAddAlias,
           onRemoveAlias: _onRemoveAlias,
-          initiallyExpanded: _firstItemOfSession,
+          initiallyExpanded: false,
         ),
         const SizedBox(height: 32),
         OutlinedButton.icon(

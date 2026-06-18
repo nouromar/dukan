@@ -697,7 +697,7 @@
   },
   "shopItemEditorSessionSheetTitle": "Added this session",
   "shopItemEditorSessionSheetViewAll": "View all products →",
-  "shopItemEditorBuyHeader": "How you buy it (optional)",
+  "shopItemEditorBuyHeader": "Suppliers",
   "shopItemEditorBuySubtitle": "Default supplier + typical cost — pre-fills Receive later.",
   "shopItemEditorPickSupplierButton": "Pick supplier",
   "shopItemEditorNewSupplierButton": "NEW",
@@ -711,7 +711,7 @@
       }
     }
   },
-  "shopItemEditorOpeningHeader": "What you have right now (optional)",
+  "shopItemEditorOpeningHeader": "Stock",
   "shopItemEditorOpeningSubtitle": "Enter current stock per packaging so reports are right from day one.",
   "shopItemEditorOpeningPickBaseUnitFirst": "Pick a base unit above to enable this section.",
   "shopItemEditorOpeningQtyLabel": "Quantity in {unit}",
@@ -764,7 +764,7 @@
       }
     }
   },
-  "shopItemEditorDiscoveryHeader": "Help find it faster (optional)",
+  "shopItemEditorDiscoveryHeader": "Aliases",
   "shopItemEditorDiscoverySubtitle": "Extra names + bono spelling improve search later.",
   "shopItemEditorAliasesLabel": "Other names",
   "shopItemEditorAliasHint": "Add another name",

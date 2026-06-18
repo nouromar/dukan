@@ -2901,7 +2901,7 @@ abstract class AppLocalizations {
   /// No description provided for @shopItemEditorBuyHeader.
   ///
   /// In en, this message translates to:
-  /// **'How you buy it (optional)'**
+  /// **'Suppliers'**
   String get shopItemEditorBuyHeader;
 
   /// No description provided for @shopItemEditorBuySubtitle.
@@ -2943,7 +2943,7 @@ abstract class AppLocalizations {
   /// No description provided for @shopItemEditorOpeningHeader.
   ///
   /// In en, this message translates to:
-  /// **'What you have right now (optional)'**
+  /// **'Stock'**
   String get shopItemEditorOpeningHeader;
 
   /// No description provided for @shopItemEditorOpeningSubtitle.
@@ -3093,7 +3093,7 @@ abstract class AppLocalizations {
   /// No description provided for @shopItemEditorDiscoveryHeader.
   ///
   /// In en, this message translates to:
-  /// **'Help find it faster (optional)'**
+  /// **'Aliases'**
   String get shopItemEditorDiscoveryHeader;
 
   /// No description provided for @shopItemEditorDiscoverySubtitle.

@@ -1686,7 +1686,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopItemEditorSessionSheetViewAll => 'View all products →';
 
   @override
-  String get shopItemEditorBuyHeader => 'How you buy it (optional)';
+  String get shopItemEditorBuyHeader => 'Suppliers';
 
   @override
   String get shopItemEditorBuySubtitle =>
@@ -1710,8 +1710,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get shopItemEditorOpeningHeader =>
-      'What you have right now (optional)';
+  String get shopItemEditorOpeningHeader => 'Stock';
 
   @override
   String get shopItemEditorOpeningSubtitle =>
@@ -1800,7 +1799,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get shopItemEditorDiscoveryHeader => 'Help find it faster (optional)';
+  String get shopItemEditorDiscoveryHeader => 'Aliases';
 
   @override
   String get shopItemEditorDiscoverySubtitle =>
