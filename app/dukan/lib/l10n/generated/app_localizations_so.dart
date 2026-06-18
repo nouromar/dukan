@@ -1722,7 +1722,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get shopItemEditorOpeningHeader => 'Bakhaarka';
+  String get shopItemEditorOpeningHeader => 'Inta Taal';
 
   @override
   String get shopItemEditorOpeningSubtitle =>
