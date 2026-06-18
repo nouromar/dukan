@@ -61,9 +61,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final shop = widget.shop;
     return Scaffold(
       drawer: shop != null ? DukanDrawer(shop: shop) : null,
+      // AppBar title carries the shop name when one is selected — the
+      // shopkeeper opens the app to act on THIS shop, and "Dukan"
+      // (the brand) is on the splash + Play Store. Falls back to the
+      // brand when no shop is set yet (pre-setup state).
       appBar: dukanAppBar(
         context,
-        l.appTitle,
+        shop?.name ?? l.appTitle,
         actions: [
           if (widget.onSignOut != null)
             IconButton(
@@ -74,31 +78,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SafeArea(
-        // Single scrollable column — title, chip, summary, then action
-        // grid stacked top-to-bottom with no forced bottom anchor.
-        // Earlier layout used Expanded which created a visible empty
-        // gap when the summary card was short. The new flow keeps
-        // buttons within thumb reach on real devices because the
-        // content above is always small.
+        // Single scrollable column. Used to render the homeHint title
+        // ("Choose today's job") + a shop-name chip; both were dropped
+        // because the four big action buttons below speak for
+        // themselves, and the shop name now lives in the AppBar.
+        // Saves ~80px above the fold so the Today summary + actions
+        // sit comfortably within thumb reach.
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                l.homeHint,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
               if (shop != null) ...[
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Chip(
-                    avatar: const Icon(Icons.storefront),
-                    label: Text(l.activeShopLabel(shop.name)),
-                  ),
-                ),
-                const SizedBox(height: 12),
                 _TodayCard(
                   shop: shop,
                   refreshTrigger: _refreshTrigger,

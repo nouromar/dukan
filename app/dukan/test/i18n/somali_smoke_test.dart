@@ -65,7 +65,10 @@ void main() {
           lowStockCount: 0,
         );
     await pumpInSomali(tester, HomeScreen(shop: shop));
-    expect(find.text(so.homeHint), findsOneWidget);
+    // The homeHint title was removed; smoke-check the four daily
+    // action labels render in Somali instead.
+    expect(find.text(so.sale), findsOneWidget);
+    expect(find.text(so.receive), findsOneWidget);
   });
 
   testWidgets('Sale screen renders in Somali', (tester) async {

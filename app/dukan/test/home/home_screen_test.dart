@@ -19,7 +19,7 @@ void main() {
     en = lookupAppLocalizations(const Locale('en'));
   });
 
-  testWidgets('renders the shop chip + four daily actions when a shop is selected', (
+  testWidgets('AppBar carries the shop name + four daily actions render', (
     tester,
   ) async {
     final shop = fakeShop(name: 'Hodan Shop');
@@ -33,7 +33,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(en.activeShopLabel('Hodan Shop')), findsOneWidget);
+    // Shop name is now in the AppBar title (replaced the static
+    // "Dukan" brand) — the in-body chip was removed to save space.
+    expect(find.text('Hodan Shop'), findsOneWidget);
     expect(find.text(en.sale), findsOneWidget);
     expect(find.text(en.receive), findsOneWidget);
     expect(find.text(en.payment), findsOneWidget);
