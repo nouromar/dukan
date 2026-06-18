@@ -243,10 +243,14 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
     // First-frame on Home == end of cold start (auth bootstrap + shop
     // selection are done by the time _TodayCard mounts). No-op in
     // release builds — the entire Timing class is tree-shaken.
+    //
+    // Favorites prefetch is deliberately NOT fired here — it lives
+    // inside _swrLoad so it runs AFTER the today summary lands. The
+    // summary RPC is the user's wait; firing two extra search_items
+    // calls alongside it just steals the first network slot.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Timing.endFlow(context);
-      _prefetchFavorites();
     });
     widget.refreshTrigger?.addListener(_onRefreshTrigger);
   }
@@ -308,15 +312,28 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
   /// summary. The FutureBuilder receives whichever lands first — in
   /// practice the cached value lands within a frame and the network
   /// value updates the persisted cache for the next mount.
+  ///
+  /// Favorites prefetch (sale + receive search seeds) is fired only
+  /// AFTER the summary lands so it doesn't compete with the summary
+  /// RPC for the first network slot. On a warm cache the cached
+  /// value returns instantly and the prefetch can ride along with
+  /// the background refresh.
   Future<TodaySummary> _swrLoad() async {
     final cached = await TodaySummaryCache.get(widget.shop.id);
-    // Fire-and-forget the fresh fetch. When it lands we replace
-    // _future so the FutureBuilder rebuilds with the new values, and
-    // persist for next mount.
-    unawaited(_refreshFromNetwork());
-    if (cached != null) return cached;
-    // Cold cache — fall through to the network as the primary read.
-    return _fetchFromNetwork();
+    if (cached != null) {
+      // Warm cache — render immediately. Background refresh +
+      // favorites prefetch fire concurrently; neither blocks the user.
+      unawaited(_refreshFromNetwork());
+      _prefetchFavorites();
+      return cached;
+    }
+    // Cold cache — the summary RPC IS the user's wait. Fire favorites
+    // prefetch only after it lands. (Previously this path also fired
+    // a redundant _refreshFromNetwork in parallel with _fetchFromNetwork
+    // for the same data; the duplicate is gone with this rewrite.)
+    final summary = await _fetchFromNetwork();
+    _prefetchFavorites();
+    return summary;
   }
 
   Future<TodaySummary> _fetchFromNetwork() async {
