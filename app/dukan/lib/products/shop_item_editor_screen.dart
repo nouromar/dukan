@@ -164,7 +164,8 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   }
 
   BonoImagePicker get _imagePicker =>
-      _picker ??= widget.imagePicker ?? DefaultBonoImagePicker();
+      _picker ??= widget.imagePicker ??
+      DefaultBonoImagePicker(quality: ImageQuality.shopItem);
 
   Future<_EditorBootstrap> _loadBootstrap() async {
     final api = context.read<ShopApi>();
