@@ -53,6 +53,7 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/stock_format.dart';
+import 'package:dukan/shared/typography.dart';
 
 enum _BonoSource { camera, gallery }
 
@@ -955,7 +956,7 @@ class _ReceiveItemTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 15 * kFontScale,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -965,7 +966,7 @@ class _ReceiveItemTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 13 * kFontScale,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
                     ),
                   ),
@@ -976,7 +977,7 @@ class _ReceiveItemTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 13 * kFontScale,
                         fontWeight: low ? FontWeight.w700 : FontWeight.w400,
                         color: low
                             ? theme.colorScheme.error

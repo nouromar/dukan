@@ -12,6 +12,7 @@ import 'package:dukan/observability/timing.dart';
 import 'package:dukan/shared/fallback_localizations.dart';
 import 'package:dukan/shared/locale_controller.dart';
 import 'package:dukan/shared/supabase_config_screen.dart';
+import 'package:dukan/shared/typography.dart';
 
 Future<void> main() async {
   // Cold-start clock. No-op in release; _TodayCard mount calls
@@ -122,24 +123,26 @@ class _MaterialAppShell extends StatelessWidget {
       brightness: Brightness.light,
     ).copyWith(surface: const Color(0xFFF8FAF7)),
     scaffoldBackgroundColor: const Color(0xFFF8FAF7),
+    // Every declared fontSize goes through `kFontScale` so a single
+    // constant tunes the whole app. See lib/shared/typography.dart.
     textTheme: const TextTheme(
-      titleLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-      titleMedium: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
-      bodyLarge: TextStyle(fontSize: 18),
-      bodyMedium: TextStyle(fontSize: 16),
-      labelLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+      titleLarge: TextStyle(fontSize: 24 * kFontScale, fontWeight: FontWeight.w800),
+      titleMedium: TextStyle(fontSize: 19 * kFontScale, fontWeight: FontWeight.w700),
+      bodyLarge: TextStyle(fontSize: 18 * kFontScale),
+      bodyMedium: TextStyle(fontSize: 16 * kFontScale),
+      labelLarge: TextStyle(fontSize: 18 * kFontScale, fontWeight: FontWeight.w800),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         minimumSize: const Size(56, 64),
-        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        textStyle: const TextStyle(fontSize: 20 * kFontScale, fontWeight: FontWeight.w900),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         minimumSize: const Size(56, 64),
-        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        textStyle: const TextStyle(fontSize: 20 * kFontScale, fontWeight: FontWeight.w900),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
     ),
