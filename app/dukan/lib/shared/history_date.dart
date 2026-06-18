@@ -1,10 +1,12 @@
-// Compact date-time formatter for history rows (Sale, Receive, future
-// debt log). The Sale + Receive screens previously rendered every row
-// as bare HH:mm, which is only readable for today's rows — yesterday's
-// "14:32" carries no day context.
+// Compact date-time formatter for history rows (Sale, Receive,
+// Payment, Expense). Every row carries date context so a list that
+// spans days reads cleanly — the original collapsed today's rows to
+// bare time ("14:32"), which was fine when the history filter
+// defaulted to today but became confusing when the default changed
+// to "All time" in #320.
 //
 // Rules (all in the device's local timezone):
-//   * Today          → "14:32"
+//   * Today          → "Today 14:32"      (localized word)
 //   * Yesterday      → "Yesterday 14:32"  (localized word)
 //   * Same year      → "Apr 6 14:32"
 //   * Earlier year   → "6 Apr 2025"
@@ -13,7 +15,8 @@
 // set (en, fr, es, ar, …) but NOT Somali. Passing 'so' to DateFormat
 // throws `ArgumentError: Invalid locale "so"`. We try the requested
 // locale first and fall back to English month/time symbols if intl
-// doesn't recognise it. The "Yesterday" word stays localized via ARB.
+// doesn't recognise it. The "Today" / "Yesterday" words stay
+// localized via ARB.
 
 import 'package:flutter/widgets.dart';
 import 'package:intl/date_symbol_data_local.dart' as date_symbols;
@@ -28,7 +31,7 @@ String formatHistoryStamp(BuildContext context, DateTime dt) {
   final now = DateTime.now();
   final time = _safeFormat(local, locale, (lc) => DateFormat.Hm(lc));
 
-  if (_isSameDay(local, now)) return time;
+  if (_isSameDay(local, now)) return '${l.historyToday} $time';
 
   final yesterday = DateTime(now.year, now.month, now.day - 1);
   if (_isSameDay(local, yesterday)) return '${l.historyYesterday} $time';
