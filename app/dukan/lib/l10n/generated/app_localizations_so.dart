@@ -1698,7 +1698,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorSessionSheetViewAll => 'Eeg dhammaan alaabta →';
 
   @override
-  String get shopItemEditorBuyHeader => 'Alaab-qeybiyeyaasha';
+  String get shopItemEditorBuyHeader => 'Alaab Keenayaasha';
 
   @override
   String get shopItemEditorBuySubtitle =>
