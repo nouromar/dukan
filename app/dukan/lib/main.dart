@@ -15,45 +15,60 @@ import 'package:dukan/shared/supabase_config_screen.dart';
 import 'package:dukan/shared/typography.dart';
 
 Future<void> main() async {
+  // ensureInitialized must run before any plugin call (Supabase touches
+  // shared_preferences for its session store). Sync + idempotent, so
+  // calling it at the very top is the safest place.
+  WidgetsFlutterBinding.ensureInitialized();
   // Cold-start clock. No-op in release; _TodayCard mount calls
   // endFlow when the cashier first sees the Home content.
   Timing.startFlow('cold.start');
   final appConfig = AppConfig.fromEnvironment();
+
+  // Kick off Supabase init concurrently with Sentry init. Both make
+  // independent HTTP handshakes; serializing them costs ~500–1000 ms
+  // on hosted/network paths. We do NOT await this future here — it's
+  // awaited inside appRunner (Sentry branch) or below (no-Sentry
+  // branch) so both branches overlap the two awaits.
+  final Future<void> supabaseFuture = appConfig.hasSupabase
+      ? Supabase.initialize(
+          url: appConfig.supabaseUrl,
+          anonKey: appConfig.supabaseAnonKey,
+        )
+      : Future<void>.value();
+
   if (appConfig.hasSentry) {
-    await SentryFlutter.init((options) {
-      options.dsn = appConfig.sentryDsn;
-      // Empty strings here are silently fine — Sentry just won't surface
-      // those fields in the dashboard.
-      options.environment = appConfig.appEnvironment;
-      if (appConfig.appVersion.isNotEmpty) {
-        options.release = 'dukan@${appConfig.appVersion}';
-      }
-      // Performance tracing off by default — it adds network noise the
-      // pilot shops can't afford. Re-enable per environment if needed.
-      options.tracesSampleRate = 0.0;
-      // PII guard: even though we set user.id ourselves below, double
-      // up here so the SDK never auto-attaches IP / cookies / etc.
-      options.sendDefaultPii = false;
-    }, appRunner: () => _runApp(appConfig));
-    CrashReporter.install(enabled: true);
-  } else {
-    await _runApp(appConfig);
-  }
-}
-
-Future<void> _runApp(AppConfig appConfig) async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  SupabaseClient? supabaseClient;
-  if (appConfig.hasSupabase) {
-    await Supabase.initialize(
-      url: appConfig.supabaseUrl,
-      anonKey: appConfig.supabaseAnonKey,
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = appConfig.sentryDsn;
+        // Empty strings here are silently fine — Sentry just won't surface
+        // those fields in the dashboard.
+        options.environment = appConfig.appEnvironment;
+        if (appConfig.appVersion.isNotEmpty) {
+          options.release = 'dukan@${appConfig.appVersion}';
+        }
+        // Performance tracing off by default — it adds network noise the
+        // pilot shops can't afford. Re-enable per environment if needed.
+        options.tracesSampleRate = 0.0;
+        // PII guard: even though we set user.id ourselves below, double
+        // up here so the SDK never auto-attaches IP / cookies / etc.
+        options.sendDefaultPii = false;
+      },
+      appRunner: () async {
+        await supabaseFuture;
+        CrashReporter.install(enabled: true);
+        runApp(DukanApp(
+          supabaseClient:
+              appConfig.hasSupabase ? Supabase.instance.client : null,
+        ));
+      },
     );
-    supabaseClient = Supabase.instance.client;
+  } else {
+    await supabaseFuture;
+    runApp(DukanApp(
+      supabaseClient:
+          appConfig.hasSupabase ? Supabase.instance.client : null,
+    ));
   }
-
-  runApp(DukanApp(supabaseClient: supabaseClient));
 }
 
 class DukanApp extends StatelessWidget {

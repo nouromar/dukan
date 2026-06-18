@@ -5,8 +5,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
-import 'package:dukan/config/business_rules.dart';
+import 'package:dukan/auth/auth_state_cache.dart';
 import 'package:dukan/auth/capabilities.dart';
+import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 
 class DukanOtpDelivery {
@@ -49,6 +50,10 @@ class AuthController extends ChangeNotifier {
   String? _pendingEmail;
   Capabilities _capabilities = Capabilities.empty();
   String? _capabilitiesShopId;
+  /// Held so cache writes (selectShop, refreshSelectedShop) don't have
+  /// to re-fetch the currency reference table. Updated by loadShops
+  /// and by the cache-hit branch of start().
+  Map<String, String> _currencySymbols = const {};
 
   Session? get session => _session;
   bool get initialized => _initialized;
@@ -86,12 +91,46 @@ class AuthController extends ChangeNotifier {
     });
 
     if (_session != null) {
+      // SWR: if there's a cached shop list for this user, paint it
+      // synchronously and let AuthRouter mount HomeScreen on the
+      // next frame. The source-of-truth refresh (claim invites +
+      // loadShops) fires unawaited; when it lands, _shops is
+      // replaced and the UI swaps. This is the same SWR pattern as
+      // the Today card (lib/shared/today_summary_cache.dart) lifted
+      // one level up so the auth chain stops being the gate.
+      final userId = _session!.user.id;
+      final cached = await AuthStateCache.get(userId);
+      if (cached != null && cached.shops.isNotEmpty) {
+        _shops = cached.shops;
+        _currencySymbols = cached.currencySymbols;
+        if (cached.selectedShopId != null) {
+          _selectedShop = _shopById(cached.shops, cached.selectedShopId!);
+        }
+        _initialized = true;
+        notifyListeners();
+        // Install scanner settings + fire capabilities sync against
+        // the cached selection now so the scanner and feature gates
+        // are ready before the user taps into Sale/Receive.
+        unawaited(_syncCapabilities());
+        // Background refresh — same sequence as the cold-cache path.
+        unawaited(_claimPendingInvitesSilently().then((_) => loadShops()));
+        return;
+      }
+      // Cold cache — fall through to the serial path (same as before
+      // this change). LoadingScreen renders until both calls return.
       await _claimPendingInvitesSilently();
       await loadShops();
     }
 
     _initialized = true;
     notifyListeners();
+  }
+
+  static ShopSummary? _shopById(List<ShopSummary> shops, String id) {
+    for (final shop in shops) {
+      if (shop.id == id) return shop;
+    }
+    return null;
   }
 
   /// Calls claim_pending_invites_for_me() and swallows errors. The RPC
@@ -203,12 +242,14 @@ class AuthController extends ChangeNotifier {
             ),
           )
           .toList(growable: false);
+      _currencySymbols = symbols;
 
       if (_selectedShop != null &&
           !_shops.any((shop) => shop.id == _selectedShop!.id)) {
         _selectedShop = null;
       }
       _shopLoadFailed = false;
+      unawaited(_writeCacheIfSignedIn());
       unawaited(_syncCapabilities());
     } catch (error, stackTrace) {
       FlutterError.reportError(
@@ -273,9 +314,11 @@ class AuthController extends ChangeNotifier {
     _selectedShop = shop;
     notifyListeners();
     unawaited(_syncCapabilities());
+    unawaited(_writeCacheIfSignedIn());
   }
 
   Future<void> signOut() async {
+    final userId = _session?.user.id;
     await _client.auth.signOut();
     _pendingPhone = null;
     _pendingEmail = null;
@@ -283,7 +326,25 @@ class AuthController extends ChangeNotifier {
     _selectedShop = null;
     _capabilities = Capabilities.empty();
     _capabilitiesShopId = null;
+    _currencySymbols = const {};
+    if (userId != null) {
+      unawaited(AuthStateCache.clear(userId));
+    }
     notifyListeners();
+  }
+
+  /// Best-effort SWR write — persisted for the next cold start. Skipped
+  /// when no session or no shops, since there's nothing useful to
+  /// render-fast on next mount.
+  Future<void> _writeCacheIfSignedIn() async {
+    final userId = _session?.user.id;
+    if (userId == null || _shops.isEmpty) return;
+    await AuthStateCache.put(
+      userId,
+      shops: _shops,
+      currencySymbols: _currencySymbols,
+      selectedShopId: _selectedShop?.id,
+    );
   }
 
   /// Fetches the capability set for the currently-effective shop
