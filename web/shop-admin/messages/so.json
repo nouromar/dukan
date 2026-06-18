@@ -5,13 +5,13 @@
   },
   "nav": {
     "overview": "Guudmar",
-    "sales": "Iibyada",
-    "receives": "Qaadasho",
-    "inventory": "Alaabta",
+    "sales": "Iibin",
+    "receives": "Alaab Dajin",
+    "inventory": "Alaab",
     "people": "Dadka",
     "money": "Lacagta",
-    "setup": "Hagaajinta",
-    "audit": "Diiwaanka"
+    "setup": "Qaabayn",
+    "audit": "Raadraac"
   },
   "saleDetail": {
     "back": "← Dhammaan iibyada",
@@ -662,7 +662,7 @@
       "salesCount": "{count, plural, =0 {iib ma jirin} one {# iib} other {# iib}}"
     },
     "topCustomers": {
-      "title": "Macaamiisha sare",
+      "title": "Dadka deynta ugu badan qaba",
       "empty": "Deyn ma jirto.",
       "viewAll": "Dhammaan macaamiisha"
     },

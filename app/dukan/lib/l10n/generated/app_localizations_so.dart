@@ -21,10 +21,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get homeHint => 'Dooro shaqada maanta';
 
   @override
-  String get sale => 'Iibin';
+  String get sale => 'Iibi';
 
   @override
-  String get receive => 'Alaab dajin';
+  String get receive => 'Alaab Dajin';
 
   @override
   String get payment => 'Lacag bixin';
@@ -116,16 +116,16 @@ class AppLocalizationsSo extends AppLocalizations {
   String get homeTodayHeader => 'Maanta';
 
   @override
-  String get homeSalesTodayLabel => 'Iibka maanta';
+  String get homeSalesTodayLabel => 'Iibka manta';
 
   @override
-  String get homeReceivablesLabel => 'Deyn lagaa qabo';
+  String get homeReceivablesLabel => 'Deynta kaa maqan';
 
   @override
-  String get homePayablesLabel => 'Deyn Aaad Qabto';
+  String get homePayablesLabel => 'Deyn aad qabto';
 
   @override
-  String get homeLowStockLabel => 'Alaab yaraatey';
+  String get homeLowStockLabel => 'Alaab Yaraatey';
 
   @override
   String homeLowStockCount(int count) {
@@ -298,13 +298,13 @@ class AppLocalizationsSo extends AppLocalizations {
   String get drawerCustomers => 'Macaamiisha';
 
   @override
-  String get drawerSuppliers => 'Bixiyayaasha';
+  String get drawerSuppliers => 'Alaab Keenayaasha';
 
   @override
   String get customersTitle => 'Macaamiisha';
 
   @override
-  String get suppliersTitle => 'Bixiyayaasha';
+  String get suppliersTitle => 'Alaab Keenayaasha';
 
   @override
   String get customersSearchHint => 'Raadi macmiil';
@@ -484,7 +484,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get productsSortByStockLow => 'Kayd (kii ugu yaraa horta)';
 
   @override
-  String get drawerProductsHeader => 'ALAABTA';
+  String get drawerProductsHeader => 'ALAAB';
 
   @override
   String get drawerTopMovers => 'Kuwa ugu badan iibka';
@@ -521,10 +521,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get drawerSetupHeader => 'DEJINTA';
 
   @override
-  String get drawerProducts => 'Alaabta';
+  String get drawerProducts => 'Alaab';
 
   @override
-  String get drawerSettings => 'Habayn';
+  String get drawerSettings => 'Qaabayn';
 
   @override
   String receiveFrom(Object supplier) {
@@ -803,7 +803,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Diyaarinta lama keydin karin. Isku day mar kale.';
 
   @override
-  String get productsTitle => 'Alaabo';
+  String get productsTitle => 'Alaab';
 
   @override
   String get productsSearchHint => 'Ku Raadi Soomaali ama Ingiriis';
@@ -1091,7 +1091,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Wali noocyada qarashaadka lama galin. Ka dooro nooca dukaanka meesha Diyaarinta.';
 
   @override
-  String get saleHistoryTitle => 'Iibka';
+  String get saleHistoryTitle => 'Iibin';
 
   @override
   String get historyYesterday => 'Shalay';
