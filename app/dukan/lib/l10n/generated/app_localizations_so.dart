@@ -1091,6 +1091,9 @@ class AppLocalizationsSo extends AppLocalizations {
   String get historyYesterday => 'Shalay';
 
   @override
+  String get historyToday => 'Maanta';
+
+  @override
   String get saleHistoryTooltip => 'Sooyaalka iibka';
 
   @override

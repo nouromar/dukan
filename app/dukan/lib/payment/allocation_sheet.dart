@@ -328,7 +328,7 @@ class _InvoiceRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  formatHistoryStamp(context, invoice.occurredAt),
+                  formatInvoiceDate(context, invoice.occurredAt),
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 2),

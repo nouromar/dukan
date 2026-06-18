@@ -40,6 +40,38 @@ String formatHistoryStamp(BuildContext context, DateTime dt) {
   return _safeFormat(local, locale, (lc) => DateFormat.yMMMd(lc));
 }
 
+/// Date-leaning sibling for invoice / allocation rows where the date
+/// is the primary anchor and time is secondary. Used by the payment
+/// allocation sheet — shopkeepers pick "which sale to pay against"
+/// by date first; the time-only collapse `formatHistoryStamp` does
+/// for today's rows is confusing there because the list can mix
+/// invoices from any past day.
+///
+///   Today      → "Today 14:32"  (time kept to disambiguate multiple
+///                                same-day sales to one customer)
+///   Yesterday  → "Yesterday"    (date alone is enough)
+///   Same year  → "Apr 6"
+///   Other year → "6 Apr 2025"
+String formatInvoiceDate(BuildContext context, DateTime dt) {
+  final l = tr(context);
+  final locale = Localizations.localeOf(context).toLanguageTag();
+  final local = dt.toLocal();
+  final now = DateTime.now();
+
+  if (_isSameDay(local, now)) {
+    final time = _safeFormat(local, locale, (lc) => DateFormat.Hm(lc));
+    return '${l.historyToday} $time';
+  }
+
+  final yesterday = DateTime(now.year, now.month, now.day - 1);
+  if (_isSameDay(local, yesterday)) return l.historyYesterday;
+
+  if (local.year == now.year) {
+    return _safeFormat(local, locale, (lc) => DateFormat.MMMd(lc));
+  }
+  return _safeFormat(local, locale, (lc) => DateFormat.yMMMd(lc));
+}
+
 /// Try the requested locale; on `ArgumentError` (intl has no data for
 /// it — Somali being the common case) fall back to English. `intl`'s
 /// default-locale ensure runs once per process so the fallback is

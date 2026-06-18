@@ -1088,6 +1088,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyYesterday => 'Yesterday';
 
   @override
+  String get historyToday => 'Today';
+
+  @override
   String get saleHistoryTooltip => 'Sales history';
 
   @override

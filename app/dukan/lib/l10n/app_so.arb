@@ -456,6 +456,7 @@
   "expenseEmptyMessage": "Wali noocyada qarashaadka lama galin. Ka dooro nooca dukaanka meesha Diyaarinta.",
   "saleHistoryTitle": "Iibka",
   "historyYesterday": "Shalay",
+  "historyToday": "Maanta",
   "saleHistoryTooltip": "Sooyaalka iibka",
   "saleHistoryEmptyMessage": "Wali waxba lama gadin.  Marka hore wax gad.",
   "saleHistoryLoadFailedMessage": "Iibka lama soo dejin karin. Hubi internetka oo isku day mar kale.",

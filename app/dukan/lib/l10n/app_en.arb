@@ -457,6 +457,7 @@
   "expenseEmptyMessage": "No expense categories yet. Pick a shop type in Settings.",
   "saleHistoryTitle": "Sales",
   "historyYesterday": "Yesterday",
+  "historyToday": "Today",
   "saleHistoryTooltip": "Sales history",
   "saleHistoryEmptyMessage": "No sales yet. The first SAVE on the Sale screen will land here.",
   "saleHistoryLoadFailedMessage": "Could not load sales. Check your internet and try again.",

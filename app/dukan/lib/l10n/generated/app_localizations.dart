@@ -1940,6 +1940,12 @@ abstract class AppLocalizations {
   /// **'Yesterday'**
   String get historyYesterday;
 
+  /// No description provided for @historyToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get historyToday;
+
   /// No description provided for @saleHistoryTooltip.
   ///
   /// In en, this message translates to:
