@@ -40,8 +40,14 @@ class PaymentHistoryFilters {
     this.direction = PaymentDirectionFilter.any,
   });
 
+  /// Defaults to "all dates" so opening Payment history surfaces the
+  /// latest activity immediately (capped at historyPageLimit by the
+  /// RPC). The "today" preset is still one tap away in the filter
+  /// sheet for shopkeepers who want the day's view — that's the
+  /// minority case; the common ask is "where's my data?". Mirrors
+  /// the Sale / Receive history defaults swapped in #320.
   factory PaymentHistoryFilters.initial() =>
-      PaymentHistoryFilters(dateRange: DateRange.today());
+      const PaymentHistoryFilters(dateRange: DateRange.all);
 
   final DateRange dateRange;
   final String? partyId;

@@ -1517,7 +1517,7 @@ abstract class AppLocalizations {
   /// No description provided for @productsNewItemButton.
   ///
   /// In en, this message translates to:
-  /// **'+ NEW ITEM'**
+  /// **'NEW ITEM'**
   String get productsNewItemButton;
 
   /// No description provided for @productsEmptyMessage.

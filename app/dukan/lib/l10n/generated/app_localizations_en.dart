@@ -814,7 +814,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productsSearchHint => 'Search Somali or English';
 
   @override
-  String get productsNewItemButton => '+ NEW ITEM';
+  String get productsNewItemButton => 'NEW ITEM';
 
   @override
   String get productsEmptyMessage =>

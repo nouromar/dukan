@@ -359,7 +359,7 @@
   "settingsSaveFailedMessage": "Could not save settings. Try again.",
   "productsTitle": "Products",
   "productsSearchHint": "Search Somali or English",
-  "productsNewItemButton": "+ NEW ITEM",
+  "productsNewItemButton": "NEW ITEM",
   "productsEmptyMessage": "No items yet. Add one from the catalog below.",
   "productsSearchEmptyMessage": "Nothing matches “{query}”.",
   "productsLoadFailedMessage": "Could not load products. Check your internet and try again.",

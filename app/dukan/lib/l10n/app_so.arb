@@ -348,7 +348,7 @@
   "settingsSaveFailedMessage": "Diyaarinta lama keydin karin. Isku day mar kale.",
   "productsTitle": "Alaab",
   "productsSearchHint": "Ku Raadi Soomaali ama Ingiriis",
-  "productsNewItemButton": "+ Alaab CUSUB",
+  "productsNewItemButton": "Alaab CUSUB",
   "productsEmptyMessage": "Alaabo maleh. Kudar hadda liiska guud.",
   "productsSearchEmptyMessage": "Wax la mid ah “{query}” maleh.",
   "productsLoadFailedMessage": "Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale.",

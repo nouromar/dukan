@@ -818,7 +818,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get productsSearchHint => 'Ku Raadi Soomaali ama Ingiriis';
 
   @override
-  String get productsNewItemButton => '+ Alaab CUSUB';
+  String get productsNewItemButton => 'Alaab CUSUB';
 
   @override
   String get productsEmptyMessage => 'Alaabo maleh. Kudar hadda liiska guud.';
