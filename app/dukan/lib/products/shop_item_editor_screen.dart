@@ -1371,6 +1371,7 @@ class _SupplierSection extends StatelessWidget {
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
+          _SectionSubtitle(text: l.shopItemEditorBuySubtitle),
           if (supplier == null)
             Row(
               children: [
@@ -1483,6 +1484,7 @@ class _OpeningStockSection extends StatelessWidget {
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
+          _SectionSubtitle(text: l.shopItemEditorOpeningSubtitle),
           if (baseUnitCode == null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1569,6 +1571,7 @@ class _DiscoverySection extends StatelessWidget {
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
+          _SectionSubtitle(text: l.shopItemEditorDiscoverySubtitle),
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: Text(
@@ -1907,6 +1910,31 @@ class _SessionAddsSheet extends StatelessWidget {
               child: Text(l.shopItemEditorSessionSheetViewAll),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tiny helper rendered as the FIRST child inside each optional
+/// section's ExpansionTile. ExpansionTile.subtitle would always
+/// render (even when collapsed) — placing the same copy inside
+/// `children` makes it visible only when expanded, which keeps the
+/// collapsed header tight.
+class _SectionSubtitle extends StatelessWidget {
+  const _SectionSubtitle({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        text,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );
