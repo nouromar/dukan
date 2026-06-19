@@ -40,6 +40,9 @@ void main() {
     expect(find.text(en.receive), findsOneWidget);
     expect(find.text(en.payment), findsOneWidget);
     expect(find.text(en.expense), findsOneWidget);
+    // Products is the 5th tile on the home grid (also reachable from
+    // the drawer with the same label).
+    expect(find.text(en.drawerProducts), findsAtLeastNWidgets(1));
   });
 
   testWidgets('drawer hamburger + sign-out icons appear when shop and onSignOut are set', (
@@ -93,7 +96,10 @@ void main() {
           )
           .first,
     );
-    expect(find.text(en.drawerProducts), findsOneWidget);
+    // drawerProducts is rendered in BOTH the drawer destinations and
+    // the home grid tile (Batch B / #342) — accept "at least one"
+    // since both surfaces are mounted.
+    expect(find.text(en.drawerProducts), findsAtLeastNWidgets(1));
     // drawerLowStock shares its text with homeLowStockLabel on Home —
     // accept "at least one" since both surfaces are mounted.
     expect(find.text(en.drawerLowStock), findsAtLeastNWidgets(1));

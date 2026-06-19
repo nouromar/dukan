@@ -8,6 +8,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/expense/expense_screen.dart';
 import 'package:dukan/home/dukan_drawer.dart';
 import 'package:dukan/payment/payment_screen.dart';
+import 'package:dukan/products/products_screen.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
@@ -127,6 +128,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     return ExpenseScreen(shop: shop!);
                   },
                 ),
+                onProducts: () => _pushAndRefresh(
+                  (_) => ProductsScreen(shop: shop!),
+                ),
               ),
             ],
           ),
@@ -143,6 +147,7 @@ class _ActionGrid extends StatelessWidget {
     required this.onReceive,
     required this.onPayment,
     required this.onExpense,
+    required this.onProducts,
   });
 
   final ShopSummary? shop;
@@ -150,13 +155,17 @@ class _ActionGrid extends StatelessWidget {
   final VoidCallback onReceive;
   final VoidCallback onPayment;
   final VoidCallback onExpense;
+  final VoidCallback onProducts;
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    // 2x2 grid at a fixed cell height matching the previous design's
-    // tap-target size. We don't enforce a parent height; the grid
-    // sits at the natural end of the scroll column.
+    // 2-column grid at a fixed cell height matching the original design's
+    // tap-target size. Five tiles now (Sale, Receive, Payment, Expense,
+    // Products) — the 5th lands alone on row 3. Products joined the
+    // home grid because the editor is the entry point for the
+    // comprehensive item-onboarding form; previously only reachable
+    // from the drawer.
     return GridView(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
@@ -186,6 +195,13 @@ class _ActionGrid extends StatelessWidget {
           icon: Icons.receipt_long,
           label: l.expense,
           onTap: shop == null ? () {} : onExpense,
+        ),
+        // Products — same icon as the drawer (Icons.label_outline) so
+        // muscle memory transfers between the two entry points.
+        HomeAction(
+          icon: Icons.label_outline,
+          label: l.drawerProducts,
+          onTap: shop == null ? () {} : onProducts,
         ),
       ],
     );
