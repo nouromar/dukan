@@ -163,6 +163,8 @@ class _PaymentRow extends StatelessWidget {
         ? Icons.arrow_downward
         : Icons.arrow_upward;
     final partyLabel = row.partyName ?? l.paymentHistoryNoParty;
+    final note = row.notes?.trim();
+    final hasNote = note != null && note.isNotEmpty;
     return ListTile(
       contentPadding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       leading: Icon(icon, color: color),
@@ -183,14 +185,36 @@ class _PaymentRow extends StatelessWidget {
           ),
         ],
       ),
-      subtitle: Row(
+      // Subtitle is a Column so the optional note can sit on its own
+      // line below the party/refund row. Without this the cashier had
+      // no way to see the note they typed on save (filed as #345 from
+      // the iPhone test-pass — `notes` was already on PaymentSummary
+      // but never rendered).
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(child: Text(partyLabel)),
-          if (row.isRefund)
+          Row(
+            children: [
+              Expanded(child: Text(partyLabel)),
+              if (row.isRefund)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 6),
+                  child: Text(
+                    l.paymentHistoryRefundBadge,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (hasNote)
             Padding(
-              padding: const EdgeInsetsDirectional.only(start: 6),
+              padding: const EdgeInsets.only(top: 2),
               child: Text(
-                l.paymentHistoryRefundBadge,
+                note,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
