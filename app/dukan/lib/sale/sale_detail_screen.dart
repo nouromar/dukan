@@ -14,11 +14,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/config/business_rules.dart';
@@ -273,53 +275,27 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
     return 'void-$ts-$r';
   }
 
-  Future<void> _onShare() async {
+  /// Native share — opens the platform action sheet so the cashier can
+  /// pick WhatsApp / SMS / Notes / Print / whatever they've installed.
+  /// We hand SharePlus a plain-text receipt; it preserves line breaks
+  /// across every target the user typically lands on (WhatsApp, SMS,
+  /// Notes, Mail). Per-target richer formats (PDF for print, vCard for
+  /// contacts) would need separate adapters; out of scope for v1.
+  Future<void> _onShare(_SaleBundle bundle) async {
     final l = tr(context);
-    // v1 stub — exposes the Print + WhatsApp choices so the affordance
-    // is real, but both branches just show a "coming soon" toast. Wires
-    // the hook so v1.x can drop in share_plus / a bluetooth printer
-    // adapter without touching the receipt screen layout.
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                l.saleReceiptShareTitle,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.print_outlined),
-              title: Text(l.saleReceiptSharePrint),
-              onTap: () {
-                Navigator.of(context).pop();
-                _showComingSoon();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.chat_outlined),
-              title: Text(l.saleReceiptShareWhatsApp),
-              onTap: () {
-                Navigator.of(context).pop();
-                _showComingSoon();
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
+    final text = _buildShareText(context, widget.shop, bundle, l);
+    // Anchor the iPad popover at the screen centre — the share button's
+    // RenderBox isn't easy to reach from here, and a centre origin is
+    // the conventional fallback when the trigger isn't a fixed widget.
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box == null
+        ? Rect.zero
+        : box.localToGlobal(Offset.zero) & box.size;
+    await SharePlus.instance.share(
+      ShareParams(
+        text: text,
+        sharePositionOrigin: origin,
       ),
-    );
-  }
-
-  void _showComingSoon() {
-    if (!mounted) return;
-    final l = tr(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l.saleReceiptShareComingSoon)),
     );
   }
 
@@ -350,7 +326,7 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
           voiding: _voiding,
           showVoidAffordance: widget.showVoidAffordance,
           onVoid: () => _confirmAndVoid(snapshot.data!.header),
-          onShare: _onShare,
+          onShare: () => _onShare(snapshot.data!),
         );
       },
     );
@@ -724,4 +700,53 @@ String _formatDateTime(DateTime dt) {
   final h = local.hour.toString().padLeft(2, '0');
   final mi = local.minute.toString().padLeft(2, '0');
   return '$y-$mo-$d  $h:$mi';
+}
+
+/// Plain-text receipt the user can paste into WhatsApp / SMS / Notes /
+/// Mail via the native share sheet. Format is intentionally simple
+/// (no monospace ASCII tables) — WhatsApp / SMS render proportional
+/// fonts and ASCII alignment falls apart there. Each line item shows
+/// its quantity + unit price + subtotal; totals show as "label: value"
+/// rows. Uses existing i18n keys so nothing here is hardcoded English.
+String _buildShareText(
+  BuildContext context,
+  ShopSummary shop,
+  _SaleBundle bundle,
+  AppLocalizations l,
+) {
+  final buf = StringBuffer();
+  buf.writeln(shop.name);
+  buf.writeln(l.saleDetailTitle);
+  buf.writeln(_formatDateTime(bundle.header.occurredAt));
+  if (bundle.header.partyName != null) {
+    buf.writeln(l.saleHistoryDebtLabel(bundle.header.partyName!));
+  } else {
+    buf.writeln(l.saleHistoryCashLabel);
+  }
+  buf.writeln();
+  for (final line in bundle.lines) {
+    final qtyText = line.quantity == line.quantity.roundToDouble()
+        ? line.quantity.toInt().toString()
+        : line.quantity.toString();
+    final unitLabel = line.packagingLabel ?? line.unitLabel;
+    final unitPriceText = line.unitAmount == null
+        ? '—'
+        : formatMoney(line.unitAmount!, shop);
+    buf.writeln(line.itemName);
+    buf.writeln(
+      '  ${l.saleDetailLineSubtotal(qtyText, formatMoney(line.lineTotal, shop), unitLabel, unitPriceText)}',
+    );
+  }
+  buf.writeln();
+  buf.writeln(
+    '${l.saleDetailTotalLabel}: ${formatMoney(bundle.header.totalAmount, shop)}',
+  );
+  buf.writeln(
+    '${l.saleDetailCashLabel}: ${formatMoney(bundle.header.paidAmount, shop)}',
+  );
+  final debt = bundle.header.totalAmount - bundle.header.paidAmount;
+  if (debt > 0) {
+    buf.writeln('${l.saleDetailDebtLabel}: ${formatMoney(debt, shop)}');
+  }
+  return buf.toString().trimRight();
 }

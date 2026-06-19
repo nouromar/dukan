@@ -1168,19 +1168,6 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleReceiptDoneButton => 'DHAMMEYSTIR';
 
   @override
-  String get saleReceiptShareTitle => 'Dir rasiidka';
-
-  @override
-  String get saleReceiptSharePrint => 'Daabac';
-
-  @override
-  String get saleReceiptShareWhatsApp => 'WhatsApp';
-
-  @override
-  String get saleReceiptShareComingSoon =>
-      'Si dhakhso ah — rasiidka halkan ayuu kaa diran doonaa.';
-
-  @override
   String get saleHistoryReceiptTooltip => 'Fur rasiidka';
 
   @override

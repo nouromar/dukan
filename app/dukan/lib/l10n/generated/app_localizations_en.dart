@@ -1165,19 +1165,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleReceiptDoneButton => 'DONE';
 
   @override
-  String get saleReceiptShareTitle => 'Share receipt';
-
-  @override
-  String get saleReceiptSharePrint => 'Print';
-
-  @override
-  String get saleReceiptShareWhatsApp => 'WhatsApp';
-
-  @override
-  String get saleReceiptShareComingSoon =>
-      'Coming soon — receipt will print/share here.';
-
-  @override
   String get saleHistoryReceiptTooltip => 'Open receipt';
 
   @override

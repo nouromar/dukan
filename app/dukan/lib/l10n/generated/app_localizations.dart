@@ -2071,30 +2071,6 @@ abstract class AppLocalizations {
   /// **'DONE'**
   String get saleReceiptDoneButton;
 
-  /// No description provided for @saleReceiptShareTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Share receipt'**
-  String get saleReceiptShareTitle;
-
-  /// No description provided for @saleReceiptSharePrint.
-  ///
-  /// In en, this message translates to:
-  /// **'Print'**
-  String get saleReceiptSharePrint;
-
-  /// No description provided for @saleReceiptShareWhatsApp.
-  ///
-  /// In en, this message translates to:
-  /// **'WhatsApp'**
-  String get saleReceiptShareWhatsApp;
-
-  /// No description provided for @saleReceiptShareComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Coming soon — receipt will print/share here.'**
-  String get saleReceiptShareComingSoon;
-
   /// No description provided for @saleHistoryReceiptTooltip.
   ///
   /// In en, this message translates to:
