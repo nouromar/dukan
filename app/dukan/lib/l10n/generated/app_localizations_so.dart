@@ -454,9 +454,6 @@ class AppLocalizationsSo extends AppLocalizations {
   String get barcodeAddTooltip => 'Ku dar bar code';
 
   @override
-  String get barcodeNoneForBase => '— miisaan';
-
-  @override
   String get aliasAddDialogTitle => 'Ku dar magac kale';
 
   @override

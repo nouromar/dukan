@@ -1017,62 +1017,56 @@ class _PackagingTile extends StatelessWidget {
                 ),
               ),
             ],
-            // Barcodes inline — the chip IS the SKU. Base packaging
-            // (loose / by weight) doesn't show + Add since there's
-            // rarely an EAN on bulk; we surface a soft hint instead.
+            // Barcodes inline — the chip IS the SKU. v1 (pre-#346)
+            // hid the +Add / Scan affordances on the base packaging
+            // when it had no codes, assuming "base = loose / by
+            // weight, rarely has a barcode". That's not always true —
+            // a bottle of water sold individually has a barcode on
+            // its base unit. The editor already lets you bind a base
+            // barcode at creation (shop_item_editor_screen.dart
+            // line 503); detail-screen consistency means letting you
+            // bind one later too.
             const SizedBox(height: 6),
-            if (unit.isBaseUnit && barcodes.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(
-                  l.barcodeNoneForBase,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              )
-            else
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  for (final b in barcodes)
-                    ActionChip(
-                      avatar: b.isPrimary
-                          ? Icon(
-                              Icons.star,
-                              size: 14,
-                              color: theme.colorScheme.primary,
-                            )
-                          : null,
-                      label: Text(
-                        b.barcode,
-                        style: const TextStyle(
-                          fontFeatures: [FontFeature.tabularFigures()],
-                        ),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                for (final b in barcodes)
+                  ActionChip(
+                    avatar: b.isPrimary
+                        ? Icon(
+                            Icons.star,
+                            size: 14,
+                            color: theme.colorScheme.primary,
+                          )
+                        : null,
+                    label: Text(
+                      b.barcode,
+                      style: const TextStyle(
+                        fontFeatures: [FontFeature.tabularFigures()],
                       ),
-                      // Null pressed = disabled chip; cashier sees the
-                      // code but can't open the promote/remove menu.
-                      onPressed: onBarcodeChipTap == null
-                          ? null
-                          : () => onBarcodeChipTap!(b),
                     ),
-                  if (onAddBarcode != null)
-                    ActionChip(
-                      avatar: const Icon(Icons.add, size: 14),
-                      label: Text(l.barcodeAddTooltip),
-                      onPressed: onAddBarcode,
-                    ),
-                  if (onScanBindBarcode != null)
-                    ActionChip(
-                      avatar: const Icon(Icons.qr_code_scanner, size: 14),
-                      label: Text(l.barcodeScanAndBindAction),
-                      onPressed: onScanBindBarcode,
-                    ),
-                ],
-              ),
+                    // Null pressed = disabled chip; cashier sees the
+                    // code but can't open the promote/remove menu.
+                    onPressed: onBarcodeChipTap == null
+                        ? null
+                        : () => onBarcodeChipTap!(b),
+                  ),
+                if (onAddBarcode != null)
+                  ActionChip(
+                    avatar: const Icon(Icons.add, size: 14),
+                    label: Text(l.barcodeAddTooltip),
+                    onPressed: onAddBarcode,
+                  ),
+                if (onScanBindBarcode != null)
+                  ActionChip(
+                    avatar: const Icon(Icons.qr_code_scanner, size: 14),
+                    label: Text(l.barcodeScanAndBindAction),
+                    onPressed: onScanBindBarcode,
+                  ),
+              ],
+            ),
           ],
         ),
       ),

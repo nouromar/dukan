@@ -216,7 +216,6 @@
   "barcodeChipMakePrimary": "Make primary",
   "barcodeChipRemove": "Remove",
   "barcodeAddTooltip": "Add barcode",
-  "barcodeNoneForBase": "— loose / by weight",
   "aliasAddDialogTitle": "Add another name",
   "aliasAddDialogHint": "e.g. Riis (Somali)",
   "aliasAddDialogLanguage": "Language",

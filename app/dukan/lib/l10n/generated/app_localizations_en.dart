@@ -453,9 +453,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get barcodeAddTooltip => 'Add barcode';
 
   @override
-  String get barcodeNoneForBase => '— loose / by weight';
-
-  @override
   String get aliasAddDialogTitle => 'Add another name';
 
   @override

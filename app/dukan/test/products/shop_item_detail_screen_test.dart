@@ -227,8 +227,16 @@ void main() {
     await pumpDetail(tester);
 
     // Scroll the non-base packaging row's trash icon into view.
-    await tester.scrollUntilVisible(find.text('25 Kg Bag'), 100);
-    await tester.tap(find.byIcon(Icons.delete_outline));
+    // scrollUntilVisible stops at the widget's edge; ensureVisible
+    // pushes it fully on-screen so the tap centre isn't outside the
+    // viewport (#346 added Add/Scan chips to the base packaging,
+    // pushing the second packaging's trash icon below the 600 px
+    // test fold).
+    final deleteIcon = find.byIcon(Icons.delete_outline);
+    await tester.scrollUntilVisible(deleteIcon, 100);
+    await tester.ensureVisible(deleteIcon);
+    await tester.pumpAndSettle();
+    await tester.tap(deleteIcon);
     await tester.pumpAndSettle();
     await tester.tap(
       find.widgetWithText(FilledButton, en.removePackagingConfirmAction),

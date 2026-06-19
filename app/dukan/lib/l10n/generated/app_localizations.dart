@@ -878,12 +878,6 @@ abstract class AppLocalizations {
   /// **'Add barcode'**
   String get barcodeAddTooltip;
 
-  /// No description provided for @barcodeNoneForBase.
-  ///
-  /// In en, this message translates to:
-  /// **'— loose / by weight'**
-  String get barcodeNoneForBase;
-
   /// No description provided for @aliasAddDialogTitle.
   ///
   /// In en, this message translates to:
