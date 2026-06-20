@@ -1393,6 +1393,23 @@ class FakeShopApi implements ShopApi {
     }
   }
 
+  /// Recorded calls from #350 (mobile switched the product detail's
+  /// trash icon from deactivateShopItemUnit to this RPC). Defaults to
+  /// returning 'removed' so tests see the "empty packaging hard-
+  /// deleted" path; override `removeOrDisableShopItemUnitResult` to
+  /// simulate the soft-disable branch.
+  final List<String> removeOrDisableShopItemUnitCalls = [];
+  String removeOrDisableShopItemUnitResult = 'removed';
+
+  @override
+  Future<String> removeOrDisableShopItemUnit({
+    required String shopId,
+    required String shopItemUnitId,
+  }) async {
+    removeOrDisableShopItemUnitCalls.add(shopItemUnitId);
+    return removeOrDisableShopItemUnitResult;
+  }
+
   final List<String> removeShopItemAliasCalls = [];
 
   @override

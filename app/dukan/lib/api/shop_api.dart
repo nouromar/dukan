@@ -1741,6 +1741,26 @@ class ShopApi {
     );
   }
 
+  /// Remove-or-disable: hard-delete the packaging when no
+  /// transaction_line has ever referenced it (the "empty packaging"
+  /// case), else soft-deactivate (`is_active=false` + defaults
+  /// cleared) so historical lines keep a valid FK target. Returns
+  /// `'removed'` or `'disabled'`. See migration
+  /// 0063_remove_or_disable_shop_item_unit.sql.
+  Future<String> removeOrDisableShopItemUnit({
+    required String shopId,
+    required String shopItemUnitId,
+  }) async {
+    final result = await _client.rpc(
+      'remove_or_disable_shop_item_unit',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_unit_id': shopItemUnitId,
+      },
+    );
+    return (result as String?) ?? 'disabled';
+  }
+
   /// Removes a non-display alias from a shop_item. Refuses to remove
   /// the active display alias (the user must add a replacement first).
   Future<void> removeShopItemAlias({

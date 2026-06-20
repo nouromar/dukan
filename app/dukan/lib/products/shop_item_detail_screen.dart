@@ -450,7 +450,12 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     }
   }
 
-  /// Delete a packaging — confirm dialog → deactivateShopItemUnit.
+  /// Delete a packaging — confirm dialog → removeOrDisableShopItemUnit.
+  /// The server hard-deletes when no sale/receive line ever referenced
+  /// the packaging (the "empty packaging" case), else soft-disables so
+  /// historical lines keep a valid FK target. Either way the row
+  /// disappears from the rendered list because we filter
+  /// `is_active=false` units below.
   Future<void> _onDeletePackaging(ShopItemUnitDetail unit) async {
     final l = tr(context);
     final confirmed = await showDialog<bool>(
@@ -472,7 +477,7 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     );
     if (confirmed != true || !mounted) return;
     try {
-      await context.read<ShopApi>().deactivateShopItemUnit(
+      await context.read<ShopApi>().removeOrDisableShopItemUnit(
             shopId: widget.shop.id,
             shopItemUnitId: unit.shopItemUnitId,
           );
@@ -480,7 +485,7 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       _reload();
       _showSaved();
     } catch (error, stackTrace) {
-      _reportAndShow(error, stackTrace, 'deactivating packaging');
+      _reportAndShow(error, stackTrace, 'removing packaging');
     }
   }
 
@@ -644,7 +649,12 @@ class _DetailBody extends StatelessWidget {
     final header = detail.header;
     // Sort packagings: base first, then by ascending conversion so the
     // shopkeeper reads them small → large (kg, 25 kg bag, 50 kg sack).
-    final units = [...detail.units]..sort((a, b) {
+    // Drop soft-disabled rows here — get_shop_item returns them so the
+    // editor could choose to surface them as "removed" history, but we
+    // don't have that UX yet and rendering them inline was the bug
+    // behind "I cannot delete empty packaging" (#350): the delete RPC
+    // succeeded but the soft-disabled row stayed visible.
+    final units = [...detail.units.where((u) => u.isActive)]..sort((a, b) {
         if (a.isBaseUnit && !b.isBaseUnit) return -1;
         if (!a.isBaseUnit && b.isBaseUnit) return 1;
         return a.conversionToBase.compareTo(b.conversionToBase);

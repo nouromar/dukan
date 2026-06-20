@@ -221,7 +221,7 @@ void main() {
     expect(api.setShopItemCategoryCalls.first.categoryId, 'cat-2');
   });
 
-  testWidgets('Delete non-base packaging → deactivateShopItemUnit fires',
+  testWidgets('Delete non-base packaging → removeOrDisableShopItemUnit fires',
       (tester) async {
     api.onGetShopItem = (_, _, _) async => _detail();
     await pumpDetail(tester);
@@ -243,7 +243,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(api.deactivateShopItemUnitCalls, ['siu-bag']);
+    // #350 switched the mobile from deactivate_shop_item_unit (soft-
+    // only) to remove_or_disable_shop_item_unit (hard-delete when the
+    // packaging has no transaction lines, else soft-disable). The
+    // fake's default is 'removed'.
+    expect(api.removeOrDisableShopItemUnitCalls, ['siu-bag']);
+    expect(api.deactivateShopItemUnitCalls, isEmpty);
   });
 
   testWidgets('Stock readout tap → adjust sheet → postInventoryAdjustment fires',
