@@ -926,20 +926,54 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _PhotoTile(
-                photo: _photo,
-                onPick: _onPickPhoto,
-                onClear: _onClearPhoto,
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _onSection1Scan,
-                icon: const Icon(Icons.qr_code_scanner),
-                label: Text(l.shopItemEditorScanIdentifyButton),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
+              // Photo + Scan compact row in the common "no photo yet"
+              // state — saves ~80 px of vertical chrome before the
+              // Name field is visible. Once a photo is taken the
+              // preview strip needs full width to render the
+              // thumbnail + clear affordance, so we fall back to the
+              // two-row layout for that less-common state.
+              if (_photo == null)
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _onPickPhoto,
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: Text(l.shopItemEditorAddPhotoButton),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(56),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _onSection1Scan,
+                        icon: const Icon(Icons.qr_code_scanner),
+                        label: Text(l.shopItemEditorScanIdentifyButton),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(56),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                _PhotoTile(
+                  photo: _photo,
+                  onPick: _onPickPhoto,
+                  onClear: _onClearPhoto,
                 ),
-              ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _onSection1Scan,
+                  icon: const Icon(Icons.qr_code_scanner),
+                  label: Text(l.shopItemEditorScanIdentifyButton),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               TextField(
                 controller: _nameController,
