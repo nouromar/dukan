@@ -55,12 +55,23 @@ class PackagingDraftSubmission {
 /// - [initial] null      = add new; sheet opens empty.
 /// - [baseUnitLabel] is plugged into the "How many [base] in 1 [unit]?"
 ///   conversion label so the cashier sees a clear question.
+/// - [excludeUnitCodes] hides unit options already used by other
+///   packagings on the same item — prevents a duplicate Kg row from
+///   being added alongside the auto-present BASE row. The currently-
+///   selected unit (from `initial.unitCode`) is always kept selectable
+///   so the existing row's own unit isn't removed when editing.
+/// - [lockUnit] / [lockConversion] disable those fields (used for the
+///   BASE row, where unit + conversion are derived from Identify and
+///   must not change).
 Future<PackagingDraftSubmission?> showPackagingEditorSheet(
   BuildContext context, {
   required ShopSummary shop,
   required List<UnitOption> units,
   required String baseUnitLabel,
   PackagingDraftSubmission? initial,
+  List<String> excludeUnitCodes = const [],
+  bool lockUnit = false,
+  bool lockConversion = false,
 }) {
   return showModalBottomSheet<PackagingDraftSubmission>(
     context: context,
@@ -71,6 +82,9 @@ Future<PackagingDraftSubmission?> showPackagingEditorSheet(
       units: units,
       baseUnitLabel: baseUnitLabel,
       initial: initial,
+      excludeUnitCodes: excludeUnitCodes,
+      lockUnit: lockUnit,
+      lockConversion: lockConversion,
     ),
   );
 }
@@ -81,12 +95,18 @@ class _PackagingEditorBody extends StatefulWidget {
     required this.units,
     required this.baseUnitLabel,
     required this.initial,
+    required this.excludeUnitCodes,
+    required this.lockUnit,
+    required this.lockConversion,
   });
 
   final ShopSummary shop;
   final List<UnitOption> units;
   final String baseUnitLabel;
   final PackagingDraftSubmission? initial;
+  final List<String> excludeUnitCodes;
+  final bool lockUnit;
+  final bool lockConversion;
 
   @override
   State<_PackagingEditorBody> createState() => _PackagingEditorBodyState();
@@ -210,19 +230,24 @@ class _PackagingEditorBodyState extends State<_PackagingEditorBody> {
                 ),
                 items: [
                   for (final u in widget.units)
-                    DropdownMenuItem(value: u.code, child: Text(u.label)),
+                    if (!widget.excludeUnitCodes.contains(u.code) ||
+                        u.code == _unitCode)
+                      DropdownMenuItem(value: u.code, child: Text(u.label)),
                 ],
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() {
-                    _unitCode = value;
-                    if (_errorMessage != null) _errorMessage = null;
-                  });
-                },
+                onChanged: widget.lockUnit
+                    ? null
+                    : (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _unitCode = value;
+                          if (_errorMessage != null) _errorMessage = null;
+                        });
+                      },
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _conversionController,
+                enabled: !widget.lockConversion,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [

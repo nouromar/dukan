@@ -1855,6 +1855,14 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorBaseBadge => 'ASAAS';
 
   @override
+  String get shopItemEditorBasePackagingEmptyHint =>
+      'Taabo si aad u gelisid qiime, qarash, kayd';
+
+  @override
+  String get shopItemEditorPackagingMissingMessage =>
+      'Buuxi ugu yaraan hal qaybsasho (qiime, qarash, kayd, ama barcode).';
+
+  @override
   String get shopItemEditorScanBarcodeButton =>
       'Sken garee barcode (ikhtiyaari)';
 

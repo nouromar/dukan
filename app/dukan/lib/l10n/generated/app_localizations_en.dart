@@ -1842,6 +1842,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopItemEditorBaseBadge => 'BASE';
 
   @override
+  String get shopItemEditorBasePackagingEmptyHint =>
+      'Tap to set price, cost, stock';
+
+  @override
+  String get shopItemEditorPackagingMissingMessage =>
+      'Fill at least one packaging (price, cost, stock, or barcode).';
+
+  @override
   String get shopItemEditorScanBarcodeButton => 'Scan barcode (optional)';
 
   @override

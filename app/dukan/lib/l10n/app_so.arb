@@ -791,6 +791,8 @@
   "shopItemEditorPackagingsHeader": "Baakado",
   "shopItemEditorAddPackagingButton": "Ku dar baakad",
   "shopItemEditorBaseBadge": "ASAAS",
+  "shopItemEditorBasePackagingEmptyHint": "Taabo si aad u gelisid qiime, qarash, kayd",
+  "shopItemEditorPackagingMissingMessage": "Buuxi ugu yaraan hal qaybsasho (qiime, qarash, kayd, ama barcode).",
   "shopItemEditorScanBarcodeButton": "Sken garee barcode (ikhtiyaari)",
   "shopItemEditorRescanBarcodeButton": "Mar kale sken",
   "shopItemEditorRemoveBarcodeTooltip": "Saar barcode-ka",
