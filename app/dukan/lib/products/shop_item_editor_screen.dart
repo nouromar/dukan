@@ -926,17 +926,57 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Photo + Scan compact row in the common "no photo yet"
-              // state — saves ~80 px of vertical chrome before the
-              // Name field is visible. Once a photo is taken the
-              // preview strip needs full width to render the
-              // thumbnail + clear affordance, so we fall back to the
-              // two-row layout for that less-common state.
-              if (_photo == null)
-                Row(
+              // Photo + Scan layout:
+              //   * Both empty (the common opening state): one compact
+              //     row of two equal-width 56 px buttons — saves
+              //     ~80 px of vertical chrome before the Name field.
+              //   * Either set: fall back to a two-row layout where
+              //     the captured side renders as a full-width preview
+              //     strip (thumbnail / barcode + Retake + ✕).
+              // The empty side keeps the full-width compact button so
+              // the row heights stay aligned.
+              () {
+                final hasPhoto = _photo != null;
+                final hasBarcode = _packagings.first.barcode != null &&
+                    _packagings.first.barcode!.isNotEmpty;
+                if (!hasPhoto && !hasBarcode) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _onPickPhoto,
+                          icon: const Icon(Icons.camera_alt_outlined),
+                          label: Text(l.shopItemEditorAddPhotoButton),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(56),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _onSection1Scan,
+                          icon: const Icon(Icons.qr_code_scanner),
+                          label: Text(l.shopItemEditorScanIdentifyButton),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(56),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
+                    if (hasPhoto)
+                      _PhotoTile(
+                        photo: _photo,
+                        onPick: _onPickPhoto,
+                        onClear: _onClearPhoto,
+                      )
+                    else
+                      OutlinedButton.icon(
                         onPressed: _onPickPhoto,
                         icon: const Icon(Icons.camera_alt_outlined),
                         label: Text(l.shopItemEditorAddPhotoButton),
@@ -944,10 +984,17 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
                           minimumSize: const Size.fromHeight(56),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
+                    const SizedBox(height: 12),
+                    if (hasBarcode)
+                      _BarcodeTile(
+                        barcode: _packagings.first.barcode!,
+                        onScan: _onSection1Scan,
+                        onClear: () => setState(
+                          () => _packagings.first.barcode = null,
+                        ),
+                      )
+                    else
+                      OutlinedButton.icon(
                         onPressed: _onSection1Scan,
                         icon: const Icon(Icons.qr_code_scanner),
                         label: Text(l.shopItemEditorScanIdentifyButton),
@@ -955,25 +1002,9 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
                           minimumSize: const Size.fromHeight(56),
                         ),
                       ),
-                    ),
                   ],
-                )
-              else ...[
-                _PhotoTile(
-                  photo: _photo,
-                  onPick: _onPickPhoto,
-                  onClear: _onClearPhoto,
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _onSection1Scan,
-                  icon: const Icon(Icons.qr_code_scanner),
-                  label: Text(l.shopItemEditorScanIdentifyButton),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(56),
-                  ),
-                ),
-              ],
+                );
+              }(),
               const SizedBox(height: 16),
               TextField(
                 controller: _nameController,
@@ -1460,6 +1491,74 @@ class _PhotoTile extends StatelessWidget {
           ),
           IconButton(
             tooltip: l.shopItemEditorRemovePhotoTooltip,
+            onPressed: onClear,
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Barcode tile — Section 1 scan affordance mirroring _PhotoTile so the
+// captured state surfaces the scanned code with a Retake + ✕ row
+// (instead of the older silent "code captured" toast).
+// ----------------------------------------------------------------------------
+
+class _BarcodeTile extends StatelessWidget {
+  const _BarcodeTile({
+    required this.barcode,
+    required this.onScan,
+    required this.onClear,
+  });
+
+  final String barcode;
+  final VoidCallback onScan;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.qr_code_scanner,
+              color: theme.colorScheme.onPrimaryContainer,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              barcode,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          TextButton(
+            onPressed: onScan,
+            child: Text(l.shopItemEditorRescanBarcodeButton),
+          ),
+          IconButton(
+            tooltip: l.shopItemEditorRemoveBarcodeTooltip,
             onPressed: onClear,
             icon: const Icon(Icons.close),
           ),
