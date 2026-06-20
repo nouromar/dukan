@@ -778,6 +778,7 @@
   },
   "shopItemEditorChangeDateButton": "Bedel",
   "shopItemEditorOpeningStockNote": "Kayd furitaan oo la diiwaan geliyay xilliga hagaajinta.",
+  "shopItemEditorOpeningStockFailedMessage": "Alaabta waa la kaydiyay laakiin kaydka ma kaydsanin — fur alaabta si aad u hagaajiso.",
   "shopItemEditorDedupTitle": "Waxaa laga yaabaa inaad horey u haysatay",
   "shopItemEditorDedupBody": "Dukaankaaga wuxuu leeyahay alaab la mid ah. Mid ka fur si aad u tafatirto, ama sii wad haddii uu kala duwan yahay:",
   "shopItemEditorDedupKeepGoing": "WAA KALA DUWAN",

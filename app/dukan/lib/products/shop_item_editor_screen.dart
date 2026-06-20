@@ -774,7 +774,19 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
             notes: l.shopItemEditorOpeningStockNote,
           );
         } catch (error, stackTrace) {
+          // Surface the failure to the cashier instead of swallowing
+          // silently — opening stock IS the user's data and a silent
+          // 0 in product detail is the worst outcome (#357 from the
+          // iPhone test pass). The item save itself already
+          // succeeded, so we don't abort; we just show a warning so
+          // they can re-enter stock via product detail → adjust.
           _reportNonFatal(error, stackTrace, 'opening stock adjustment');
+          if (mounted) {
+            showError(
+              context,
+              l.shopItemEditorOpeningStockFailedMessage,
+            );
+          }
         }
       }
 

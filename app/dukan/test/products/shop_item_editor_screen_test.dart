@@ -364,4 +364,96 @@ void main() {
       expect(payload.unitCode, 'kg');
     },
   );
+
+  testWidgets(
+    '#357 fill ONLY non-base packaging stock → opening adjustment is '
+    'posted with baseQuantity = stock × conversion',
+    (tester) async {
+      // Reproducing the user report: "I create new item base unit:Kg,
+      // chose non-base package: 20 Kg bag. cost, price seem converted
+      // to base correctly but stock is 0." Expected after 20 Kg/Bag
+      // × 3 bags: baseQuantity = 60 Kg.
+      api.onListUnits = () async => const [
+            UnitOption(id: 'unit-kg', code: 'kg', label: 'Kg'),
+            UnitOption(id: 'unit-bag', code: 'bag', label: 'Bag'),
+          ];
+      api.onCreateShopItemUnit = (_, _, unit, conv, _) async =>
+          'unit-id-$unit-$conv';
+      await pumpEditor(tester);
+
+      // Name + base unit Kg.
+      await tester.enterText(
+        find.widgetWithText(TextField, en.shopItemEditorNameLabel),
+        'Bariis 20 Kg',
+      );
+      await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kg').last);
+      await tester.pumpAndSettle();
+
+      // +Add → pick Bag → conv 20 → stock 3 (no price/cost) → SAVE.
+      await tester.scrollUntilVisible(
+        find.text(en.shopItemEditorAddPackagingButton),
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byType(ShopItemEditorScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.tap(find.text(en.shopItemEditorAddPackagingButton));
+      await tester.pumpAndSettle();
+      // Pick Bag.
+      await tester.tap(find.byType(DropdownButtonFormField<String>).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bag').last);
+      await tester.pumpAndSettle();
+      // Conversion 20.
+      await tester.enterText(
+        find.widgetWithText(
+          TextField,
+          en.addPackagingConversionLabel('Kg', 'Bag'),
+        ),
+        '20',
+      );
+      // Stock 3 (in Bag units).
+      await tester.enterText(
+        find.widgetWithText(TextField, en.packagingEditorStockLabel('Bag')),
+        '3',
+      );
+      await tester.tap(sheetSaveButton(en));
+      await tester.pumpAndSettle();
+
+      // SAVE the item.
+      final editorSave = find.descendant(
+        of: find.byType(ShopItemEditorScreen),
+        matching: find.widgetWithText(
+          FilledButton,
+          en.shopItemEditorSaveButton,
+        ),
+      );
+      await tester.scrollUntilVisible(
+        editorSave,
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byType(ShopItemEditorScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(editorSave, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      // The asserted invariant: opening stock was posted with the
+      // back-computed base quantity (3 bags × 20 Kg/bag = 60 Kg).
+      expect(api.postInventoryAdjustmentCalls, hasLength(1));
+      final adj = api.postInventoryAdjustmentCalls.first;
+      expect(adj.reasonCode, 'opening');
+      expect(adj.shopItemId, isNotNull);
+      expect(adj.quantityDelta, 60);
+    },
+  );
 }

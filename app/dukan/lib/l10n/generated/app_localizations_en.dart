@@ -1800,6 +1800,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Opening stock recorded during onboarding.';
 
   @override
+  String get shopItemEditorOpeningStockFailedMessage =>
+      'Item saved but stock did not save — open the product to adjust.';
+
+  @override
   String get shopItemEditorDedupTitle => 'You may already have this';
 
   @override

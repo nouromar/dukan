@@ -1812,6 +1812,10 @@ class AppLocalizationsSo extends AppLocalizations {
       'Kayd furitaan oo la diiwaan geliyay xilliga hagaajinta.';
 
   @override
+  String get shopItemEditorOpeningStockFailedMessage =>
+      'Alaabta waa la kaydiyay laakiin kaydka ma kaydsanin — fur alaabta si aad u hagaajiso.';
+
+  @override
   String get shopItemEditorDedupTitle =>
       'Waxaa laga yaabaa inaad horey u haysatay';
 

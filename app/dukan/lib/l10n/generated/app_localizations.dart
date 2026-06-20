@@ -3066,6 +3066,12 @@ abstract class AppLocalizations {
   /// **'Opening stock recorded during onboarding.'**
   String get shopItemEditorOpeningStockNote;
 
+  /// No description provided for @shopItemEditorOpeningStockFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Item saved but stock did not save — open the product to adjust.'**
+  String get shopItemEditorOpeningStockFailedMessage;
+
   /// No description provided for @shopItemEditorDedupTitle.
   ///
   /// In en, this message translates to:

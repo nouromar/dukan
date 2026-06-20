@@ -788,6 +788,7 @@
   },
   "shopItemEditorChangeDateButton": "Change",
   "shopItemEditorOpeningStockNote": "Opening stock recorded during onboarding.",
+  "shopItemEditorOpeningStockFailedMessage": "Item saved but stock did not save — open the product to adjust.",
   "shopItemEditorDedupTitle": "You may already have this",
   "shopItemEditorDedupBody": "Your shop has similar items. Open one to edit, or keep going if it's something different:",
   "shopItemEditorDedupKeepGoing": "IT'S DIFFERENT",
