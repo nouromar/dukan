@@ -3144,12 +3144,6 @@ abstract class AppLocalizations {
   /// **'BASE'**
   String get shopItemEditorBaseBadge;
 
-  /// No description provided for @shopItemEditorBasePackagingEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap to set price, cost, stock'**
-  String get shopItemEditorBasePackagingEmptyHint;
-
   /// No description provided for @shopItemEditorPackagingMissingMessage.
   ///
   /// In en, this message translates to:

@@ -801,7 +801,6 @@
   "shopItemEditorPackagingsHeader": "Packagings",
   "shopItemEditorAddPackagingButton": "Add packaging",
   "shopItemEditorBaseBadge": "BASE",
-  "shopItemEditorBasePackagingEmptyHint": "Tap to set price, cost, stock",
   "shopItemEditorPackagingMissingMessage": "Fill at least one packaging (price, cost, stock, or barcode).",
   "shopItemEditorScanBarcodeButton": "Scan barcode (optional)",
   "shopItemEditorRescanBarcodeButton": "Scan again",

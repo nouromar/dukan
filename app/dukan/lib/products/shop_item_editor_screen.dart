@@ -177,31 +177,39 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     final baseUnit = _baseUnitCode;
     if (baseUnit == null) return; // hidden in UI until base unit picked
     final baseLabel = _unitLabelFor(bootstrap.units, baseUnit) ?? baseUnit;
-    // Exclude units already in use on this item — including the BASE
-    // row — so the cashier can't add a duplicate Kg packaging next to
-    // the auto-present Kg BASE row. The BASE draft's `unitCode` is
-    // null (the base unit is held in the separate `_baseUnitCode`
-    // field), so we have to add it to the exclude list explicitly;
-    // without this the Add Packaging sheet would offer the base unit,
-    // letting the cashier create a second "Kg" row with an editable
-    // conversion that's meaningless (1 Kg in 1 Kg).
+    // Exclude only the units already FILLED on this item — the BASE
+    // draft is auto-allocated as `_packagings[0]` but we treat it as
+    // "available" until the cashier has actually populated its
+    // fields. That way the +Add sheet can offer the base unit, the
+    // cashier accepts the default (or picks it), fills sale/cost/
+    // stock/barcode, and on save we merge into _packagings[0]
+    // rather than creating a duplicate.
     final excluded = <String>{
-      baseUnit,
-      for (final p in _packagings)
-        if (p.unitCode != null) p.unitCode!,
+      for (var i = 0; i < _packagings.length; i++)
+        if (_packagings[i].hasAnyField)
+          if (i == 0) baseUnit else _packagings[i].unitCode!,
     }.toList();
     final result = await showPackagingEditorSheet(
       context,
       shop: widget.shop,
       units: bootstrap.units,
       baseUnitLabel: baseLabel,
+      baseUnitCode: baseUnit,
+      defaultUnitCode: baseUnit,
       excludeUnitCodes: excluded,
     );
     if (result == null || !mounted) return;
     setState(() {
-      final draft = _PackagingDraft.empty();
-      _applySubmissionToDraft(draft, result);
-      _packagings.add(draft);
+      if (result.unitCode == baseUnit) {
+        // Cashier kept the base unit → merge into the BASE draft so
+        // save sees the values on _packagings[0]. The createShopItem
+        // RPC then stamps them on the auto-created base shop_item_unit.
+        _applySubmissionToDraft(_packagings[0], result);
+      } else {
+        final draft = _PackagingDraft.empty();
+        _applySubmissionToDraft(draft, result);
+        _packagings.add(draft);
+      }
       if (_packagingMissing) _packagingMissing = false;
     });
   }
@@ -239,10 +247,10 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
       shop: widget.shop,
       units: bootstrap.units,
       baseUnitLabel: baseLabel,
+      baseUnitCode: baseUnit,
       initial: initial,
       excludeUnitCodes: isBase ? const [] : excluded,
       lockUnit: isBase,
-      lockConversion: isBase,
     );
     if (result == null || !mounted) return;
     setState(() {
@@ -1185,19 +1193,26 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Only render packagings the cashier has actually
+              // populated. The BASE draft (`_packagings[0]`) stays
+              // in state regardless (the save flow assumes it) but
+              // hides from the list until the cashier fills any of
+              // its fields via the +Add sheet. Empty state: zero
+              // rows; the +Add CTA is the only thing visible.
               for (var i = 0; i < _packagings.length; i++)
-                Padding(
-                  padding: EdgeInsets.only(top: i == 0 ? 0 : 8),
-                  child: _PackagingSummaryRow(
-                    draft: _packagings[i],
-                    units: units,
-                    shop: widget.shop,
-                    isBase: i == 0,
-                    baseUnitLabel: baseUnitLabel,
-                    onEdit: () => _onEditPackaging(bootstrap, i),
-                    onRemove: () => _onRemovePackaging(i),
+                if (_packagings[i].hasAnyField)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _PackagingSummaryRow(
+                      draft: _packagings[i],
+                      units: units,
+                      shop: widget.shop,
+                      isBase: i == 0,
+                      baseUnitLabel: baseUnitLabel,
+                      onEdit: () => _onEditPackaging(bootstrap, i),
+                      onRemove: () => _onRemovePackaging(i),
+                    ),
                   ),
-                ),
               if (_packagingMissing)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -1336,6 +1351,16 @@ class _PackagingDraft {
     final raw = openingStockController.text.trim();
     return raw.isEmpty ? null : num.tryParse(raw);
   }
+
+  /// True when the cashier has typed ANY field on this draft. Used
+  /// to decide whether the row shows in the packagings list (empty
+  /// drafts hide; the BASE draft stays in `_packagings[0]` either
+  /// way so the save flow's index assumptions hold).
+  bool get hasAnyField =>
+      parsedSalePrice != null ||
+      parsedCost != null ||
+      parsedOpeningQty != null ||
+      (barcode != null && barcode!.isNotEmpty);
 
   void dispose() {
     conversionController.dispose();
@@ -1881,19 +1906,13 @@ class _PackagingSummaryRow extends StatelessWidget {
     // glance; non-base rows just show the unit label (their conversion
     // surfaces inside the sheet on edit).
     final titleText = isBase ? '1 $unitLabel' : unitLabel;
-    final hasAnyFilled = draft.parsedSalePrice != null ||
-        draft.parsedCost != null ||
-        draft.parsedOpeningQty != null ||
-        (draft.barcode != null && draft.barcode!.isNotEmpty);
-    final subtitle = isBase && !hasAnyFilled
-        ? Text(
-            l.shopItemEditorBasePackagingEmptyHint,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontStyle: FontStyle.italic,
-            ),
-          )
-        : Column(
+    // The empty-state branch is gone — the parent now filters out
+    // drafts where `hasAnyField == false`, so this widget is only
+    // ever rendered with at least one populated field. (Previously
+    // an empty BASE row showed a "Tap to set price, cost, stock"
+    // hint inline; now the BASE row simply doesn't appear until the
+    // cashier has filled it via the +Add packaging sheet.)
+    final subtitle = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(l.shopItemEditorPackagingSummary(

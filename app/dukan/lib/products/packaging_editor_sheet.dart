@@ -57,21 +57,33 @@ class PackagingDraftSubmission {
 ///   conversion label so the cashier sees a clear question.
 /// - [excludeUnitCodes] hides unit options already used by other
 ///   packagings on the same item — prevents a duplicate Kg row from
-///   being added alongside the auto-present BASE row. The currently-
+///   being added alongside an already-filled row. The currently-
 ///   selected unit (from `initial.unitCode`) is always kept selectable
 ///   so the existing row's own unit isn't removed when editing.
-/// - [lockUnit] / [lockConversion] disable those fields (used for the
-///   BASE row, where unit + conversion are derived from Identify and
-///   must not change).
+/// - [lockUnit] disables the unit dropdown (used when editing an
+///   existing row from a context that should pin its unit).
+/// - The conversion field is now derived from the live selection: if
+///   the selected unit equals [baseUnitCode], conversion is implicit 1
+///   and the "How many [base] in 1 [unit]?" field is hidden entirely
+///   (there's nothing meaningful to ask). For non-base selections the
+///   field is shown and required.
+/// - [baseUnitCode] is the item's base unit code; used both for the
+///   conversion-field auto-hide and as the [defaultUnitCode] seed
+///   when nothing else is supplied.
+/// - [defaultUnitCode] seeds the dropdown when [initial] is null
+///   (i.e. the "+ Add packaging" empty-form case). Defaults to
+///   [baseUnitCode] so the common path (cashier sells loose / by
+///   base unit) is one-tap-to-SAVE.
 Future<PackagingDraftSubmission?> showPackagingEditorSheet(
   BuildContext context, {
   required ShopSummary shop,
   required List<UnitOption> units,
   required String baseUnitLabel,
+  required String baseUnitCode,
   PackagingDraftSubmission? initial,
+  String? defaultUnitCode,
   List<String> excludeUnitCodes = const [],
   bool lockUnit = false,
-  bool lockConversion = false,
 }) {
   return showModalBottomSheet<PackagingDraftSubmission>(
     context: context,
@@ -81,10 +93,11 @@ Future<PackagingDraftSubmission?> showPackagingEditorSheet(
       shop: shop,
       units: units,
       baseUnitLabel: baseUnitLabel,
+      baseUnitCode: baseUnitCode,
       initial: initial,
+      defaultUnitCode: defaultUnitCode ?? baseUnitCode,
       excludeUnitCodes: excludeUnitCodes,
       lockUnit: lockUnit,
-      lockConversion: lockConversion,
     ),
   );
 }
@@ -94,19 +107,21 @@ class _PackagingEditorBody extends StatefulWidget {
     required this.shop,
     required this.units,
     required this.baseUnitLabel,
+    required this.baseUnitCode,
     required this.initial,
+    required this.defaultUnitCode,
     required this.excludeUnitCodes,
     required this.lockUnit,
-    required this.lockConversion,
   });
 
   final ShopSummary shop;
   final List<UnitOption> units;
   final String baseUnitLabel;
+  final String baseUnitCode;
   final PackagingDraftSubmission? initial;
+  final String defaultUnitCode;
   final List<String> excludeUnitCodes;
   final bool lockUnit;
-  final bool lockConversion;
 
   @override
   State<_PackagingEditorBody> createState() => _PackagingEditorBodyState();
@@ -125,7 +140,7 @@ class _PackagingEditorBodyState extends State<_PackagingEditorBody> {
   void initState() {
     super.initState();
     final init = widget.initial;
-    _unitCode = init?.unitCode;
+    _unitCode = init?.unitCode ?? widget.defaultUnitCode;
     _conversionController = TextEditingController(
       text: init?.conversion.toString() ?? '',
     );
@@ -167,17 +182,29 @@ class _PackagingEditorBodyState extends State<_PackagingEditorBody> {
     });
   }
 
+  /// True when the live selection IS the item's base unit. In this
+  /// state the conversion is implicit 1 and the "How many" field is
+  /// hidden (asking "how many Kg in 1 Kg?" is nonsense).
+  bool get _isBaseSelected => _unitCode == widget.baseUnitCode;
+
   void _onSave() {
     final l = tr(context);
     if (_unitCode == null) {
       setState(() => _errorMessage = l.packagingEditorMissingUnitMessage);
       return;
     }
-    final convText = _conversionController.text.trim();
-    final conv = num.tryParse(convText);
-    if (conv == null || conv <= 0) {
-      setState(() => _errorMessage = l.packagingEditorMissingConversionMessage);
-      return;
+    final num conv;
+    if (_isBaseSelected) {
+      conv = 1;
+    } else {
+      final convText = _conversionController.text.trim();
+      final parsed = num.tryParse(convText);
+      if (parsed == null || parsed <= 0) {
+        setState(() =>
+            _errorMessage = l.packagingEditorMissingConversionMessage);
+        return;
+      }
+      conv = parsed;
     }
     final sale = num.tryParse(_saleController.text.trim());
     final cost = num.tryParse(_costController.text.trim());
@@ -244,27 +271,31 @@ class _PackagingEditorBodyState extends State<_PackagingEditorBody> {
                         });
                       },
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _conversionController,
-                enabled: !widget.lockConversion,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                ],
-                decoration: InputDecoration(
-                  labelText: l.addPackagingConversionLabel(
-                    widget.baseUnitLabel,
-                    _unitLabel(),
+              // Conversion field is hidden entirely when the selected
+              // unit IS the base unit (conversion is implicit 1; the
+              // "How many Kg in 1 Kg?" question is meaningless).
+              if (!_isBaseSelected) ...[
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _conversionController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: l.addPackagingConversionLabel(
+                      widget.baseUnitLabel,
+                      _unitLabel(),
+                    ),
                   ),
+                  onChanged: (_) {
+                    if (_errorMessage != null) {
+                      setState(() => _errorMessage = null);
+                    }
+                  },
                 ),
-                onChanged: (_) {
-                  if (_errorMessage != null) {
-                    setState(() => _errorMessage = null);
-                  }
-                },
-              ),
+              ],
               const SizedBox(height: 12),
               TextField(
                 controller: _saleController,

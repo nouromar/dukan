@@ -37,15 +37,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// Drives the BASE summary row → packaging editor sheet → SAVE flow
-  /// post-#354 (the inline base fields are gone — every edit is via
-  /// the sheet). Fills the BASE row's sale price so the save invariant
-  /// "at least one packaging filled" passes.
+  /// Drives the "+ Add packaging" CTA → packaging editor sheet (which
+  /// defaults the unit dropdown to the item's base unit) → SAVE flow.
+  /// Post-#356, the BASE summary row only appears AFTER the cashier
+  /// has populated at least one field, so there's no tappable BASE
+  /// badge in the empty state. Fills sale price so the save invariant
+  /// "at least one packaging filled" passes; the editor merges the
+  /// sheet's result into _packagings[0] because the chosen unit is
+  /// the base unit.
   Future<void> fillBaseSalePriceViaSheet(
     WidgetTester tester,
     String value,
   ) async {
-    await tester.tap(find.text(en.shopItemEditorBaseBadge));
+    await tester.tap(find.text(en.shopItemEditorAddPackagingButton));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.widgetWithText(TextField, en.addPackagingPriceLabel('Kg')),

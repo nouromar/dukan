@@ -36,6 +36,7 @@ Future<PackagingDraftSubmission?> _openSheet(
                   shop: shop,
                   units: _units,
                   baseUnitLabel: 'Kg',
+                  baseUnitCode: 'kg',
                   initial: initial,
                 );
               },
@@ -91,14 +92,47 @@ void main() {
         findsOneWidget);
   });
 
-  testWidgets('SAVE without a unit shows the missing-unit error',
+  testWidgets(
+      'SAVE with default base unit and no other fields returns a base submission',
       (tester) async {
-    await _openSheet(tester);
+    // Post-#356 the sheet always seeds the unit dropdown with
+    // `defaultUnitCode` (which the parent passes as the item's base
+    // unit). So the "no unit picked" branch is no longer reachable
+    // from the editor — SAVE on a fresh sheet succeeds and the
+    // result is a base-unit submission with conversion 1.
+    final shop = fakeShop();
+    PackagingDraftSubmission? captured;
+    await tester.pumpWidget(
+      wrapWithApp(
+        Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () async {
+                  captured = await showPackagingEditorSheet(
+                    context,
+                    shop: shop,
+                    units: _units,
+                    baseUnitLabel: 'Kg',
+                    baseUnitCode: 'kg',
+                  );
+                },
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
     await tester.tap(
       find.widgetWithText(FilledButton, en.packagingEditorSaveButton),
     );
     await tester.pumpAndSettle();
-    expect(find.text(en.packagingEditorMissingUnitMessage), findsOneWidget);
+    expect(captured, isNotNull);
+    expect(captured!.unitCode, 'kg');
+    expect(captured!.conversion, 1);
   });
 
   testWidgets('SAVE returns a populated submission when fields are valid',
@@ -121,6 +155,7 @@ void main() {
                     shop: shop,
                     units: _units,
                     baseUnitLabel: 'Kg',
+                    baseUnitCode: 'kg',
                   );
                 },
                 child: const Text('open'),
