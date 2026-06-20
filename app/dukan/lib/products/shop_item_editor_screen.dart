@@ -177,13 +177,19 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     final baseUnit = _baseUnitCode;
     if (baseUnit == null) return; // hidden in UI until base unit picked
     final baseLabel = _unitLabelFor(bootstrap.units, baseUnit) ?? baseUnit;
-    // Exclude units already in use on this item (including the BASE
-    // row) so the cashier can't add a duplicate Kg packaging next to
-    // an auto-present Kg BASE row.
-    final excluded = <String>[
+    // Exclude units already in use on this item — including the BASE
+    // row — so the cashier can't add a duplicate Kg packaging next to
+    // the auto-present Kg BASE row. The BASE draft's `unitCode` is
+    // null (the base unit is held in the separate `_baseUnitCode`
+    // field), so we have to add it to the exclude list explicitly;
+    // without this the Add Packaging sheet would offer the base unit,
+    // letting the cashier create a second "Kg" row with an editable
+    // conversion that's meaningless (1 Kg in 1 Kg).
+    final excluded = <String>{
+      baseUnit,
       for (final p in _packagings)
         if (p.unitCode != null) p.unitCode!,
-    ];
+    }.toList();
     final result = await showPackagingEditorSheet(
       context,
       shop: widget.shop,
