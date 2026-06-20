@@ -905,9 +905,9 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
             onDismiss: _dismissPrefillBanner,
           ),
         if (_prefillBanner != null) const SizedBox(height: 12),
-        // ---- Card 1: Identify ------------------------------------------
+        // ---- Card 1: Identify (no header — most-visible content is
+        // self-explanatory). Carries Photo, Name, Base unit, Category.
         _SectionCard(
-          title: l.shopItemEditorIdentifyHeader,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -976,16 +976,11 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
                   });
                 },
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        // ---- Card 2: Packaging ----------------------------------------
-        _SectionCard(
-          title: l.shopItemEditorPackagingHeader,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+              const SizedBox(height: 16),
+              // Category lives in the first card directly after Base
+              // unit — they're both item-level descriptors. Supplier /
+              // packagings (sales + purchasing concerns) stay in the
+              // Packaging card below.
               DropdownButtonFormField<String?>(
                 initialValue: _categoryId,
                 isExpanded: true,
@@ -1002,7 +997,16 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
                 ],
                 onChanged: (v) => setState(() => _categoryId = v),
               ),
-              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        // ---- Card 2: Packaging ----------------------------------------
+        _SectionCard(
+          title: l.shopItemEditorPackagingHeader,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               _InlineSupplierPicker(
                 supplier: _supplier,
                 onPick: _onPickSupplier,
@@ -1423,9 +1427,13 @@ class _PhotoTile extends StatelessWidget {
 // ----------------------------------------------------------------------------
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.child});
+  const _SectionCard({this.title, required this.child});
 
-  final String title;
+  /// When null, the Card renders just the child (no header). Used by
+  /// the first card (was "Identify") which carries the most-visible
+  /// content — Photo, Name, Base unit, Category — and reads cleaner
+  /// without a redundant title above it.
+  final String? title;
   final Widget child;
 
   @override
@@ -1434,18 +1442,22 @@ class _SectionCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        padding: title == null
+            ? const EdgeInsets.fromLTRB(16, 16, 16, 16)
+            : const EdgeInsets.fromLTRB(16, 14, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
+            if (title != null) ...[
+              Text(
+                title!,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ],
             child,
           ],
         ),
