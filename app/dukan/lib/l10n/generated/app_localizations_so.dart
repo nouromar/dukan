@@ -1691,11 +1691,13 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorSessionSheetViewAll => 'Eeg dhammaan alaabta →';
 
   @override
-  String get shopItemEditorBuyHeader => 'Alaab Keenayaasha';
+  String get shopItemEditorIdentifyHeader => 'Aqoonsasho';
 
   @override
-  String get shopItemEditorBuySubtitle =>
-      'Alaab keene asaasi + qiimaha caadiga — wuxuu hore u buuxinayaa Qaadasho.';
+  String get shopItemEditorPackagingHeader => 'Xidhmada';
+
+  @override
+  String get shopItemEditorSupplierHeader => 'Alaab Keene';
 
   @override
   String get shopItemEditorPickSupplierButton => 'Dooro alaab keene';
@@ -1705,6 +1707,73 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get shopItemEditorRemoveSupplierTooltip => 'Saar alaab keenaha';
+
+  @override
+  String get packagingEditorAddTitle => 'Ku dar xidhmad';
+
+  @override
+  String get packagingEditorEditTitle => 'Bedel xidhmadda';
+
+  @override
+  String get packagingEditorSaveButton => 'KEYDI';
+
+  @override
+  String get packagingEditorMissingUnitMessage =>
+      'Dooro nooca xidhmadda (tusaale: bac, sanduuq).';
+
+  @override
+  String get packagingEditorMissingConversionMessage =>
+      'Imisa unug aasaasi ah ayaa ku jira xidhmaddan? Geli tiro ka weyn 0.';
+
+  @override
+  String packagingEditorCostLabel(String unit) {
+    return 'Qiimaha $unit';
+  }
+
+  @override
+  String packagingEditorStockLabel(String unit) {
+    return 'Kayd — imisa $unit?';
+  }
+
+  @override
+  String shopItemEditorBaseStockLabel(String unit) {
+    return 'Kayd — furan $unit';
+  }
+
+  @override
+  String shopItemEditorBaseSaleLabel(String unit) {
+    return 'Qiimaha iibka — $unit';
+  }
+
+  @override
+  String shopItemEditorBaseCostLabel(String unit) {
+    return 'Qiimaha keenta — $unit';
+  }
+
+  @override
+  String shopItemEditorPackagingSummary(
+    String sale,
+    String cost,
+    String stock,
+  ) {
+    return 'Iib $sale · Qiimaha $cost · $stock kayd';
+  }
+
+  @override
+  String get shopItemEditorPackagingSummaryEmpty => '—';
+
+  @override
+  String get shopItemEditorEditPackagingTooltip => 'Bedel xidhmadda';
+
+  @override
+  String get shopItemEditorRemovePackagingTooltip => 'Saar xidhmadda';
+
+  @override
+  String get shopItemEditorBuyHeader => 'Alaab Keenayaasha';
+
+  @override
+  String get shopItemEditorBuySubtitle =>
+      'Alaab keene asaasi + qiimaha caadiga — wuxuu hore u buuxinayaa Qaadasho.';
 
   @override
   String get shopItemEditorTypicalCostHeader => 'Qiimaha caadiga';

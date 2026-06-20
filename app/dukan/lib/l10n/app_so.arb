@@ -694,6 +694,55 @@
   },
   "shopItemEditorSessionSheetTitle": "Lagu daray fadhigan",
   "shopItemEditorSessionSheetViewAll": "Eeg dhammaan alaabta →",
+  "shopItemEditorIdentifyHeader": "Aqoonsasho",
+  "shopItemEditorPackagingHeader": "Xidhmada",
+  "shopItemEditorSupplierHeader": "Alaab Keene",
+  "packagingEditorAddTitle": "Ku dar xidhmad",
+  "packagingEditorEditTitle": "Bedel xidhmadda",
+  "packagingEditorSaveButton": "KEYDI",
+  "packagingEditorMissingUnitMessage": "Dooro nooca xidhmadda (tusaale: bac, sanduuq).",
+  "packagingEditorMissingConversionMessage": "Imisa unug aasaasi ah ayaa ku jira xidhmaddan? Geli tiro ka weyn 0.",
+  "packagingEditorCostLabel": "Qiimaha {unit}",
+  "@packagingEditorCostLabel": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
+  "packagingEditorStockLabel": "Kayd — imisa {unit}?",
+  "@packagingEditorStockLabel": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
+  "shopItemEditorBaseStockLabel": "Kayd — furan {unit}",
+  "@shopItemEditorBaseStockLabel": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
+  "shopItemEditorBaseSaleLabel": "Qiimaha iibka — {unit}",
+  "@shopItemEditorBaseSaleLabel": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
+  "shopItemEditorBaseCostLabel": "Qiimaha keenta — {unit}",
+  "@shopItemEditorBaseCostLabel": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
+  "shopItemEditorPackagingSummary": "Iib {sale} · Qiimaha {cost} · {stock} kayd",
+  "@shopItemEditorPackagingSummary": {
+    "placeholders": {
+      "sale": { "type": "String" },
+      "cost": { "type": "String" },
+      "stock": { "type": "String" }
+    }
+  },
+  "shopItemEditorPackagingSummaryEmpty": "—",
+  "shopItemEditorEditPackagingTooltip": "Bedel xidhmadda",
+  "shopItemEditorRemovePackagingTooltip": "Saar xidhmadda",
   "shopItemEditorBuyHeader": "Alaab Keenayaasha",
   "shopItemEditorBuySubtitle": "Alaab keene asaasi + qiimaha caadiga — wuxuu hore u buuxinayaa Qaadasho.",
   "shopItemEditorPickSupplierButton": "Dooro alaab keene",

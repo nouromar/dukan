@@ -55,6 +55,8 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/products/packaging_editor_sheet.dart';
 import 'package:dukan/products/shop_item_detail_screen.dart';
 import 'package:dukan/products/products_screen.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
@@ -128,9 +130,11 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
 
   PartySearchResult? _supplier;
 
-  // ----- Section 4 (Opening stock) state -------------------------------------
-
-  DateTime _openingDate = DateTime.now();
+  // Opening date field was removed in #348 — it was only ever a UI
+  // label ("as of [date]") and was never passed to the RPC; the
+  // server's `post_opening_stock_adjustment` always stamps the
+  // current timestamp. Earlier-dated opening adjustments are an edge
+  // case the shopkeeper handles via the stock-adjust sheet later.
 
   // ----- Session counter -----------------------------------------------------
 
@@ -169,8 +173,42 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     return _EditorBootstrap(units: units, categories: categories);
   }
 
-  void _onAddPackaging() {
-    setState(() => _packagings.add(_PackagingDraft.empty()));
+  Future<void> _onAddPackaging(_EditorBootstrap bootstrap) async {
+    final baseUnit = _baseUnitCode;
+    if (baseUnit == null) return; // hidden in UI until base unit picked
+    final baseLabel = _unitLabelFor(bootstrap.units, baseUnit) ?? baseUnit;
+    final result = await showPackagingEditorSheet(
+      context,
+      shop: widget.shop,
+      units: bootstrap.units,
+      baseUnitLabel: baseLabel,
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      final draft = _PackagingDraft.empty();
+      _applySubmissionToDraft(draft, result);
+      _packagings.add(draft);
+    });
+  }
+
+  Future<void> _onEditPackaging(
+    _EditorBootstrap bootstrap,
+    int index,
+  ) async {
+    if (index == 0) return; // base row is edited inline
+    final baseUnit = _baseUnitCode;
+    if (baseUnit == null) return;
+    final baseLabel = _unitLabelFor(bootstrap.units, baseUnit) ?? baseUnit;
+    final draft = _packagings[index];
+    final result = await showPackagingEditorSheet(
+      context,
+      shop: widget.shop,
+      units: bootstrap.units,
+      baseUnitLabel: baseLabel,
+      initial: _draftToSubmission(draft),
+    );
+    if (result == null || !mounted) return;
+    setState(() => _applySubmissionToDraft(draft, result));
   }
 
   void _onRemovePackaging(int index) {
@@ -178,6 +216,45 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     final draft = _packagings.removeAt(index);
     draft.dispose();
     setState(() {});
+  }
+
+  /// Map a `_PackagingDraft` → sheet input shape (so the sheet can
+  /// pre-fill its own controllers without sharing draft state).
+  PackagingDraftSubmission? _draftToSubmission(_PackagingDraft draft) {
+    final unit = draft.unitCode;
+    if (unit == null) return null;
+    final conv = draft.parsedConversion;
+    if (conv == null) return null;
+    return PackagingDraftSubmission(
+      unitCode: unit,
+      conversion: conv,
+      salePrice: draft.parsedSalePrice,
+      cost: draft.parsedCost,
+      openingStock: draft.parsedOpeningQty,
+      barcode: draft.barcode,
+    );
+  }
+
+  /// Apply a sheet result back onto the parent-owned `_PackagingDraft`.
+  /// Writes through the existing controllers so identity is preserved
+  /// (no controller churn).
+  void _applySubmissionToDraft(
+    _PackagingDraft draft,
+    PackagingDraftSubmission r,
+  ) {
+    draft.unitCode = r.unitCode;
+    draft.conversionController.text = r.conversion.toString();
+    draft.salePriceController.text = r.salePrice?.toString() ?? '';
+    draft.costController.text = r.cost?.toString() ?? '';
+    draft.openingStockController.text = r.openingStock?.toString() ?? '';
+    draft.barcode = r.barcode;
+  }
+
+  String? _unitLabelFor(List<UnitOption> units, String code) {
+    for (final u in units) {
+      if (u.code == code) return u.label;
+    }
+    return null;
   }
 
   Future<void> _onPickPhoto() async {
@@ -403,19 +480,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   }
 
   void _onClearSupplier() => setState(() => _supplier = null);
-
-  // --- Section 4: opening date ----------------------------------------------
-
-  Future<void> _onPickOpeningDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _openingDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-    );
-    if (picked == null || !mounted) return;
-    setState(() => _openingDate = picked);
-  }
 
   // --- Session counter sheet ------------------------------------------------
 
@@ -770,7 +834,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
       _prefillBanner = null;
       _suggestions = const [];
       _lastSuggestionQuery = '';
-      _openingDate = DateTime.now();
       // Supplier sticks across resets — typical stocking session.
     });
     _nameFocusNode.requestFocus();
@@ -830,7 +893,9 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   Widget _buildForm(_EditorBootstrap bootstrap) {
     final l = tr(context);
     final units = bootstrap.units;
-    final theme = Theme.of(context);
+    final baseUnitLabel = _baseUnitCode == null
+        ? null
+        : _unitLabelFor(units, _baseUnitCode!);
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       children: [
@@ -840,134 +905,153 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
             onDismiss: _dismissPrefillBanner,
           ),
         if (_prefillBanner != null) const SizedBox(height: 12),
-        _PhotoTile(
-          photo: _photo,
-          onPick: _onPickPhoto,
-          onClear: _onClearPhoto,
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: _onSection1Scan,
-          icon: const Icon(Icons.qr_code_scanner),
-          label: Text(l.shopItemEditorScanIdentifyButton),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(56),
+        // ---- Card 1: Identify ------------------------------------------
+        _SectionCard(
+          title: l.shopItemEditorIdentifyHeader,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _PhotoTile(
+                photo: _photo,
+                onPick: _onPickPhoto,
+                onClear: _onClearPhoto,
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _onSection1Scan,
+                icon: const Icon(Icons.qr_code_scanner),
+                label: Text(l.shopItemEditorScanIdentifyButton),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _nameController,
+                focusNode: _nameFocusNode,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: l.shopItemEditorNameLabel,
+                  errorText:
+                      _nameMissing ? l.addNewItemMissingNameMessage : null,
+                  suffixIcon: _suggestionsLoading
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : null,
+                ),
+                onChanged: _onNameChanged,
+              ),
+              if (_suggestions.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: _SuggestionList(
+                    suggestions: _suggestions,
+                    onTap: _onTapSuggestion,
+                  ),
+                ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _baseUnitCode,
+                decoration: InputDecoration(
+                  labelText: l.shopItemEditorBaseUnitLabel,
+                  errorText: _baseUnitMissing
+                      ? l.addNewItemMissingUnitMessage
+                      : null,
+                ),
+                items: [
+                  for (final u in units)
+                    DropdownMenuItem(value: u.code, child: Text(u.label)),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _baseUnitCode = value;
+                    _baseUnitMissing = false;
+                  });
+                },
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _nameController,
-          focusNode: _nameFocusNode,
-          textInputAction: TextInputAction.next,
-          decoration: InputDecoration(
-            labelText: l.shopItemEditorNameLabel,
-            errorText: _nameMissing ? l.addNewItemMissingNameMessage : null,
-            suffixIcon: _suggestionsLoading
-                ? const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+        const SizedBox(height: 12),
+        // ---- Card 2: Packaging ----------------------------------------
+        _SectionCard(
+          title: l.shopItemEditorPackagingHeader,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DropdownButtonFormField<String?>(
+                initialValue: _categoryId,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: l.shopItemEditorCategoryLabel,
+                ),
+                items: [
+                  DropdownMenuItem<String?>(value: null, child: Text(l.other)),
+                  for (final c in bootstrap.categories)
+                    DropdownMenuItem<String?>(
+                      value: c.id,
+                      child: Text(c.name),
                     ),
-                  )
-                : null,
+                ],
+                onChanged: (v) => setState(() => _categoryId = v),
+              ),
+              const SizedBox(height: 16),
+              _InlineSupplierPicker(
+                supplier: _supplier,
+                onPick: _onPickSupplier,
+                onAddInline: _onAddSupplierInline,
+                onClear: _onClearSupplier,
+              ),
+              const SizedBox(height: 16),
+              // BASE packaging — inline compact strip. Other packagings
+              // are summary rows below; both fold supplier-cost +
+              // opening-stock into the per-packaging editing surface
+              // (the old Section 3 / Section 4 are gone).
+              _BasePackagingStrip(
+                draft: _packagings.first,
+                baseUnitLabel: baseUnitLabel,
+                shop: widget.shop,
+                onChanged: () => setState(() {}),
+                onScanBarcode: () =>
+                    _onScanPackagingBarcode(_packagings.first),
+                onClearBarcode: () => setState(
+                  () => _packagings.first.barcode = null,
+                ),
+              ),
+              for (var i = 1; i < _packagings.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _PackagingSummaryRow(
+                    draft: _packagings[i],
+                    units: units,
+                    shop: widget.shop,
+                    onEdit: () => _onEditPackaging(bootstrap, i),
+                    onRemove: () => _onRemovePackaging(i),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _baseUnitCode == null
+                    ? null
+                    : () => _onAddPackaging(bootstrap),
+                icon: const Icon(Icons.add),
+                label: Text(l.shopItemEditorAddPackagingButton),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                ),
+              ),
+            ],
           ),
-          onChanged: _onNameChanged,
-        ),
-        if (_suggestions.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: _SuggestionList(
-              suggestions: _suggestions,
-              onTap: _onTapSuggestion,
-            ),
-          ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          initialValue: _baseUnitCode,
-          decoration: InputDecoration(
-            labelText: l.shopItemEditorBaseUnitLabel,
-            errorText: _baseUnitMissing
-                ? l.addNewItemMissingUnitMessage
-                : null,
-          ),
-          items: [
-            for (final u in units)
-              DropdownMenuItem(value: u.code, child: Text(u.label)),
-          ],
-          onChanged: (value) {
-            if (value == null) return;
-            setState(() {
-              _baseUnitCode = value;
-              _baseUnitMissing = false;
-            });
-          },
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String?>(
-          initialValue: _categoryId,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: l.shopItemEditorCategoryLabel,
-          ),
-          items: [
-            DropdownMenuItem<String?>(value: null, child: Text(l.other)),
-            for (final c in bootstrap.categories)
-              DropdownMenuItem<String?>(value: c.id, child: Text(c.name)),
-          ],
-          onChanged: (v) => setState(() => _categoryId = v),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          l.shopItemEditorPackagingsHeader,
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        for (var i = 0; i < _packagings.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _PackagingRow(
-              draft: _packagings[i],
-              units: units,
-              baseUnitCode: _baseUnitCode,
-              shop: widget.shop,
-              onChanged: () => setState(() {}),
-              onRemove: i == 0 ? null : () => _onRemovePackaging(i),
-              onScanBarcode: () => _onScanPackagingBarcode(_packagings[i]),
-              onClearBarcode: () =>
-                  setState(() => _packagings[i].barcode = null),
-            ),
-          ),
-        OutlinedButton.icon(
-          onPressed: _baseUnitCode == null ? null : _onAddPackaging,
-          icon: const Icon(Icons.add),
-          label: Text(l.shopItemEditorAddPackagingButton),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(56),
-          ),
-        ),
-        const SizedBox(height: 16),
-        _SupplierSection(
-          shop: widget.shop,
-          packagings: _packagings,
-          supplier: _supplier,
-          initiallyExpanded: false,
-          onPick: _onPickSupplier,
-          onAddInline: _onAddSupplierInline,
-          onClear: _onClearSupplier,
-          onChanged: () => setState(() {}),
         ),
         const SizedBox(height: 12),
-        _OpeningStockSection(
-          packagings: _packagings,
-          baseUnitCode: _baseUnitCode,
-          openingDate: _openingDate,
-          onPickDate: _onPickOpeningDate,
-          initiallyExpanded: false,
-          onChanged: () => setState(() {}),
-        ),
-        const SizedBox(height: 12),
+        // ---- Card 3: Aliases (collapsible) -----------------------------
         _DiscoverySection(
           aliasController: _aliasController,
           bonoSpellingController: _bonoSpellingController,
@@ -1333,204 +1417,313 @@ class _PhotoTile extends StatelessWidget {
 }
 
 // ----------------------------------------------------------------------------
-// Section 3 — Supplier picker + per-packaging typical cost.
+// Card shell — wraps Identify + Packaging in Cards that match the
+// always-expanded "section" styling. Aliases keeps its own
+// ExpansionTile-in-Card (collapsible) widget below.
 // ----------------------------------------------------------------------------
 
-class _SupplierSection extends StatelessWidget {
-  const _SupplierSection({
-    required this.shop,
-    required this.packagings,
-    required this.supplier,
-    required this.initiallyExpanded,
-    required this.onPick,
-    required this.onAddInline,
-    required this.onClear,
-    required this.onChanged,
-  });
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.title, required this.child});
 
-  final ShopSummary shop;
-  final List<_PackagingDraft> packagings;
-  final PartySearchResult? supplier;
-  final bool initiallyExpanded;
-  final VoidCallback onPick;
-  final VoidCallback onAddInline;
-  final VoidCallback onClear;
-  final VoidCallback onChanged;
+  final String title;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final l = tr(context);
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        initiallyExpanded: initiallyExpanded,
-        title: Text(
-          l.shopItemEditorBuyHeader,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        children: [
-          _SectionSubtitle(text: l.shopItemEditorBuySubtitle),
-          if (supplier == null)
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onPick,
-                    icon: const Icon(Icons.search),
-                    label: Text(l.shopItemEditorPickSupplierButton),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.tonalIcon(
-                  onPressed: onAddInline,
-                  icon: const Icon(Icons.add),
-                  label: Text(l.shopItemEditorNewSupplierButton),
-                ),
-              ],
-            )
-          else
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.local_shipping),
-              title: Text(supplier!.name),
-              trailing: IconButton(
-                tooltip: l.shopItemEditorRemoveSupplierTooltip,
-                onPressed: onClear,
-                icon: const Icon(Icons.close),
-              ),
-              onTap: onPick,
-            ),
-          if (supplier != null) const SizedBox(height: 8),
-          if (supplier != null)
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             Text(
-              l.shopItemEditorTypicalCostHeader,
-              style: Theme.of(context).textTheme.labelLarge,
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
             ),
-          if (supplier != null) const SizedBox(height: 4),
-          if (supplier != null)
-            for (final p in packagings)
-              if (p.unitCode != null || p.isBase)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: TextField(
-                    controller: p.costController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                    ],
-                    decoration: InputDecoration(
-                      labelText: l.shopItemEditorCostPerPackLabel(
-                        _packagingDescription(p),
-                      ),
-                      prefixText: '${shop.currencySymbol} ',
-                    ),
-                    onChanged: (_) => onChanged(),
-                  ),
-                ),
-        ],
+            const SizedBox(height: 12),
+            child,
+          ],
+        ),
       ),
     );
-  }
-
-  String _packagingDescription(_PackagingDraft p) {
-    if (p.isBase) return '1 ${p.unitCode ?? '?'}';
-    final conv = p.parsedConversion;
-    final code = p.unitCode ?? '?';
-    return conv == null ? code : '$conv per $code';
   }
 }
 
 // ----------------------------------------------------------------------------
-// Section 4 — Opening stock per packaging.
+// Supplier picker — extracted from the old _SupplierSection. Sits
+// inside the Packaging card now; per-packaging cost moved into each
+// packaging row's editor sheet (and the BASE strip's inline fields).
 // ----------------------------------------------------------------------------
 
-class _OpeningStockSection extends StatelessWidget {
-  const _OpeningStockSection({
-    required this.packagings,
-    required this.baseUnitCode,
-    required this.openingDate,
-    required this.onPickDate,
-    required this.initiallyExpanded,
-    required this.onChanged,
+class _InlineSupplierPicker extends StatelessWidget {
+  const _InlineSupplierPicker({
+    required this.supplier,
+    required this.onPick,
+    required this.onAddInline,
+    required this.onClear,
   });
 
-  final List<_PackagingDraft> packagings;
-  final String? baseUnitCode;
-  final DateTime openingDate;
-  final VoidCallback onPickDate;
-  final bool initiallyExpanded;
+  final PartySearchResult? supplier;
+  final VoidCallback onPick;
+  final VoidCallback onAddInline;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    if (supplier == null) {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: onPick,
+              icon: const Icon(Icons.search),
+              label: Text(l.shopItemEditorPickSupplierButton),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.tonalIcon(
+            onPressed: onAddInline,
+            icon: const Icon(Icons.add),
+            label: Text(l.shopItemEditorNewSupplierButton),
+          ),
+        ],
+      );
+    }
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.local_shipping),
+      title: Text(supplier!.name),
+      trailing: IconButton(
+        tooltip: l.shopItemEditorRemoveSupplierTooltip,
+        onPressed: onClear,
+        icon: const Icon(Icons.close),
+      ),
+      onTap: onPick,
+    );
+  }
+}
+
+// ----------------------------------------------------------------------------
+// BASE packaging — inline compact strip. Unit + conversion are
+// derived from the Identify card's Base unit choice and locked at 1,
+// so they're not rendered here. Only sale price + cost + stock +
+// barcode are editable. Mirrors the post-refactor "fold Stock +
+// Suppliers into Packaging" decision: every packaging row carries
+// its own pricing, sourcing, and inventory data — no separate
+// sections.
+// ----------------------------------------------------------------------------
+
+class _BasePackagingStrip extends StatelessWidget {
+  const _BasePackagingStrip({
+    required this.draft,
+    required this.baseUnitLabel,
+    required this.shop,
+    required this.onChanged,
+    required this.onScanBarcode,
+    required this.onClearBarcode,
+  });
+
+  final _PackagingDraft draft;
+  final String? baseUnitLabel;
+  final ShopSummary shop;
   final VoidCallback onChanged;
+  final VoidCallback onScanBarcode;
+  final VoidCallback onClearBarcode;
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
     final theme = Theme.of(context);
-    final dateLabel = MaterialLocalizations.of(context)
-        .formatMediumDate(openingDate);
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        initiallyExpanded: initiallyExpanded,
-        title: Text(
-          l.shopItemEditorOpeningHeader,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+    final label = baseUnitLabel ?? '—';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _SectionSubtitle(text: l.shopItemEditorOpeningSubtitle),
-          if (baseUnitCode == null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text(
-                l.shopItemEditorOpeningPickBaseUnitFirst,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            )
-          else
-            for (final p in packagings)
-              if (p.unitCode != null || p.isBase)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: TextField(
-                    controller: p.openingStockController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                    ],
-                    decoration: InputDecoration(
-                      labelText: l.shopItemEditorOpeningQtyLabel(
-                        p.unitCode ?? baseUnitCode ?? '?',
-                      ),
-                    ),
-                    onChanged: (_) => onChanged(),
-                  ),
-                ),
-          const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Text(
-                  l.shopItemEditorOpeningAsOf(dateLabel),
-                  style: theme.textTheme.bodyMedium,
+                  l.shopItemEditorBaseBadge,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              TextButton(
-                onPressed: onPickDate,
-                child: Text(l.shopItemEditorChangeDateButton),
+              const SizedBox(width: 8),
+              Text(
+                '1 $label',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: draft.salePriceController,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+            ],
+            decoration: InputDecoration(
+              labelText: l.shopItemEditorBaseSaleLabel(label),
+              prefixText: '${shop.currencySymbol} ',
+              isDense: true,
+            ),
+            onChanged: (_) => onChanged(),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: draft.costController,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+            ],
+            decoration: InputDecoration(
+              labelText: l.shopItemEditorBaseCostLabel(label),
+              prefixText: '${shop.currencySymbol} ',
+              isDense: true,
+            ),
+            onChanged: (_) => onChanged(),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: draft.openingStockController,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+            ],
+            decoration: InputDecoration(
+              labelText: l.shopItemEditorBaseStockLabel(label),
+              isDense: true,
+            ),
+            onChanged: (_) => onChanged(),
+          ),
+          const SizedBox(height: 8),
+          _BarcodeRow(
+            barcode: draft.barcode,
+            onScan: onScanBarcode,
+            onClear: onClearBarcode,
+          ),
         ],
+      ),
+    );
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Summary row for a non-base packaging. Read-only display of the
+// editor sheet's payload; tap → reopens the sheet pre-filled.
+// ----------------------------------------------------------------------------
+
+class _PackagingSummaryRow extends StatelessWidget {
+  const _PackagingSummaryRow({
+    required this.draft,
+    required this.units,
+    required this.shop,
+    required this.onEdit,
+    required this.onRemove,
+  });
+
+  final _PackagingDraft draft;
+  final List<UnitOption> units;
+  final ShopSummary shop;
+  final VoidCallback onEdit;
+  final VoidCallback onRemove;
+
+  String _unitLabel() {
+    final code = draft.unitCode;
+    if (code == null) return '—';
+    for (final u in units) {
+      if (u.code == code) return u.label;
+    }
+    return code;
+  }
+
+  String _moneyOrEmpty(num? value, ShopSummary shop, AppLocalizations l) {
+    if (value == null) return l.shopItemEditorPackagingSummaryEmpty;
+    return '${shop.currencySymbol}${value.toStringAsFixed(2)}';
+  }
+
+  String _stockOrEmpty(num? value, AppLocalizations l) {
+    if (value == null) return l.shopItemEditorPackagingSummaryEmpty;
+    final asInt = value.toInt();
+    return value == asInt ? '$asInt' : value.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    final summary = l.shopItemEditorPackagingSummary(
+      _moneyOrEmpty(draft.parsedSalePrice, shop, l),
+      _moneyOrEmpty(draft.parsedCost, shop, l),
+      _stockOrEmpty(draft.parsedOpeningQty, l),
+    );
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ListTile(
+        onTap: onEdit,
+        title: Text(
+          _unitLabel(),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(summary),
+            if (draft.barcode != null && draft.barcode!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  draft.barcode!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: l.shopItemEditorEditPackagingTooltip,
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit_outlined),
+            ),
+            IconButton(
+              tooltip: l.shopItemEditorRemovePackagingTooltip,
+              onPressed: onRemove,
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1632,161 +1825,9 @@ class _DiscoverySection extends StatelessWidget {
 }
 
 // ----------------------------------------------------------------------------
-// Packaging row — captures sale price + optional barcode per packaging.
-// Cost + opening stock are captured in their respective sections so the
-// row stays scannable for the daily use case (most rows have just price).
+// Barcode row — small affordance shared by the BASE strip inline.
+// Other packagings edit barcode via the packaging editor sheet instead.
 // ----------------------------------------------------------------------------
-
-class _PackagingRow extends StatelessWidget {
-  const _PackagingRow({
-    required this.draft,
-    required this.units,
-    required this.baseUnitCode,
-    required this.shop,
-    required this.onChanged,
-    required this.onRemove,
-    required this.onScanBarcode,
-    required this.onClearBarcode,
-  });
-
-  final _PackagingDraft draft;
-  final List<UnitOption> units;
-  final String? baseUnitCode;
-  final ShopSummary shop;
-  final VoidCallback onChanged;
-  final VoidCallback? onRemove;
-  final VoidCallback onScanBarcode;
-  final VoidCallback onClearBarcode;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = tr(context);
-    final theme = Theme.of(context);
-    final unitCodeForRow =
-        draft.isBase ? baseUnitCode ?? draft.unitCode : draft.unitCode;
-    final unitLocked = draft.isBase;
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (draft.isBase)
-              Padding(
-                padding:
-                    const EdgeInsetsDirectional.only(bottom: 8, start: 4),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  constraints: const BoxConstraints(maxWidth: 100),
-                  child: Text(
-                    l.shopItemEditorBaseBadge,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: unitCodeForRow,
-                    decoration: InputDecoration(
-                      labelText: l.addPackagingUnitLabel,
-                    ),
-                    items: [
-                      for (final u in units)
-                        DropdownMenuItem(
-                          value: u.code,
-                          child: Text(u.label),
-                        ),
-                    ],
-                    onChanged: unitLocked
-                        ? null
-                        : (value) {
-                            if (value == null) return;
-                            draft.unitCode = value;
-                            onChanged();
-                          },
-                  ),
-                ),
-                if (onRemove != null)
-                  IconButton(
-                    tooltip: l.removePackagingTooltip,
-                    onPressed: onRemove,
-                    icon: const Icon(Icons.delete_outline),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: draft.conversionController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              enabled: !draft.isBase,
-              decoration: InputDecoration(
-                labelText: _conversionLabel(context),
-              ),
-              onChanged: (_) => onChanged(),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: draft.salePriceController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              decoration: InputDecoration(
-                labelText: _priceLabel(context),
-                prefixText: '${shop.currencySymbol} ',
-              ),
-              onChanged: (_) => onChanged(),
-            ),
-            const SizedBox(height: 12),
-            _BarcodeRow(
-              barcode: draft.barcode,
-              onScan: onScanBarcode,
-              onClear: onClearBarcode,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _conversionLabel(BuildContext context) {
-    final l = tr(context);
-    final baseLabel = _resolveUnitLabel(baseUnitCode);
-    final unitLabel = _resolveUnitLabel(draft.unitCode) ?? '—';
-    return l.addPackagingConversionLabel(baseLabel ?? '—', unitLabel);
-  }
-
-  String _priceLabel(BuildContext context) {
-    final l = tr(context);
-    final unitLabel = _resolveUnitLabel(draft.unitCode) ?? '—';
-    return l.addPackagingPriceLabel(unitLabel);
-  }
-
-  String? _resolveUnitLabel(String? code) {
-    if (code == null) return null;
-    for (final u in units) {
-      if (u.code == code) return u.label;
-    }
-    return code;
-  }
-}
 
 class _BarcodeRow extends StatelessWidget {
   const _BarcodeRow({

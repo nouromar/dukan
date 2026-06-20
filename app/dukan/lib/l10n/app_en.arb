@@ -704,11 +704,60 @@
   },
   "shopItemEditorSessionSheetTitle": "Added this session",
   "shopItemEditorSessionSheetViewAll": "View all products →",
-  "shopItemEditorBuyHeader": "Suppliers",
-  "shopItemEditorBuySubtitle": "Default supplier + typical cost — pre-fills Receive later.",
+  "shopItemEditorIdentifyHeader": "Identify",
+  "shopItemEditorPackagingHeader": "Packaging",
+  "shopItemEditorSupplierHeader": "Supplier",
   "shopItemEditorPickSupplierButton": "Pick supplier",
   "shopItemEditorNewSupplierButton": "NEW",
   "shopItemEditorRemoveSupplierTooltip": "Remove supplier",
+  "packagingEditorAddTitle": "Add packaging",
+  "packagingEditorEditTitle": "Edit packaging",
+  "packagingEditorSaveButton": "SAVE",
+  "packagingEditorMissingUnitMessage": "Pick a packaging unit (e.g. bag, box).",
+  "packagingEditorMissingConversionMessage": "How many base units fit in this pack? Enter a number greater than 0.",
+  "packagingEditorCostLabel": "Cost per {unit}",
+  "@packagingEditorCostLabel": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
+  "packagingEditorStockLabel": "Stock — how many {unit}?",
+  "@packagingEditorStockLabel": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
+  "shopItemEditorBaseStockLabel": "Stock — loose {unit}",
+  "@shopItemEditorBaseStockLabel": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
+  "shopItemEditorBaseSaleLabel": "Sale price per {unit}",
+  "@shopItemEditorBaseSaleLabel": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
+  "shopItemEditorBaseCostLabel": "Cost per {unit}",
+  "@shopItemEditorBaseCostLabel": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
+  "shopItemEditorPackagingSummary": "Sell {sale} · Cost {cost} · {stock} in stock",
+  "@shopItemEditorPackagingSummary": {
+    "placeholders": {
+      "sale": { "type": "String" },
+      "cost": { "type": "String" },
+      "stock": { "type": "String" }
+    }
+  },
+  "shopItemEditorPackagingSummaryEmpty": "—",
+  "shopItemEditorEditPackagingTooltip": "Edit packaging",
+  "shopItemEditorRemovePackagingTooltip": "Remove packaging",
+  "shopItemEditorBuyHeader": "Suppliers",
+  "shopItemEditorBuySubtitle": "Default supplier + typical cost — pre-fills Receive later.",
   "shopItemEditorTypicalCostHeader": "Typical cost",
   "shopItemEditorCostPerPackLabel": "Cost per {pack}",
   "@shopItemEditorCostPerPackLabel": {

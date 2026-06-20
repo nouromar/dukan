@@ -2880,17 +2880,23 @@ abstract class AppLocalizations {
   /// **'View all products →'**
   String get shopItemEditorSessionSheetViewAll;
 
-  /// No description provided for @shopItemEditorBuyHeader.
+  /// No description provided for @shopItemEditorIdentifyHeader.
   ///
   /// In en, this message translates to:
-  /// **'Suppliers'**
-  String get shopItemEditorBuyHeader;
+  /// **'Identify'**
+  String get shopItemEditorIdentifyHeader;
 
-  /// No description provided for @shopItemEditorBuySubtitle.
+  /// No description provided for @shopItemEditorPackagingHeader.
   ///
   /// In en, this message translates to:
-  /// **'Default supplier + typical cost — pre-fills Receive later.'**
-  String get shopItemEditorBuySubtitle;
+  /// **'Packaging'**
+  String get shopItemEditorPackagingHeader;
+
+  /// No description provided for @shopItemEditorSupplierHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier'**
+  String get shopItemEditorSupplierHeader;
 
   /// No description provided for @shopItemEditorPickSupplierButton.
   ///
@@ -2909,6 +2915,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove supplier'**
   String get shopItemEditorRemoveSupplierTooltip;
+
+  /// No description provided for @packagingEditorAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add packaging'**
+  String get packagingEditorAddTitle;
+
+  /// No description provided for @packagingEditorEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit packaging'**
+  String get packagingEditorEditTitle;
+
+  /// No description provided for @packagingEditorSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get packagingEditorSaveButton;
+
+  /// No description provided for @packagingEditorMissingUnitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a packaging unit (e.g. bag, box).'**
+  String get packagingEditorMissingUnitMessage;
+
+  /// No description provided for @packagingEditorMissingConversionMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'How many base units fit in this pack? Enter a number greater than 0.'**
+  String get packagingEditorMissingConversionMessage;
+
+  /// No description provided for @packagingEditorCostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost per {unit}'**
+  String packagingEditorCostLabel(String unit);
+
+  /// No description provided for @packagingEditorStockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock — how many {unit}?'**
+  String packagingEditorStockLabel(String unit);
+
+  /// No description provided for @shopItemEditorBaseStockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock — loose {unit}'**
+  String shopItemEditorBaseStockLabel(String unit);
+
+  /// No description provided for @shopItemEditorBaseSaleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale price per {unit}'**
+  String shopItemEditorBaseSaleLabel(String unit);
+
+  /// No description provided for @shopItemEditorBaseCostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost per {unit}'**
+  String shopItemEditorBaseCostLabel(String unit);
+
+  /// No description provided for @shopItemEditorPackagingSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell {sale} · Cost {cost} · {stock} in stock'**
+  String shopItemEditorPackagingSummary(String sale, String cost, String stock);
+
+  /// No description provided for @shopItemEditorPackagingSummaryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'—'**
+  String get shopItemEditorPackagingSummaryEmpty;
+
+  /// No description provided for @shopItemEditorEditPackagingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit packaging'**
+  String get shopItemEditorEditPackagingTooltip;
+
+  /// No description provided for @shopItemEditorRemovePackagingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove packaging'**
+  String get shopItemEditorRemovePackagingTooltip;
+
+  /// No description provided for @shopItemEditorBuyHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Suppliers'**
+  String get shopItemEditorBuyHeader;
+
+  /// No description provided for @shopItemEditorBuySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default supplier + typical cost — pre-fills Receive later.'**
+  String get shopItemEditorBuySubtitle;
 
   /// No description provided for @shopItemEditorTypicalCostHeader.
   ///

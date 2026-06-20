@@ -1679,11 +1679,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopItemEditorSessionSheetViewAll => 'View all products →';
 
   @override
-  String get shopItemEditorBuyHeader => 'Suppliers';
+  String get shopItemEditorIdentifyHeader => 'Identify';
 
   @override
-  String get shopItemEditorBuySubtitle =>
-      'Default supplier + typical cost — pre-fills Receive later.';
+  String get shopItemEditorPackagingHeader => 'Packaging';
+
+  @override
+  String get shopItemEditorSupplierHeader => 'Supplier';
 
   @override
   String get shopItemEditorPickSupplierButton => 'Pick supplier';
@@ -1693,6 +1695,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shopItemEditorRemoveSupplierTooltip => 'Remove supplier';
+
+  @override
+  String get packagingEditorAddTitle => 'Add packaging';
+
+  @override
+  String get packagingEditorEditTitle => 'Edit packaging';
+
+  @override
+  String get packagingEditorSaveButton => 'SAVE';
+
+  @override
+  String get packagingEditorMissingUnitMessage =>
+      'Pick a packaging unit (e.g. bag, box).';
+
+  @override
+  String get packagingEditorMissingConversionMessage =>
+      'How many base units fit in this pack? Enter a number greater than 0.';
+
+  @override
+  String packagingEditorCostLabel(String unit) {
+    return 'Cost per $unit';
+  }
+
+  @override
+  String packagingEditorStockLabel(String unit) {
+    return 'Stock — how many $unit?';
+  }
+
+  @override
+  String shopItemEditorBaseStockLabel(String unit) {
+    return 'Stock — loose $unit';
+  }
+
+  @override
+  String shopItemEditorBaseSaleLabel(String unit) {
+    return 'Sale price per $unit';
+  }
+
+  @override
+  String shopItemEditorBaseCostLabel(String unit) {
+    return 'Cost per $unit';
+  }
+
+  @override
+  String shopItemEditorPackagingSummary(
+    String sale,
+    String cost,
+    String stock,
+  ) {
+    return 'Sell $sale · Cost $cost · $stock in stock';
+  }
+
+  @override
+  String get shopItemEditorPackagingSummaryEmpty => '—';
+
+  @override
+  String get shopItemEditorEditPackagingTooltip => 'Edit packaging';
+
+  @override
+  String get shopItemEditorRemovePackagingTooltip => 'Remove packaging';
+
+  @override
+  String get shopItemEditorBuyHeader => 'Suppliers';
+
+  @override
+  String get shopItemEditorBuySubtitle =>
+      'Default supplier + typical cost — pre-fills Receive later.';
 
   @override
   String get shopItemEditorTypicalCostHeader => 'Typical cost';
