@@ -640,22 +640,37 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
       }
 
       // Opening stock — sum per-packaging base-unit quantities into a
-      // single adjustment call with reason='opening'.
+      // single adjustment call with reason='opening'. Compute a
+      // weighted-average per-base-unit cost from packagings that have
+      // both qty + cost; fall back to 0 when no packaging carried
+      // cost data. post_inventory_adjustment requires unit_cost on
+      // ANY stock increase regardless of reason (migration
+      // 0010_posting_rpcs.sql:1370-1376) — #351 fix: before this we
+      // posted without unit_cost and the server silently rejected
+      // every onboarding item's opening stock.
       var openingBase = 0.0;
+      var openingCostTotal = 0.0;
       for (final entry in perUnitIds.entries) {
         final p = entry.key;
         final qty = p.parsedOpeningQty;
         if (qty == null || qty <= 0) continue;
         final conversion =
             p.isBase ? 1.0 : (p.parsedConversion?.toDouble() ?? 1.0);
-        openingBase += qty.toDouble() * conversion;
+        final baseQty = qty.toDouble() * conversion;
+        openingBase += baseQty;
+        final cost = p.parsedCost;
+        if (cost != null && cost > 0) {
+          openingCostTotal += qty.toDouble() * cost.toDouble();
+        }
       }
       if (openingBase > 0) {
+        final avgUnitCost = openingCostTotal / openingBase;
         try {
           await api.postOpeningStockAdjustment(
             shopId: widget.shop.id,
             shopItemId: shopItemId,
             baseQuantity: openingBase,
+            unitCost: avgUnitCost,
             notes: l.shopItemEditorOpeningStockNote,
           );
         } catch (error, stackTrace) {
