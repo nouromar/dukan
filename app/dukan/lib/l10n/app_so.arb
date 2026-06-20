@@ -887,14 +887,6 @@
       }
     }
   },
-  "shopItemDetailPriceEditedAt": "qiimaha la beddelay {when}",
-  "@shopItemDetailPriceEditedAt": {
-    "placeholders": {
-      "when": {
-        "type": "String"
-      }
-    }
-  },
   "partyDetailEditedAt": "xog xidhiidh la beddelay {when}",
   "@partyDetailEditedAt": {
     "placeholders": {

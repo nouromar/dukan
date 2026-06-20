@@ -2038,11 +2038,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String shopItemDetailPriceEditedAt(String when) {
-    return 'price edited $when';
-  }
-
-  @override
   String partyDetailEditedAt(String when) {
     return 'contact info edited $when';
   }

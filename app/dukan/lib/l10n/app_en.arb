@@ -897,14 +897,6 @@
       }
     }
   },
-  "shopItemDetailPriceEditedAt": "price edited {when}",
-  "@shopItemDetailPriceEditedAt": {
-    "placeholders": {
-      "when": {
-        "type": "String"
-      }
-    }
-  },
   "partyDetailEditedAt": "contact info edited {when}",
   "@partyDetailEditedAt": {
     "placeholders": {

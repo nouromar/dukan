@@ -3408,12 +3408,6 @@ abstract class AppLocalizations {
   /// **'voided {when}'**
   String saleHistoryVoidedSubtitle(String when);
 
-  /// No description provided for @shopItemDetailPriceEditedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'price edited {when}'**
-  String shopItemDetailPriceEditedAt(String when);
-
   /// No description provided for @partyDetailEditedAt.
   ///
   /// In en, this message translates to:

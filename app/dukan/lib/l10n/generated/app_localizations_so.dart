@@ -2057,11 +2057,6 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String shopItemDetailPriceEditedAt(String when) {
-    return 'qiimaha la beddelay $when';
-  }
-
-  @override
   String partyDetailEditedAt(String when) {
     return 'xog xidhiidh la beddelay $when';
   }

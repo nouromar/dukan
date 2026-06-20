@@ -32,7 +32,6 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/realtime.dart';
-import 'package:dukan/shared/relative_time.dart';
 import 'package:dukan/shared/stock_format.dart';
 
 class ShopItemDetailScreen extends StatefulWidget {
@@ -116,6 +115,13 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     final api = context.read<ShopApi>();
     // Detail + categories in parallel so the category picker is ready
     // the moment the user taps the tile.
+    //
+    // Previously this also fired one listAuditEntriesForEntity per
+    // packaging to surface a small "edited X ago" cue under each
+    // price row. That added N additional RPCs (3-packaging item =
+    // 3 extra round-trips) just for an informational line nobody was
+    // actually using; the proper audit log surfaces the same history.
+    // Dropped in #347 to make the screen feel snappy on iPhone.
     final detailF = api.getShopItem(
       shopId: widget.shop.id,
       shopItemId: widget.shopItemId,
@@ -125,34 +131,9 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     final results = await Future.wait([detailF, categoriesF]);
     final detail = results[0] as ShopItemDetail;
     _liveDisplayName = detail.header.displayName;
-    // Audit-log "last edited" cue per packaging. Fire one fetch per
-    // packaging in parallel; per-tile counts are tiny (1-5 typical).
-    // Failure for any single packaging is silent -- the tile just
-    // renders without the cue.
-    final audits = await Future.wait(
-      detail.units.map((u) => api.listAuditEntriesForEntity(
-            shopId: widget.shop.id,
-            entityType: 'shop_item_unit',
-            entityId: u.shopItemUnitId,
-            limit: 1,
-          ).then<List<AuditEntry>?>((r) => r).catchError((_) => null)),
-    );
-    final priceEditedAt = <String, DateTime>{};
-    for (var i = 0; i < detail.units.length; i++) {
-      final rows = audits[i];
-      if (rows == null || rows.isEmpty) continue;
-      final priceEdit = rows.firstWhere(
-        (a) => a.actionCode == 'inventory.unit.price_edit',
-        orElse: () => rows.first,
-      );
-      if (priceEdit.actionCode == 'inventory.unit.price_edit') {
-        priceEditedAt[detail.units[i].shopItemUnitId] = priceEdit.occurredAt;
-      }
-    }
     return _ProductBootstrap(
       detail: detail,
       categories: results[1] as List<CategoryOption>,
-      priceEditedAt: priceEditedAt,
     );
   }
 
@@ -607,14 +588,9 @@ class _ProductBootstrap {
   const _ProductBootstrap({
     required this.detail,
     required this.categories,
-    this.priceEditedAt = const <String, DateTime>{},
   });
   final ShopItemDetail detail;
   final List<CategoryOption> categories;
-  /// shop_item_unit_id → most-recent inventory.unit.price_edit timestamp.
-  /// Absent for packagings whose price hasn't been edited (or audit
-  /// fetch failed silently).
-  final Map<String, DateTime> priceEditedAt;
 }
 
 class _CategoryPick {
@@ -760,7 +736,6 @@ class _DetailBody extends StatelessWidget {
               barcodes: detail.barcodes
                   .where((b) => b.shopItemUnitId == u.shopItemUnitId)
                   .toList(growable: false),
-              priceEditedAt: bootstrap.priceEditedAt[u.shopItemUnitId],
               onEditPrice: canEdit ? () => onEditPrice(u) : null,
               onToggleDefault: canEdit
                   ? ({
@@ -877,13 +852,7 @@ class _PackagingTile extends StatelessWidget {
     required this.onAddBarcode,
     required this.onScanBindBarcode,
     required this.onBarcodeChipTap,
-    this.priceEditedAt,
   });
-
-  /// When non-null, surface a "price edited {relative time} ago"
-  /// subtitle beneath the price. Sourced from
-  /// list_audit_entries_for_entity at bootstrap.
-  final DateTime? priceEditedAt;
 
   final ShopItemUnitDetail unit;
   final ShopSummary shop;
@@ -1005,18 +974,6 @@ class _PackagingTile extends StatelessWidget {
                 ),
               ],
             ),
-            if (priceEditedAt != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                l.shopItemDetailPriceEditedAt(
-                  formatRelativeTime(context, priceEditedAt!),
-                ),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
             // Barcodes inline — the chip IS the SKU. v1 (pre-#346)
             // hid the +Add / Scan affordances on the base packaging
             // when it had no codes, assuming "base = loose / by
