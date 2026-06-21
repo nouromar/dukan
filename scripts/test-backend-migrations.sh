@@ -763,6 +763,68 @@ begin
 
   perform public.complete_shop_setup(v_shop_id);
 
+  -- #359 regression: 'opening' adjustment must succeed AFTER setup
+  -- transitioned to 'ready' — the New Item editor (post-#316) creates
+  -- items at any time and each one needs an opening stock post for
+  -- its initial stock. The prior guard rejected these legitimate
+  -- posts with "Opening stock can only be posted during setup".
+  -- Relaxation: 'opening' is allowed regardless of setup_status;
+  -- all OTHER reason codes still require 'ready'.
+  declare
+    v_post_setup_item_id uuid;
+  begin
+    if (select setup_status from public.shop where id = v_shop_id) <> 'ready' then
+      raise exception '#359 pre-check: shop should be ready after complete_shop_setup';
+    end if;
+    -- create_shop_item signature: (shop_id, name, language_code,
+    -- sold_unit_code, sale_price, category_id, ...). Mirrors the
+    -- 'Eggs' callsite earlier in this harness.
+    select shop_item_id into v_post_setup_item_id
+    from public.create_shop_item(
+      v_shop_id, '#359 post-ready Rice', 'en', 'kg', 5.00, null
+    );
+    perform public.post_inventory_adjustment(
+      v_shop_id, 'opening',
+      jsonb_build_array(jsonb_build_object(
+        'shop_item_id', v_post_setup_item_id,
+        'quantity_delta', 60,
+        'unit_cost', 2.00
+      )),
+      null, '#359-opening-after-ready', null, 'opening after setup ready'
+    );
+    if (select current_stock from public.shop_item
+        where id = v_post_setup_item_id) <> 60 then
+      raise exception '#359: opening adjustment did not update current_stock';
+    end if;
+    if (select setup_status from public.shop where id = v_shop_id) <> 'ready' then
+      raise exception '#359: opening adjustment should NOT change setup_status from ready';
+    end if;
+  end;
+
+  -- #359 negative path: a NON-opening reason still requires the
+  -- 'ready' setup_status; the guard only relaxes the 'opening' branch.
+  -- Rewind setup_status to 'template_applied' and try a 'correction'
+  -- — should be rejected.
+  update public.shop set setup_status = 'template_applied' where id = v_shop_id;
+  begin
+    perform public.post_inventory_adjustment(
+      v_shop_id, 'correction',
+      jsonb_build_array(jsonb_build_object(
+        'shop_item_id', v_rice_shop_item_id,
+        'quantity_delta', -1,
+        'unit_cost', 0.50
+      )),
+      null, '#359-correction-not-ready', null, 'should reject'
+    );
+    raise exception '#359: correction adjustment must fail when setup_status is not ready';
+  exception when others then
+    if sqlerrm not like '%Shop setup must be ready before posting adjustments%' then
+      raise exception '#359: wrong error: %', sqlerrm;
+    end if;
+  end;
+  -- Restore ready so downstream tests aren't affected.
+  update public.shop set setup_status = 'ready' where id = v_shop_id;
+
   -- Receive: 4 × 25 kg bag of rice from Hodan, $20/bag, $30 paid cash.
   v_receive_txn_id := public.post_receive(
     v_shop_id, v_supplier_id,

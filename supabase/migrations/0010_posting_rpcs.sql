@@ -1263,11 +1263,20 @@ begin
     raise exception 'Shop does not exist';
   end if;
 
-  if p_reason_code = 'opening' then
-    if v_setup_status not in ('template_applied', 'opening_stock_done') then
-      raise exception 'Opening stock can only be posted during setup';
-    end if;
-  elsif v_setup_status <> 'ready' then
+  -- 'opening' reason is allowed regardless of setup_status: during
+  -- initial setup the cashier opens template-seeded items, and
+  -- post-setup the New Item editor opens stock on newly-created
+  -- items (see #357 — the prior guard
+  -- "Opening stock can only be posted during setup" broke every
+  -- on-create opening post once setup_status went 'ready'). Per-item
+  -- safety still holds because:
+  --   * a newly-created shop_item starts with current_stock=0 and
+  --     no prior adjustment lines, so opening is meaningful;
+  --   * the audit log records every adjustment, so abuse (re-
+  --     opening an existing item) is traceable.
+  -- All OTHER reason codes (correction, damage, count_diff, ...)
+  -- still require setup_status='ready'.
+  if p_reason_code <> 'opening' and v_setup_status <> 'ready' then
     raise exception 'Shop setup must be ready before posting adjustments';
   end if;
 
