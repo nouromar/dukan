@@ -687,7 +687,8 @@ class _DetailBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 32),
       children: [
-        _SectionLabel(text: l.shopItemEditorItemSectionHeader),
+        // #362: Dropped the "ITEM" section label — redundant with the
+        // AppBar title, which already shows the item's display name.
         _SettingsTile(
           label: l.shopItemEditorNameLabel,
           value: displayName(header.displayName),

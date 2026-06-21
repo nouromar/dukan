@@ -825,7 +825,6 @@
   "shopItemEditorBonoSpellingLabel": "Bono spelling (optional)",
   "shopItemEditorBonoSpellingHelper": "How this item appears on supplier paper invoices (e.g. CCL 330x24).",
   "removePackagingTooltip": "Remove packaging",
-  "shopItemEditorItemSectionHeader": "Item",
   "removePackagingConfirmBody": "Remove this packaging? You can add it back later.",
   "removePackagingConfirmAction": "REMOVE",
   "shopItemEditorSaveButton": "SAVE",
