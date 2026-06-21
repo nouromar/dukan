@@ -1703,6 +1703,23 @@ class FakeShopApi implements ShopApi {
   }) async {
     setPlatformConfigCalls.add((orgId: orgId, key: key, value: value));
   }
+
+  /// Records of every call to setAuditOriginalActor (#368).
+  final List<({String shopId, String entityId, String originalActorUserId})>
+      setAuditOriginalActorCalls = [];
+
+  @override
+  Future<void> setAuditOriginalActor({
+    required String shopId,
+    required String entityId,
+    required String originalActorUserId,
+  }) async {
+    setAuditOriginalActorCalls.add((
+      shopId: shopId,
+      entityId: entityId,
+      originalActorUserId: originalActorUserId,
+    ));
+  }
 }
 
 // --- Fixture builders -----------------------------------------------------

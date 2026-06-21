@@ -170,4 +170,53 @@ void main() {
       throwsA(isA<UnsupportedError>()),
     );
   });
+
+  test(
+      '#368 after successful drain, setAuditOriginalActor is called '
+      'with the post.originalActorUserId + the returned transaction id',
+      () async {
+    api.onPostSale = (shop, lines, paid, party, method, clientOp, notes) async {
+      return 'sale-txn-stamped';
+    };
+    await executor.execute(_post(
+      'post_sale',
+      buildPostSaleParams(
+        lines: const [
+          SaleLine(shopItemUnitId: 'unit-a', quantity: 1, unitPrice: 5),
+        ],
+        paidAmount: 5,
+        paymentMethodCode: 'cash',
+      ),
+    ));
+    expect(api.setAuditOriginalActorCalls, hasLength(1));
+    final call = api.setAuditOriginalActorCalls.single;
+    expect(call.shopId, 'shop-1');
+    expect(call.entityId, 'sale-txn-stamped');
+    expect(call.originalActorUserId, 'user-A');
+  });
+
+  test(
+      '#368 audit-stamp skipped when post has no originator stamp',
+      () async {
+    api.onPostSale = (shop, lines, paid, party, method, clientOp, notes) async {
+      return 'sale-txn-bare';
+    };
+    final bare = PendingPost(
+      id: 'id-bare',
+      clientOpId: 'op-bare',
+      shopId: 'shop-1',
+      originalActorUserId: '', // empty = no originator captured
+      rpc: 'post_sale',
+      params: buildPostSaleParams(
+        lines: const [
+          SaleLine(shopItemUnitId: 'unit-a', quantity: 1, unitPrice: 5),
+        ],
+        paidAmount: 5,
+        paymentMethodCode: 'cash',
+      ),
+      queuedAt: DateTime.utc(2026, 6, 21, 12, 0, 0),
+    );
+    await executor.execute(bare);
+    expect(api.setAuditOriginalActorCalls, isEmpty);
+  });
 }

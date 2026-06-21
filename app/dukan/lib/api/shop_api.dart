@@ -1958,4 +1958,28 @@ class ShopApi {
       },
     );
   }
+
+  /// Backfills `original_actor_user_id` on the most-recent audit
+  /// row for `(shop_id, entity_id)`. Called by the queue executor
+  /// after a successful drain when the originator differs from the
+  /// current auth user (cashier A queued, owner B drained). See
+  /// migration 0068_audit_original_actor.sql.
+  ///
+  /// Best-effort: if the underlying post didn't emit audit, the
+  /// server-side RPC is a no-op. We don't surface errors to the
+  /// cashier — audit-stamping is an admin-side concern.
+  Future<void> setAuditOriginalActor({
+    required String shopId,
+    required String entityId,
+    required String originalActorUserId,
+  }) async {
+    await _client.rpc(
+      'set_audit_original_actor',
+      params: {
+        'p_shop_id': shopId,
+        'p_entity_id': entityId,
+        'p_original_actor_user_id': originalActorUserId,
+      },
+    );
+  }
 }

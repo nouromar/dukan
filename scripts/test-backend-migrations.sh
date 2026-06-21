@@ -5965,6 +5965,98 @@ set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
 reset role;
 
+-- §RR set_audit_original_actor (0068). Verify:
+--   1. The original_actor_user_id column exists on audit_log and
+--      defaults to NULL.
+--   2. set_audit_original_actor backfills the most-recent audit row
+--      for (shop, entity).
+--   3. Re-calling with the same value is a no-op (idempotent).
+--   4. Calling for an entity with no audit row no-ops silently.
+--   5. Non-shop-member calls are rejected.
+
+do $$
+declare
+  v_shop_id     uuid;
+  v_owner_id    uuid := '00000000-0000-0000-0000-000000000001';
+  v_other_user  uuid := '00000000-0000-0000-0000-000000000099';
+  v_synthetic   uuid := '11111111-1111-1111-1111-111111111111';
+  v_audit_id    uuid;
+  v_after_set   uuid;
+  v_random_ent  uuid := extensions.gen_random_uuid();
+begin
+  select id into v_shop_id from public.shop where name = 'Hodan Shop' limit 1;
+  if v_shop_id is null then
+    raise exception 'RR pre: Hodan Shop fixture missing';
+  end if;
+
+  -- Insert a fixture audit row (use _audit_log helper).
+  v_audit_id := public._audit_log(
+    p_shop_id      => v_shop_id,
+    p_action_code  => 'sale.post',
+    p_entity_type  => 'txn',
+    p_entity_id    => v_synthetic,
+    p_after        => '{"test": "rr"}'::jsonb,
+    p_client_op_id => null
+  );
+
+  -- (1) original_actor_user_id starts NULL.
+  if (select original_actor_user_id from public.audit_log
+        where id = v_audit_id) is not null then
+    raise exception 'RR (1): original_actor_user_id should be NULL on insert';
+  end if;
+
+  -- (2) Backfill.
+  perform public.set_audit_original_actor(
+    v_shop_id, v_synthetic, v_other_user
+  );
+  if (select original_actor_user_id from public.audit_log
+        where id = v_audit_id) <> v_other_user then
+    raise exception 'RR (2): set_audit_original_actor did not stamp the row';
+  end if;
+
+  -- (3) Idempotent — same call again.
+  perform public.set_audit_original_actor(
+    v_shop_id, v_synthetic, v_other_user
+  );
+  if (select original_actor_user_id from public.audit_log
+        where id = v_audit_id) <> v_other_user then
+    raise exception 'RR (3): idempotent re-call broke the stamp';
+  end if;
+
+  -- (4) No matching audit row — no-op, no exception.
+  perform public.set_audit_original_actor(
+    v_shop_id, v_random_ent, v_other_user
+  );
+end;
+$$;
+
+-- (5) Non-member rejection. Switch to a user with no membership in
+--     the org and assert the RPC raises.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id     uuid;
+  v_synthetic   uuid := '22222222-2222-2222-2222-222222222222';
+  v_failed      boolean := false;
+begin
+  select id into v_shop_id from public.shop where name = 'Hodan Shop' limit 1;
+  begin
+    perform public.set_audit_original_actor(
+      v_shop_id, v_synthetic, '00000000-0000-0000-0000-000000000099'
+    );
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'RR (5): non-member was allowed to call set_audit_original_actor';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+reset role;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';

@@ -17,23 +17,41 @@ class PostExecutor {
   final ShopApi _api;
 
   Future<void> execute(PendingPost post) async {
+    final String entityId;
     switch (post.rpc) {
       case 'post_sale':
-        await _executeSale(post);
+        entityId = await _executeSale(post);
       case 'post_receive':
-        await _executeReceive(post);
+        entityId = await _executeReceive(post);
       case 'post_payment':
-        await _executePayment(post);
+        entityId = await _executePayment(post);
       case 'post_expense':
-        await _executeExpense(post);
+        entityId = await _executeExpense(post);
       default:
         throw UnsupportedError(
           'OfflineQueue does not yet know how to retry ${post.rpc}',
         );
     }
+    // #368 audit-stamping: if the cashier who originated this post
+    // is captured (set at enqueue time from auth.uid()), backfill
+    // it onto the freshly-created audit row. Best-effort — don't
+    // fail the drain over audit metadata.
+    if (post.originalActorUserId.isNotEmpty) {
+      try {
+        await _api.setAuditOriginalActor(
+          shopId: post.shopId,
+          entityId: entityId,
+          originalActorUserId: post.originalActorUserId,
+        );
+      } catch (_) {
+        // Audit-stamp failure is non-fatal. The post landed; the
+        // audit row exists with the drainer as actor; we just lost
+        // the originator backfill.
+      }
+    }
   }
 
-  Future<void> _executeSale(PendingPost post) async {
+  Future<String> _executeSale(PendingPost post) async {
     final p = post.params;
     final lines = (p['lines'] as List)
         .whereType<Map>()
@@ -44,7 +62,7 @@ class PostExecutor {
               unitPrice: (m['unit_price'] as num),
             ))
         .toList(growable: false);
-    await _api.postSale(
+    return _api.postSale(
       shopId: post.shopId,
       lines: lines,
       paidAmount: (p['paid_amount'] as num),
@@ -54,7 +72,7 @@ class PostExecutor {
     );
   }
 
-  Future<void> _executeReceive(PendingPost post) async {
+  Future<String> _executeReceive(PendingPost post) async {
     final p = post.params;
     final lines = (p['lines'] as List)
         .whereType<Map>()
@@ -65,7 +83,7 @@ class PostExecutor {
               lineTotal: (m['line_total'] as num),
             ))
         .toList(growable: false);
-    await _api.postReceive(
+    return _api.postReceive(
       shopId: post.shopId,
       partyId: p['party_id'] as String,
       lines: lines,
@@ -77,7 +95,7 @@ class PostExecutor {
     );
   }
 
-  Future<void> _executePayment(PendingPost post) async {
+  Future<String> _executePayment(PendingPost post) async {
     final p = post.params;
     final rawAllocs = p['allocations'];
     final allocations = rawAllocs is List
@@ -90,7 +108,7 @@ class PostExecutor {
                 ))
             .toList(growable: false)
         : null;
-    await _api.postPayment(
+    return _api.postPayment(
       shopId: post.shopId,
       partyId: p['party_id'] as String,
       direction: p['direction'] as String,
@@ -102,9 +120,9 @@ class PostExecutor {
     );
   }
 
-  Future<void> _executeExpense(PendingPost post) async {
+  Future<String> _executeExpense(PendingPost post) async {
     final p = post.params;
-    await _api.postExpense(
+    return _api.postExpense(
       shopId: post.shopId,
       expenseCategoryId: p['expense_category_id'] as String,
       amount: (p['amount'] as num),

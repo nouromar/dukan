@@ -6,11 +6,6 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/payment/payment_screen.dart';
-import 'package:dukan/queue/offline_queue_controller.dart';
-import 'package:dukan/queue/pending_post.dart';
-import 'package:dukan/storage/app_database.dart';
-import 'package:dukan/storage/pending_post_dao.dart';
-
 import '../shared/fakes.dart';
 import '../shared/wrap.dart';
 
