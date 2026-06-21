@@ -839,8 +839,10 @@
     }
   },
   "shopItemDetailEditPrice": "Edit price",
-  "shopItemDetailDefaultSaleBadge": "default sale",
-  "shopItemDetailDefaultReceiveBadge": "default receive",
+  "shopItemDetailDefaultSaleBadge": "Sale",
+  "shopItemDetailDefaultReceiveBadge": "Receive",
+  "shopItemDetailDefaultForLabel": "Default for:",
+  "shopItemDetailStockLabel": "Stock",
   "shopItemDetailNoPriceLabel": "no price yet",
   "shopItemDetailReorderBelowLabel": "Reorder below {amount} {unit}",
   "catalogPickerTitle": "Browse catalog",

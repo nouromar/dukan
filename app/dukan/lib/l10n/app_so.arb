@@ -829,8 +829,10 @@
     }
   },
   "shopItemDetailEditPrice": "Bedel qiimaha",
-  "shopItemDetailDefaultSaleBadge": "iib caadi",
-  "shopItemDetailDefaultReceiveBadge": "alaab caadi",
+  "shopItemDetailDefaultSaleBadge": "Iibin",
+  "shopItemDetailDefaultReceiveBadge": "Soo qaad",
+  "shopItemDetailDefaultForLabel": "Caadi u ah:",
+  "shopItemDetailStockLabel": "Kayd",
   "shopItemDetailNoPriceLabel": "qiimo maleh",
   "shopItemDetailReorderBelowLabel": "Soo qaado marka uu yaraado {amount} {unit}",
   "catalogPickerTitle": "Eeg liiska guud",

@@ -3249,14 +3249,26 @@ abstract class AppLocalizations {
   /// No description provided for @shopItemDetailDefaultSaleBadge.
   ///
   /// In en, this message translates to:
-  /// **'default sale'**
+  /// **'Sale'**
   String get shopItemDetailDefaultSaleBadge;
 
   /// No description provided for @shopItemDetailDefaultReceiveBadge.
   ///
   /// In en, this message translates to:
-  /// **'default receive'**
+  /// **'Receive'**
   String get shopItemDetailDefaultReceiveBadge;
+
+  /// No description provided for @shopItemDetailDefaultForLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Default for:'**
+  String get shopItemDetailDefaultForLabel;
+
+  /// No description provided for @shopItemDetailStockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock'**
+  String get shopItemDetailStockLabel;
 
   /// No description provided for @shopItemDetailNoPriceLabel.
   ///

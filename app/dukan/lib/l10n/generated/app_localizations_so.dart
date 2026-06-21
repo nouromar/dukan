@@ -1919,10 +1919,16 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemDetailEditPrice => 'Bedel qiimaha';
 
   @override
-  String get shopItemDetailDefaultSaleBadge => 'iib caadi';
+  String get shopItemDetailDefaultSaleBadge => 'Iibin';
 
   @override
-  String get shopItemDetailDefaultReceiveBadge => 'alaab caadi';
+  String get shopItemDetailDefaultReceiveBadge => 'Soo qaad';
+
+  @override
+  String get shopItemDetailDefaultForLabel => 'Caadi u ah:';
+
+  @override
+  String get shopItemDetailStockLabel => 'Kayd';
 
   @override
   String get shopItemDetailNoPriceLabel => 'qiimo maleh';

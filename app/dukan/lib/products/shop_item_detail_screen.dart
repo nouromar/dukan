@@ -708,29 +708,45 @@ class _DetailBody extends StatelessWidget {
           value: header.baseUnitLabel,
           onTap: null,
         ),
-        // Big stock readout — tappable opens the adjust sheet; cashier
-        // sees the readout without the tap affordance.
+        // Stock readout (#361): now a labeled row matching the
+        // _SettingsTile shape ("Stock    12.5 kg ⚙") so the cashier
+        // sees what the number is. Low-stock red coloring stays on
+        // the VALUE only so the color signal still works; the label
+        // stays neutral. Whole row is the tap target.
         InkWell(
           onTap: canAdjustStock ? onAdjustStock : null,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
               children: [
                 Expanded(
                   child: Text(
+                    l.shopItemDetailStockLabel,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
                     stockText,
-                    style: theme.textTheme.headlineSmall?.copyWith(
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: low ? theme.colorScheme.error : null,
                     ),
                   ),
                 ),
-                if (canAdjustStock)
+                if (canAdjustStock) ...[
+                  const SizedBox(width: 4),
                   Icon(
                     Icons.tune,
                     size: 20,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
+                ],
               ],
             ),
           ),
@@ -903,47 +919,58 @@ class _PackagingTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // #361: whole packaging-row header is the tap target for
+            // edit-price (when allowed) — previously the InkWell was
+            // wrapped tightly around the price text (~32 px tall,
+            // 60–70 px wide), below the 56 dp guideline. The
+            // packaging name on the left was dead space. Now the
+            // entire header row is one InkWell, with the price + edit
+            // pencil kept as visual cues inside. Delete button stays
+            // outside the InkWell so its own tap doesn't trigger
+            // edit.
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    unit.packagingLabel,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ),
-                InkWell(
-                  onTap: onEditPrice,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 6),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (price == null)
-                          Text(
-                            l.shopItemDetailNoPriceLabel,
-                            style: theme.textTheme.bodyLarge?.copyWith(
+                  child: InkWell(
+                    onTap: onEditPrice,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              unit.packagingLabel,
+                              style: theme.textTheme.titleMedium,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (price == null)
+                            Text(
+                              l.shopItemDetailNoPriceLabel,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            )
+                          else
+                            Text(
+                              formatMoney(price, shop),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          if (onEditPrice != null) ...[
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.edit_outlined,
+                              size: 16,
                               color: theme.colorScheme.onSurfaceVariant,
-                              fontStyle: FontStyle.italic,
                             ),
-                          )
-                        else
-                          Text(
-                            formatMoney(price, shop),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        if (onEditPrice != null) ...[
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.edit_outlined,
-                            size: 16,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -955,85 +982,118 @@ class _PackagingTile extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
+            // #361: "Default for:" prefix + full-height FilterChips.
+            // Previous `visualDensity: compact` rendered chips at ~28
+            // px, below the 56 dp guideline for primary tap-targets.
+            // Material 3 default (~40 px) is still smaller than a
+            // button but acceptable for a state toggle. The "Default
+            // for:" prefix carries the semantics; chips now read just
+            // "Sale" / "Receive" instead of repeating "Default" in
+            // each label.
+            const SizedBox(height: 8),
+            Row(
               children: [
-                FilterChip(
-                  label: Text(l.shopItemDetailDefaultSaleBadge),
-                  selected: unit.isDefaultSale,
-                  visualDensity: VisualDensity.compact,
-                  onSelected: onToggleDefault == null
-                      ? null
-                      : (v) => onToggleDefault!(
-                            isDefaultSale: v,
-                            isDefaultReceive: unit.isDefaultReceive,
-                          ),
+                Text(
+                  l.shopItemDetailDefaultForLabel,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                FilterChip(
-                  label: Text(l.shopItemDetailDefaultReceiveBadge),
-                  selected: unit.isDefaultReceive,
-                  visualDensity: VisualDensity.compact,
-                  onSelected: onToggleDefault == null
-                      ? null
-                      : (v) => onToggleDefault!(
-                            isDefaultSale: unit.isDefaultSale,
-                            isDefaultReceive: v,
-                          ),
-                ),
-              ],
-            ),
-            // Barcodes inline — the chip IS the SKU. v1 (pre-#346)
-            // hid the +Add / Scan affordances on the base packaging
-            // when it had no codes, assuming "base = loose / by
-            // weight, rarely has a barcode". That's not always true —
-            // a bottle of water sold individually has a barcode on
-            // its base unit. The editor already lets you bind a base
-            // barcode at creation (shop_item_editor_screen.dart
-            // line 503); detail-screen consistency means letting you
-            // bind one later too.
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                for (final b in barcodes)
-                  ActionChip(
-                    avatar: b.isPrimary
-                        ? Icon(
-                            Icons.star,
-                            size: 14,
-                            color: theme.colorScheme.primary,
-                          )
-                        : null,
-                    label: Text(
-                      b.barcode,
-                      style: const TextStyle(
-                        fontFeatures: [FontFeature.tabularFigures()],
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      FilterChip(
+                        label: Text(l.shopItemDetailDefaultSaleBadge),
+                        selected: unit.isDefaultSale,
+                        onSelected: onToggleDefault == null
+                            ? null
+                            : (v) => onToggleDefault!(
+                                  isDefaultSale: v,
+                                  isDefaultReceive: unit.isDefaultReceive,
+                                ),
                       ),
-                    ),
-                    // Null pressed = disabled chip; cashier sees the
-                    // code but can't open the promote/remove menu.
-                    onPressed: onBarcodeChipTap == null
-                        ? null
-                        : () => onBarcodeChipTap!(b),
+                      FilterChip(
+                        label: Text(l.shopItemDetailDefaultReceiveBadge),
+                        selected: unit.isDefaultReceive,
+                        onSelected: onToggleDefault == null
+                            ? null
+                            : (v) => onToggleDefault!(
+                                  isDefaultSale: unit.isDefaultSale,
+                                  isDefaultReceive: v,
+                                ),
+                      ),
+                    ],
                   ),
-                if (onAddBarcode != null)
-                  ActionChip(
-                    avatar: const Icon(Icons.add, size: 14),
-                    label: Text(l.barcodeAddTooltip),
-                    onPressed: onAddBarcode,
-                  ),
-                if (onScanBindBarcode != null)
-                  ActionChip(
-                    avatar: const Icon(Icons.qr_code_scanner, size: 14),
-                    label: Text(l.barcodeScanAndBindAction),
-                    onPressed: onScanBindBarcode,
-                  ),
+                ),
               ],
             ),
+            // #361: barcode chips split into two Wraps — top one is
+            // the existing codes (data), bottom one is the +Add /
+            // Scan action affordances. Previously these were
+            // visually indistinguishable in one Wrap; the cashier
+            // had no signal of which chips were "your data" vs
+            // "actions you can take". The actions Wrap is hidden
+            // entirely when !canBindBarcode (both callbacks null).
+            //
+            // Existing UX note (pre-#346): the editor lets the
+            // cashier bind a barcode to the base packaging at item
+            // creation (shop_item_editor_screen.dart line 503);
+            // detail-screen consistency means letting them bind one
+            // later too — that's why the action affordances render
+            // for any active unit including BASE.
+            if (barcodes.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  for (final b in barcodes)
+                    ActionChip(
+                      avatar: b.isPrimary
+                          ? Icon(
+                              Icons.star,
+                              size: 14,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                      label: Text(
+                        b.barcode,
+                        style: const TextStyle(
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      onPressed: onBarcodeChipTap == null
+                          ? null
+                          : () => onBarcodeChipTap!(b),
+                    ),
+                ],
+              ),
+            ],
+            if (onAddBarcode != null || onScanBindBarcode != null) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  if (onAddBarcode != null)
+                    ActionChip(
+                      avatar: const Icon(Icons.add, size: 14),
+                      label: Text(l.barcodeAddTooltip),
+                      onPressed: onAddBarcode,
+                    ),
+                  if (onScanBindBarcode != null)
+                    ActionChip(
+                      avatar: const Icon(Icons.qr_code_scanner, size: 14),
+                      label: Text(l.barcodeScanAndBindAction),
+                      onPressed: onScanBindBarcode,
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -1188,6 +1248,11 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Side-by-side label/value (#361): label left, value right with
+    // text-end + ellipsis, chevron right when editable. Previously
+    // stacked (label above value) which cost ~22 px per tile of
+    // vertical space; the label is short and predictable, the value
+    // is what can grow.
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -1195,32 +1260,34 @@ class _SettingsTile extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: onTap == null
-                          ? theme.colorScheme.onSurfaceVariant
-                          : null,
-                    ),
-                  ),
-                ],
+              child: Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
-            if (onTap != null)
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                value,
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: onTap == null
+                      ? theme.colorScheme.onSurfaceVariant
+                      : null,
+                ),
+              ),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 4),
               Icon(
                 Icons.chevron_right,
+                size: 20,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
+            ],
           ],
         ),
       ),

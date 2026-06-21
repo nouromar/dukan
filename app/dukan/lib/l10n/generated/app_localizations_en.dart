@@ -1903,10 +1903,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopItemDetailEditPrice => 'Edit price';
 
   @override
-  String get shopItemDetailDefaultSaleBadge => 'default sale';
+  String get shopItemDetailDefaultSaleBadge => 'Sale';
 
   @override
-  String get shopItemDetailDefaultReceiveBadge => 'default receive';
+  String get shopItemDetailDefaultReceiveBadge => 'Receive';
+
+  @override
+  String get shopItemDetailDefaultForLabel => 'Default for:';
+
+  @override
+  String get shopItemDetailStockLabel => 'Stock';
 
   @override
   String get shopItemDetailNoPriceLabel => 'no price yet';
