@@ -14,8 +14,9 @@ import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
-import 'package:dukan/queue/pending_post_store.dart';
 import 'package:dukan/receive/receive_controller.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/shared/fallback_localizations.dart';
 import 'package:dukan/shared/locale_controller.dart';
@@ -48,7 +49,7 @@ Widget wrapWithApp(
   // their own controller.
   final queue = offlineQueueController ??
       OfflineQueueController(
-        store: PendingPostStore(),
+        dao: PendingPostDao(AppDatabase.instance()),
         executor: (_) async {},
         // Zero backoff so the retry timer is effectively synchronous
         // and pumpAndSettle drains it without holding pending timers

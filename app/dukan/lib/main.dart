@@ -13,6 +13,7 @@ import 'package:dukan/shared/fallback_localizations.dart';
 import 'package:dukan/shared/locale_controller.dart';
 import 'package:dukan/shared/supabase_config_screen.dart';
 import 'package:dukan/shared/typography.dart';
+import 'package:dukan/storage/app_database.dart';
 
 Future<void> main() async {
   // ensureInitialized must run before any plugin call (Supabase touches
@@ -36,6 +37,16 @@ Future<void> main() async {
         )
       : Future<void>.value();
 
+  // Open the local sqflite DB alongside Supabase init so they
+  // overlap. Both are filesystem/disk-bound and independent of each
+  // other; serializing would add ~50 ms to cold start.
+  final Future<void> databaseFuture =
+      AppDatabase.instance().then((_) {}).catchError((error, stackTrace) {
+    // A failed DB open is non-fatal — the queue + caches simply
+    // won't work this session. Live RPCs still succeed.
+    CrashReporter.reportError(error, stackTrace, hint: 'main.openDatabase');
+  });
+
   if (appConfig.hasSentry) {
     await SentryFlutter.init(
       (options) {
@@ -54,7 +65,7 @@ Future<void> main() async {
         options.sendDefaultPii = false;
       },
       appRunner: () async {
-        await supabaseFuture;
+        await Future.wait([supabaseFuture, databaseFuture]);
         CrashReporter.install(enabled: true);
         runApp(DukanApp(
           supabaseClient:
@@ -63,7 +74,7 @@ Future<void> main() async {
       },
     );
   } else {
-    await supabaseFuture;
+    await Future.wait([supabaseFuture, databaseFuture]);
     runApp(DukanApp(
       supabaseClient:
           appConfig.hasSupabase ? Supabase.instance.client : null,

@@ -1,6 +1,7 @@
 // In-memory state + retry scheduling for the offline posting queue.
-// Loaded from PendingPostStore at app start, kept in lockstep with
-// disk via writeAll after every mutation.
+// Backed by PendingPostDao (sqflite) for durable, row-level
+// persistence — every mutation hits a single row, not a re-encoded
+// blob.
 //
 // Retry policy (exponential, capped):
 //   attempt 1 fail -> 5 s
@@ -23,20 +24,20 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'package:dukan/queue/pending_post.dart';
-import 'package:dukan/queue/pending_post_store.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
 
 typedef PostExecutorFn = Future<void> Function(PendingPost post);
 
 class OfflineQueueController extends ChangeNotifier {
   OfflineQueueController({
-    required this.store,
+    required this.dao,
     required this.executor,
     Duration Function(int attempts)? backoff,
     DateTime Function()? clock,
   })  : _backoff = backoff ?? _defaultBackoff,
         _clock = clock ?? DateTime.now;
 
-  final PendingPostStore store;
+  final PendingPostDao dao;
   final PostExecutorFn executor;
   final Duration Function(int) _backoff;
   final DateTime Function() _clock;
@@ -59,7 +60,7 @@ class OfflineQueueController extends ChangeNotifier {
   Future<void> start() async {
     if (_started) return;
     _started = true;
-    _pending = await store.readAll();
+    _pending = await dao.load();
     notifyListeners();
     if (_pending.isNotEmpty) {
       _scheduleDrain(immediate: true);
@@ -70,8 +71,8 @@ class OfflineQueueController extends ChangeNotifier {
   /// for posts whose immediate attempt failed (the caller has already
   /// observed the failure and is queuing for background retry).
   Future<void> enqueue(PendingPost post) async {
+    await dao.insert(post);
     _pending = [..._pending, post];
-    await store.writeAll(_pending);
     notifyListeners();
     _scheduleDrain(immediate: true);
   }
@@ -108,18 +109,26 @@ class OfflineQueueController extends ChangeNotifier {
         final head = _pending.first;
         try {
           await executor(head);
+          await dao.remove(head.id);
           _pending = _pending.sublist(1);
-          await store.writeAll(_pending);
           if (_disposed) return;
           notifyListeners();
         } catch (error) {
+          final attempts = head.attempts + 1;
+          final lastAttemptAt = _clock();
+          final errorString = error.toString();
+          await dao.updateAttempts(
+            id: head.id,
+            attempts: attempts,
+            lastAttemptAt: lastAttemptAt,
+            lastError: errorString,
+          );
           final updated = head.copyWith(
-            attempts: head.attempts + 1,
-            lastAttemptAt: _clock(),
-            lastError: error.toString(),
+            attempts: attempts,
+            lastAttemptAt: lastAttemptAt,
+            lastError: errorString,
           );
           _pending = [updated, ..._pending.sublist(1)];
-          await store.writeAll(_pending);
           if (_disposed) return;
           notifyListeners();
           break;

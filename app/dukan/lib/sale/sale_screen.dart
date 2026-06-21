@@ -685,10 +685,23 @@ class _SaleScreenState extends State<SaleScreen> {
         ),
       );
       if (!mounted) return;
+      // Stamp the cashier's user id so a future audit-stamping pass
+      // (Phase 5) can attribute the sale to whoever rang it up even
+      // if a different user is signed in when the queue drains.
+      // currentUser is non-null in production (screen is gated
+      // behind sign-in); '' is a defensive fallback for tests where
+      // Supabase isn't initialised.
+      String actorId = '';
+      try {
+        actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+      } catch (_) {
+        actorId = '';
+      }
       final post = PendingPost(
         id: generateClientOpId('sale'),
         clientOpId: clientOpId,
         shopId: widget.shop.id,
+        originalActorUserId: actorId,
         rpc: 'post_sale',
         params: buildPostSaleParams(
           lines: lines,

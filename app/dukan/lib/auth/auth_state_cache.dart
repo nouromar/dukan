@@ -9,17 +9,17 @@
 // reconciles state when it returns.
 //
 // Mirrors the shape of lib/shared/today_summary_cache.dart — same
-// SharedPreferences-backed SWR, per-user key so accounts on the same
-// device don't see each other's shops, swallowing on schema-mismatch
+// sqflite-backed SWR, per-user key so accounts on the same device
+// don't see each other's shops, swallowing on schema-mismatch
 // (drop + return null so the cold path runs).
 //
 // Sign-out clears the cache for the signed-out user.
 
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:dukan/api/types.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/cache_dao.dart';
 
 /// What's persisted: the shop list and the user's last-selected shop
 /// id. Currency symbols ride along so `ShopSummary.fromJson` can
@@ -40,17 +40,22 @@ class CachedAuthState {
 class AuthStateCache {
   AuthStateCache._();
 
+  /// Matches the Phase-3 `cache_ttl_auth_state_s` default. 1 hour is
+  /// long enough that warm cold-starts stay fast and short enough
+  /// that a stale shop list can't survive a major change.
+  static const Duration _kDefaultTtl = Duration(hours: 1);
+
   static String _key(String userId) => 'auth_state:$userId';
 
   /// Returns the cached state for [userId], or null when there's
   /// nothing cached or the stored value is corrupt / stale-schema.
   /// A corrupt value is removed so the next put writes fresh JSON.
   static Future<CachedAuthState?> get(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_key(userId));
-    if (raw == null) return null;
+    final dao = CacheDao(AppDatabase.instance());
+    final entry = await dao.get(_key(userId));
+    if (entry == null) return null;
     try {
-      final json = jsonDecode(raw) as Map<String, dynamic>;
+      final json = jsonDecode(entry.valueJson) as Map<String, dynamic>;
       final symbolsRaw = (json['currency_symbols'] as Map?) ?? const {};
       final symbols = <String, String>{};
       symbolsRaw.forEach((key, value) {
@@ -70,7 +75,7 @@ class AuthStateCache {
       );
     } catch (_) {
       // Stored value is corrupt or from a previous schema — drop it.
-      await prefs.remove(_key(userId));
+      await dao.remove(_key(userId));
       return null;
     }
   }
@@ -85,21 +90,29 @@ class AuthStateCache {
     String? selectedShopId,
   }) async {
     if (shops.isEmpty) return;
-    final prefs = await SharedPreferences.getInstance();
-    final json = <String, dynamic>{
-      'shops': shops.map(_shopToJson).toList(),
-      'currency_symbols': currencySymbols,
-      'selected_shop_id': selectedShopId,
-    };
-    await prefs.setString(_key(userId), jsonEncode(json));
+    try {
+      final dao = CacheDao(AppDatabase.instance());
+      final json = <String, dynamic>{
+        'shops': shops.map(_shopToJson).toList(),
+        'currency_symbols': currencySymbols,
+        'selected_shop_id': selectedShopId,
+      };
+      await dao.put(_key(userId), jsonEncode(json), ttl: _kDefaultTtl);
+    } catch (_) {
+      // Cache writes never block sign-in.
+    }
   }
 
   /// Drop the cached state for [userId]. Called on sign-out so a
   /// next sign-in by a different user on the same device doesn't
   /// briefly render the previous user's shops.
   static Future<void> clear(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_key(userId));
+    try {
+      final dao = CacheDao(AppDatabase.instance());
+      await dao.remove(_key(userId));
+    } catch (_) {
+      // Best-effort — a failed clear is recoverable on next put.
+    }
   }
 
   static Map<String, dynamic> _shopToJson(ShopSummary shop) {

@@ -3204,12 +3204,6 @@ abstract class AppLocalizations {
   /// **'Remove packaging'**
   String get removePackagingTooltip;
 
-  /// No description provided for @shopItemEditorItemSectionHeader.
-  ///
-  /// In en, this message translates to:
-  /// **'Item'**
-  String get shopItemEditorItemSectionHeader;
-
   /// No description provided for @removePackagingConfirmBody.
   ///
   /// In en, this message translates to:

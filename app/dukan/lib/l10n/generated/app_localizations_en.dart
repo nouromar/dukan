@@ -1879,9 +1879,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removePackagingTooltip => 'Remove packaging';
 
   @override
-  String get shopItemEditorItemSectionHeader => 'Item';
-
-  @override
   String get removePackagingConfirmBody =>
       'Remove this packaging? You can add it back later.';
 

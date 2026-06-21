@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,8 +15,12 @@ import 'package:dukan/home/home_screen.dart';
 import 'package:dukan/observability/crash_reporter.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
-import 'package:dukan/queue/pending_post_store.dart';
 import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/cache_dao.dart';
+import 'package:dukan/storage/device_config_dao.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
+import 'package:dukan/storage/shared_prefs_migration.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/setup/setup_item_onboarding_screen.dart';
@@ -70,14 +76,49 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     _receiveController = ReceiveController();
     _paymentController = PaymentController();
     _expenseController = ExpenseController();
+    // main.dart waits for AppDatabase.instance() before runApp, so
+    // the singleton is guaranteed open by the time we get here.
+    // The DAOs accept a Future<AppDatabase> so construction is sync
+    // even though the open is async; _initStorage runs the one-shot
+    // SharedPreferences migration (idempotent — no-op on second
+    // launch) then starts the queue draining.
+    final database = AppDatabase.instance();
     _offlineQueueController = OfflineQueueController(
-      store: PendingPostStore(),
+      dao: PendingPostDao(database),
       executor: PostExecutor(_shopApi).execute,
-    )..start();
+    );
+    unawaited(_initStorage(database));
     // Clear in-progress carts/bonos/payments/expenses whenever the
     // session transitions to null (sign-out or session expiry). Stops
     // state from leaking across users sharing the same device.
     _authController.addListener(_onAuthChanged);
+  }
+
+  /// Run the one-shot SharedPreferences migration if needed, then
+  /// kick off the queue drain. Errors are reported to Sentry but
+  /// never block app startup — screens stay usable even if local
+  /// storage is borked (live RPCs still work).
+  Future<void> _initStorage(Future<AppDatabase> databaseFuture) async {
+    try {
+      final migration = SharedPrefsMigration(
+        pendingPostDao: PendingPostDao(databaseFuture),
+        cacheDao: CacheDao(databaseFuture),
+        deviceConfigDao: DeviceConfigDao(databaseFuture),
+        fallbackOriginalActorUserId:
+            widget.supabaseClient.auth.currentUser?.id,
+        reportError: (error, stack, ctx) {
+          unawaited(CrashReporter.reportError(error, stack, hint: ctx));
+        },
+      );
+      await migration.runIfNeeded();
+      await _offlineQueueController.start();
+    } catch (error, stackTrace) {
+      unawaited(CrashReporter.reportError(
+        error,
+        stackTrace,
+        hint: 'auth_bootstrap.initStorage',
+      ));
+    }
   }
 
   void _onAuthChanged() {

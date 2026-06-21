@@ -1894,9 +1894,6 @@ class AppLocalizationsSo extends AppLocalizations {
   String get removePackagingTooltip => 'Tirtir baakadda';
 
   @override
-  String get shopItemEditorItemSectionHeader => 'Alaab';
-
-  @override
   String get removePackagingConfirmBody =>
       'Ma tirtirayaa baakaddan? Mar dambe wad ku celin kartaa.';
 

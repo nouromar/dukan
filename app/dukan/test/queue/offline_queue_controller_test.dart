@@ -6,29 +6,31 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
-import 'package:dukan/queue/pending_post_store.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
 
 PendingPost _post(String id) => PendingPost(
       id: id,
       clientOpId: 'op-$id',
       shopId: 'shop-1',
+      originalActorUserId: 'user-1',
       rpc: 'post_sale',
       params: const <String, dynamic>{},
       queuedAt: DateTime.utc(2026, 6, 12, 12, 0, 0),
     );
 
 void main() {
-  late PendingPostStore store;
+  late PendingPostDao dao;
   late List<String> executed;
   late List<String> shouldFail;
   late OfflineQueueController controller;
 
   setUp(() {
-    store = PendingPostStore();
+    dao = PendingPostDao(AppDatabase.instance());
     executed = <String>[];
     shouldFail = <String>[];
     controller = OfflineQueueController(
-      store: store,
+      dao: dao,
       executor: (post) async {
         if (shouldFail.contains(post.id)) {
           throw StateError('network down for ${post.id}');
@@ -44,7 +46,7 @@ void main() {
 
   tearDown(() => controller.dispose());
 
-  Future<void> _waitForIdle() async {
+  Future<void> waitForIdle() async {
     // Pump a few microtasks so the queued Timer.zero retries fire.
     for (var i = 0; i < 16; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 1));
@@ -53,7 +55,8 @@ void main() {
   }
 
   test('start() loads persisted posts and notifies', () async {
-    await store.writeAll([_post('a'), _post('b')]);
+    await dao.insert(_post('a'));
+    await dao.insert(_post('b'));
     var notified = 0;
     controller.addListener(() => notified++);
     await controller.start();
@@ -64,10 +67,10 @@ void main() {
   test('enqueue persists + drains on success', () async {
     await controller.start();
     await controller.enqueue(_post('a'));
-    await _waitForIdle();
+    await waitForIdle();
     expect(executed, ['a']);
     expect(controller.pendingCount, 0);
-    expect(await store.readAll(), isEmpty);
+    expect(await dao.load(), isEmpty);
   });
 
   test('failure leaves the head queued with bumped attempt count', () async {
@@ -111,7 +114,7 @@ void main() {
     expect(controller.pendingCount, 2);
     shouldFail.clear();
     await controller.drainNow();
-    await _waitForIdle();
+    await waitForIdle();
     expect(executed, ['a', 'b']);
     expect(controller.pendingCount, 0);
   });

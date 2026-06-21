@@ -5,7 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
-import 'package:dukan/queue/pending_post_store.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/sale_screen.dart';
 
@@ -784,7 +785,7 @@ void main() {
           );
 
       final queue = OfflineQueueController(
-        store: PendingPostStore(),
+        dao: PendingPostDao(AppDatabase.instance()),
         executor: (_) async {},
         backoff: (_) => Duration.zero,
       );
@@ -839,7 +840,7 @@ void main() {
       // through the queue.
       final drainedPosts = <Object>[];
       final queue = OfflineQueueController(
-        store: PendingPostStore(),
+        dao: PendingPostDao(AppDatabase.instance()),
         executor: (post) async => drainedPosts.add(post),
         backoff: (_) => Duration.zero,
       );
