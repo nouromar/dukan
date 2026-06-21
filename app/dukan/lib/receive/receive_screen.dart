@@ -38,6 +38,9 @@ import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
 import 'package:dukan/observability/timing.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/multi_scan_sheet.dart';
 import 'package:dukan/scanner/scan_event.dart';
@@ -601,16 +604,17 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       SnackBar(content: Text(l.receiveSavedToast)),
     );
 
-    try {
-      final lines = <ReceiveLinePayload>[
-        for (final line in snapshot.lines.values)
-          ReceiveLinePayload(
-            shopItemUnitId: line.shopItemUnitId,
-            quantity: line.quantity,
-            lineTotal: line.lineTotal,
-          ),
-      ];
+    final clientOpId = generateClientOpId('receive');
+    final lines = <ReceiveLinePayload>[
+      for (final line in snapshot.lines.values)
+        ReceiveLinePayload(
+          shopItemUnitId: line.shopItemUnitId,
+          quantity: line.quantity,
+          lineTotal: line.lineTotal,
+        ),
+    ];
 
+    try {
       await api.postReceive(
         shopId: widget.shop.id,
         partyId: supplier.id,
@@ -619,7 +623,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         paidAmount: 0,
         paymentMethodCode: null,
         documentId: _bonoDocumentId,
-        clientOpId: generateClientOpId('receive'),
+        clientOpId: clientOpId,
       );
 
       if (mounted) {
@@ -628,9 +632,45 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         Navigator.of(context).maybePop();
       }
     } on PostgrestException catch (error, stackTrace) {
+      // 4xx-style server reject — won't succeed on retry. Restore the
+      // snapshot so the cashier sees their lines and can correct the
+      // underlying issue.
       _handleSaveFailure(snapshot, error, stackTrace, l.receivePostFailedMessage);
     } catch (error, stackTrace) {
-      _handleSaveFailure(snapshot, error, stackTrace, l.receivePostFailedMessage);
+      // Network / transient — enqueue for the offline write queue to
+      // retry on backoff. Lines stay cleared (already cleared above)
+      // and the bono documentId rides along in the queued params so
+      // the bono Storage object isn't orphaned. The queue's
+      // `client_op_id` mirrors the server-side idempotency guarantee.
+      // Mirrors sale_screen.dart's pattern from #320.
+      _reportError(error, stackTrace, 'post_receive (queuing for retry)');
+      if (!mounted) return;
+      String actorId = '';
+      try {
+        actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+      } catch (_) {
+        actorId = '';
+      }
+      final post = PendingPost(
+        id: generateClientOpId('receive'),
+        clientOpId: clientOpId,
+        shopId: widget.shop.id,
+        originalActorUserId: actorId,
+        rpc: 'post_receive',
+        params: buildPostReceiveParams(
+          partyId: supplier.id,
+          lines: lines,
+          paidAmount: 0,
+          documentId: _bonoDocumentId,
+        ),
+        queuedAt: DateTime.now(),
+      );
+      await context.read<OfflineQueueController>().enqueue(post);
+      if (mounted) {
+        controller.clearAll();
+        setState(() => _bonoDocumentId = null);
+        Navigator.of(context).maybePop();
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

@@ -5,6 +5,10 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/expense/expense_screen.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
 
 import '../shared/fakes.dart';
 import '../shared/wrap.dart';
@@ -122,4 +126,49 @@ void main() {
     expect(captured!['amount'], 120);
     expect(captured!['methodCode'], 'cash');
   });
+
+  testWidgets(
+    '#367 transient post_expense failure enqueues to the offline queue',
+    (tester) async {
+      FlutterError.onError = (_) {};
+      api.onListExpenseCategories = (_, _) async => const [
+        ExpenseCategoryOption(id: 'c1', code: 'rent', name: 'Rent'),
+      ];
+      api.onPostExpense =
+          (_, _, _, _, _, _) async => throw Exception('connection reset');
+
+      final drained = <Object>[];
+      final queue = OfflineQueueController(
+        dao: PendingPostDao(AppDatabase.instance()),
+        executor: (post) async => drained.add(post),
+        backoff: (_) => Duration.zero,
+      );
+
+      await tester.pumpWidget(
+        wrapWithApp(
+          ExpenseScreen(shop: shop),
+          authController: auth,
+          shopApi: api,
+          expenseController: expense,
+          offlineQueueController: queue,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Rent'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, '120');
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, en.expenseSaveButton));
+      await tester.pumpAndSettle();
+
+      // Exactly one post flowed through the queue's executor with
+      // rpc='post_expense'.
+      expect(drained, hasLength(1));
+      final post = drained.single as PendingPost;
+      expect(post.rpc, 'post_expense');
+      expect(post.shopId, shop.id);
+      expect(post.params['expense_category_id'], 'c1');
+      expect(post.params['amount'], 120);
+    },
+  );
 }

@@ -8,11 +8,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/payment/allocation_sheet.dart';
 import 'package:dukan/payment/payment_controller.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -123,6 +127,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
 
     final api = context.read<ShopApi>();
+    final queue = context.read<OfflineQueueController>();
     final amount = controller.amount;
     final partyId = party.id;
     final direction = controller.type.direction;
@@ -131,6 +136,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final failureMessage = l.paymentPostFailedMessage;
     final rawNotes = _notesController.text.trim();
     final notes = rawNotes.isEmpty ? null : rawNotes;
+
+    // Capture cashier's user id before the screen pops; #367 stamps
+    // it onto the queued post so Phase 5A's audit-stamping preserves
+    // who originated the payment even if a different user drains.
+    String actorId = '';
+    try {
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {
+      actorId = '';
+    }
 
     final messenger = runOptimisticSaveShell(
       context: context,
@@ -145,6 +160,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     unawaited(
       _postPaymentInBackground(
         api: api,
+        queue: queue,
+        shopId: widget.shop.id,
+        actorId: actorId,
         partyId: partyId,
         direction: direction,
         amount: amount,
@@ -159,6 +177,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Future<void> _postPaymentInBackground({
     required ShopApi api,
+    required OfflineQueueController queue,
+    required String shopId,
+    required String actorId,
     required String partyId,
     required String direction,
     required num amount,
@@ -170,7 +191,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }) async {
     try {
       await api.postPayment(
-        shopId: widget.shop.id,
+        shopId: shopId,
         partyId: partyId,
         direction: direction,
         amount: amount,
@@ -179,7 +200,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
         allocations: allocations,
         notes: notes,
       );
-    } catch (error, stackTrace) {
+    } on PostgrestException catch (error, stackTrace) {
+      // Server-side reject — retry won't help. Surface a toast; the
+      // screen has already popped so the cashier needs the visible
+      // signal to re-attempt manually.
       reportBackgroundFailure(
         error: error,
         stackTrace: stackTrace,
@@ -188,6 +212,33 @@ class _PaymentScreenState extends State<PaymentScreen> {
         context: 'post_payment',
         failureMessage: failureMessage,
       );
+    } catch (error, stackTrace) {
+      // Transient — enqueue for the offline queue to retry on
+      // backoff. Mirrors Sale's pattern. No toast; the queue badge
+      // in the home AppBar signals that work is pending.
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan payment',
+        context: ErrorDescription('post_payment (queuing for retry)'),
+      ));
+      final post = PendingPost(
+        id: generateClientOpId('payment'),
+        clientOpId: clientOpId,
+        shopId: shopId,
+        originalActorUserId: actorId,
+        rpc: 'post_payment',
+        params: buildPostPaymentParams(
+          partyId: partyId,
+          direction: direction,
+          amount: amount,
+          paymentMethodCode: 'cash',
+          notes: notes,
+          allocations: allocations,
+        ),
+        queuedAt: DateTime.now(),
+      );
+      await queue.enqueue(post);
     }
   }
 

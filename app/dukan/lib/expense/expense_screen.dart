@@ -12,10 +12,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/expense/expense_controller.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -100,12 +104,21 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     }
 
     final api = context.read<ShopApi>();
+    final queue = context.read<OfflineQueueController>();
     final categoryId = category.id;
     final amount = controller.amount;
     final clientOpId = generateClientOpId('expense');
     final failureMessage = l.expensePostFailedMessage;
     final rawNotes = _notesController.text.trim();
     final notes = rawNotes.isEmpty ? null : rawNotes;
+
+    // Capture cashier id before pop; #367 stamps onto the queued post.
+    String actorId = '';
+    try {
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {
+      actorId = '';
+    }
 
     final messenger = runOptimisticSaveShell(
       context: context,
@@ -120,6 +133,9 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     unawaited(
       _postExpenseInBackground(
         api: api,
+        queue: queue,
+        shopId: widget.shop.id,
+        actorId: actorId,
         categoryId: categoryId,
         amount: amount,
         clientOpId: clientOpId,
@@ -132,6 +148,9 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   Future<void> _postExpenseInBackground({
     required ShopApi api,
+    required OfflineQueueController queue,
+    required String shopId,
+    required String actorId,
     required String categoryId,
     required num amount,
     required String clientOpId,
@@ -141,14 +160,15 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   }) async {
     try {
       await api.postExpense(
-        shopId: widget.shop.id,
+        shopId: shopId,
         expenseCategoryId: categoryId,
         amount: amount,
         paymentMethodCode: 'cash',
         clientOpId: clientOpId,
         notes: notes,
       );
-    } catch (error, stackTrace) {
+    } on PostgrestException catch (error, stackTrace) {
+      // Server-side reject — retry won't help. Toast.
       reportBackgroundFailure(
         error: error,
         stackTrace: stackTrace,
@@ -157,6 +177,30 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         context: 'post_expense',
         failureMessage: failureMessage,
       );
+    } catch (error, stackTrace) {
+      // Transient — enqueue. Queue badge signals pending work; no
+      // toast since the screen popped already.
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan expense',
+        context: ErrorDescription('post_expense (queuing for retry)'),
+      ));
+      final post = PendingPost(
+        id: generateClientOpId('expense'),
+        clientOpId: clientOpId,
+        shopId: shopId,
+        originalActorUserId: actorId,
+        rpc: 'post_expense',
+        params: buildPostExpenseParams(
+          expenseCategoryId: categoryId,
+          amount: amount,
+          paymentMethodCode: 'cash',
+          notes: notes,
+        ),
+        queuedAt: DateTime.now(),
+      );
+      await queue.enqueue(post);
     }
   }
 

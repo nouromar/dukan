@@ -5,9 +5,13 @@ import 'dart:typed_data';
 
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
 
 import '../shared/fakes.dart';
 import '../shared/wrap.dart';
@@ -428,6 +432,66 @@ void main() {
 
       // post_receive received the uploaded document_id.
       expect(capturedDocId, 'doc-uploaded-123');
+    },
+  );
+
+  testWidgets(
+    '#367 transient post_receive failure enqueues to the offline queue',
+    (tester) async {
+      FlutterError.onError = (_) {};
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          shopItemId: 'si-rice',
+          itemId: 'item-rice',
+          defaultShopItemUnitId: 'siu-bag',
+          displayName: 'Bariis',
+          baseUnitCode: 'kg',
+          baseUnitLabel: 'Kg',
+          defaultUnitCode: 'bag',
+          defaultUnitLabel: 'Bag',
+          defaultUnitConversionToBase: 25,
+          packagingLabel: '25 Kg Bag',
+          defaultUnitLastCost: 24,
+        ),
+      ];
+      api.onPostReceive =
+          (_, _, _, _, _, _, _, _) async =>
+              throw Exception('connection reset');
+
+      final drained = <Object>[];
+      final queue = OfflineQueueController(
+        dao: PendingPostDao(AppDatabase.instance()),
+        executor: (post) async => drained.add(post),
+        backoff: (_) => Duration.zero,
+      );
+
+      await tester.pumpWidget(
+        wrapWithApp(
+          ReceiveScreen(shop: shop),
+          authController: auth,
+          shopApi: api,
+          receiveController: receive,
+          offlineQueueController: queue,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.receiveAddLineButton));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.receiveSaveButton),
+      );
+      await tester.pumpAndSettle();
+
+      // Lines cleared (the queue owns the work now).
+      expect(receive.isEmpty, isTrue);
+      // Exactly one post flowed through the queue's executor with
+      // rpc='post_receive'.
+      expect(drained, hasLength(1));
+      final post = drained.single as PendingPost;
+      expect(post.rpc, 'post_receive');
+      expect(post.shopId, shop.id);
     },
   );
 }
