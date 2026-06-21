@@ -18,16 +18,24 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/config/config_keys.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/storage/app_database.dart';
 import 'package:dukan/storage/cache_dao.dart';
 
 class TodaySummaryCache {
   TodaySummaryCache._();
 
-  /// Default freshness window. Phase 3 wires this to the hierarchical
-  /// `cache_ttl_today_summary_s` config key; for now it's a hard-
-  /// coded 1 hour.
+  /// Hard-coded fallback TTL when no [ConfigResolver] is passed. Phase 3
+  /// wired the resolver-fed `cache_ttl_today_summary_s` key; callers in
+  /// production pass the resolver from the provider tree.
   static const Duration _kDefaultTtl = Duration(hours: 1);
+
+  static Duration _resolveTtl(ConfigResolver? resolver) {
+    if (resolver == null) return _kDefaultTtl;
+    final seconds = resolver.resolve(ConfigKeys.cacheTtlTodaySummaryS);
+    return Duration(seconds: seconds);
+  }
 
   static String _key(String shopId) => 'today_summary:$shopId';
 
@@ -54,17 +62,24 @@ class TodaySummaryCache {
   }
 
   /// Persist a fresh summary for [shopId]. Errors are swallowed:
-  /// SWR caches are best-effort.
-  static Future<void> put(String shopId, TodaySummary summary) async {
+  /// SWR caches are best-effort. Pass [resolver] from the provider
+  /// tree so the TTL respects org/shop/device overrides; falls back
+  /// to a 1h hard-coded default when null (tests and code paths that
+  /// don't have a resolver in scope).
+  static Future<void> put(
+    String shopId,
+    TodaySummary summary, {
+    ConfigResolver? resolver,
+  }) async {
     try {
-      final dao = CacheDao(AppDatabase.instance());
+      final dao = CacheDao(AppDatabase.instance(), configResolver: resolver);
       final json = <String, dynamic>{
         'sales_today': summary.salesToday,
         'receivables_total': summary.receivablesTotal,
         'payables_total': summary.payablesTotal,
         'low_stock_count': summary.lowStockCount,
       };
-      await dao.put(_key(shopId), jsonEncode(json), ttl: _kDefaultTtl);
+      await dao.put(_key(shopId), jsonEncode(json), ttl: _resolveTtl(resolver));
     } catch (_) {
       // Cache writes never block the caller.
     }

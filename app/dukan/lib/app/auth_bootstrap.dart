@@ -11,6 +11,7 @@ import 'package:dukan/auth/sign_out_flow.dart';
 import 'package:dukan/auth/otp_verification_screen.dart';
 import 'package:dukan/auth/owner_onboarding_screen.dart';
 import 'package:dukan/auth/shop_picker_screen.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/home/home_screen.dart';
 import 'package:dukan/observability/crash_reporter.dart';
@@ -62,9 +63,11 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   late final PaymentController _paymentController;
   late final ExpenseController _expenseController;
   late final OfflineQueueController _offlineQueueController;
+  late final ConfigResolver _configResolver;
   bool _hadSession = false;
   String? _crashReportedUserId;
   String? _crashReportedShopId;
+  String? _configLoadedForShopId;
 
   @override
   void initState() {
@@ -84,9 +87,17 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     // SharedPreferences migration (idempotent — no-op on second
     // launch) then starts the queue draining.
     final database = AppDatabase.instance();
+    _configResolver = ConfigResolver(
+      shopApi: _shopApi,
+      deviceConfigDao: DeviceConfigDao(database),
+      reportError: (error, stack, hint) {
+        unawaited(CrashReporter.reportError(error, stack, hint: hint));
+      },
+    );
     _offlineQueueController = OfflineQueueController(
       dao: PendingPostDao(database),
       executor: PostExecutor(_shopApi).execute,
+      configResolver: _configResolver,
     );
     unawaited(_initStorage(database));
     // Clear in-progress carts/bonos/payments/expenses whenever the
@@ -129,9 +140,27 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
       _receiveController.clearAll();
       _paymentController.clearAll();
       _expenseController.clearAll();
+      _configResolver.reset();
+      _configLoadedForShopId = null;
     }
     _hadSession = hasSession;
     _syncCrashReporter();
+    _maybeReloadConfig();
+  }
+
+  /// Refresh the hierarchical config whenever the selected shop
+  /// changes (initial load, shop switch, sign-in). Defaults are
+  /// already in place; the load brings in org-scoped + device-scoped
+  /// overrides. Failures are non-fatal — see ConfigResolver.
+  void _maybeReloadConfig() {
+    final shop = _authController.selectedShop;
+    if (shop == null) {
+      _configLoadedForShopId = null;
+      return;
+    }
+    if (_configLoadedForShopId == shop.id) return;
+    _configLoadedForShopId = shop.id;
+    unawaited(_configResolver.loadForSession(shopId: shop.id));
   }
 
   // Push the current session's user + selected shop into Sentry scope
@@ -186,6 +215,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
         ChangeNotifierProvider<OfflineQueueController>.value(
           value: _offlineQueueController,
         ),
+        ChangeNotifierProvider<ConfigResolver>.value(value: _configResolver),
       ],
       child: Builder(builder: widget.builder),
     );

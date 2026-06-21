@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/expense/expense_screen.dart';
 import 'package:dukan/home/dukan_drawer.dart';
 import 'package:dukan/payment/payment_screen.dart';
@@ -357,7 +358,11 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
           shopId: widget.shop.id,
           locale: _locale ?? 'en',
         );
-    unawaited(TodaySummaryCache.put(widget.shop.id, summary));
+    // ConfigResolver from the provider tree feeds the per-shop /
+    // per-org TTL override (Phase 3 / `cache_ttl_today_summary_s`).
+    // Falls back to a 1h default when no override is set.
+    final resolver = _readResolverOrNull();
+    unawaited(TodaySummaryCache.put(widget.shop.id, summary, resolver: resolver));
     return summary;
   }
 
@@ -367,13 +372,25 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
             shopId: widget.shop.id,
             locale: _locale ?? 'en',
           );
-      unawaited(TodaySummaryCache.put(widget.shop.id, fresh));
+      final resolver = _readResolverOrNull();
+      unawaited(TodaySummaryCache.put(widget.shop.id, fresh, resolver: resolver));
       if (!mounted) return;
       setState(() {
         _future = Future.value(fresh);
       });
     } catch (_) {
       // Background refresh failure leaves the cached value visible.
+    }
+  }
+
+  /// Returns the ConfigResolver from the provider tree, or null if it
+  /// isn't wired (widget tests that skip AuthBootstrap). The cache
+  /// gracefully falls back to its hard-coded TTL when null.
+  ConfigResolver? _readResolverOrNull() {
+    try {
+      return context.read<ConfigResolver>();
+    } catch (_) {
+      return null;
     }
   }
 

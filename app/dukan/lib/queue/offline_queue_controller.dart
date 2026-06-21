@@ -23,6 +23,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:dukan/config/config_keys.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
 import 'package:dukan/storage/storage_defaults.dart';
@@ -42,21 +44,64 @@ class OfflineQueueController extends ChangeNotifier {
   OfflineQueueController({
     required this.dao,
     required this.executor,
+    this.configResolver,
     Duration Function(int attempts)? backoff,
     DateTime Function()? clock,
     int? maxPending,
     int? maxAttempts,
-  })  : _backoff = backoff ?? _defaultBackoff,
+  })  : _explicitBackoff = backoff,
         _clock = clock ?? DateTime.now,
-        _maxPending = maxPending ?? kQueueMaxPending,
-        _maxAttempts = maxAttempts ?? kQueueMaxAttempts;
+        _explicitMaxPending = maxPending,
+        _explicitMaxAttempts = maxAttempts;
 
   final PendingPostDao dao;
   final PostExecutorFn executor;
-  final Duration Function(int) _backoff;
+
+  /// Optional — when wired, the controller reads `queueMaxPending` /
+  /// `queueMaxAttempts` / `queueRetry*` from the hierarchical config
+  /// (defaults → org → shop → device). Tests pass an explicit value
+  /// via the constructor and skip the resolver entirely.
+  final ConfigResolver? configResolver;
+
+  final Duration Function(int)? _explicitBackoff;
   final DateTime Function() _clock;
-  final int _maxPending;
-  final int _maxAttempts;
+  final int? _explicitMaxPending;
+  final int? _explicitMaxAttempts;
+
+  int get _maxPending {
+    if (_explicitMaxPending != null) return _explicitMaxPending;
+    final r = configResolver;
+    if (r != null) return r.resolve(ConfigKeys.queueMaxPending);
+    return kQueueMaxPending;
+  }
+
+  int get _maxAttempts {
+    if (_explicitMaxAttempts != null) return _explicitMaxAttempts;
+    final r = configResolver;
+    if (r != null) return r.resolve(ConfigKeys.queueMaxAttempts);
+    return kQueueMaxAttempts;
+  }
+
+  Duration _backoff(int attempts) {
+    if (_explicitBackoff != null) return _explicitBackoff(attempts);
+    final r = configResolver;
+    if (r != null) {
+      final initialMs = r.resolve(ConfigKeys.queueRetryInitialMs);
+      final maxMs = r.resolve(ConfigKeys.queueRetryMaxMs);
+      final multiplier = r.resolve(ConfigKeys.queueRetryMultiplier);
+      // attempts=0 → initial; attempts=1 → initial*mult; capped.
+      var ms = initialMs;
+      for (var i = 0; i < attempts; i++) {
+        ms *= multiplier;
+        if (ms >= maxMs) {
+          ms = maxMs;
+          break;
+        }
+      }
+      return Duration(milliseconds: ms);
+    }
+    return _defaultBackoff(attempts);
+  }
 
   List<PendingPost> _pending = const <PendingPost>[];
   Timer? _retryTimer;

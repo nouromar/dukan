@@ -1914,4 +1914,48 @@ class ShopApi {
       currencySymbols: symbols,
     );
   }
+
+  // --- Hierarchical config (Phase 3 / migration 0067) -----------------
+
+  /// Returns the merged platform + org-scoped overrides for the org
+  /// that owns [shopId]. The server resolves org_id from the shop —
+  /// callers don't need to wire `organizationId` onto every screen.
+  /// Each row carries the raw jsonb value; the resolver's typed
+  /// ConfigKey.parse converts to the strongly-typed shape the caller
+  /// expects.
+  Future<List<PlatformConfigEntry>> getPlatformConfigForShop({
+    required String shopId,
+  }) async {
+    final rows = await _client.rpc(
+      'get_platform_config_for_shop',
+      params: {'p_shop_id': shopId},
+    );
+    if (rows is! List) return const <PlatformConfigEntry>[];
+    return [
+      for (final r in rows)
+        if (r is Map)
+          PlatformConfigEntry(
+            key: r['key'] as String,
+            value: r['value'],
+          ),
+    ];
+  }
+
+  /// Platform-staff-only upsert. Pass `orgId: null` for a platform
+  /// default. Authorization enforced server-side; non-staff callers
+  /// get a PostgrestException.
+  Future<void> setPlatformConfig({
+    required String? orgId,
+    required String key,
+    required Object value,
+  }) async {
+    await _client.rpc(
+      'set_platform_config',
+      params: {
+        'p_org_id': orgId,
+        'p_key': key,
+        'p_value': value,
+      },
+    );
+  }
 }

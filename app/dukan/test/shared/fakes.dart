@@ -1676,6 +1676,33 @@ class FakeShopApi implements ShopApi {
         clientOpId: clientOpId,
         notes: notes,
       );
+
+  // ----- Hierarchical config (Phase 3) ---------------------------------
+  /// Pre-populate the rows the resolver will see. Empty list = no
+  /// org-scoped overrides (resolver falls through to defaults).
+  List<PlatformConfigEntry> platformConfigEntries =
+      const <PlatformConfigEntry>[];
+
+  /// Records of every call to setPlatformConfig.
+  final List<
+      ({String? orgId, String key, Object value})> setPlatformConfigCalls =
+      [];
+
+  @override
+  Future<List<PlatformConfigEntry>> getPlatformConfigForShop({
+    required String shopId,
+  }) async {
+    return platformConfigEntries;
+  }
+
+  @override
+  Future<void> setPlatformConfig({
+    required String? orgId,
+    required String key,
+    required Object value,
+  }) async {
+    setPlatformConfigCalls.add((orgId: orgId, key: key, value: value));
+  }
 }
 
 // --- Fixture builders -----------------------------------------------------

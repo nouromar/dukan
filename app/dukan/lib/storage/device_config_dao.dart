@@ -52,6 +52,15 @@ class DeviceConfigDao {
     await (await _db).delete('device_config', where: 'key = ?', whereArgs: [key]);
   }
 
+  /// Snapshot of every key/value pair. Used by the config resolver
+  /// (Phase 3) to populate its device-override layer in one query.
+  Future<Map<String, String>> loadAll() async {
+    final rows = await (await _db).query('device_config');
+    return {
+      for (final r in rows) (r['key'] as String): (r['value'] as String),
+    };
+  }
+
   /// Wipe the table. Test-only.
   Future<void> clear() async {
     await (await _db).delete('device_config');

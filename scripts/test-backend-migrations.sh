@@ -5802,6 +5802,167 @@ $$;
 
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
+-- ---------------------------------------------------------------------------
+-- §QQ platform_config (0067). Verify:
+--   1. Platform staff can upsert + select platform defaults (NULL org_id).
+--   2. Platform staff can upsert org-scoped overrides.
+--   3. Org member can SELECT only their org's overrides via the table.
+--   4. Org member is REJECTED from set_platform_config.
+--   5. get_platform_config returns org-scoped value when both NULL
+--      and org-scoped exist for the same key (org wins).
+--   6. get_platform_config returns NULL-org default when only that
+--      row exists for a key.
+--   7. get_platform_config rejected for non-members of the org.
+--   8. Blank key + NULL value rejected by set_platform_config.
+-- ---------------------------------------------------------------------------
+
+-- 1+2: platform staff upserts both default + org override.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000004';
+
+do $$
+declare
+  v_org_id uuid;
+begin
+  select organization_id into v_org_id from test_ids;
+
+  -- (1) Platform default for queue_max_pending.
+  perform public.set_platform_config(null, 'queue_max_pending', '150'::jsonb);
+  if (
+    select value::text from public.platform_config
+    where org_id is null and key = 'queue_max_pending'
+  ) <> '150' then
+    raise exception 'QQ (1): platform default not written';
+  end if;
+
+  -- (2) Org override for the same key.
+  perform public.set_platform_config(v_org_id, 'queue_max_pending', '300'::jsonb);
+  if (
+    select value::text from public.platform_config
+    where org_id = v_org_id and key = 'queue_max_pending'
+  ) <> '300' then
+    raise exception 'QQ (2): org override not written';
+  end if;
+
+  -- Another default-only key (no org override) for case 6.
+  perform public.set_platform_config(null, 'cache_budget_mb', '120'::jsonb);
+
+  -- (8) Blank key rejected.
+  begin
+    perform public.set_platform_config(null, '   ', '"x"'::jsonb);
+    raise exception 'QQ (8): blank key was accepted';
+  exception when raise_exception then null;
+  end;
+
+  -- (8) NULL value rejected.
+  begin
+    perform public.set_platform_config(null, 'foo', null);
+    raise exception 'QQ (8): null value was accepted';
+  exception when raise_exception then null;
+  end;
+end;
+$$;
+
+-- 5+6: get_platform_config from owner (org member).
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+do $$
+declare
+  v_org_id uuid;
+  v_shop_id uuid;
+  v_qmp_value jsonb;
+  v_cbm_value jsonb;
+begin
+  select organization_id, shop_id into v_org_id, v_shop_id from test_ids;
+
+  -- (5) Org-scoped value wins for queue_max_pending.
+  select value into v_qmp_value
+    from public.get_platform_config(v_org_id)
+   where key = 'queue_max_pending';
+  if v_qmp_value::text <> '300' then
+    raise exception 'QQ (5): expected org override (300), got %', v_qmp_value;
+  end if;
+
+  -- (6) Platform default surfaces for cache_budget_mb (no org row).
+  select value into v_cbm_value
+    from public.get_platform_config(v_org_id)
+   where key = 'cache_budget_mb';
+  if v_cbm_value::text <> '120' then
+    raise exception 'QQ (6): expected platform default (120), got %', v_cbm_value;
+  end if;
+
+  -- (6b) Shop-id wrapper returns the same merged set.
+  select value into v_qmp_value
+    from public.get_platform_config_for_shop(v_shop_id)
+   where key = 'queue_max_pending';
+  if v_qmp_value::text <> '300' then
+    raise exception 'QQ (6b): shop-id wrapper missed org override (got %)', v_qmp_value;
+  end if;
+end;
+$$;
+
+-- 3: owner sees their org row via direct table select; does NOT see
+-- the NULL-org platform-default row.
+do $$
+declare
+  v_org_id uuid;
+  v_org_visible int;
+  v_default_visible int;
+begin
+  select organization_id into v_org_id from test_ids;
+
+  select count(*) into v_org_visible
+    from public.platform_config
+   where org_id = v_org_id;
+  if v_org_visible < 1 then
+    raise exception 'QQ (3): owner cannot see org-scoped platform_config row';
+  end if;
+
+  select count(*) into v_default_visible
+    from public.platform_config
+   where org_id is null;
+  if v_default_visible <> 0 then
+    raise exception 'QQ (3): owner unexpectedly saw NULL-org platform default rows (RLS leak)';
+  end if;
+end;
+$$;
+
+-- 4: owner is rejected from set_platform_config.
+do $$
+declare
+  v_failed boolean := false;
+begin
+  begin
+    perform public.set_platform_config(null, 'queue_max_pending', '999'::jsonb);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'QQ (4): owner was allowed to set_platform_config';
+  end if;
+end;
+$$;
+
+-- 7: get_platform_config rejected for non-members. User 3 has no org
+-- membership.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_org_id uuid;
+  v_failed boolean := false;
+begin
+  select organization_id into v_org_id from test_ids;
+  begin
+    perform 1 from public.get_platform_config(v_org_id);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'QQ (7): non-member could read get_platform_config';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
 reset role;
 
 do $$

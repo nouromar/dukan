@@ -4,10 +4,16 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dukan/api/types.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/device_config_dao.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
+
+import '../shared/fakes.dart';
+import '../shared/test_database.dart';
 
 PendingPost _post(String id, {DateTime? queuedAt}) => PendingPost(
       id: id,
@@ -177,6 +183,46 @@ void main() {
     final inTerminal = await dao.loadFailedPermanent();
     expect(inTerminal.map((p) => p.id), ['a']);
     terminal.dispose();
+  });
+
+  test(
+      '#365: maxPending sourced from ConfigResolver when no explicit override',
+      () async {
+    // No explicit `maxPending:` — the controller should read the
+    // resolver-backed value. We override the org layer to 2 so the
+    // cap fires after 2 enqueues.
+    final db = await openTestDatabase();
+    final fakeApi = FakeShopApi()
+      ..platformConfigEntries = const [
+        PlatformConfigEntry(key: 'queue_max_pending', value: 2),
+      ];
+    final resolver = ConfigResolver(
+      shopApi: fakeApi,
+      deviceConfigDao: DeviceConfigDao(Future.value(db)),
+    );
+    await resolver.loadForSession(shopId: 'shop-1');
+
+    final freshDao = PendingPostDao(Future.value(db));
+    final c = OfflineQueueController(
+      dao: freshDao,
+      executor: (_) async => throw StateError('network down'),
+      backoff: (_) => const Duration(days: 1),
+      clock: () => DateTime.utc(2026, 6, 12, 12, 0, 0),
+      configResolver: resolver,
+    );
+    final dropped = <PendingPost>[];
+    c.addDroppedListener(dropped.add);
+    await c.start();
+    await c.enqueue(_post('a'));
+    await c.enqueue(_post('b'));
+    expect(c.pendingCount, 2);
+    // Third enqueue exceeds the resolver-fed cap of 2 → oldest
+    // (`a`) is dropped before insert.
+    await c.enqueue(_post('c'));
+    expect(c.pendingCount, 2);
+    expect(c.pending.map((p) => p.id), ['b', 'c']);
+    expect(dropped.map((p) => p.id), ['a']);
+    c.dispose();
   });
 
   test('drainWithTimeout returns even when drain takes longer', () async {

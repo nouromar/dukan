@@ -1010,3 +1010,14 @@ class AuditEntry {
   final String? reason;
   final String source;
 }
+
+/// One key/value entry returned by `get_platform_config(_for_shop)`.
+/// Value is whatever jsonb decoded to — int, double, String, bool, or
+/// nested Map/List — depending on what platform staff stored. The
+/// resolver's typed [ConfigKey.parse] converts to the strongly-typed
+/// shape callers expect.
+class PlatformConfigEntry {
+  const PlatformConfigEntry({required this.key, required this.value});
+  final String key;
+  final Object? value;
+}

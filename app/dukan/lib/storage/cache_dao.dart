@@ -14,6 +14,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'package:dukan/config/config_keys.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/storage/app_database.dart';
 import 'package:dukan/storage/storage_defaults.dart';
 
@@ -43,15 +45,31 @@ class CacheDao {
     this._database, {
     DateTime Function()? clock,
     int? budgetBytes,
+    this.configResolver,
   })  : _clock = clock ?? DateTime.now,
-        _budgetBytes = budgetBytes ?? kCacheBudgetBytes;
+        _explicitBudgetBytes = budgetBytes;
 
   /// Future-typed so the DAO can be constructed synchronously while
   /// sqflite finishes opening. main.dart awaits the open before
   /// runApp, so methods resolve instantly in practice.
   final Future<AppDatabase> _database;
   final DateTime Function() _clock;
-  final int _budgetBytes;
+
+  /// Optional config layer (Phase 3). When set, the cache budget
+  /// comes from `cacheBudgetMb` (defaults → org → shop → device).
+  /// Tests pass `budgetBytes:` explicitly; production wires the
+  /// resolver.
+  final ConfigResolver? configResolver;
+  final int? _explicitBudgetBytes;
+
+  int get _budgetBytes {
+    if (_explicitBudgetBytes != null) return _explicitBudgetBytes;
+    final r = configResolver;
+    if (r != null) {
+      return r.resolve(ConfigKeys.cacheBudgetMb) * 1024 * 1024;
+    }
+    return kCacheBudgetBytes;
+  }
 
   Future<Database> get _db => _database.then((d) => d.db);
 
