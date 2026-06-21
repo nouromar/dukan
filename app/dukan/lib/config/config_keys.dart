@@ -105,6 +105,23 @@ class ConfigKeys {
     parse: _parseInt,
   );
 
+  /// Sale + Receive history caches share this TTL — both go stale
+  /// fast as new posts come in. Default 5 min (300s).
+  static const ConfigKey<int> cacheTtlHistoryS = ConfigKey<int>(
+    name: 'cache_ttl_history_s',
+    defaultValue: 300,
+    parse: _parseInt,
+  );
+
+  /// Search-items results cache TTL. Not wired in Phase 5C — kept
+  /// here so the platform_config table has the key when the cache
+  /// arrives.
+  static const ConfigKey<int> cacheTtlSearchItemsS = ConfigKey<int>(
+    name: 'cache_ttl_search_items_s',
+    defaultValue: 300,
+    parse: _parseInt,
+  );
+
   // --- Sync + alerts (owner-tunable) ------------------------------------
   /// 'auto' (default), 'wifi' (only sync on Wi-Fi), 'off' (manual only).
   static const ConfigKey<String> syncMode = ConfigKey<String>(

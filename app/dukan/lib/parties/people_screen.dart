@@ -17,6 +17,8 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/config/config_resolver.dart';
+import 'package:dukan/parties/parties_cache.dart';
 import 'package:dukan/parties/party_detail_screen.dart';
 import 'package:dukan/shared/add_party_sheet.dart';
 import 'package:dukan/shared/display_name.dart';
@@ -103,13 +105,65 @@ class _PeopleScreenState extends State<PeopleScreen> {
 
   bool get _isCustomer => widget.kind == PeopleKind.customer;
 
+  /// SWR cache (#369) only kicks in for the default view: empty
+  /// query AND no hasBalanceOnly filter. Sorting is client-side
+  /// (re-applied below) so it doesn't disqualify caching.
+  bool get _isDefaultView => _query.isEmpty && !_hasBalanceOnly;
+
   Future<List<PartySearchResult>> _fetch() async {
-    final rows = await context.read<ShopApi>().listParties(
-          shopId: widget.shop.id,
-          query: _query,
-          type: widget.kind.typeCode(),
-          hasBalanceOnly: _hasBalanceOnly,
-        );
+    // SWR fast path: paint cached, then refresh in background.
+    if (_isDefaultView) {
+      final cached = await PartiesCache.get(
+        widget.shop.id,
+        widget.kind.typeCode(),
+      );
+      if (cached != null) {
+        // ignore: discarded_futures
+        _refreshInBackground();
+        return _applySort(cached);
+      }
+    }
+    return _fetchFresh();
+  }
+
+  Future<List<PartySearchResult>> _fetchFresh() async {
+    final api = context.read<ShopApi>();
+    ConfigResolver? resolver;
+    try {
+      resolver = context.read<ConfigResolver>();
+    } catch (_) {
+      resolver = null;
+    }
+    final rows = await api.listParties(
+      shopId: widget.shop.id,
+      query: _query,
+      type: widget.kind.typeCode(),
+      hasBalanceOnly: _hasBalanceOnly,
+    );
+    if (_isDefaultView) {
+      // ignore: discarded_futures
+      PartiesCache.put(
+        widget.shop.id,
+        widget.kind.typeCode(),
+        rows,
+        resolver: resolver,
+      );
+    }
+    return _applySort(rows);
+  }
+
+  Future<void> _refreshInBackground() async {
+    try {
+      final fresh = await _fetchFresh();
+      if (!mounted || !_isDefaultView) return;
+      setState(() => _future = Future.value(fresh));
+    } catch (_) {
+      // Silent — cached value is on screen; pull-to-refresh
+      // recovers if needed.
+    }
+  }
+
+  List<PartySearchResult> _applySort(List<PartySearchResult> rows) {
     // Server sorts by (receivable+payable) DESC then name; honour the
     // user-picked sort client-side so the toggle is instant.
     if (_sort == _PeopleSort.byName) {

@@ -14,7 +14,9 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/sale/sale_detail_screen.dart';
+import 'package:dukan/sale/sale_history_cache.dart';
 import 'package:dukan/sale/sale_history_filter_sheet.dart';
 import 'package:dukan/shared/date_range.dart';
 import 'package:dukan/shared/future_list_scaffold.dart';
@@ -45,14 +47,56 @@ class _SaleHistoryScreenState extends State<SaleHistoryScreen> {
     _future = _fetch();
   }
 
-  Future<List<SaleSummary>> _fetch() {
-    return context.read<ShopApi>().listSales(
-          shopId: widget.shop.id,
-          limit: historyPageLimit,
-          dateFrom: _filters.dateRange.from,
-          dateTo: _filters.dateRange.to,
-          partyId: _filters.partyId,
-        );
+  /// True when no filters have been applied — only this case is
+  /// cached (per-filter keys would explode the cache).
+  bool get _isDefaultFilters =>
+      _filters.partyId == null &&
+      !_filters.hideVoided &&
+      _filters.dateRange.preset == DateRangePreset.all;
+
+  Future<List<SaleSummary>> _fetch() async {
+    // SWR (#369): paint cached first, refresh in the background.
+    if (_isDefaultFilters) {
+      final cached = await SaleHistoryCache.get(widget.shop.id);
+      if (cached != null) {
+        // ignore: discarded_futures
+        _refreshInBackground();
+        return cached;
+      }
+    }
+    return _fetchFresh();
+  }
+
+  Future<List<SaleSummary>> _fetchFresh() async {
+    final api = context.read<ShopApi>();
+    ConfigResolver? resolver;
+    try {
+      resolver = context.read<ConfigResolver>();
+    } catch (_) {
+      resolver = null;
+    }
+    final rows = await api.listSales(
+      shopId: widget.shop.id,
+      limit: historyPageLimit,
+      dateFrom: _filters.dateRange.from,
+      dateTo: _filters.dateRange.to,
+      partyId: _filters.partyId,
+    );
+    if (_isDefaultFilters) {
+      // ignore: discarded_futures
+      SaleHistoryCache.put(widget.shop.id, rows, resolver: resolver);
+    }
+    return rows;
+  }
+
+  Future<void> _refreshInBackground() async {
+    try {
+      final fresh = await _fetchFresh();
+      if (!mounted || !_isDefaultFilters) return;
+      setState(() => _future = Future.value(fresh));
+    } catch (_) {
+      // Silent — cached value is on screen.
+    }
   }
 
   void _reload() {

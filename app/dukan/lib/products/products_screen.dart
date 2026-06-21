@@ -11,7 +11,9 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/products/catalog_picker_screen.dart';
+import 'package:dukan/products/products_cache.dart';
 import 'package:dukan/products/products_filter_sheet.dart';
 import 'package:dukan/products/shop_item_detail_screen.dart';
 import 'package:dukan/products/shop_item_editor_screen.dart';
@@ -94,14 +96,57 @@ class _ProductsScreenState extends State<ProductsScreen> {
     super.dispose();
   }
 
+  /// True when neither search query nor any filter is active —
+  /// the only case we cache (per-query keys would balloon).
+  bool _isDefaultView(String query) =>
+      query.isEmpty &&
+      _filters.categoryId == null &&
+      !_filters.lowStockOnly &&
+      !_filters.noPriceOnly;
+
   Future<List<ShopItemSummary>> _fetch(String query) async {
+    // SWR (#369): if this is the default unfiltered view, return
+    // the cached list immediately and schedule a background fetch
+    // to refresh on next render. Filtered / searched views skip
+    // the cache.
+    if (_isDefaultView(query)) {
+      final cached = await ProductsCache.get(widget.shop.id);
+      if (cached != null) {
+        // Schedule background refresh — fire-and-forget; the
+        // refresh swaps in fresh data via setState when it
+        // returns. UI shows the cached snapshot in the meantime.
+        // ignore: discarded_futures
+        _refreshInBackground(query);
+        return cached;
+      }
+    }
+    return _fetchFresh(query);
+  }
+
+  Future<List<ShopItemSummary>> _fetchFresh(String query) async {
+    // Capture context-dependent values BEFORE the await — using
+    // context after an async gap trips the analyzer.
+    final api = context.read<ShopApi>();
+    final locale = Localizations.localeOf(context).languageCode;
+    ConfigResolver? resolver;
     try {
-      return await context.read<ShopApi>().listShopItems(
+      resolver = context.read<ConfigResolver>();
+    } catch (_) {
+      resolver = null;
+    }
+    try {
+      final items = await api.listShopItems(
         shopId: widget.shop.id,
         query: query.isEmpty ? null : query,
         categoryId: _filters.categoryId,
-        locale: Localizations.localeOf(context).languageCode,
+        locale: locale,
       );
+      // Only cache the default view (matching the read path).
+      if (_isDefaultView(query)) {
+        // ignore: discarded_futures
+        ProductsCache.put(widget.shop.id, items, resolver: resolver);
+      }
+      return items;
     } catch (error, stackTrace) {
       FlutterError.reportError(
         FlutterErrorDetails(
@@ -112,6 +157,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
         ),
       );
       rethrow;
+    }
+  }
+
+  Future<void> _refreshInBackground(String query) async {
+    try {
+      final fresh = await _fetchFresh(query);
+      if (!mounted) return;
+      // Only swap if the query/filter context hasn't moved on.
+      if (_activeQuery == query && _isDefaultView(query)) {
+        setState(() => _resultsFuture = Future.value(fresh));
+      }
+    } catch (_) {
+      // Background refresh failures are silent; the user sees
+      // the cached value and a pull-to-refresh recovery path.
     }
   }
 

@@ -7,7 +7,9 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/receive/receive_detail_screen.dart';
+import 'package:dukan/receive/receive_history_cache.dart';
 import 'package:dukan/receive/receive_history_filter_sheet.dart';
 import 'package:dukan/shared/date_range.dart';
 import 'package:dukan/shared/future_list_scaffold.dart';
@@ -37,14 +39,54 @@ class _ReceiveHistoryScreenState extends State<ReceiveHistoryScreen> {
     _future = _fetch();
   }
 
-  Future<List<ReceiveSummary>> _fetch() {
-    return context.read<ShopApi>().listReceives(
-          shopId: widget.shop.id,
-          limit: historyPageLimit,
-          dateFrom: _filters.dateRange.from,
-          dateTo: _filters.dateRange.to,
-          partyId: _filters.supplierId,
-        );
+  bool get _isDefaultFilters =>
+      _filters.supplierId == null &&
+      !_filters.hideVoided &&
+      _filters.dateRange.preset == DateRangePreset.all;
+
+  Future<List<ReceiveSummary>> _fetch() async {
+    // SWR (#369): paint cached first, refresh in background.
+    if (_isDefaultFilters) {
+      final cached = await ReceiveHistoryCache.get(widget.shop.id);
+      if (cached != null) {
+        // ignore: discarded_futures
+        _refreshInBackground();
+        return cached;
+      }
+    }
+    return _fetchFresh();
+  }
+
+  Future<List<ReceiveSummary>> _fetchFresh() async {
+    final api = context.read<ShopApi>();
+    ConfigResolver? resolver;
+    try {
+      resolver = context.read<ConfigResolver>();
+    } catch (_) {
+      resolver = null;
+    }
+    final rows = await api.listReceives(
+      shopId: widget.shop.id,
+      limit: historyPageLimit,
+      dateFrom: _filters.dateRange.from,
+      dateTo: _filters.dateRange.to,
+      partyId: _filters.supplierId,
+    );
+    if (_isDefaultFilters) {
+      // ignore: discarded_futures
+      ReceiveHistoryCache.put(widget.shop.id, rows, resolver: resolver);
+    }
+    return rows;
+  }
+
+  Future<void> _refreshInBackground() async {
+    try {
+      final fresh = await _fetchFresh();
+      if (!mounted || !_isDefaultFilters) return;
+      setState(() => _future = Future.value(fresh));
+    } catch (_) {
+      // Silent — cached value is on screen.
+    }
   }
 
   void _reload() => setState(() => _future = _fetch());
