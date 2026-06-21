@@ -60,7 +60,6 @@ import 'package:dukan/products/shop_item_detail_screen.dart';
 import 'package:dukan/products/products_screen.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/add_party_sheet.dart';
-import 'package:dukan/shared/bono_image_picker.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -69,15 +68,10 @@ import 'package:dukan/shared/party_picker_sheet.dart';
 class ShopItemEditorScreen extends StatefulWidget {
   const ShopItemEditorScreen({
     required this.shop,
-    this.imagePicker,
     super.key,
   });
 
   final ShopSummary shop;
-
-  /// Inject for tests. Production lazy-instantiates DefaultBonoImagePicker
-  /// (same pattern receive_screen.dart uses for bono uploads).
-  final BonoImagePicker? imagePicker;
 
   @override
   State<ShopItemEditorScreen> createState() => _ShopItemEditorScreenState();
@@ -96,9 +90,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
 
   /// Chip-style multi-add. Extras the shopkeeper types in Section 5.
   final List<String> _aliases = [];
-
-  PickedBono? _photo;
-  BonoImagePicker? _picker;
 
   String? _baseUnitCode;
   Future<_EditorBootstrap>? _bootstrapFuture;
@@ -160,10 +151,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     }
     super.dispose();
   }
-
-  BonoImagePicker get _imagePicker =>
-      _picker ??= widget.imagePicker ??
-      DefaultBonoImagePicker(quality: ImageQuality.shopItem);
 
   Future<_EditorBootstrap> _loadBootstrap() async {
     final api = context.read<ShopApi>();
@@ -304,27 +291,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     }
     return null;
   }
-
-  Future<void> _onPickPhoto() async {
-    final l = tr(context);
-    PickedBono? picked;
-    try {
-      picked = await _imagePicker.pickFromCamera();
-    } catch (_) {
-      picked = null;
-    }
-    if (!mounted) return;
-    if (picked == null) return;
-    setState(() => _photo = picked);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l.shopItemEditorPhotoCapturedToast),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _onClearPhoto() => setState(() => _photo = null);
 
   void _onAddAlias() {
     final raw = _aliasController.text.trim();
@@ -824,35 +790,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
         }
       }
 
-      // Photo upload — best-effort; never blocks the item save.
-      final photo = _photo;
-      if (photo != null) {
-        try {
-          final path = await api.uploadShopItemImage(
-            shopId: widget.shop.id,
-            shopItemId: shopItemId,
-            bytes: photo.bytes,
-            mimeType: photo.mimeType,
-            fileExtension: photo.fileExtension,
-          );
-          await api.setShopItemImagePath(
-            shopId: widget.shop.id,
-            shopItemId: shopItemId,
-            imagePath: path,
-          );
-        } catch (error, stackTrace) {
-          _reportNonFatal(error, stackTrace, 'uploading item photo');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l.shopItemEditorPhotoUploadFailedToast),
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        }
-      }
-
       // Record in the session list so the counter chip + sheet reflect
       // it without any re-fetch.
       _sessionAdds.add(
@@ -951,7 +888,6 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
       p.dispose();
     }
     setState(() {
-      _photo = null;
       _aliases.clear();
       _packagings
         ..clear()
@@ -1040,85 +976,32 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Photo + Scan layout:
-              //   * Both empty (the common opening state): one compact
-              //     row of two equal-width 56 px buttons — saves
-              //     ~80 px of vertical chrome before the Name field.
-              //   * Either set: fall back to a two-row layout where
-              //     the captured side renders as a full-width preview
-              //     strip (thumbnail / barcode + Retake + ✕).
-              // The empty side keeps the full-width compact button so
-              // the row heights stay aligned.
-              () {
-                final hasPhoto = _photo != null;
-                final hasBarcode = _packagings.first.barcode != null &&
-                    _packagings.first.barcode!.isNotEmpty;
-                if (!hasPhoto && !hasBarcode) {
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _onPickPhoto,
-                          icon: const Icon(Icons.camera_alt_outlined),
-                          label: Text(l.shopItemEditorAddPhotoButton),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(56),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _onSection1Scan,
-                          icon: const Icon(Icons.qr_code_scanner),
-                          label: Text(l.shopItemEditorScanIdentifyButton),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(56),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                }
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (hasPhoto)
-                      _PhotoTile(
-                        photo: _photo,
-                        onPick: _onPickPhoto,
-                        onClear: _onClearPhoto,
-                      )
-                    else
-                      OutlinedButton.icon(
-                        onPressed: _onPickPhoto,
-                        icon: const Icon(Icons.camera_alt_outlined),
-                        label: Text(l.shopItemEditorAddPhotoButton),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(56),
-                        ),
-                      ),
-                    const SizedBox(height: 12),
-                    if (hasBarcode)
-                      _BarcodeTile(
-                        barcode: _packagings.first.barcode!,
-                        onScan: _onSection1Scan,
-                        onClear: () => setState(
-                          () => _packagings.first.barcode = null,
-                        ),
-                      )
-                    else
-                      OutlinedButton.icon(
-                        onPressed: _onSection1Scan,
-                        icon: const Icon(Icons.qr_code_scanner),
-                        label: Text(l.shopItemEditorScanIdentifyButton),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(56),
-                        ),
-                      ),
-                  ],
-                );
-              }(),
+              // Scan affordance — full-width since photo capture was
+              // deferred from v1 (#360). Renders the empty Scan
+              // button until a barcode is captured, then swaps to
+              // the _BarcodeTile preview strip (code + Scan again +
+              // ✕). Photo upload is still wired end-to-end on the
+              // backend (column + bucket + RPC + ShopApi wrappers)
+              // so when grids get redesigned to show images, the
+              // capture UI can come back in one commit.
+              if (_packagings.first.barcode != null &&
+                  _packagings.first.barcode!.isNotEmpty)
+                _BarcodeTile(
+                  barcode: _packagings.first.barcode!,
+                  onScan: _onSection1Scan,
+                  onClear: () => setState(
+                    () => _packagings.first.barcode = null,
+                  ),
+                )
+              else
+                OutlinedButton.icon(
+                  onPressed: _onSection1Scan,
+                  icon: const Icon(Icons.qr_code_scanner),
+                  label: Text(l.shopItemEditorScanIdentifyButton),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                  ),
+                ),
               const SizedBox(height: 16),
               TextField(
                 controller: _nameController,
@@ -1571,77 +1454,11 @@ class _SuggestionList extends StatelessWidget {
 }
 
 // ----------------------------------------------------------------------------
-// Photo tile — Section 1 photo capture affordance.
-// ----------------------------------------------------------------------------
-
-class _PhotoTile extends StatelessWidget {
-  const _PhotoTile({
-    required this.photo,
-    required this.onPick,
-    required this.onClear,
-  });
-
-  final PickedBono? photo;
-  final VoidCallback onPick;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = tr(context);
-    final theme = Theme.of(context);
-    if (photo == null) {
-      return OutlinedButton.icon(
-        onPressed: onPick,
-        icon: const Icon(Icons.camera_alt_outlined),
-        label: Text(l.shopItemEditorAddPhotoButton),
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(72),
-        ),
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.memory(
-              photo!.bytes,
-              width: 56,
-              height: 56,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              l.shopItemEditorPhotoCapturedLabel,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
-          TextButton(
-            onPressed: onPick,
-            child: Text(l.shopItemEditorRetakePhotoButton),
-          ),
-          IconButton(
-            tooltip: l.shopItemEditorRemovePhotoTooltip,
-            onPressed: onClear,
-            icon: const Icon(Icons.close),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ----------------------------------------------------------------------------
-// Barcode tile — Section 1 scan affordance mirroring _PhotoTile so the
-// captured state surfaces the scanned code with a Retake + ✕ row
-// (instead of the older silent "code captured" toast).
+// Barcode tile — Section 1 scan affordance. Captured state surfaces
+// the scanned code with a Retake + ✕ row (instead of the older silent
+// "code captured" toast). Used to mirror a sibling _PhotoTile widget
+// pre-#360; photo capture was deferred from v1 since no read site
+// renders the image yet.
 // ----------------------------------------------------------------------------
 
 class _BarcodeTile extends StatelessWidget {

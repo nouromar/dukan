@@ -1830,26 +1830,6 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorDedupOpenExisting => 'FUR KII HORE';
 
   @override
-  String get shopItemEditorAddPhotoButton => 'Ku dar sawir (ikhtiyaari)';
-
-  @override
-  String get shopItemEditorPhotoCapturedLabel => 'Sawir diyaar';
-
-  @override
-  String get shopItemEditorRetakePhotoButton => 'Mar kale qaad';
-
-  @override
-  String get shopItemEditorRemovePhotoTooltip => 'Saar sawirka';
-
-  @override
-  String get shopItemEditorPhotoCapturedToast =>
-      'Sawir la qaaday — la soo dejin doonaa marka aad kaydiso.';
-
-  @override
-  String get shopItemEditorPhotoUploadFailedToast =>
-      'Alaabta waa la kaydiyay, laakiin sawir soo-dejin ma guulaysan. Waad ka qaadi kartaa bogga alaabta.';
-
-  @override
   String get shopItemEditorPackagingsHeader => 'Baakado';
 
   @override

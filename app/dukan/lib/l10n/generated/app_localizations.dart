@@ -3096,42 +3096,6 @@ abstract class AppLocalizations {
   /// **'OPEN EXISTING'**
   String get shopItemEditorDedupOpenExisting;
 
-  /// No description provided for @shopItemEditorAddPhotoButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Add photo (optional)'**
-  String get shopItemEditorAddPhotoButton;
-
-  /// No description provided for @shopItemEditorPhotoCapturedLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Photo ready'**
-  String get shopItemEditorPhotoCapturedLabel;
-
-  /// No description provided for @shopItemEditorRetakePhotoButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Retake'**
-  String get shopItemEditorRetakePhotoButton;
-
-  /// No description provided for @shopItemEditorRemovePhotoTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove photo'**
-  String get shopItemEditorRemovePhotoTooltip;
-
-  /// No description provided for @shopItemEditorPhotoCapturedToast.
-  ///
-  /// In en, this message translates to:
-  /// **'Photo captured — will upload when you save.'**
-  String get shopItemEditorPhotoCapturedToast;
-
-  /// No description provided for @shopItemEditorPhotoUploadFailedToast.
-  ///
-  /// In en, this message translates to:
-  /// **'Product saved, but photo upload failed. You can retake from the product page.'**
-  String get shopItemEditorPhotoUploadFailedToast;
-
   /// No description provided for @shopItemEditorPackagingsHeader.
   ///
   /// In en, this message translates to:

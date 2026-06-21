@@ -31,11 +31,11 @@ class PickedBono {
   final String fileExtension;
 }
 
-/// Compression preset for [DefaultBonoImagePicker]. The `bono` preset
-/// is tuned for OCR (~1600 px / quality 70). The `shopItem` preset is
-/// tuned for a thumbnail (~800 px / quality 65) — the photo only has
-/// to identify the product visually; storage cost scales by every
-/// item every shop adds.
+/// Compression preset for [DefaultBonoImagePicker]. Currently only
+/// the `bono` preset (tuned for OCR, ~1600 px / quality 70). The
+/// former `shopItem` preset (800 px / quality 65) was removed in
+/// #360 when shop-item photo capture was deferred from v1; revive it
+/// here when grids start rendering images.
 class ImageQuality {
   const ImageQuality({required this.maxWidth, required this.quality});
 
@@ -46,11 +46,6 @@ class ImageQuality {
   /// to read prices reliably; 1600 leaves headroom. Quality 70 keeps
   /// JPEG artifacts off of digit edges.
   static const bono = ImageQuality(maxWidth: 1600, quality: 70);
-
-  /// Shop-item thumbnail. Half the resolution, slightly tighter
-  /// quality — final files ~60–100 KB. Plenty for a list thumbnail
-  /// or the detail-screen header.
-  static const shopItem = ImageQuality(maxWidth: 800, quality: 65);
 }
 
 /// Picker contract — production wires `ImagePicker`, tests inject a
@@ -62,7 +57,7 @@ abstract class BonoImagePicker {
 
 class DefaultBonoImagePicker implements BonoImagePicker {
   /// Default config is [ImageQuality.bono] — Receive's bono upload
-  /// path. Pass [ImageQuality.shopItem] from the shop-item editor.
+  /// path.
   DefaultBonoImagePicker({this.quality = ImageQuality.bono})
       : _picker = ImagePicker();
 

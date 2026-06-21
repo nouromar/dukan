@@ -1817,26 +1817,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shopItemEditorDedupOpenExisting => 'OPEN EXISTING';
 
   @override
-  String get shopItemEditorAddPhotoButton => 'Add photo (optional)';
-
-  @override
-  String get shopItemEditorPhotoCapturedLabel => 'Photo ready';
-
-  @override
-  String get shopItemEditorRetakePhotoButton => 'Retake';
-
-  @override
-  String get shopItemEditorRemovePhotoTooltip => 'Remove photo';
-
-  @override
-  String get shopItemEditorPhotoCapturedToast =>
-      'Photo captured — will upload when you save.';
-
-  @override
-  String get shopItemEditorPhotoUploadFailedToast =>
-      'Product saved, but photo upload failed. You can retake from the product page.';
-
-  @override
   String get shopItemEditorPackagingsHeader => 'Packagings';
 
   @override
