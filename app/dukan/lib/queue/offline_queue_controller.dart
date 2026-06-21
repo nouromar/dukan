@@ -109,6 +109,14 @@ class OfflineQueueController extends ChangeNotifier {
   bool _started = false;
   bool _disposed = false;
 
+  /// Wall-clock time of the last successful drain attempt — i.e. the
+  /// most recent moment we definitely had network connectivity. The
+  /// Storage & sync screen derives "Connected" vs "Offline" from
+  /// this (within 60s + queue empty → Connected). Null until the
+  /// first successful drain in this process.
+  DateTime? _lastDrainSuccessAt;
+  DateTime? get lastDrainSuccessAt => _lastDrainSuccessAt;
+
   /// Listeners notified when posts are dropped (size cap) or
   /// promoted to failed_permanent. UI surfaces wire these to toasts
   /// / badges. Multiple listeners supported so different screens
@@ -224,6 +232,7 @@ class OfflineQueueController extends ChangeNotifier {
           await executor(head);
           await dao.remove(head.id);
           _pending = _pending.sublist(1);
+          _lastDrainSuccessAt = _clock();
           if (_disposed) return;
           notifyListeners();
         } catch (error) {

@@ -2136,4 +2136,123 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get storageSyncTitle => 'Storage & sync';
+
+  @override
+  String get storageSyncStatusConnected => 'Connected';
+
+  @override
+  String get storageSyncStatusOffline => 'Offline';
+
+  @override
+  String get storageSyncLastSyncedLabel => 'Last synced';
+
+  @override
+  String get storageSyncLastSyncedNever => 'Never';
+
+  @override
+  String get storageSyncPendingSalesLabel => 'Pending posts';
+
+  @override
+  String storageSyncPendingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count waiting',
+      one: '1 waiting',
+      zero: 'none waiting',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageSyncFailedPermanentlyLabel => 'Failed permanently';
+
+  @override
+  String storageSyncFailedPermanentlyCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count posts',
+      one: '1 post',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageSyncStorageUsedLabel => 'Storage used';
+
+  @override
+  String get storageSyncStorageBreakdownPending => 'Pending posts';
+
+  @override
+  String get storageSyncStorageBreakdownCached => 'Cached data';
+
+  @override
+  String get storageSyncSyncNowButton => 'Sync now';
+
+  @override
+  String get storageSyncFreeUpSpaceButton => 'Free up space';
+
+  @override
+  String get storageSyncFreeUpSpaceConfirmTitle => 'Clear cached data?';
+
+  @override
+  String get storageSyncFreeUpSpaceConfirmBody =>
+      'This refreshes prices and lists from the server. Your saved sales aren\'t touched.';
+
+  @override
+  String get storageSyncFreeUpSpaceConfirmAction => 'CLEAR';
+
+  @override
+  String get storageSyncCacheClearedToast => 'Cache cleared';
+
+  @override
+  String storageSyncSyncedToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Synced $count posts',
+      one: 'Synced 1 post',
+      zero: 'Already up to date',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageSyncSyncFailedToast =>
+      'Could not sync — check your connection.';
+
+  @override
+  String get storageSyncSettingsHeader => 'Settings';
+
+  @override
+  String get storageSyncWifiOnlyLabel => 'Sync only on Wi-Fi';
+
+  @override
+  String get storageSyncDrawerEntry => 'Storage & sync';
+
+  @override
+  String get failedPostsTitle => 'Failed posts';
+
+  @override
+  String get failedPostsRetryButton => 'RETRY';
+
+  @override
+  String get failedPostsDiscardButton => 'DISCARD';
+
+  @override
+  String get failedPostsDiscardConfirmTitle => 'Discard this post?';
+
+  @override
+  String get failedPostsDiscardConfirmBody =>
+      'You can\'t recover it. Continue?';
+
+  @override
+  String get failedPostsDiscardConfirmAction => 'DISCARD';
+
+  @override
+  String get failedPostsEmptyState => 'No failed posts.';
 }

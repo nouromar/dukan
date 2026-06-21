@@ -1,0 +1,415 @@
+// Shopkeeper-facing storage & sync status screen. Read-only by design
+// (per CLAUDE.md decision-free daily use) plus two action buttons —
+// "Sync now" forces a drain, "Free up space" clears caches without
+// touching queued sales. One device-level toggle: "Sync only on
+// Wi-Fi" (persists the preference; OfflineQueueController doesn't
+// honor it yet — Phase 5 wiring).
+//
+// Numbers come from existing infrastructure:
+//   * Queue count / drain status: OfflineQueueController.
+//   * Failed-permanent count + cache size: DAO queries (cheap).
+//   * Cache budget: ConfigResolver.resolve(cacheBudgetMb).
+
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:dukan/config/config_keys.dart';
+import 'package:dukan/config/config_resolver.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/shared/feedback.dart';
+import 'package:dukan/shared/history_date.dart';
+import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/storage/cache_dao.dart';
+import 'package:dukan/storage/failed_posts_screen.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
+
+class StorageSyncScreen extends StatefulWidget {
+  const StorageSyncScreen({super.key});
+
+  @override
+  State<StorageSyncScreen> createState() => _StorageSyncScreenState();
+}
+
+class _StorageSyncScreenState extends State<StorageSyncScreen> {
+  late final PendingPostDao _pendingDao;
+  late final CacheDao _cacheDao;
+  late final OfflineQueueController _queue;
+  ConfigResolver? _resolver;
+
+  int _failedCount = 0;
+  int _pendingBytes = 0;
+  int _cacheBytes = 0;
+  int _cacheEntries = 0;
+  bool _refreshing = false;
+  bool _syncing = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pendingDao = context.read<PendingPostDao>();
+    _cacheDao = context.read<CacheDao>();
+    _queue = context.read<OfflineQueueController>();
+    try {
+      _resolver = context.read<ConfigResolver>();
+    } catch (_) {
+      _resolver = null;
+    }
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    if (_refreshing) return;
+    _refreshing = true;
+    try {
+      final results = await Future.wait<dynamic>([
+        _pendingDao.countFailedPermanent(),
+        _pendingDao.totalBytes(),
+        _cacheDao.stats(),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _failedCount = results[0] as int;
+        _pendingBytes = results[1] as int;
+        final cacheStats =
+            results[2] as ({int totalBytes, int entryCount});
+        _cacheBytes = cacheStats.totalBytes;
+        _cacheEntries = cacheStats.entryCount;
+      });
+    } finally {
+      _refreshing = false;
+    }
+  }
+
+  Future<void> _onSyncNow() async {
+    final l = tr(context);
+    setState(() => _syncing = true);
+    final before = _queue.pendingCount;
+    try {
+      await _queue.drainNow();
+      if (!mounted) return;
+      final drained = before - _queue.pendingCount;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.storageSyncSyncedToast(drained))),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      showError(context, l.storageSyncSyncFailedToast);
+    } finally {
+      if (mounted) setState(() => _syncing = false);
+      await _refresh();
+    }
+  }
+
+  Future<void> _onFreeUpSpace() async {
+    final l = tr(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.storageSyncFreeUpSpaceConfirmTitle),
+        content: Text(l.storageSyncFreeUpSpaceConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l.storageSyncFreeUpSpaceConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await _cacheDao.clear();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l.storageSyncCacheClearedToast)),
+    );
+    await _refresh();
+  }
+
+  Future<void> _onToggleWifiOnly(bool wifiOnly) async {
+    final r = _resolver;
+    if (r == null) return;
+    await r.setDeviceOverride(
+      ConfigKeys.syncMode.name,
+      wifiOnly ? 'wifi' : 'auto',
+    );
+    if (mounted) setState(() {});
+  }
+
+  bool _isConnected() {
+    if (_queue.pendingCount == 0) return true;
+    final last = _queue.lastDrainSuccessAt;
+    if (last == null) return false;
+    return DateTime.now().difference(last) < const Duration(seconds: 60);
+  }
+
+  int _budgetBytes() {
+    final r = _resolver;
+    if (r == null) return 100 * 1024 * 1024;
+    return r.resolve(ConfigKeys.cacheBudgetMb) * 1024 * 1024;
+  }
+
+  bool _wifiOnly() {
+    final r = _resolver;
+    if (r == null) return false;
+    return r.resolve(ConfigKeys.syncMode) == 'wifi';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    // Watch the queue so pending count + lastDrainSuccessAt updates
+    // re-render the screen live.
+    context.watch<OfflineQueueController>();
+    final pending = _queue.pendingCount;
+    final connected = _isConnected();
+    final last = _queue.lastDrainSuccessAt;
+    final totalBytes = _pendingBytes + _cacheBytes;
+    final budget = _budgetBytes();
+
+    return Scaffold(
+      appBar: AppBar(title: Text(l.storageSyncTitle)),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // ---- Connection status ---------------------------------------
+            Row(
+              children: [
+                Icon(
+                  connected ? Icons.cloud_done : Icons.cloud_off,
+                  color: connected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.error,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  connected
+                      ? l.storageSyncStatusConnected
+                      : l.storageSyncStatusOffline,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _LabelValueRow(
+              label: l.storageSyncLastSyncedLabel,
+              value: last == null
+                  ? l.storageSyncLastSyncedNever
+                  : formatHistoryStamp(context, last),
+            ),
+            const SizedBox(height: 24),
+
+            // ---- Pending / failed ---------------------------------------
+            _LabelValueRow(
+              label: l.storageSyncPendingSalesLabel,
+              value: l.storageSyncPendingCount(pending),
+            ),
+            if (_failedCount > 0) ...[
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const FailedPostsScreen(),
+                    ),
+                  );
+                  if (mounted) await _refresh();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l.storageSyncFailedPermanentlyLabel,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        l.storageSyncFailedPermanentlyCount(_failedCount),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 20,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+
+            // ---- Storage usage ------------------------------------------
+            _LabelValueRow(
+              label: l.storageSyncStorageUsedLabel,
+              value: '${_formatBytes(totalBytes)} / ${_formatBytes(budget)}',
+            ),
+            const SizedBox(height: 4),
+            // Static usage bar (not LinearProgressIndicator) so
+            // widget tests don't hang on its perpetual ticker.
+            // pumpAndSettle on M3 LinearProgressIndicator never
+            // returns under fake-async; FractionallySizedBox is a
+            // single layout pass with the same visual.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: Container(
+                height: 4,
+                color: theme.colorScheme.surfaceContainerHighest,
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: budget == 0
+                      ? 0
+                      : (totalBytes / budget).clamp(0.0, 1.0),
+                  child: Container(color: theme.colorScheme.primary),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _BreakdownRow(
+              label: l.storageSyncStorageBreakdownPending,
+              value: _formatBytes(_pendingBytes),
+            ),
+            _BreakdownRow(
+              label: l.storageSyncStorageBreakdownCached,
+              value: '${_formatBytes(_cacheBytes)} '
+                  '($_cacheEntries)',
+            ),
+            const SizedBox(height: 24),
+
+            // ---- Actions -------------------------------------------------
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _syncing ? null : _onSyncNow,
+                    icon: _syncing
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.sync),
+                    label: Text(l.storageSyncSyncNowButton),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _onFreeUpSpace,
+                    icon: const Icon(Icons.cleaning_services_outlined),
+                    label: Text(l.storageSyncFreeUpSpaceButton),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // ---- Settings -----------------------------------------------
+            Text(
+              l.storageSyncSettingsHeader,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+              ),
+            ),
+            const SizedBox(height: 4),
+            // TODO(#36X): OfflineQueueController doesn't honor sync_mode
+            // yet — the toggle persists the preference but drain still
+            // fires on any connection. Wire `connectivity_plus` in
+            // Phase 5 so the drain pauses when on cellular and the
+            // toggle is enabled.
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l.storageSyncWifiOnlyLabel),
+              value: _wifiOnly(),
+              onChanged: _resolver == null ? null : _onToggleWifiOnly,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) {
+      return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    }
+    return '${(bytes / 1024 / 1024).toStringAsFixed(1)} MB';
+  }
+}
+
+class _LabelValueRow extends StatelessWidget {
+  const _LabelValueRow({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(value, style: theme.textTheme.titleMedium),
+      ],
+    );
+  }
+}
+
+class _BreakdownRow extends StatelessWidget {
+  const _BreakdownRow({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, top: 2, bottom: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Text(value, style: theme.textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}

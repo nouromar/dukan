@@ -2155,4 +2155,123 @@ class AppLocalizationsSo extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get storageSyncTitle => 'Kayd & is-waafajin';
+
+  @override
+  String get storageSyncStatusConnected => 'Xidhan';
+
+  @override
+  String get storageSyncStatusOffline => 'Aan xidhneyn';
+
+  @override
+  String get storageSyncLastSyncedLabel => 'Is-waafajin u dambeysay';
+
+  @override
+  String get storageSyncLastSyncedNever => 'Welwaa';
+
+  @override
+  String get storageSyncPendingSalesLabel => 'Kuwa sugaya';
+
+  @override
+  String storageSyncPendingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sugaya',
+      one: '1 sugaya',
+      zero: 'midna',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageSyncFailedPermanentlyLabel =>
+      'Si rasmi ah u guul-darreystay';
+
+  @override
+  String storageSyncFailedPermanentlyCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count',
+      one: '1',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageSyncStorageUsedLabel => 'Boos la isticmaalay';
+
+  @override
+  String get storageSyncStorageBreakdownPending => 'Kuwa sugaya';
+
+  @override
+  String get storageSyncStorageBreakdownCached => 'Xog la kaydiyay';
+
+  @override
+  String get storageSyncSyncNowButton => 'Is-waafaji hadda';
+
+  @override
+  String get storageSyncFreeUpSpaceButton => 'Furfur booska';
+
+  @override
+  String get storageSyncFreeUpSpaceConfirmTitle => 'Tirtir xogta la kaydiyay?';
+
+  @override
+  String get storageSyncFreeUpSpaceConfirmBody =>
+      'Tani waxay cusbooneysiisaa qiimaha iyo liiska serfarka. Iibyada aad kaydisay ma taabankaro.';
+
+  @override
+  String get storageSyncFreeUpSpaceConfirmAction => 'TIRTIR';
+
+  @override
+  String get storageSyncCacheClearedToast => 'Kaydka waa la tirtiray';
+
+  @override
+  String storageSyncSyncedToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count la diray',
+      one: '1 la diray',
+      zero: 'Horeyba u cusub',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageSyncSyncFailedToast =>
+      'Lama waafajin karin — hubi xidhiidhka.';
+
+  @override
+  String get storageSyncSettingsHeader => 'Dejinta';
+
+  @override
+  String get storageSyncWifiOnlyLabel => 'Kaliya marka Wi-Fi jiro';
+
+  @override
+  String get storageSyncDrawerEntry => 'Kayd & is-waafajin';
+
+  @override
+  String get failedPostsTitle => 'Kuwa guul-darreystay';
+
+  @override
+  String get failedPostsRetryButton => 'MAR KALE';
+
+  @override
+  String get failedPostsDiscardButton => 'TUUR';
+
+  @override
+  String get failedPostsDiscardConfirmTitle => 'Tuur kan?';
+
+  @override
+  String get failedPostsDiscardConfirmBody => 'Ma soo celin kartid. Sii wad?';
+
+  @override
+  String get failedPostsDiscardConfirmAction => 'TUUR';
+
+  @override
+  String get failedPostsEmptyState => 'Wax guul-darreystay ma jiro.';
 }

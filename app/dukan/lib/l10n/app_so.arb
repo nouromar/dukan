@@ -960,5 +960,56 @@
         "type": "int"
       }
     }
-  }
+  },
+  "storageSyncTitle": "Kayd & is-waafajin",
+  "storageSyncStatusConnected": "Xidhan",
+  "storageSyncStatusOffline": "Aan xidhneyn",
+  "storageSyncLastSyncedLabel": "Is-waafajin u dambeysay",
+  "storageSyncLastSyncedNever": "Welwaa",
+  "storageSyncPendingSalesLabel": "Kuwa sugaya",
+  "storageSyncPendingCount": "{count, plural, =0{midna} =1{1 sugaya} other{{count} sugaya}}",
+  "@storageSyncPendingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageSyncFailedPermanentlyLabel": "Si rasmi ah u guul-darreystay",
+  "storageSyncFailedPermanentlyCount": "{count, plural, =1{1} other{{count}}}",
+  "@storageSyncFailedPermanentlyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageSyncStorageUsedLabel": "Boos la isticmaalay",
+  "storageSyncStorageBreakdownPending": "Kuwa sugaya",
+  "storageSyncStorageBreakdownCached": "Xog la kaydiyay",
+  "storageSyncSyncNowButton": "Is-waafaji hadda",
+  "storageSyncFreeUpSpaceButton": "Furfur booska",
+  "storageSyncFreeUpSpaceConfirmTitle": "Tirtir xogta la kaydiyay?",
+  "storageSyncFreeUpSpaceConfirmBody": "Tani waxay cusbooneysiisaa qiimaha iyo liiska serfarka. Iibyada aad kaydisay ma taabankaro.",
+  "storageSyncFreeUpSpaceConfirmAction": "TIRTIR",
+  "storageSyncCacheClearedToast": "Kaydka waa la tirtiray",
+  "storageSyncSyncedToast": "{count, plural, =0{Horeyba u cusub} =1{1 la diray} other{{count} la diray}}",
+  "@storageSyncSyncedToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageSyncSyncFailedToast": "Lama waafajin karin — hubi xidhiidhka.",
+  "storageSyncSettingsHeader": "Dejinta",
+  "storageSyncWifiOnlyLabel": "Kaliya marka Wi-Fi jiro",
+  "storageSyncDrawerEntry": "Kayd & is-waafajin",
+  "failedPostsTitle": "Kuwa guul-darreystay",
+  "failedPostsRetryButton": "MAR KALE",
+  "failedPostsDiscardButton": "TUUR",
+  "failedPostsDiscardConfirmTitle": "Tuur kan?",
+  "failedPostsDiscardConfirmBody": "Ma soo celin kartid. Sii wad?",
+  "failedPostsDiscardConfirmAction": "TUUR",
+  "failedPostsEmptyState": "Wax guul-darreystay ma jiro."
 }

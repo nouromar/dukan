@@ -136,6 +136,27 @@ class PendingPostDao {
     return (row.first['c'] as int?) ?? 0;
   }
 
+  /// Count of `failed_permanent`-state rows. Used by the Storage &
+  /// sync screen to show the "Failed permanently" line (hidden when
+  /// zero) and to badge the drill-in target.
+  Future<int> countFailedPermanent() async {
+    final row = await (await _db).rawQuery(
+      "SELECT COUNT(*) AS c FROM pending_post WHERE state = 'failed_permanent'",
+    );
+    return (row.first['c'] as int?) ?? 0;
+  }
+
+  /// Approximate total bytes occupied by ALL rows (both `pending` and
+  /// `failed_permanent`). Uses LENGTH(params_json) plus a 200-byte
+  /// fudge for the other columns (id, client_op_id, shop_id, etc.).
+  /// Cheap enough to call on every Storage & sync screen open.
+  Future<int> totalBytes() async {
+    final row = await (await _db).rawQuery(
+      'SELECT COALESCE(SUM(LENGTH(params_json) + 200), 0) AS b FROM pending_post',
+    );
+    return (row.first['b'] as int?) ?? 0;
+  }
+
   /// Drop the single oldest `pending` row (by `queued_at`) and
   /// return it so the caller can log the dropped payload to Sentry
   /// before it vanishes. Returns null if no `pending` rows exist

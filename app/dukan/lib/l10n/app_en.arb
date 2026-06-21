@@ -970,5 +970,56 @@
         "type": "int"
       }
     }
-  }
+  },
+  "storageSyncTitle": "Storage & sync",
+  "storageSyncStatusConnected": "Connected",
+  "storageSyncStatusOffline": "Offline",
+  "storageSyncLastSyncedLabel": "Last synced",
+  "storageSyncLastSyncedNever": "Never",
+  "storageSyncPendingSalesLabel": "Pending posts",
+  "storageSyncPendingCount": "{count, plural, =0{none waiting} =1{1 waiting} other{{count} waiting}}",
+  "@storageSyncPendingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageSyncFailedPermanentlyLabel": "Failed permanently",
+  "storageSyncFailedPermanentlyCount": "{count, plural, =1{1 post} other{{count} posts}}",
+  "@storageSyncFailedPermanentlyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageSyncStorageUsedLabel": "Storage used",
+  "storageSyncStorageBreakdownPending": "Pending posts",
+  "storageSyncStorageBreakdownCached": "Cached data",
+  "storageSyncSyncNowButton": "Sync now",
+  "storageSyncFreeUpSpaceButton": "Free up space",
+  "storageSyncFreeUpSpaceConfirmTitle": "Clear cached data?",
+  "storageSyncFreeUpSpaceConfirmBody": "This refreshes prices and lists from the server. Your saved sales aren't touched.",
+  "storageSyncFreeUpSpaceConfirmAction": "CLEAR",
+  "storageSyncCacheClearedToast": "Cache cleared",
+  "storageSyncSyncedToast": "{count, plural, =0{Already up to date} =1{Synced 1 post} other{Synced {count} posts}}",
+  "@storageSyncSyncedToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storageSyncSyncFailedToast": "Could not sync — check your connection.",
+  "storageSyncSettingsHeader": "Settings",
+  "storageSyncWifiOnlyLabel": "Sync only on Wi-Fi",
+  "storageSyncDrawerEntry": "Storage & sync",
+  "failedPostsTitle": "Failed posts",
+  "failedPostsRetryButton": "RETRY",
+  "failedPostsDiscardButton": "DISCARD",
+  "failedPostsDiscardConfirmTitle": "Discard this post?",
+  "failedPostsDiscardConfirmBody": "You can't recover it. Continue?",
+  "failedPostsDiscardConfirmAction": "DISCARD",
+  "failedPostsEmptyState": "No failed posts."
 }

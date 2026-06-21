@@ -3533,6 +3533,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Syncing 1} other{Syncing {count}}}'**
   String offlineQueuePillLabel(int count);
+
+  /// No description provided for @storageSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage & sync'**
+  String get storageSyncTitle;
+
+  /// No description provided for @storageSyncStatusConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get storageSyncStatusConnected;
+
+  /// No description provided for @storageSyncStatusOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get storageSyncStatusOffline;
+
+  /// No description provided for @storageSyncLastSyncedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced'**
+  String get storageSyncLastSyncedLabel;
+
+  /// No description provided for @storageSyncLastSyncedNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get storageSyncLastSyncedNever;
+
+  /// No description provided for @storageSyncPendingSalesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending posts'**
+  String get storageSyncPendingSalesLabel;
+
+  /// No description provided for @storageSyncPendingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{none waiting} =1{1 waiting} other{{count} waiting}}'**
+  String storageSyncPendingCount(int count);
+
+  /// No description provided for @storageSyncFailedPermanentlyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed permanently'**
+  String get storageSyncFailedPermanentlyLabel;
+
+  /// No description provided for @storageSyncFailedPermanentlyCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 post} other{{count} posts}}'**
+  String storageSyncFailedPermanentlyCount(int count);
+
+  /// No description provided for @storageSyncStorageUsedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage used'**
+  String get storageSyncStorageUsedLabel;
+
+  /// No description provided for @storageSyncStorageBreakdownPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending posts'**
+  String get storageSyncStorageBreakdownPending;
+
+  /// No description provided for @storageSyncStorageBreakdownCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Cached data'**
+  String get storageSyncStorageBreakdownCached;
+
+  /// No description provided for @storageSyncSyncNowButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get storageSyncSyncNowButton;
+
+  /// No description provided for @storageSyncFreeUpSpaceButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Free up space'**
+  String get storageSyncFreeUpSpaceButton;
+
+  /// No description provided for @storageSyncFreeUpSpaceConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cached data?'**
+  String get storageSyncFreeUpSpaceConfirmTitle;
+
+  /// No description provided for @storageSyncFreeUpSpaceConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This refreshes prices and lists from the server. Your saved sales aren\'t touched.'**
+  String get storageSyncFreeUpSpaceConfirmBody;
+
+  /// No description provided for @storageSyncFreeUpSpaceConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'CLEAR'**
+  String get storageSyncFreeUpSpaceConfirmAction;
+
+  /// No description provided for @storageSyncCacheClearedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleared'**
+  String get storageSyncCacheClearedToast;
+
+  /// No description provided for @storageSyncSyncedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Already up to date} =1{Synced 1 post} other{Synced {count} posts}}'**
+  String storageSyncSyncedToast(int count);
+
+  /// No description provided for @storageSyncSyncFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sync — check your connection.'**
+  String get storageSyncSyncFailedToast;
+
+  /// No description provided for @storageSyncSettingsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get storageSyncSettingsHeader;
+
+  /// No description provided for @storageSyncWifiOnlyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync only on Wi-Fi'**
+  String get storageSyncWifiOnlyLabel;
+
+  /// No description provided for @storageSyncDrawerEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage & sync'**
+  String get storageSyncDrawerEntry;
+
+  /// No description provided for @failedPostsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed posts'**
+  String get failedPostsTitle;
+
+  /// No description provided for @failedPostsRetryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY'**
+  String get failedPostsRetryButton;
+
+  /// No description provided for @failedPostsDiscardButton.
+  ///
+  /// In en, this message translates to:
+  /// **'DISCARD'**
+  String get failedPostsDiscardButton;
+
+  /// No description provided for @failedPostsDiscardConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this post?'**
+  String get failedPostsDiscardConfirmTitle;
+
+  /// No description provided for @failedPostsDiscardConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You can\'t recover it. Continue?'**
+  String get failedPostsDiscardConfirmBody;
+
+  /// No description provided for @failedPostsDiscardConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'DISCARD'**
+  String get failedPostsDiscardConfirmAction;
+
+  /// No description provided for @failedPostsEmptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'No failed posts.'**
+  String get failedPostsEmptyState;
 }
 
 class _AppLocalizationsDelegate

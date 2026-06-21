@@ -64,6 +64,8 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   late final ExpenseController _expenseController;
   late final OfflineQueueController _offlineQueueController;
   late final ConfigResolver _configResolver;
+  late final PendingPostDao _pendingPostDao;
+  late final CacheDao _cacheDao;
   bool _hadSession = false;
   String? _crashReportedUserId;
   String? _crashReportedShopId;
@@ -87,6 +89,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     // SharedPreferences migration (idempotent — no-op on second
     // launch) then starts the queue draining.
     final database = AppDatabase.instance();
+    _pendingPostDao = PendingPostDao(database);
     _configResolver = ConfigResolver(
       shopApi: _shopApi,
       deviceConfigDao: DeviceConfigDao(database),
@@ -94,8 +97,9 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
         unawaited(CrashReporter.reportError(error, stack, hint: hint));
       },
     );
+    _cacheDao = CacheDao(database, configResolver: _configResolver);
     _offlineQueueController = OfflineQueueController(
-      dao: PendingPostDao(database),
+      dao: _pendingPostDao,
       executor: PostExecutor(_shopApi).execute,
       configResolver: _configResolver,
     );
@@ -216,6 +220,8 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
           value: _offlineQueueController,
         ),
         ChangeNotifierProvider<ConfigResolver>.value(value: _configResolver),
+        Provider<PendingPostDao>.value(value: _pendingPostDao),
+        Provider<CacheDao>.value(value: _cacheDao),
       ],
       child: Builder(builder: widget.builder),
     );

@@ -21,6 +21,7 @@ import 'package:dukan/reports/low_stock_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/storage/storage_sync_screen.dart';
 
 class DukanDrawer extends StatelessWidget {
   const DukanDrawer({required this.shop, super.key});
@@ -126,6 +127,11 @@ class DukanDrawer extends StatelessWidget {
               icon: Icons.settings,
               label: l.drawerSettings,
               builder: (_) => SettingsScreen(shop: shop),
+            ),
+            _DrawerItem(
+              icon: Icons.cloud_sync_outlined,
+              label: l.storageSyncDrawerEntry,
+              builder: (_) => const StorageSyncScreen(),
             ),
           ],
         ),
