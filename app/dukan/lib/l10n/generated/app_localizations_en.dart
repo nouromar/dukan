@@ -699,6 +699,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOut => 'Sign out';
 
   @override
+  String get queueCapExceededToast =>
+      'Some old unsynced data was dropped — your phone was offline too long.';
+
+  @override
+  String get signOutPendingDialogTitle => 'Unsynced data';
+
+  @override
+  String signOutPendingDialogBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'You have $count posts that have not synced yet.',
+      one: 'You have 1 post that has not synced yet.',
+    );
+    return '$_temp0 Sign out anyway? They will sync the next time you sign in.';
+  }
+
+  @override
+  String get signOutPendingDialogCancel => 'Cancel';
+
+  @override
+  String get signOutPendingDialogConfirm => 'Sign out';
+
+  @override
   String get invalidPhoneMessage =>
       'Enter a valid phone number, for example +252612345678.';
 

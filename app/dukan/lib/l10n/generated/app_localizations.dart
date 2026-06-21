@@ -1316,6 +1316,36 @@ abstract class AppLocalizations {
   /// **'Sign out'**
   String get signOut;
 
+  /// No description provided for @queueCapExceededToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Some old unsynced data was dropped — your phone was offline too long.'**
+  String get queueCapExceededToast;
+
+  /// No description provided for @signOutPendingDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsynced data'**
+  String get signOutPendingDialogTitle;
+
+  /// No description provided for @signOutPendingDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{You have 1 post that has not synced yet.} other{You have {count} posts that have not synced yet.}} Sign out anyway? They will sync the next time you sign in.'**
+  String signOutPendingDialogBody(int count);
+
+  /// No description provided for @signOutPendingDialogCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get signOutPendingDialogCancel;
+
+  /// No description provided for @signOutPendingDialogConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOutPendingDialogConfirm;
+
   /// No description provided for @invalidPhoneMessage.
   ///
   /// In en, this message translates to:

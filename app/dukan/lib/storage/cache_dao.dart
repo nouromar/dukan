@@ -11,9 +11,11 @@
 // All values are stored as TEXT (JSON). Callers serialize before
 // `put()` and decode after `get()` — keeps the DAO type-agnostic.
 
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/storage_defaults.dart';
 
 class CacheEntry {
   const CacheEntry({
@@ -37,14 +39,19 @@ class CacheEntry {
 }
 
 class CacheDao {
-  CacheDao(this._database, {DateTime Function()? clock})
-      : _clock = clock ?? DateTime.now;
+  CacheDao(
+    this._database, {
+    DateTime Function()? clock,
+    int? budgetBytes,
+  })  : _clock = clock ?? DateTime.now,
+        _budgetBytes = budgetBytes ?? kCacheBudgetBytes;
 
   /// Future-typed so the DAO can be constructed synchronously while
   /// sqflite finishes opening. main.dart awaits the open before
   /// runApp, so methods resolve instantly in practice.
   final Future<AppDatabase> _database;
   final DateTime Function() _clock;
+  final int _budgetBytes;
 
   Future<Database> get _db => _database.then((d) => d.db);
 
@@ -55,19 +62,36 @@ class CacheDao {
   /// Updates `last_read_at` on a hit so LRU eviction prefers stale
   /// entries.
   Future<CacheEntry?> get(String key) async {
-    final rows = await (await _db).query(
+    final db = await _db;
+    final rows = await db.query(
       'cache_entry',
       where: 'key = ?',
       whereArgs: [key],
       limit: 1,
     );
     if (rows.isEmpty) return null;
-    final entry = _rowToEntry(rows.first);
-    if (entry.isExpired(_clock())) {
-      await (await _db).delete('cache_entry', where: 'key = ?', whereArgs: [key]);
+    // Corruption tolerance: if the row can't be decoded into a
+    // CacheEntry (e.g. value_json field type changed, written_at
+    // missing), delete the bad row and treat as miss. Logged to
+    // Sentry so we know if it's recurring.
+    CacheEntry entry;
+    try {
+      entry = _rowToEntry(rows.first);
+    } catch (error, stackTrace) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan storage',
+        context: ErrorDescription('cache_entry row corrupt — deleting'),
+      ));
+      await db.delete('cache_entry', where: 'key = ?', whereArgs: [key]);
       return null;
     }
-    await (await _db).update(
+    if (entry.isExpired(_clock())) {
+      await db.delete('cache_entry', where: 'key = ?', whereArgs: [key]);
+      return null;
+    }
+    await db.update(
       'cache_entry',
       {'last_read_at': _clock().millisecondsSinceEpoch},
       where: 'key = ?',
@@ -78,6 +102,12 @@ class CacheDao {
 
   /// Insert or replace the entry at [key]. Pass [ttl] to set an
   /// `expires_at`; null means no expiry.
+  ///
+  /// After the write, if total cache size exceeds [_budgetBytes],
+  /// runs eviction in this order:
+  ///   1. Delete all expired rows.
+  ///   2. If still over budget, delete by `last_read_at ASC` until
+  ///      under budget.
   Future<void> put(
     String key,
     String valueJson, {
@@ -85,7 +115,8 @@ class CacheDao {
   }) async {
     final now = _clock();
     final expires = ttl == null ? null : now.add(ttl);
-    await (await _db).insert(
+    final db = await _db;
+    await db.insert(
       'cache_entry',
       {
         'key': key,
@@ -97,6 +128,15 @@ class CacheDao {
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    await _enforceBudget();
+  }
+
+  Future<void> _enforceBudget() async {
+    final total = await totalBytes();
+    if (total <= _budgetBytes) return;
+    // Expired-first sweep; cheap and often enough on its own.
+    await evictExpired();
+    await evictLruUntil(_budgetBytes);
   }
 
   /// Drop a single entry by [key]. No-op when missing.
@@ -111,6 +151,19 @@ class CacheDao {
       'SELECT COALESCE(SUM(size_bytes), 0) AS s FROM cache_entry',
     );
     return (rows.first['s'] as int?) ?? 0;
+  }
+
+  /// Summary for the Storage & sync screen (Phase 4). Computed in
+  /// one query so the UI can poll cheaply.
+  Future<({int totalBytes, int entryCount})> stats() async {
+    final rows = await (await _db).rawQuery(
+      'SELECT COALESCE(SUM(size_bytes), 0) AS s, COUNT(*) AS c FROM cache_entry',
+    );
+    final row = rows.first;
+    return (
+      totalBytes: (row['s'] as int?) ?? 0,
+      entryCount: (row['c'] as int?) ?? 0,
+    );
   }
 
   /// Eagerly remove every expired row. Returns the number deleted.

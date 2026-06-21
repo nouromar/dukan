@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/auth/login_screen.dart';
+import 'package:dukan/auth/sign_out_flow.dart';
 import 'package:dukan/auth/otp_verification_screen.dart';
 import 'package:dukan/auth/owner_onboarding_screen.dart';
 import 'package:dukan/auth/shop_picker_screen.dart';
@@ -247,7 +248,7 @@ class AuthRouter extends StatelessWidget {
         title: tr(context).shopLoadFailedTitle,
         message: tr(context).shopLoadFailedMessage,
         onRetry: () => auth.loadShops(),
-        onSignOut: () => auth.signOut(),
+        onSignOut: () => confirmSignOut(context),
       );
     }
 
@@ -272,6 +273,9 @@ class AuthRouter extends StatelessWidget {
       return SetupItemOnboardingScreen(shop: selectedShop);
     }
 
-    return HomeScreen(shop: selectedShop, onSignOut: () => auth.signOut());
+    return HomeScreen(
+      shop: selectedShop,
+      onSignOut: () => confirmSignOut(context),
+    );
   }
 }

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/auth/sign_out_flow.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -81,7 +82,7 @@ class _ShopTypeSetupScreenState extends State<ShopTypeSetupScreen> {
         actions: [
           IconButton(
             tooltip: l.signOut,
-            onPressed: () => context.read<AuthController>().signOut(),
+            onPressed: () => confirmSignOut(context),
             icon: const Icon(Icons.logout),
           ),
         ],

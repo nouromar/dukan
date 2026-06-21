@@ -701,6 +701,30 @@ class AppLocalizationsSo extends AppLocalizations {
   String get signOut => 'Ka bax';
 
   @override
+  String get queueCapExceededToast =>
+      'Xog hore oo aan la kaydin ayaa la tirtiray — telefoonkaagu wuxuu daahay xagga internet-ka.';
+
+  @override
+  String get signOutPendingDialogTitle => 'Xog aan la kaydin';
+
+  @override
+  String signOutPendingDialogBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Waxaad haysataa $count diiwaan oo aan weli la kaydin.',
+      one: 'Waxaad haysataa 1 diiwaan oo aan weli la kaydin.',
+    );
+    return '$_temp0 Ma rabtaa inaad sii baxdo? Markaad mar kale gasho ayaa la kaydin doonaa.';
+  }
+
+  @override
+  String get signOutPendingDialogCancel => 'Jooji';
+
+  @override
+  String get signOutPendingDialogConfirm => 'Ka bax';
+
+  @override
   String get invalidPhoneMessage =>
       'Geli lambar telefoon sax ah, tusaale +252612345678.';
 

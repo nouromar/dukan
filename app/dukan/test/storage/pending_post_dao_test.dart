@@ -148,4 +148,36 @@ void main() {
     expect(await dao.load(), isEmpty);
     expect(await dao.loadFailedPermanent(), isEmpty);
   });
+
+  test('dropOldestPending removes + returns the oldest pending row',
+      () async {
+    await dao.insert(
+      _post('newer', queuedAt: DateTime.utc(2026, 6, 12, 12, 5, 0)),
+    );
+    await dao.insert(
+      _post('older', queuedAt: DateTime.utc(2026, 6, 12, 12, 0, 0)),
+    );
+    await dao.insert(
+      _post(
+        'ancient_but_failed',
+        queuedAt: DateTime.utc(2026, 6, 12, 11, 0, 0),
+        state: PendingPostState.failedPermanent,
+      ),
+    );
+    final dropped = await dao.dropOldestPending();
+    expect(dropped?.id, 'older',
+        reason: 'failed_permanent rows must NOT be considered');
+    expect((await dao.load()).map((p) => p.id), ['newer']);
+    // failed_permanent rows untouched
+    expect((await dao.loadFailedPermanent()).map((p) => p.id),
+        ['ancient_but_failed']);
+  });
+
+  test('dropOldestPending returns null when no pending rows exist',
+      () async {
+    await dao.insert(
+      _post('only_failed', state: PendingPostState.failedPermanent),
+    );
+    expect(await dao.dropOldestPending(), isNull);
+  });
 }

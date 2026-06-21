@@ -326,6 +326,18 @@
   "shopSetupStatus": "Setup: {status}",
   "activeShopLabel": "Shop: {shop}",
   "signOut": "Sign out",
+  "queueCapExceededToast": "Some old unsynced data was dropped — your phone was offline too long.",
+  "signOutPendingDialogTitle": "Unsynced data",
+  "signOutPendingDialogBody": "{count, plural, =1{You have 1 post that has not synced yet.} other{You have {count} posts that have not synced yet.}} Sign out anyway? They will sync the next time you sign in.",
+  "@signOutPendingDialogBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "signOutPendingDialogCancel": "Cancel",
+  "signOutPendingDialogConfirm": "Sign out",
   "invalidPhoneMessage": "Enter a valid phone number, for example +252612345678.",
   "invalidEmailMessage": "Enter a valid email, for example you@example.com.",
   "missingPendingPhoneMessage": "Start with your phone number first.",

@@ -316,6 +316,18 @@
   "shopSetupStatus": "Diyaarin: {status}",
   "activeShopLabel": "Dukaan: {shop}",
   "signOut": "Ka bax",
+  "queueCapExceededToast": "Xog hore oo aan la kaydin ayaa la tirtiray — telefoonkaagu wuxuu daahay xagga internet-ka.",
+  "signOutPendingDialogTitle": "Xog aan la kaydin",
+  "signOutPendingDialogBody": "{count, plural, =1{Waxaad haysataa 1 diiwaan oo aan weli la kaydin.} other{Waxaad haysataa {count} diiwaan oo aan weli la kaydin.}} Ma rabtaa inaad sii baxdo? Markaad mar kale gasho ayaa la kaydin doonaa.",
+  "@signOutPendingDialogBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "signOutPendingDialogCancel": "Jooji",
+  "signOutPendingDialogConfirm": "Ka bax",
   "invalidPhoneMessage": "Geli lambar telefoon sax ah, tusaale +252612345678.",
   "invalidEmailMessage": "Geli iimayl sax ah, tusaale you@example.com.",
   "missingPendingPhoneMessage": "Marka hore ku bilow lambarka telefoonkaaga.",

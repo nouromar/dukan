@@ -128,13 +128,38 @@ class PendingPostDao {
     await (await _db).delete('pending_post');
   }
 
-  /// Count of `pending`-state rows. Used by the queue size cap that
-  /// lands in Phase 2.
+  /// Count of `pending`-state rows. Used by the queue size cap.
   Future<int> countPending() async {
     final row = await (await _db).rawQuery(
       "SELECT COUNT(*) AS c FROM pending_post WHERE state = 'pending'",
     );
     return (row.first['c'] as int?) ?? 0;
+  }
+
+  /// Drop the single oldest `pending` row (by `queued_at`) and
+  /// return it so the caller can log the dropped payload to Sentry
+  /// before it vanishes. Returns null if no `pending` rows exist
+  /// (caller would not have called this in that case, but be safe).
+  ///
+  /// Used by the Phase 2 size cap when [insert] would push the
+  /// queue past [kQueueMaxPending].
+  Future<PendingPost?> dropOldestPending() async {
+    final db = await _db;
+    final rows = await db.query(
+      'pending_post',
+      where: 'state = ?',
+      whereArgs: ['pending'],
+      orderBy: 'queued_at ASC',
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    final victim = _rowToPost(rows.first);
+    await db.delete(
+      'pending_post',
+      where: 'id = ?',
+      whereArgs: [victim.id],
+    );
+    return victim;
   }
 
   /// Bulk overwrite of the queue contents. Wraps the writes in a

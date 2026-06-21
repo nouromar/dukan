@@ -87,4 +87,59 @@ void main() {
     await dao.clear();
     expect(await dao.get('b'), isNull);
   });
+
+  test('stats reports total bytes + entry count', () async {
+    expect(await dao.stats(), (totalBytes: 0, entryCount: 0));
+    await dao.put('a', '1234');
+    await dao.put('b', '12345678');
+    expect(await dao.stats(), (totalBytes: 12, entryCount: 2));
+  });
+
+  test('put auto-evicts (expired first, then LRU) when over budget',
+      () async {
+    // Budget of 25 bytes — small enough to force eviction.
+    final tight = CacheDao(
+      AppDatabase.instance(),
+      clock: () => now,
+      budgetBytes: 25,
+    );
+    // Two entries, neither expired.
+    now = DateTime.utc(2026, 6, 21, 12, 0, 0);
+    await tight.put('oldRead', '0123456789'); // 10
+    now = DateTime.utc(2026, 6, 21, 12, 1, 0);
+    await tight.put('newRead', '0123456789'); // 10
+    // 20 bytes total, under budget — both remain.
+    expect(await tight.get('oldRead'), isNotNull);
+    // Reading promotes 'oldRead' past 'newRead' in LRU order.
+    now = DateTime.utc(2026, 6, 21, 12, 2, 0);
+    await tight.get('oldRead');
+    // Third put pushes total to 30 — over budget. Eviction runs.
+    now = DateTime.utc(2026, 6, 21, 12, 3, 0);
+    await tight.put('third', '0123456789'); // 10
+    // 'newRead' was the least-recently-read, so it gets evicted.
+    expect(await tight.get('newRead'), isNull);
+    expect(await tight.get('oldRead'), isNotNull);
+    expect(await tight.get('third'), isNotNull);
+  });
+
+  test('put evicts expired before touching healthy entries', () async {
+    final tight = CacheDao(
+      AppDatabase.instance(),
+      clock: () => now,
+      budgetBytes: 25,
+    );
+    // Expiring entry.
+    await tight.put('willExpire', '0123456789',
+        ttl: const Duration(minutes: 1));
+    await tight.put('keep', '0123456789');
+    // Fast-forward so willExpire is expired.
+    now = now.add(const Duration(minutes: 2));
+    // Trigger eviction by another put.
+    await tight.put('newEntry', '0123456789');
+    // Expired one was deleted; both healthy entries remain (we have
+    // budget for two 10-byte entries).
+    expect(await tight.get('willExpire'), isNull);
+    expect(await tight.get('keep'), isNotNull);
+    expect(await tight.get('newEntry'), isNotNull);
+  });
 }
