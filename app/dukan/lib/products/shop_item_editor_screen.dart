@@ -774,17 +774,18 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
             notes: l.shopItemEditorOpeningStockNote,
           );
         } catch (error, stackTrace) {
-          // Surface the failure to the cashier instead of swallowing
-          // silently — opening stock IS the user's data and a silent
-          // 0 in product detail is the worst outcome (#357 from the
-          // iPhone test pass). The item save itself already
-          // succeeded, so we don't abort; we just show a warning so
-          // they can re-enter stock via product detail → adjust.
+          // Surface the failure to the cashier — opening stock IS
+          // the user's data and a silent 0 in product detail is
+          // the worst outcome (#357 from the iPhone test pass).
+          // We also include the raw error string in the toast so
+          // we can actually diagnose what's failing in production
+          // (Sentry-only reports are invisible to the cashier and
+          // the developer alike when iterating live on device).
           _reportNonFatal(error, stackTrace, 'opening stock adjustment');
           if (mounted) {
             showError(
               context,
-              l.shopItemEditorOpeningStockFailedMessage,
+              '${l.shopItemEditorOpeningStockFailedMessage}\n$error',
             );
           }
         }
