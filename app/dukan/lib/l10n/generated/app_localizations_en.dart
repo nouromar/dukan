@@ -2255,4 +2255,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get failedPostsEmptyState => 'No failed posts.';
+
+  @override
+  String get syncFirstTimeSetupTitle => 'Connect to load your shop\'s data';
+
+  @override
+  String get syncFirstTimeSetupBody =>
+      'We need to fetch your items, customers, and recent transactions one time before you can work offline. Open Wi-Fi or mobile data, then tap Retry.';
+
+  @override
+  String get syncFirstTimeSetupRetryButton => 'RETRY';
+
+  @override
+  String syncIssueBannerLabel(String time) {
+    return '⚠ Working offline since $time. Tap to retry sync.';
+  }
+
+  @override
+  String get syncForceSyncingToast => 'Syncing…';
+
+  @override
+  String syncForceSyncedToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Synced $count updates',
+      one: 'Synced 1 update',
+      zero: 'Already up to date',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncForceFailedToast => 'Couldn\'t sync — try again later.';
 }

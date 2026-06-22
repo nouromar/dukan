@@ -24,6 +24,7 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/today_summary_cache.dart';
 import 'package:dukan/observability/timing.dart';
+import 'package:dukan/sync/cache_miss_boundary.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.shop, this.onSignOut});
@@ -61,6 +62,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final l = tr(context);
     final shop = widget.shop;
+    final scaffold = _buildScaffold(context, shop, l);
+    if (shop == null) return scaffold;
+    // #375: gate access to the home flow on first-time setup +
+    // surface the sync-issue banner when sync is stuck. In light
+    // mode this is a transparent pass-through.
+    return CacheMissBoundary(shop: shop, child: scaffold);
+  }
+
+  Widget _buildScaffold(BuildContext context, ShopSummary? shop, l) {
     return Scaffold(
       drawer: shop != null ? DukanDrawer(shop: shop) : null,
       // AppBar title carries the shop name when one is selected — the

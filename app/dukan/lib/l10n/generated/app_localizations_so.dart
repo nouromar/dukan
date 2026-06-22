@@ -2274,4 +2274,39 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get failedPostsEmptyState => 'Wax guul-darreystay ma jiro.';
+
+  @override
+  String get syncFirstTimeSetupTitle =>
+      'Ku xidh internet si aad u soo dejiso xogta dukaankaaga';
+
+  @override
+  String get syncFirstTimeSetupBody =>
+      'Waxaan mar u baahanahay inaan soo dejino alaabtaada, macaamiishaada, iyo wax iibinta dhowaan ka hor inta aanad shaqayn karin marka aad offline-tahay. Fur Wi-Fi ama internet-ka taleefanka, ka dibna taabo MAR KALE.';
+
+  @override
+  String get syncFirstTimeSetupRetryButton => 'MAR KALE';
+
+  @override
+  String syncIssueBannerLabel(String time) {
+    return '⚠ Offline tan iyo $time. Taabo si aad mar kale isku daydid.';
+  }
+
+  @override
+  String get syncForceSyncingToast => 'Waa la diraaya…';
+
+  @override
+  String syncForceSyncedToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cusboonaysiis la diray',
+      one: '1 cusboonaysiis la diray',
+      zero: 'Horeyba u cusub',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncForceFailedToast =>
+      'Lama is-waafajin karin — mar kale isku day.';
 }

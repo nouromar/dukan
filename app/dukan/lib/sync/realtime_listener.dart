@@ -73,9 +73,26 @@ class RealtimeListener {
           },
         );
       }
-      channel.subscribe();
+      channel.subscribe((status, [_]) {
+        // Supabase v2 surfaces channel lifecycle via subscribe's
+        // optional callback. SUBSCRIBED → channel open;
+        // CHANNEL_ERROR / TIMED_OUT / CLOSED → cannot reconnect.
+        // We forward these to the SyncEngine which exposes
+        // `realtimeDisconnectedAt` for CacheMissBoundary.
+        switch (status) {
+          case RealtimeSubscribeStatus.subscribed:
+            _engine.markRealtimeConnected();
+            break;
+          case RealtimeSubscribeStatus.channelError:
+          case RealtimeSubscribeStatus.timedOut:
+          case RealtimeSubscribeStatus.closed:
+            _engine.markRealtimeDisconnected();
+            break;
+        }
+      });
       _channel = channel;
     } catch (error, stackTrace) {
+      _engine.markRealtimeDisconnected();
       _reportError?.call(error, stackTrace, 'RealtimeListener.start');
       _channel = null;
     }

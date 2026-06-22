@@ -101,6 +101,33 @@ class SyncEngine extends ChangeNotifier {
   Object? _lastError;
   Object? get lastError => _lastError;
 
+  /// Wallclock of the last successful sync (full or delta), used by
+  /// the sync-issue banner to format "Working offline since ...".
+  /// Null if no sync has ever landed.
+  DateTime? _lastSyncedAt;
+  DateTime? get lastSyncedAt => _lastSyncedAt;
+
+  /// Wallclock of the moment the realtime channel disconnected and
+  /// could not reconnect. Null when connected (or never connected
+  /// at all — light mode). Updated by [RealtimeListener].
+  DateTime? _realtimeDisconnectedAt;
+  DateTime? get realtimeDisconnectedAt => _realtimeDisconnectedAt;
+
+  /// Toggled by [RealtimeListener.start] / .stop. Read by
+  /// [CacheMissBoundary] to decide whether to surface a "sync issue"
+  /// banner when the connection is gone.
+  void markRealtimeConnected() {
+    if (_realtimeDisconnectedAt == null) return;
+    _realtimeDisconnectedAt = null;
+    notifyListeners();
+  }
+
+  void markRealtimeDisconnected() {
+    if (_realtimeDisconnectedAt != null) return;
+    _realtimeDisconnectedAt = _clock();
+    notifyListeners();
+  }
+
   String? _activeShopId;
   Timer? _deltaTimer;
   Timer? _debounceTimer;
@@ -189,6 +216,7 @@ class SyncEngine extends ChangeNotifier {
       }
       _hasInitialSync = true;
       _lastError = null;
+      _lastSyncedAt = _clock();
       _setState(SyncEngineState.live);
     } catch (error, stack) {
       _lastError = error;
@@ -257,6 +285,7 @@ class SyncEngine extends ChangeNotifier {
         lastSyncedAtMs: _serverNowOrLocal(txnsPayload),
       );
       _lastError = null;
+      _lastSyncedAt = _clock();
       if (_state == SyncEngineState.deltaSync) {
         _setState(SyncEngineState.live);
       }
@@ -266,6 +295,24 @@ class SyncEngine extends ChangeNotifier {
       // Don't transition to errored — live mode should survive a
       // single delta hiccup. The next poll catches up.
     }
+  }
+
+  /// Manually-triggered delta sync — same as [deltaSync] but ignores
+  /// the periodic interval. Used by the sync-issue banner's "Tap to
+  /// retry" affordance. Returns the count of resources whose state
+  /// timestamp advanced (a rough "how many updates" surface for the
+  /// success toast).
+  Future<int> forceDelta(String shopId) async {
+    final before = await _local.loadSyncState(shopId);
+    await deltaSync(shopId);
+    final after = await _local.loadSyncState(shopId);
+    var advanced = 0;
+    for (final key in SyncResource.all) {
+      final b = before[key]?.lastSyncedAtMs ?? 0;
+      final a = after[key]?.lastSyncedAtMs ?? 0;
+      if (a > b) advanced++;
+    }
+    return advanced;
   }
 
   // -------------------------------------------------------------------------

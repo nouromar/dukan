@@ -21,12 +21,15 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/relative_time.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/offline_mode.dart';
 
 /// Outcome of the void confirmation dialog. `null` = cashier
 /// cancelled. A returned record means "go ahead and void"; the
@@ -60,23 +63,90 @@ class SaleDetailScreen extends StatelessWidget {
 /// Bottom-sheet entry point used by the Sale screen right after a
 /// successful SAVE. Pops with `void` — there's no return value the
 /// caller needs (the post is already confirmed).
+///
+/// `fallback` carries the just-submitted cart so the receipt can
+/// render instantly even when offline_mode=full AND the txn row
+/// hasn't been mirrored locally yet (sync engine catches up via
+/// realtime within seconds, but we don't want to block on it).
 Future<void> showSaleReceiptSheet(
   BuildContext context, {
   required ShopSummary shop,
   required String txnId,
+  SaleReceiptFallback? fallback,
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _SaleReceiptSheet(shop: shop, txnId: txnId),
+    builder: (_) => _SaleReceiptSheet(
+      shop: shop,
+      txnId: txnId,
+      fallback: fallback,
+    ),
   );
 }
 
+/// Local cart snapshot used as the receipt source when the txn
+/// hasn't yet been mirrored into local_transaction. Built by
+/// [SaleReceiptFallback.fromCart] in the SAVE path.
+class SaleReceiptFallback {
+  const SaleReceiptFallback({
+    required this.totalAmount,
+    required this.paidAmount,
+    required this.paymentMethodCode,
+    required this.partyName,
+    required this.occurredAt,
+    required this.lines,
+  });
+
+  factory SaleReceiptFallback.fromCart(CartSnapshot snapshot) {
+    final total = snapshot.lines.values
+        .fold<double>(0, (sum, line) => sum + line.subtotal.toDouble());
+    final cashSale = !snapshot.debt;
+    final lines = <SaleLineDetail>[];
+    var i = 1;
+    for (final line in snapshot.lines.values) {
+      lines.add(
+        SaleLineDetail(
+          lineNo: i++,
+          itemId: line.itemId,
+          shopItemUnitId: line.shopItemUnitId,
+          itemName: line.displayName,
+          quantity: line.quantity.toDouble(),
+          unitLabel: line.baseUnitLabel,
+          unitAmount: line.unitPrice.toDouble(),
+          lineTotal: line.subtotal.toDouble(),
+          packagingLabel: line.packagingLabel,
+        ),
+      );
+    }
+    return SaleReceiptFallback(
+      totalAmount: total,
+      paidAmount: cashSale ? total : 0,
+      paymentMethodCode: cashSale ? 'cash' : null,
+      partyName: snapshot.customer?.name,
+      occurredAt: DateTime.now(),
+      lines: lines,
+    );
+  }
+
+  final double totalAmount;
+  final double paidAmount;
+  final String? paymentMethodCode;
+  final String? partyName;
+  final DateTime occurredAt;
+  final List<SaleLineDetail> lines;
+}
+
 class _SaleReceiptSheet extends StatelessWidget {
-  const _SaleReceiptSheet({required this.shop, required this.txnId});
+  const _SaleReceiptSheet({
+    required this.shop,
+    required this.txnId,
+    this.fallback,
+  });
 
   final ShopSummary shop;
   final String txnId;
+  final SaleReceiptFallback? fallback;
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +187,7 @@ class _SaleReceiptSheet extends StatelessWidget {
                 child: SaleReceiptView(
                   shop: shop,
                   txnId: txnId,
+                  fallback: fallback,
                   // Void from a freshly-completed sale is confusing —
                   // the cashier just rang it up. They can void from
                   // history if needed.
@@ -145,6 +216,7 @@ class SaleReceiptView extends StatefulWidget {
     required this.txnId,
     this.showVoidAffordance = true,
     this.onAfterVoid,
+    this.fallback,
     super.key,
   });
 
@@ -159,6 +231,11 @@ class SaleReceiptView extends StatefulWidget {
   /// can pop back with a "refresh" flag. Ignored when
   /// `showVoidAffordance` is false.
   final VoidCallback? onAfterVoid;
+
+  /// Cart-derived fallback used by the post-save sheet (#375).
+  /// When offline_mode = full AND the txn isn't yet in local_*, we
+  /// render from this snapshot. Otherwise unused.
+  final SaleReceiptFallback? fallback;
 
   @override
   State<SaleReceiptView> createState() => _SaleReceiptViewState();
@@ -176,6 +253,50 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
   }
 
   Future<_SaleBundle> _load() async {
+    // #375: when offline_mode = full, render from the local mirror
+    // first. If the row hasn't synced yet, fall back to the cart
+    // snapshot the SAVE flow handed us. Only fall through to the
+    // network as a last resort (and only when light, since `full`
+    // mode is meant to never block on network).
+    if (offlineModeFull(context)) {
+      try {
+        final repo = context.read<LocalRepository>();
+        final localTxn = await repo.getTransaction(widget.txnId);
+        if (localTxn != null) {
+          final lines = await repo.saleLinesFromLocal(widget.txnId);
+          return _SaleBundle(
+            header: repo.toSaleSummary(localTxn),
+            lines: lines,
+          );
+        }
+      } catch (_) {
+        // Local probe failure shouldn't sink the receipt — fall
+        // through to fallback / network.
+      }
+      final fallback = widget.fallback;
+      if (fallback != null) {
+        return _SaleBundle(
+          header: SaleSummary(
+            txnId: widget.txnId,
+            occurredAt: fallback.occurredAt,
+            postedAt: fallback.occurredAt,
+            partyId: null,
+            partyName: fallback.partyName,
+            totalAmount: fallback.totalAmount,
+            paidAmount: fallback.paidAmount,
+            paymentMethodCode: fallback.paymentMethodCode,
+            isVoided: false,
+            reversalTxnId: null,
+            voidedAt: null,
+          ),
+          lines: fallback.lines,
+        );
+      }
+      // No local + no fallback — the user hit the receipt from
+      // history before sync caught up. Throw so the FutureBuilder
+      // shows the standard error frame.
+      throw StateError('Sale not found in local mirror yet');
+    }
     final api = context.read<ShopApi>();
     final header = await api.getSale(
       shopId: widget.shop.id,

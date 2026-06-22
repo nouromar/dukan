@@ -3713,6 +3713,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No failed posts.'**
   String get failedPostsEmptyState;
+
+  /// No description provided for @syncFirstTimeSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to load your shop\'s data'**
+  String get syncFirstTimeSetupTitle;
+
+  /// No description provided for @syncFirstTimeSetupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We need to fetch your items, customers, and recent transactions one time before you can work offline. Open Wi-Fi or mobile data, then tap Retry.'**
+  String get syncFirstTimeSetupBody;
+
+  /// No description provided for @syncFirstTimeSetupRetryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY'**
+  String get syncFirstTimeSetupRetryButton;
+
+  /// No description provided for @syncIssueBannerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'⚠ Working offline since {time}. Tap to retry sync.'**
+  String syncIssueBannerLabel(String time);
+
+  /// No description provided for @syncForceSyncingToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get syncForceSyncingToast;
+
+  /// No description provided for @syncForceSyncedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Already up to date} =1{Synced 1 update} other{Synced {count} updates}}'**
+  String syncForceSyncedToast(int count);
+
+  /// No description provided for @syncForceFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t sync — try again later.'**
+  String get syncForceFailedToast;
 }
 
 class _AppLocalizationsDelegate

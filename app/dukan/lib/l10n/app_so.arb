@@ -1011,5 +1011,22 @@
   "failedPostsDiscardConfirmTitle": "Tuur kan?",
   "failedPostsDiscardConfirmBody": "Ma soo celin kartid. Sii wad?",
   "failedPostsDiscardConfirmAction": "TUUR",
-  "failedPostsEmptyState": "Wax guul-darreystay ma jiro."
+  "failedPostsEmptyState": "Wax guul-darreystay ma jiro.",
+  "syncFirstTimeSetupTitle": "Ku xidh internet si aad u soo dejiso xogta dukaankaaga",
+  "syncFirstTimeSetupBody": "Waxaan mar u baahanahay inaan soo dejino alaabtaada, macaamiishaada, iyo wax iibinta dhowaan ka hor inta aanad shaqayn karin marka aad offline-tahay. Fur Wi-Fi ama internet-ka taleefanka, ka dibna taabo MAR KALE.",
+  "syncFirstTimeSetupRetryButton": "MAR KALE",
+  "syncIssueBannerLabel": "⚠ Offline tan iyo {time}. Taabo si aad mar kale isku daydid.",
+  "@syncIssueBannerLabel": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "syncForceSyncingToast": "Waa la diraaya…",
+  "syncForceSyncedToast": "{count, plural, =0{Horeyba u cusub} =1{1 cusboonaysiis la diray} other{{count} cusboonaysiis la diray}}",
+  "@syncForceSyncedToast": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncForceFailedToast": "Lama is-waafajin karin — mar kale isku day."
 }

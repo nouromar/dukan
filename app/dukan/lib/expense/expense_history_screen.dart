@@ -16,6 +16,8 @@ import 'package:dukan/shared/future_list_scaffold.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/offline_mode.dart';
 
 class ExpenseHistoryScreen extends StatefulWidget {
   const ExpenseHistoryScreen({required this.shop, super.key});
@@ -46,7 +48,25 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
     }
   }
 
-  Future<List<ExpenseSummary>> _fetch() {
+  Future<List<ExpenseSummary>> _fetch() async {
+    // #375: local mirror when offline_mode = full.
+    if (offlineModeFull(context)) {
+      final repo = context.read<LocalRepository>();
+      final rows = await repo.historyExpenses(
+        shopId: widget.shop.id,
+        limit: historyPageLimit,
+        dateFrom: _filters.dateRange.from,
+        dateTo: _filters.dateRange.to,
+      );
+      var summaries =
+          rows.map(repo.toExpenseSummary).toList(growable: false);
+      if (_filters.categoryId != null) {
+        summaries = summaries
+            .where((e) => e.categoryId == _filters.categoryId)
+            .toList(growable: false);
+      }
+      return summaries;
+    }
     return context.read<ShopApi>().listExpenses(
           shopId: widget.shop.id,
           limit: historyPageLimit,

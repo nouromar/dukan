@@ -26,6 +26,8 @@ import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/relative_time.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/offline_mode.dart';
 
 class SaleHistoryScreen extends StatefulWidget {
   const SaleHistoryScreen({required this.shop, super.key});
@@ -55,6 +57,25 @@ class _SaleHistoryScreenState extends State<SaleHistoryScreen> {
       _filters.dateRange.preset == DateRangePreset.all;
 
   Future<List<SaleSummary>> _fetch() async {
+    // #375: when offline_mode=full, read straight from the local
+    // mirror. SyncEngine keeps it warm; no network roundtrip needed.
+    if (offlineModeFull(context)) {
+      final repo = context.read<LocalRepository>();
+      final rows = await repo.historySales(
+        shopId: widget.shop.id,
+        limit: historyPageLimit,
+        dateFrom: _filters.dateRange.from,
+        dateTo: _filters.dateRange.to,
+        partyId: _filters.partyId,
+      );
+      var summaries =
+          rows.map(repo.toSaleSummary).toList(growable: false);
+      if (_filters.hideVoided) {
+        summaries =
+            summaries.where((s) => !s.isVoided).toList(growable: false);
+      }
+      return summaries;
+    }
     // SWR (#369): paint cached first, refresh in the background.
     if (_isDefaultFilters) {
       final cached = await SaleHistoryCache.get(widget.shop.id);

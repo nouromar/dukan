@@ -580,15 +580,207 @@ class LocalRepository {
   Future<List<LocalTransaction>> historySales({
     required String shopId,
     int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? partyId,
+  }) =>
+      _historyOfType(
+        shopId: shopId,
+        typeCode: 'sale',
+        limit: limit,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        partyId: partyId,
+      );
+
+  /// Recent receives — most-recent first. Used by Receive History.
+  Future<List<LocalTransaction>> historyReceives({
+    required String shopId,
+    int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? partyId,
+  }) =>
+      _historyOfType(
+        shopId: shopId,
+        typeCode: 'receive',
+        limit: limit,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        partyId: partyId,
+      );
+
+  /// Recent payments — most-recent first. Used by Payment History.
+  Future<List<LocalTransaction>> historyPayments({
+    required String shopId,
+    int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? partyId,
+    String? direction,
   }) async {
+    final where = <String>['shop_id = ?', "type_code = 'payment'"];
+    final args = <Object?>[shopId];
+    if (dateFrom != null) {
+      where.add('occurred_at >= ?');
+      args.add(dateFrom.millisecondsSinceEpoch);
+    }
+    if (dateTo != null) {
+      where.add('occurred_at <= ?');
+      args.add(dateTo.millisecondsSinceEpoch);
+    }
+    if (partyId != null) {
+      where.add('party_id = ?');
+      args.add(partyId);
+    }
     final rows = await (await _db).query(
       'local_transaction',
-      where: 'shop_id = ? AND type_code = ?',
-      whereArgs: [shopId, 'sale'],
+      where: where.join(' AND '),
+      whereArgs: args,
+      orderBy: 'occurred_at DESC',
+      limit: limit,
+    );
+    final all = rows.map(LocalTransaction._fromRow).toList(growable: false);
+    if (direction == null) return all;
+    return all
+        .where((t) => (t.payload['direction'] as String?) == direction)
+        .toList(growable: false);
+  }
+
+  /// Recent expenses — most-recent first. Used by Expense History.
+  Future<List<LocalTransaction>> historyExpenses({
+    required String shopId,
+    int limit = 50,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) =>
+      _historyOfType(
+        shopId: shopId,
+        typeCode: 'expense',
+        limit: limit,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+      );
+
+  Future<List<LocalTransaction>> _historyOfType({
+    required String shopId,
+    required String typeCode,
+    required int limit,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? partyId,
+  }) async {
+    final where = <String>['shop_id = ?', 'type_code = ?'];
+    final args = <Object?>[shopId, typeCode];
+    if (dateFrom != null) {
+      where.add('occurred_at >= ?');
+      args.add(dateFrom.millisecondsSinceEpoch);
+    }
+    if (dateTo != null) {
+      where.add('occurred_at <= ?');
+      args.add(dateTo.millisecondsSinceEpoch);
+    }
+    if (partyId != null) {
+      where.add('party_id = ?');
+      args.add(partyId);
+    }
+    final rows = await (await _db).query(
+      'local_transaction',
+      where: where.join(' AND '),
+      whereArgs: args,
       orderBy: 'occurred_at DESC',
       limit: limit,
     );
     return rows.map(LocalTransaction._fromRow).toList(growable: false);
+  }
+
+  /// Read one transaction by txn_id. Returns null if it hasn't been
+  /// synced into the local mirror yet (queued post awaiting drain).
+  Future<LocalTransaction?> getTransaction(String txnId) async {
+    final rows = await (await _db).query(
+      'local_transaction',
+      where: 'txn_id = ?',
+      whereArgs: [txnId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return LocalTransaction._fromRow(rows.first);
+  }
+
+  /// True when ANY local mirror row exists for this shop. Used by
+  /// the first-time-setup boundary to decide whether to render the
+  /// blocking "connect to load" card vs. let the screen through.
+  Future<bool> hasAnyData(String shopId) async {
+    final db = await _db;
+    final rows = await db.rawQuery(
+      'SELECT 1 FROM local_shop_item WHERE shop_id = ? LIMIT 1',
+      [shopId],
+    );
+    return rows.isNotEmpty;
+  }
+
+  /// LocalTransaction → SaleSummary. Pulls denormalized
+  /// party_name + payment_method + voided flags from payload.
+  SaleSummary toSaleSummary(LocalTransaction t) => SaleSummary(
+        txnId: t.txnId,
+        occurredAt: DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs),
+        postedAt: t.payload['posted_at'] == null
+            ? null
+            : DateTime.tryParse(t.payload['posted_at'] as String),
+        partyId: t.partyId,
+        partyName: t.payload['party_name'] as String?,
+        totalAmount: t.total.toDouble(),
+        paidAmount: (t.payload['paid_amount'] as num?)?.toDouble() ??
+            t.total.toDouble(),
+        paymentMethodCode: t.payload['payment_method_code'] as String?,
+        isVoided: t.isVoided,
+        reversalTxnId: t.payload['reversal_txn_id'] as String?,
+        voidedAt: t.payload['voided_at'] == null
+            ? null
+            : DateTime.tryParse(t.payload['voided_at'] as String),
+      );
+
+  /// LocalTransaction → ReceiveSummary (typedef for SaleSummary).
+  ReceiveSummary toReceiveSummary(LocalTransaction t) => toSaleSummary(t);
+
+  /// LocalTransaction → PaymentSummary.
+  PaymentSummary toPaymentSummary(LocalTransaction t) => PaymentSummary(
+        paymentId: t.txnId,
+        occurredAt: DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs),
+        createdAt: DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs),
+        amount: t.total.toDouble(),
+        direction: (t.payload['direction'] as String?) ?? 'I',
+        partyId: t.partyId,
+        partyName: t.payload['party_name'] as String?,
+        paymentMethodCode: t.payload['payment_method_code'] as String?,
+        notes: t.payload['notes'] as String?,
+        isRefund: t.payload['is_refund'] as bool? ?? false,
+      );
+
+  /// LocalTransaction → ExpenseSummary.
+  ExpenseSummary toExpenseSummary(LocalTransaction t) => ExpenseSummary(
+        txnId: t.txnId,
+        occurredAt: DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs),
+        postedAt: DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs),
+        amount: t.total.toDouble(),
+        paymentMethodCode: t.payload['payment_method_code'] as String?,
+        categoryId: t.payload['category_id'] as String?,
+        categoryName: t.payload['category_name'] as String?,
+        notes: t.payload['notes'] as String?,
+      );
+
+  /// Lines for a sale txn, rendered from the denormalized
+  /// `lines` array stored in payload_json. Returns empty list if
+  /// the row isn't in the local mirror or doesn't carry lines.
+  Future<List<SaleLineDetail>> saleLinesFromLocal(String txnId) async {
+    final t = await getTransaction(txnId);
+    if (t == null) return const [];
+    final raw = t.payload['lines'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((m) => SaleLineDetail.fromJson(Map<String, dynamic>.from(m)))
+        .toList(growable: false);
   }
 
   /// Effective stock for an item, taking in-flight queued posts

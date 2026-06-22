@@ -803,6 +803,7 @@ class _SaleScreenState extends State<SaleScreen> {
         context,
         shop: widget.shop,
         txnId: txnId,
+        fallback: SaleReceiptFallback.fromCart(snapshot),
       );
     } catch (error, stackTrace) {
       FlutterError.reportError(

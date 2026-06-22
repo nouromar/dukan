@@ -293,4 +293,63 @@ void main() {
     expect(engine.state, SyncEngineState.errored);
     engine.dispose();
   });
+
+  test('forceDelta returns the count of advanced resources (#375)',
+      () async {
+    // Seed sync state as if delta sync ran once already.
+    for (final res in SyncResource.all) {
+      await repo.writeSyncState(
+        shopId: shopId,
+        resource: res,
+        lastSyncedAtMs: 1000,
+        fullSyncDone: true,
+      );
+    }
+    api.onGetShopItemsDelta = ({required shopId, required since}) async => {
+          'items': [],
+          'units': [],
+          'aliases': [],
+          'barcodes': [],
+          'server_now_ms': 2000,
+        };
+    api.onGetPartiesDelta = ({required shopId, required since}) async => {
+          'parties': [],
+          'server_now_ms': 2000,
+        };
+    api.onGetCategoriesDelta = ({required shopId, required since}) async => {
+          'expense_categories': [],
+          'categories': [],
+          'units': [],
+          'server_now_ms': 2000,
+        };
+    api.onGetTransactionsDelta =
+        ({required shopId, required since, int limit = 200}) async => {
+              'transactions': [],
+              'server_now_ms': 2000,
+            };
+    final engine = SyncEngine(
+      shopApi: api,
+      localRepository: repo,
+      pendingPostDao: postDao,
+    );
+    final advanced = await engine.forceDelta(shopId);
+    expect(advanced, SyncResource.all.length);
+    expect(engine.lastSyncedAt, isNotNull);
+    engine.dispose();
+  });
+
+  test('markRealtime{Connected,Disconnected} flip realtimeDisconnectedAt',
+      () async {
+    final engine = SyncEngine(
+      shopApi: api,
+      localRepository: repo,
+      pendingPostDao: postDao,
+    );
+    expect(engine.realtimeDisconnectedAt, isNull);
+    engine.markRealtimeDisconnected();
+    expect(engine.realtimeDisconnectedAt, isNotNull);
+    engine.markRealtimeConnected();
+    expect(engine.realtimeDisconnectedAt, isNull);
+    engine.dispose();
+  });
 }

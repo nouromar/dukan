@@ -18,6 +18,8 @@ import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/offline_mode.dart';
 
 class ReceiveHistoryScreen extends StatefulWidget {
   const ReceiveHistoryScreen({required this.shop, super.key});
@@ -45,6 +47,24 @@ class _ReceiveHistoryScreenState extends State<ReceiveHistoryScreen> {
       _filters.dateRange.preset == DateRangePreset.all;
 
   Future<List<ReceiveSummary>> _fetch() async {
+    // #375: local mirror when offline_mode = full.
+    if (offlineModeFull(context)) {
+      final repo = context.read<LocalRepository>();
+      final rows = await repo.historyReceives(
+        shopId: widget.shop.id,
+        limit: historyPageLimit,
+        dateFrom: _filters.dateRange.from,
+        dateTo: _filters.dateRange.to,
+        partyId: _filters.supplierId,
+      );
+      var summaries =
+          rows.map(repo.toReceiveSummary).toList(growable: false);
+      if (_filters.hideVoided) {
+        summaries =
+            summaries.where((s) => !s.isVoided).toList(growable: false);
+      }
+      return summaries;
+    }
     // SWR (#369): paint cached first, refresh in background.
     if (_isDefaultFilters) {
       final cached = await ReceiveHistoryCache.get(widget.shop.id);
