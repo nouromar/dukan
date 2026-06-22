@@ -18,15 +18,17 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'migrations/0001_initial.dart';
+import 'migrations/0002_local_mirror.dart';
 
 /// Current schema version. Increment when adding a migration; append
 /// the migration to `_migrations` below in the matching slot.
-const int kSchemaVersion = 1;
+const int kSchemaVersion = 2;
 
 /// Ordered list of forward-only migrations. `_migrations[n - 1]` is
 /// the migration that brings the DB from version n-1 to n.
 final List<Future<void> Function(Database db)> _migrations = [
   applyInitialMigration,
+  applyLocalMirrorMigration,
 ];
 
 class AppDatabase {

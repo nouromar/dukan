@@ -141,4 +141,15 @@ class ConfigKeys {
     defaultValue: 20,
     parse: _parseInt,
   );
+
+  // --- Offline-first feature flag (#373) --------------------------------
+  /// 'light' (default): existing behavior — queue + small caches; reads
+  /// hit the network. 'full': LocalRepository + SyncEngine active;
+  /// daily-flow reads come from the local sqflite mirror. Set per-shop
+  /// via `platform_config` or org-wide by system admin.
+  static const ConfigKey<String> offlineMode = ConfigKey<String>(
+    name: 'offline_mode',
+    defaultValue: 'light',
+    parse: _parseString,
+  );
 }

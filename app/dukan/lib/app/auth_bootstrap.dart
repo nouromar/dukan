@@ -23,6 +23,9 @@ import 'package:dukan/storage/cache_dao.dart';
 import 'package:dukan/storage/device_config_dao.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
 import 'package:dukan/storage/shared_prefs_migration.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/sync_engine.dart';
+import 'package:dukan/config/config_keys.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/setup/setup_item_onboarding_screen.dart';
@@ -66,6 +69,8 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   late final ConfigResolver _configResolver;
   late final PendingPostDao _pendingPostDao;
   late final CacheDao _cacheDao;
+  late final LocalRepository _localRepository;
+  late final SyncEngine _syncEngine;
   bool _hadSession = false;
   String? _crashReportedUserId;
   String? _crashReportedShopId;
@@ -102,6 +107,15 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
       dao: _pendingPostDao,
       executor: PostExecutor(_shopApi).execute,
       configResolver: _configResolver,
+    );
+    _localRepository = LocalRepository(database);
+    _syncEngine = SyncEngine(
+      shopApi: _shopApi,
+      localRepository: _localRepository,
+      pendingPostDao: _pendingPostDao,
+      reportError: (error, stack, hint) {
+        unawaited(CrashReporter.reportError(error, stack, hint: hint));
+      },
     );
     unawaited(_initStorage(database));
     // Clear in-progress carts/bonos/payments/expenses whenever the
@@ -146,6 +160,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
       _expenseController.clearAll();
       _configResolver.reset();
       _configLoadedForShopId = null;
+      _syncEngine.stop();
     }
     _hadSession = hasSession;
     _syncCrashReporter();
@@ -164,7 +179,30 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     }
     if (_configLoadedForShopId == shop.id) return;
     _configLoadedForShopId = shop.id;
-    unawaited(_configResolver.loadForSession(shopId: shop.id));
+    unawaited(_loadConfigAndMaybeStartSync(shop.id));
+  }
+
+  /// Load the hierarchical config then start the sync engine if the
+  /// resolved `offline_mode` is `full`. Errors in config load are
+  /// non-fatal (defaults still resolve); a failing sync start is
+  /// reported but doesn't block the screen — light-mode reads still
+  /// work because the existing CacheDao + ShopApi paths are intact.
+  Future<void> _loadConfigAndMaybeStartSync(String shopId) async {
+    await _configResolver.loadForSession(shopId: shopId);
+    final mode = _configResolver.resolve(ConfigKeys.offlineMode);
+    if (mode == 'full') {
+      try {
+        await _syncEngine.start(shopId);
+      } catch (error, stack) {
+        // fullSync rethrows on cold-no-local failure. Log + swallow:
+        // screens still render via the existing network path.
+        unawaited(CrashReporter.reportError(
+          error,
+          stack,
+          hint: 'auth_bootstrap.syncEngine.start',
+        ));
+      }
+    }
   }
 
   // Push the current session's user + selected shop into Sentry scope
@@ -191,6 +229,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   @override
   void dispose() {
     _authController.removeListener(_onAuthChanged);
+    _syncEngine.dispose();
     _offlineQueueController.dispose();
     _expenseController.dispose();
     _paymentController.dispose();
@@ -222,6 +261,8 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
         ChangeNotifierProvider<ConfigResolver>.value(value: _configResolver),
         Provider<PendingPostDao>.value(value: _pendingPostDao),
         Provider<CacheDao>.value(value: _cacheDao),
+        Provider<LocalRepository>.value(value: _localRepository),
+        ChangeNotifierProvider<SyncEngine>.value(value: _syncEngine),
       ],
       child: Builder(builder: widget.builder),
     );

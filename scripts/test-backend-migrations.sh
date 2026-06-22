@@ -6057,6 +6057,180 @@ $$;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 
+-- §SS Sync RPCs (0069) — full + delta sync RPCs powering the
+-- offline-first mobile architecture (#373).  Verify:
+--   1. get_shop_full_sync returns items + parties + categories +
+--      transactions payloads and writes a shop_sync_audit row.
+--   2. A second call within 24h without p_force=true raises.
+--   3. p_force=true bypasses the rate limit.
+--   4. get_shop_items_delta returns only rows updated after the
+--      cutoff and includes is_active=false rows (tombstones).
+--   5. get_parties_delta + get_categories_delta + get_transactions_delta
+--      respect their cutoff.
+--   6. Non-shop-member calls are rejected on all RPCs.
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+do $$
+declare
+  v_shop_id      uuid;
+  v_payload      jsonb;
+  v_failed       boolean;
+  v_item_id      uuid;
+  v_party_id     uuid;
+  v_cutoff       timestamptz;
+  v_audit_count  int;
+begin
+  select id into v_shop_id from public.shop where name = 'Hodan Shop' limit 1;
+  if v_shop_id is null then
+    raise exception 'SS pre: Hodan Shop fixture missing';
+  end if;
+
+  -- (1) full_sync returns a populated payload + writes audit row.
+  v_payload := public.get_shop_full_sync(v_shop_id, false);
+  if v_payload is null then
+    raise exception 'SS (1): get_shop_full_sync returned null';
+  end if;
+  if v_payload->'items_payload' is null
+     or v_payload->'parties_payload' is null
+     or v_payload->'categories_payload' is null
+     or v_payload->'transactions_payload' is null then
+    raise exception 'SS (1): full_sync payload missing a section';
+  end if;
+  select count(*) into v_audit_count
+    from public.shop_sync_audit
+    where shop_id = v_shop_id and kind = 'full';
+  if v_audit_count < 1 then
+    raise exception 'SS (1): shop_sync_audit row not written for full sync';
+  end if;
+
+  -- (2) Second call within 24h without p_force should raise.
+  v_failed := false;
+  begin
+    perform public.get_shop_full_sync(v_shop_id, false);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'SS (2): full_sync rate-limit did not engage';
+  end if;
+
+  -- (3) p_force=true bypasses the rate limit.
+  v_payload := public.get_shop_full_sync(v_shop_id, true);
+  if v_payload is null then
+    raise exception 'SS (3): forced full_sync returned null';
+  end if;
+
+  -- (4) Delta after far-past cutoff returns the rows we have.
+  v_cutoff := 'epoch'::timestamptz;
+  v_payload := public.get_shop_items_delta(v_shop_id, v_cutoff);
+  if jsonb_array_length(v_payload->'items') < 1 then
+    raise exception 'SS (4): items_delta returned 0 items for a far-past cutoff';
+  end if;
+
+  -- (4a) Soft-delete an item (set is_active=false) and confirm
+  --      the delta surfaces it as a tombstone.
+  update public.shop_item
+    set is_active = false
+    where shop_id = v_shop_id
+      and id = (select id from public.shop_item
+                  where shop_id = v_shop_id and is_active limit 1)
+    returning id into v_item_id;
+  v_cutoff := now() - interval '1 second';
+  -- Bump the row's updated_at so the trigger-stamped value lands
+  -- after v_cutoff regardless of clock resolution.
+  perform pg_sleep(1.1);
+  update public.shop_item set updated_at = now() where id = v_item_id;
+  v_payload := public.get_shop_items_delta(v_shop_id, v_cutoff);
+  if not exists (
+    select 1
+    from jsonb_array_elements(v_payload->'items') x
+    where (x->>'shop_item_id')::uuid = v_item_id
+      and (x->>'is_active')::boolean = false
+  ) then
+    raise exception 'SS (4a): tombstone for soft-deleted item not in items_delta';
+  end if;
+
+  -- (5) parties_delta + categories_delta + transactions_delta
+  --     return data for a far-past cutoff.
+  v_payload := public.get_parties_delta(v_shop_id, 'epoch'::timestamptz);
+  if v_payload->'parties' is null then
+    raise exception 'SS (5a): parties_delta payload missing parties array';
+  end if;
+  v_payload := public.get_categories_delta(v_shop_id, 'epoch'::timestamptz);
+  if v_payload->'expense_categories' is null then
+    raise exception 'SS (5b): categories_delta missing expense_categories';
+  end if;
+  v_payload := public.get_transactions_delta(v_shop_id, 'epoch'::timestamptz, 100);
+  if v_payload->'transactions' is null then
+    raise exception 'SS (5c): transactions_delta missing transactions array';
+  end if;
+end;
+$$;
+
+-- (6) Non-shop-member rejection on all sync RPCs.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+
+do $$
+declare
+  v_shop_id  uuid;
+  v_failed   boolean;
+begin
+  -- This user (000...3) was set up in earlier sections as NOT a
+  -- member of Hodan Shop.
+  select id into v_shop_id from public.shop where name = 'Hodan Shop' limit 1;
+
+  v_failed := false;
+  begin
+    perform public.get_shop_full_sync(v_shop_id, false);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'SS (6a): non-member allowed to call get_shop_full_sync';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.get_shop_items_delta(v_shop_id, 'epoch'::timestamptz);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'SS (6b): non-member allowed to call get_shop_items_delta';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.get_parties_delta(v_shop_id, 'epoch'::timestamptz);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'SS (6c): non-member allowed to call get_parties_delta';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.get_categories_delta(v_shop_id, 'epoch'::timestamptz);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'SS (6d): non-member allowed to call get_categories_delta';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.get_transactions_delta(v_shop_id, 'epoch'::timestamptz, 100);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'SS (6e): non-member allowed to call get_transactions_delta';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+reset role;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';

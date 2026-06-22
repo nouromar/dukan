@@ -1982,4 +1982,92 @@ class ShopApi {
       },
     );
   }
+
+  // -------------------------------------------------------------------------
+  // Sync RPCs (#373 — Phase 1 of offline-first)
+  // -------------------------------------------------------------------------
+
+  /// Returns the entire shop snapshot (items + units + aliases +
+  /// barcodes + parties + expense_categories + reference data +
+  /// last 30 days of transactions). Server-side rate-limited to once
+  /// per (user, shop) per 24h unless [force]=true. See migration
+  /// 0069_full_sync_rpcs.sql for the response shape.
+  Future<Map<String, dynamic>> getShopFullSync({
+    required String shopId,
+    bool force = false,
+  }) async {
+    final raw = await _client.rpc(
+      'get_shop_full_sync',
+      params: {
+        'p_shop_id': shopId,
+        'p_force': force,
+      },
+    );
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return const <String, dynamic>{};
+  }
+
+  /// Returns item/unit/alias/barcode rows changed since [since].
+  /// Tombstones (`is_active = false`) flow through.
+  Future<Map<String, dynamic>> getShopItemsDelta({
+    required String shopId,
+    required DateTime since,
+  }) async {
+    final raw = await _client.rpc(
+      'get_shop_items_delta',
+      params: {
+        'p_shop_id': shopId,
+        'p_since': since.toUtc().toIso8601String(),
+      },
+    );
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return const <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> getPartiesDelta({
+    required String shopId,
+    required DateTime since,
+  }) async {
+    final raw = await _client.rpc(
+      'get_parties_delta',
+      params: {
+        'p_shop_id': shopId,
+        'p_since': since.toUtc().toIso8601String(),
+      },
+    );
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return const <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> getCategoriesDelta({
+    required String shopId,
+    required DateTime since,
+  }) async {
+    final raw = await _client.rpc(
+      'get_categories_delta',
+      params: {
+        'p_shop_id': shopId,
+        'p_since': since.toUtc().toIso8601String(),
+      },
+    );
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return const <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> getTransactionsDelta({
+    required String shopId,
+    required DateTime since,
+    int limit = 200,
+  }) async {
+    final raw = await _client.rpc(
+      'get_transactions_delta',
+      params: {
+        'p_shop_id': shopId,
+        'p_since': since.toUtc().toIso8601String(),
+        'p_limit': limit,
+      },
+    );
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return const <String, dynamic>{};
+  }
 }

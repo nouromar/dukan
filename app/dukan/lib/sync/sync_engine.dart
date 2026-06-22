@@ -1,0 +1,455 @@
+// Sync engine for the offline-first architecture (#373).
+//
+// State machine:
+//   cold_no_local  → fullSync → live
+//   cold_has_local → deltaSync (background) → live
+//
+// In `live`:
+//   * realtime events arrive via `notifyEvent` and are
+//     batched with a 200ms debounce window then applied as one
+//     sqflite transaction;
+//   * a periodic 5-min delta sync runs as a fallback for
+//     missed realtime events;
+//   * self-echo events (the mobile app's own writes coming
+//     back via realtime) are filtered by checking the row's
+//     `client_op_id` against the queue's known entries.
+//
+// Phase 1 (#373) ships the engine + entry points; the realtime
+// subscription wiring + screen integration land in #374.
+
+import 'dart:async';
+import 'dart:collection';
+
+import 'package:flutter/foundation.dart';
+
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
+import 'package:dukan/sync/local_repository.dart';
+
+/// Resource keys used in `local_sync_state` and the per-resource
+/// delta RPC dispatch. Single source of truth.
+class SyncResource {
+  static const items = 'items';
+  static const parties = 'parties';
+  static const categories = 'categories';
+  static const transactions = 'transactions';
+  static const all = [items, parties, categories, transactions];
+}
+
+/// Sync engine state. Exposed to consumers so a future first-sync
+/// banner widget can render the right thing.
+enum SyncEngineState {
+  idle,
+  fullSync,
+  deltaSync,
+  live,
+  errored,
+}
+
+/// One realtime row change. Tables: 'shop_item', 'shop_item_unit',
+/// 'party', 'txn'. `newRow`/`oldRow` are the WAL payloads as
+/// Postgres JSON.
+class RealtimeEvent {
+  const RealtimeEvent({
+    required this.table,
+    required this.eventType,
+    required this.newRow,
+    required this.oldRow,
+  });
+
+  final String table;
+  final String eventType; // 'INSERT' | 'UPDATE' | 'DELETE'
+  final Map<String, dynamic>? newRow;
+  final Map<String, dynamic>? oldRow;
+}
+
+class SyncEngine extends ChangeNotifier {
+  SyncEngine({
+    required ShopApi shopApi,
+    required LocalRepository localRepository,
+    required PendingPostDao pendingPostDao,
+    Duration realtimeDebounce = const Duration(milliseconds: 200),
+    Duration deltaPollInterval = const Duration(minutes: 5),
+    DateTime Function()? clock,
+    void Function(Object error, StackTrace stack, String hint)? reportError,
+  })  : _shopApi = shopApi,
+        _local = localRepository,
+        _pendingPostDao = pendingPostDao,
+        _realtimeDebounce = realtimeDebounce,
+        _deltaPollInterval = deltaPollInterval,
+        _clock = clock ?? DateTime.now,
+        _reportError = reportError;
+
+  final ShopApi _shopApi;
+  final LocalRepository _local;
+  final PendingPostDao _pendingPostDao;
+  final Duration _realtimeDebounce;
+  final Duration _deltaPollInterval;
+  final DateTime Function() _clock;
+  final void Function(Object, StackTrace, String)? _reportError;
+
+  SyncEngineState _state = SyncEngineState.idle;
+  SyncEngineState get state => _state;
+
+  /// True after the first full sync has landed for the active shop.
+  /// Read by the bootstrap to decide whether to show the
+  /// "Connect to load your shop's data" first-sync card.
+  bool _hasInitialSync = false;
+  bool get hasInitialSync => _hasInitialSync;
+
+  Object? _lastError;
+  Object? get lastError => _lastError;
+
+  String? _activeShopId;
+  Timer? _deltaTimer;
+  Timer? _debounceTimer;
+  final Queue<RealtimeEvent> _pendingEvents = Queue<RealtimeEvent>();
+  bool _running = false;
+  bool _disposed = false;
+
+  // -------------------------------------------------------------------------
+  // Lifecycle
+  // -------------------------------------------------------------------------
+
+  /// Start syncing for [shopId]. If no local sync state exists yet,
+  /// runs a full sync (blocking). Otherwise enters live mode and
+  /// fires a background delta to catch up.
+  Future<void> start(String shopId) async {
+    if (_disposed) return;
+    _activeShopId = shopId;
+    _running = true;
+    final state = await _local.loadSyncState(shopId);
+    final hasAny = state.values.any((s) => s.fullSyncDone);
+    _hasInitialSync = hasAny;
+    if (!hasAny) {
+      await fullSync(shopId);
+    } else {
+      _setState(SyncEngineState.deltaSync);
+      unawaited(deltaSync(shopId));
+      _setState(SyncEngineState.live);
+    }
+    _scheduleNextDelta();
+  }
+
+  /// Stop all sync activity for the current shop. Used on sign-out
+  /// + shop switch.
+  void stop() {
+    _activeShopId = null;
+    _running = false;
+    _deltaTimer?.cancel();
+    _deltaTimer = null;
+    _debounceTimer?.cancel();
+    _debounceTimer = null;
+    _pendingEvents.clear();
+    _setState(SyncEngineState.idle);
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    stop();
+    super.dispose();
+  }
+
+  // -------------------------------------------------------------------------
+  // Full / delta sync
+  // -------------------------------------------------------------------------
+
+  /// One-shot fetch of EVERYTHING. Used on a fresh device or after
+  /// `p_force=true` is requested.
+  Future<void> fullSync(String shopId, {bool force = false}) async {
+    _setState(SyncEngineState.fullSync);
+    try {
+      final payload = await _shopApi.getShopFullSync(
+        shopId: shopId,
+        force: force,
+      );
+      final serverNowMs =
+          (payload['server_now_ms'] as num?)?.toInt() ?? _clock().millisecondsSinceEpoch;
+      await _local.applyItemsPayload(
+        _mapOrEmpty(payload['items_payload']),
+      );
+      await _local.applyPartiesPayload(
+        _mapOrEmpty(payload['parties_payload']),
+      );
+      await _local.applyCategoriesPayload(
+        _mapOrEmpty(payload['categories_payload']),
+      );
+      await _local.applyTransactionsPayload(
+        _mapOrEmpty(payload['transactions_payload']),
+      );
+      for (final resource in SyncResource.all) {
+        await _local.writeSyncState(
+          shopId: shopId,
+          resource: resource,
+          lastSyncedAtMs: serverNowMs,
+          fullSyncDone: true,
+        );
+      }
+      _hasInitialSync = true;
+      _lastError = null;
+      _setState(SyncEngineState.live);
+    } catch (error, stack) {
+      _lastError = error;
+      _setState(SyncEngineState.errored);
+      _reportError?.call(error, stack, 'SyncEngine.fullSync');
+      rethrow;
+    }
+  }
+
+  /// Fan-out delta calls for each resource. Each uses its own
+  /// `last_synced_at` cutoff so a partial failure leaves the other
+  /// resources advanced.
+  Future<void> deltaSync(String shopId) async {
+    if (_state != SyncEngineState.live &&
+        _state != SyncEngineState.deltaSync) {
+      _setState(SyncEngineState.deltaSync);
+    }
+    final state = await _local.loadSyncState(shopId);
+    try {
+      // Items
+      final itemsSince = _sinceFromState(state[SyncResource.items]);
+      final itemsPayload = await _shopApi.getShopItemsDelta(
+        shopId: shopId,
+        since: itemsSince,
+      );
+      await _local.applyItemsPayload(itemsPayload);
+      await _local.writeSyncState(
+        shopId: shopId,
+        resource: SyncResource.items,
+        lastSyncedAtMs: _serverNowOrLocal(itemsPayload),
+      );
+      // Parties
+      final partiesSince = _sinceFromState(state[SyncResource.parties]);
+      final partiesPayload = await _shopApi.getPartiesDelta(
+        shopId: shopId,
+        since: partiesSince,
+      );
+      await _local.applyPartiesPayload(partiesPayload);
+      await _local.writeSyncState(
+        shopId: shopId,
+        resource: SyncResource.parties,
+        lastSyncedAtMs: _serverNowOrLocal(partiesPayload),
+      );
+      // Categories
+      final catsSince = _sinceFromState(state[SyncResource.categories]);
+      final catsPayload = await _shopApi.getCategoriesDelta(
+        shopId: shopId,
+        since: catsSince,
+      );
+      await _local.applyCategoriesPayload(catsPayload);
+      await _local.writeSyncState(
+        shopId: shopId,
+        resource: SyncResource.categories,
+        lastSyncedAtMs: _serverNowOrLocal(catsPayload),
+      );
+      // Transactions
+      final txnsSince = _sinceFromState(state[SyncResource.transactions]);
+      final txnsPayload = await _shopApi.getTransactionsDelta(
+        shopId: shopId,
+        since: txnsSince,
+      );
+      await _local.applyTransactionsPayload(txnsPayload);
+      await _local.writeSyncState(
+        shopId: shopId,
+        resource: SyncResource.transactions,
+        lastSyncedAtMs: _serverNowOrLocal(txnsPayload),
+      );
+      _lastError = null;
+      if (_state == SyncEngineState.deltaSync) {
+        _setState(SyncEngineState.live);
+      }
+    } catch (error, stack) {
+      _lastError = error;
+      _reportError?.call(error, stack, 'SyncEngine.deltaSync');
+      // Don't transition to errored — live mode should survive a
+      // single delta hiccup. The next poll catches up.
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Realtime
+  // -------------------------------------------------------------------------
+
+  /// Receive a realtime event. Buffered + debounced (200ms) so
+  /// rapid bursts (e.g. CSV import) flush as one transaction.
+  void notifyEvent(RealtimeEvent event) {
+    if (_disposed || !_running) return;
+    _pendingEvents.add(event);
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(_realtimeDebounce, _flushPending);
+  }
+
+  Future<void> _flushPending() async {
+    if (_disposed) return;
+    if (_pendingEvents.isEmpty) return;
+    final events = List<RealtimeEvent>.from(_pendingEvents);
+    _pendingEvents.clear();
+    final ownClientOpIds = await _knownClientOpIds();
+    // De-dupe affected resources so a burst of 200 CSV-imported
+    // rows fires exactly one delta call per resource, not 200.
+    final resourcesToRefresh = <String>{};
+    var clearedAnyProjection = false;
+    for (final event in events) {
+      final row = event.newRow ?? event.oldRow;
+      if (row == null) continue;
+      final clientOpId = row['client_op_id'] as String?;
+      if (clientOpId != null && ownClientOpIds.contains(clientOpId)) {
+        // Our own write, looping back. Clear the projection for
+        // this post — the server has now reflected the change.
+        final post = await _findPendingByClientOpId(clientOpId);
+        if (post != null) {
+          await _local.clearProjectionsForPost(post.id);
+          clearedAnyProjection = true;
+        }
+        continue;
+      }
+      final resource = _resourceForTable(event.table);
+      if (resource != null) {
+        resourcesToRefresh.add(resource);
+      }
+    }
+    final shopId = _activeShopId;
+    if (shopId != null) {
+      for (final resource in resourcesToRefresh) {
+        unawaited(_deltaForResource(shopId, resource));
+      }
+    }
+    if (clearedAnyProjection || resourcesToRefresh.isNotEmpty) {
+      notifyListeners();
+    }
+  }
+
+  String? _resourceForTable(String table) {
+    switch (table) {
+      case 'shop_item':
+      case 'shop_item_unit':
+      case 'shop_item_alias':
+      case 'shop_item_barcode':
+        return SyncResource.items;
+      case 'party':
+        return SyncResource.parties;
+      case 'expense_category':
+      case 'category':
+      case 'unit':
+        return SyncResource.categories;
+      case 'txn':
+        return SyncResource.transactions;
+      default:
+        return null;
+    }
+  }
+
+  Future<void> _deltaForResource(String shopId, String resource) async {
+    final state = await _local.loadSyncState(shopId);
+    final since = _sinceFromState(state[resource]);
+    try {
+      Map<String, dynamic> payload;
+      switch (resource) {
+        case SyncResource.items:
+          payload =
+              await _shopApi.getShopItemsDelta(shopId: shopId, since: since);
+          await _local.applyItemsPayload(payload);
+          break;
+        case SyncResource.parties:
+          payload =
+              await _shopApi.getPartiesDelta(shopId: shopId, since: since);
+          await _local.applyPartiesPayload(payload);
+          break;
+        case SyncResource.categories:
+          payload =
+              await _shopApi.getCategoriesDelta(shopId: shopId, since: since);
+          await _local.applyCategoriesPayload(payload);
+          break;
+        case SyncResource.transactions:
+          payload = await _shopApi.getTransactionsDelta(
+              shopId: shopId, since: since);
+          await _local.applyTransactionsPayload(payload);
+          break;
+        default:
+          return;
+      }
+      await _local.writeSyncState(
+        shopId: shopId,
+        resource: resource,
+        lastSyncedAtMs: _serverNowOrLocal(payload),
+      );
+    } catch (error, stack) {
+      _reportError?.call(
+          error, stack, 'SyncEngine._deltaForResource[$resource]');
+    }
+  }
+
+  Future<Set<String>> _knownClientOpIds() async {
+    final pending = await _pendingPostDao.load();
+    final failed = await _pendingPostDao.loadFailedPermanent();
+    return {
+      for (final p in pending)
+        if (p.clientOpId.isNotEmpty) p.clientOpId,
+      for (final p in failed)
+        if (p.clientOpId.isNotEmpty) p.clientOpId,
+    };
+  }
+
+  Future<PendingPost?> _findPendingByClientOpId(String clientOpId) async {
+    final pending = await _pendingPostDao.load();
+    for (final p in pending) {
+      if (p.clientOpId == clientOpId) return p;
+    }
+    final failed = await _pendingPostDao.loadFailedPermanent();
+    for (final p in failed) {
+      if (p.clientOpId == clientOpId) return p;
+    }
+    return null;
+  }
+
+  // -------------------------------------------------------------------------
+  // Internals
+  // -------------------------------------------------------------------------
+
+  void _setState(SyncEngineState next) {
+    if (_state == next) return;
+    _state = next;
+    notifyListeners();
+  }
+
+  void _scheduleNextDelta() {
+    _deltaTimer?.cancel();
+    if (!_running || _disposed) return;
+    _deltaTimer = Timer(_deltaPollInterval, () async {
+      final shopId = _activeShopId;
+      if (shopId != null) {
+        await deltaSync(shopId);
+      }
+      if (_running && !_disposed) {
+        _scheduleNextDelta();
+      }
+    });
+  }
+
+  /// Use the server-supplied `server_now_ms` from the most recent
+  /// payload if present (avoids client clock skew); otherwise fall
+  /// back to local clock.
+  int _serverNowOrLocal(Map<String, dynamic> payload) {
+    final raw = payload['server_now_ms'];
+    if (raw is num) return raw.toInt();
+    return _clock().millisecondsSinceEpoch;
+  }
+
+  DateTime _sinceFromState(ResourceSyncState? state) {
+    if (state == null) {
+      // No state for this resource yet. Use a far-past timestamp.
+      return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+    }
+    return DateTime.fromMillisecondsSinceEpoch(
+      state.lastSyncedAtMs,
+      isUtc: true,
+    );
+  }
+
+  Map<String, dynamic> _mapOrEmpty(Object? raw) {
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return const <String, dynamic>{};
+  }
+}

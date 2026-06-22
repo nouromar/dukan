@@ -1720,6 +1720,97 @@ class FakeShopApi implements ShopApi {
       originalActorUserId: originalActorUserId,
     ));
   }
+
+  // --- Sync RPCs (#373) ---------------------------------------------------
+
+  Future<Map<String, dynamic>> Function({
+    required String shopId,
+    bool force,
+  })? onGetShopFullSync;
+  final List<({String shopId, bool force})> getShopFullSyncCalls = [];
+
+  Future<Map<String, dynamic>> Function({
+    required String shopId,
+    required DateTime since,
+  })? onGetShopItemsDelta;
+  final List<({String shopId, DateTime since})> getShopItemsDeltaCalls = [];
+
+  Future<Map<String, dynamic>> Function({
+    required String shopId,
+    required DateTime since,
+  })? onGetPartiesDelta;
+  final List<({String shopId, DateTime since})> getPartiesDeltaCalls = [];
+
+  Future<Map<String, dynamic>> Function({
+    required String shopId,
+    required DateTime since,
+  })? onGetCategoriesDelta;
+  final List<({String shopId, DateTime since})> getCategoriesDeltaCalls = [];
+
+  Future<Map<String, dynamic>> Function({
+    required String shopId,
+    required DateTime since,
+    int limit,
+  })? onGetTransactionsDelta;
+  final List<({String shopId, DateTime since, int limit})>
+      getTransactionsDeltaCalls = [];
+
+  @override
+  Future<Map<String, dynamic>> getShopFullSync({
+    required String shopId,
+    bool force = false,
+  }) async {
+    getShopFullSyncCalls.add((shopId: shopId, force: force));
+    final hook = onGetShopFullSync;
+    if (hook == null) return const <String, dynamic>{};
+    return hook(shopId: shopId, force: force);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getShopItemsDelta({
+    required String shopId,
+    required DateTime since,
+  }) async {
+    getShopItemsDeltaCalls.add((shopId: shopId, since: since));
+    final hook = onGetShopItemsDelta;
+    if (hook == null) return const <String, dynamic>{};
+    return hook(shopId: shopId, since: since);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getPartiesDelta({
+    required String shopId,
+    required DateTime since,
+  }) async {
+    getPartiesDeltaCalls.add((shopId: shopId, since: since));
+    final hook = onGetPartiesDelta;
+    if (hook == null) return const <String, dynamic>{};
+    return hook(shopId: shopId, since: since);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getCategoriesDelta({
+    required String shopId,
+    required DateTime since,
+  }) async {
+    getCategoriesDeltaCalls.add((shopId: shopId, since: since));
+    final hook = onGetCategoriesDelta;
+    if (hook == null) return const <String, dynamic>{};
+    return hook(shopId: shopId, since: since);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getTransactionsDelta({
+    required String shopId,
+    required DateTime since,
+    int limit = 200,
+  }) async {
+    getTransactionsDeltaCalls
+        .add((shopId: shopId, since: since, limit: limit));
+    final hook = onGetTransactionsDelta;
+    if (hook == null) return const <String, dynamic>{};
+    return hook(shopId: shopId, since: since, limit: limit);
+  }
 }
 
 // --- Fixture builders -----------------------------------------------------
