@@ -90,7 +90,7 @@ The three components are **deliberately separated** at the domain + deployment l
 
 ### 5.1 Mobile app — *the till*
 - **Owns:** every daily transactional flow — Sale, Receive, Payment, Expense, stock adjust, party balance, opening balance entry, history with filters, all primary reports a cashier needs.
-- **Must work:** offline-tolerant (light), one-handed, big tap targets, Somali-first, optimised for the speed contract.
+- **Must work:** offline-first (per-shop feature flag — see `docs/offline-first-architecture.md`), one-handed, big tap targets, Somali-first, optimised for the speed contract.
 - **Optimises for:** speed (3 taps from home to a posted sale), discoverability via the Today card + drawer, zero configuration during daily flows.
 - **Does not own:** bulk operations across many records, CSV import/export, wide multi-column reports, multi-shop comparison, cashier-account management, platform-wide configuration.
 

@@ -26,6 +26,7 @@ Templates live in the platform layer (`docs/architecture.md` § 8aa) and are app
 - `docs/shop-admin-portal.md` — target-state design for the React/Next.js back-office portal used by org/shop owners.
 - `docs/system-admin-portal.md` — target-state design for the Dukan-internal mission-control portal. Supersedes `docs/admin-portal.md` (kept for historical reference until alignment doc lands).
 - `docs/local-development.md` — Supabase CLI local stack instructions and the local phone OTP fixture.
+- `docs/offline-first-architecture.md` — local-first thick-client design: sqflite mirror tables, sync engine (full + delta + realtime), conflict resolution, per-shop feature flag (`offline_mode = light | full`).
 - `docs/decisions.md` — decision log.
 
 ## Non-negotiable UX rules (summary — see `docs/ux.md`)
@@ -81,7 +82,7 @@ Any new feature must include a check that it doesn't regress these numbers for t
 - **React / Next.js** admin web portal (org/multi-shop setup + support administration). *Not yet present in this repo.*
 - **Supabase** (Postgres + Auth + Storage + Edge Functions + Realtime).
 - **Google Cloud Vision OCR**, called only from Edge Functions (API key never on device).
-- Light offline: cache + write queue (`client_op_id` for idempotency). Full offline-first is deferred.
+- **Offline-first** (per-shop feature flag, see `docs/offline-first-architecture.md`). Defaults to `light` mode (write queue + a few read caches per #369). Shops with `platform_config.offline_mode = full` get a local sqflite mirror of items/parties/categories/recent transactions + a sync engine (full sync once, then delta + realtime). Cashier should not perceive a difference between online and offline.
 - Pilot currency: USD by default (one currency per shop; SLSH supported for Hargeisa).
 
 ## Repository layout
