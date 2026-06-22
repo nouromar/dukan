@@ -18,6 +18,8 @@ import 'package:dukan/shared/add_party_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/offline_mode.dart';
 
 class SupplierPickerScreen extends StatefulWidget {
   const SupplierPickerScreen({required this.shop, super.key});
@@ -47,7 +49,17 @@ class _SupplierPickerScreenState extends State<SupplierPickerScreen> {
     super.dispose();
   }
 
-  Future<List<PartySearchResult>> _fetch(String query) {
+  Future<List<PartySearchResult>> _fetch(String query) async {
+    // #374: local mirror when offline_mode = full.
+    if (offlineModeFull(context)) {
+      final repo = context.read<LocalRepository>();
+      final rows = await repo.searchParties(
+        query,
+        shopId: widget.shop.id,
+        typeCode: 'supplier',
+      );
+      return rows.map(repo.toPartySearchResult).toList(growable: false);
+    }
     return context.read<ShopApi>().searchParties(
       shopId: widget.shop.id,
       query: query,

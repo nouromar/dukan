@@ -45,6 +45,7 @@ class OfflineQueueController extends ChangeNotifier {
     required this.dao,
     required this.executor,
     this.configResolver,
+    this.onProjectionCleanup,
     Duration Function(int attempts)? backoff,
     DateTime Function()? clock,
     int? maxPending,
@@ -56,6 +57,15 @@ class OfflineQueueController extends ChangeNotifier {
 
   final PendingPostDao dao;
   final PostExecutorFn executor;
+
+  /// Called when a queue entry leaves the pending state — either
+  /// drained successfully or transitioned to failed_permanent. Used
+  /// by the offline-first wiring (#374) to clear
+  /// `local_stock_projection` rows associated with the post id,
+  /// so the on-screen stock reverts (failed) or reconciles with
+  /// the server's new value (success). Optional — set to null in
+  /// `light` offline mode where projections don't exist.
+  final Future<void> Function(String pendingPostId)? onProjectionCleanup;
 
   /// Optional — when wired, the controller reads `queueMaxPending` /
   /// `queueMaxAttempts` / `queueRetry*` from the hierarchical config
@@ -233,6 +243,11 @@ class OfflineQueueController extends ChangeNotifier {
           await dao.remove(head.id);
           _pending = _pending.sublist(1);
           _lastDrainSuccessAt = _clock();
+          // #374: server now owns the canonical stock after this
+          // post succeeded; the local projection is no longer
+          // needed (delta sync / realtime will deliver the real
+          // numbers).
+          await _safeCleanupProjection(head.id);
           if (_disposed) return;
           notifyListeners();
         } catch (error) {
@@ -257,6 +272,10 @@ class OfflineQueueController extends ChangeNotifier {
           if (attempts >= _maxAttempts) {
             await dao.markFailedPermanent(head.id);
             _pending = _pending.sublist(1);
+            // #374: clear projection so stock reverts to pre-post
+            // value. Cashier can manually retry from the Failed
+            // posts screen if they want to try again.
+            await _safeCleanupProjection(head.id);
             for (final l in _failedListeners) {
               l(updated);
             }
@@ -286,6 +305,19 @@ class OfflineQueueController extends ChangeNotifier {
     _disposed = true;
     _retryTimer?.cancel();
     super.dispose();
+  }
+
+  /// Best-effort projection cleanup. Never blocks the queue on a
+  /// failure (queue's job is to drain posts; projection rows are a
+  /// UI nicety).
+  Future<void> _safeCleanupProjection(String pendingPostId) async {
+    final cb = onProjectionCleanup;
+    if (cb == null) return;
+    try {
+      await cb(pendingPostId);
+    } catch (_) {
+      // Swallow — UI will reconcile on next delta sync.
+    }
   }
 }
 

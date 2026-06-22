@@ -11,6 +11,9 @@ import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
 
+import 'package:dukan/api/shop_api.dart' show ShopItemDetail, ShopItemAliasRow,
+    ShopItemBarcodeRow;
+import 'package:dukan/api/types.dart';
 import 'package:dukan/storage/app_database.dart';
 
 // ---------------------------------------------------------------------------
@@ -306,6 +309,226 @@ class LocalRepository {
       orderBy: 'conversion_to_base ASC',
     );
     return rows.map(LocalShopItemUnit._fromRow).toList(growable: false);
+  }
+
+  /// All active items for [shopId] — used by the Products list when
+  /// offline_mode = full. Sorted alphabetically.
+  Future<List<LocalShopItem>> allActiveItems(String shopId) async {
+    final rows = await (await _db).query(
+      'local_shop_item',
+      where: 'shop_id = ? AND is_active = 1',
+      whereArgs: [shopId],
+      orderBy: 'display_name COLLATE NOCASE ASC',
+    );
+    return rows.map(LocalShopItem._fromRow).toList(growable: false);
+  }
+
+  /// All active parties for [shopId] filtered to [typeCode]. Used by
+  /// the People screen + the lookup pickers when offline_mode = full.
+  Future<List<LocalParty>> allActiveParties(
+    String shopId, {
+    required String typeCode,
+  }) async {
+    final rows = await (await _db).query(
+      'local_party',
+      where: 'shop_id = ? AND type_code = ? AND is_active = 1',
+      whereArgs: [shopId, typeCode],
+      orderBy: 'name COLLATE NOCASE ASC',
+    );
+    return rows.map(LocalParty._fromRow).toList(growable: false);
+  }
+
+  /// Alias rows for an item — used by Product Detail when composing
+  /// the bootstrap from local data instead of the get_shop_item RPC.
+  Future<List<LocalShopItemAlias>> aliasesForItem(String shopItemId) async {
+    final rows = await (await _db).query(
+      'local_shop_item_alias',
+      where: 'shop_item_id = ?',
+      whereArgs: [shopItemId],
+    );
+    return rows
+        .map((r) => LocalShopItemAlias(
+              shopItemId: r['shop_item_id'] as String,
+              alias: r['alias'] as String,
+              isDisplay: (r['is_display'] as int) == 1,
+            ))
+        .toList(growable: false);
+  }
+
+  /// Barcode rows attached to packagings of [shopItemId].
+  Future<List<LocalShopItemBarcode>> barcodesForItem(String shopItemId) async {
+    final rows = await (await _db).rawQuery('''
+      SELECT b.* FROM local_shop_item_barcode b
+      JOIN local_shop_item_unit u ON u.shop_item_unit_id = b.shop_item_unit_id
+      WHERE u.shop_item_id = ?
+    ''', [shopItemId]);
+    return rows
+        .map((r) => LocalShopItemBarcode(
+              barcode: r['barcode'] as String,
+              shopItemUnitId: r['shop_item_unit_id'] as String,
+              isPrimary: (r['is_primary'] as int) == 1,
+            ))
+        .toList(growable: false);
+  }
+
+  // ---- Converters → public DTOs --------------------------------------------
+  // Screens consume ItemSearchResult / PartySearchResult / etc.
+  // Converters keep the screen render path identical regardless of
+  // whether the data came from network or local.
+
+  /// Map a LocalShopItem + its default packaging into the shape Sale
+  /// / Receive search-results expect. [screen] picks the default
+  /// packaging by `is_default_sale` (Sale) or `is_default_receive`
+  /// (Receive).
+  Future<ItemSearchResult> toItemSearchResult(
+    LocalShopItem item, {
+    required String screen,
+  }) async {
+    final packagings = await packagingsForItem(item.shopItemId);
+    LocalShopItemUnit? defaultUnit;
+    for (final p in packagings) {
+      if (screen == 'sale' && p.isDefaultSale) {
+        defaultUnit = p;
+        break;
+      }
+      if (screen == 'receive' && p.isDefaultReceive) {
+        defaultUnit = p;
+        break;
+      }
+    }
+    // Fallback: base packaging (conversion = 1) if no default flagged.
+    defaultUnit ??= packagings.firstWhere(
+      (p) => p.conversionToBase == 1,
+      orElse: () =>
+          packagings.isNotEmpty ? packagings.first : _emptyUnit(item),
+    );
+    return ItemSearchResult(
+      shopItemId: item.shopItemId,
+      itemId: item.itemId,
+      displayName: item.displayName,
+      baseUnitCode: item.baseUnitCode,
+      baseUnitLabel: item.baseUnitCode, // we don't cache unit label
+      defaultShopItemUnitId: defaultUnit.shopItemUnitId,
+      defaultUnitCode: defaultUnit.unitCode,
+      defaultUnitLabel: defaultUnit.packagingLabel,
+      defaultUnitConversionToBase: defaultUnit.conversionToBase.toDouble(),
+      defaultUnitSalePrice: defaultUnit.salePrice?.toDouble(),
+      defaultUnitLastCost: defaultUnit.lastCost?.toDouble(),
+      currentStock: item.currentStock.toDouble(),
+      reorderThreshold: item.reorderThreshold?.toDouble(),
+      packagingLabel: defaultUnit.packagingLabel,
+      isActivated: true, // local rows are by definition activated
+      rankReason: null,
+    );
+  }
+
+  LocalShopItemUnit _emptyUnit(LocalShopItem item) => LocalShopItemUnit(
+        shopItemUnitId: '${item.shopItemId}-base',
+        shopItemId: item.shopItemId,
+        unitCode: item.baseUnitCode,
+        packagingLabel: item.baseUnitCode,
+        conversionToBase: 1,
+        salePrice: null,
+        lastCost: null,
+        isDefaultSale: true,
+        isDefaultReceive: true,
+        isActive: true,
+        serverUpdatedAtMs: 0,
+      );
+
+  /// LocalParty → PartySearchResult.
+  PartySearchResult toPartySearchResult(LocalParty p) => PartySearchResult(
+        id: p.partyId,
+        name: p.name,
+        phone: p.phone,
+        typeCode: p.typeCode,
+        receivable: p.receivable.toDouble(),
+        payable: p.payable.toDouble(),
+      );
+
+  /// LocalExpenseCategory → ExpenseCategoryOption.
+  ExpenseCategoryOption toExpenseCategoryOption(LocalExpenseCategory c) =>
+      ExpenseCategoryOption(id: c.categoryId, code: c.code, name: c.name);
+
+  /// Compose a full `ShopItemDetail` from local rows. Used by the
+  /// Product Detail screen when offline_mode = full. Aliases'
+  /// `aliasId` + `languageCode` aren't mirrored (server-only fields);
+  /// the edit affordances on the detail screen still go online so
+  /// missing IDs only block the inline view, not edit/save.
+  Future<ShopItemDetail?> getShopItemDetail(String shopItemId) async {
+    final item = await getShopItem(shopItemId);
+    if (item == null) return null;
+    final unitRows = await packagingsForItem(shopItemId);
+    final aliasRows = await aliasesForItem(shopItemId);
+    final barcodeRows = await barcodesForItem(shopItemId);
+    final summary = await toShopItemSummary(item);
+    return ShopItemDetail(
+      header: summary,
+      units: unitRows
+          .map((u) => ShopItemUnitDetail(
+                shopItemUnitId: u.shopItemUnitId,
+                itemUnitId: null,
+                unitCode: u.unitCode,
+                unitLabel: u.unitCode,
+                packagingLabel: u.packagingLabel,
+                conversionToBase: u.conversionToBase.toDouble(),
+                salePrice: u.salePrice?.toDouble(),
+                lastCost: u.lastCost?.toDouble(),
+                isDefaultSale: u.isDefaultSale,
+                isDefaultReceive: u.isDefaultReceive,
+                isBaseUnit: u.conversionToBase == 1,
+                isActive: u.isActive,
+              ))
+          .toList(growable: false),
+      aliases: aliasRows
+          .map((a) => ShopItemAliasRow(
+                aliasId: '',
+                aliasText: a.alias,
+                languageCode: null,
+                isDisplay: a.isDisplay,
+              ))
+          .toList(growable: false),
+      barcodes: barcodeRows
+          .map((b) => ShopItemBarcodeRow(
+                barcodeId: '',
+                shopItemUnitId: b.shopItemUnitId,
+                barcode: b.barcode,
+                isPrimary: b.isPrimary,
+              ))
+          .toList(growable: false),
+    );
+  }
+
+  /// Map a LocalShopItem (+ its packagings) into the
+  /// `ShopItemSummary` shape the Products list expects. The
+  /// `defaultSalePrice` / `anyPriceSet` flags fall out of the unit
+  /// rows so the "no price yet" indicator behaves the same way
+  /// offline.
+  Future<ShopItemSummary> toShopItemSummary(LocalShopItem item) async {
+    final units = await packagingsForItem(item.shopItemId);
+    LocalShopItemUnit? defaultSale;
+    LocalShopItemUnit? baseUnit;
+    var anyPriceSet = false;
+    for (final u in units) {
+      if (u.salePrice != null && u.salePrice != 0) anyPriceSet = true;
+      if (u.isDefaultSale) defaultSale = u;
+      if (u.conversionToBase == 1) baseUnit = u;
+    }
+    final preferred = defaultSale ?? baseUnit;
+    return ShopItemSummary(
+      shopItemId: item.shopItemId,
+      itemId: item.itemId,
+      displayName: item.displayName,
+      categoryName: null,
+      baseUnitCode: item.baseUnitCode,
+      baseUnitLabel: item.baseUnitCode,
+      currentStock: item.currentStock.toDouble(),
+      reorderThreshold: item.reorderThreshold?.toDouble(),
+      unitCount: units.length,
+      isActive: item.isActive,
+      defaultSalePrice: preferred?.salePrice?.toDouble(),
+      anyPriceSet: anyPriceSet,
+    );
   }
 
   /// Parties matching [query] within [shopId] filtered to
@@ -646,6 +869,45 @@ class LocalRepository {
     );
   }
 
+  /// Insert a batch of projection rows for one queued post in a
+  /// single transaction. [lines] supplies the units + quantities;
+  /// the helper looks up each unit's `shop_item_id` and
+  /// `conversion_to_base` from the local mirror, computes the
+  /// base-unit delta (positive for receives, negative for sales),
+  /// and inserts one row per line. No-op if [lines] is empty.
+  Future<void> applyProjectionLines({
+    required String pendingPostId,
+    required List<ProjectionLine> lines,
+  }) async {
+    if (lines.isEmpty) return;
+    final db = await _db;
+    await db.transaction((txn) async {
+      for (final l in lines) {
+        // Look up shop_item_id + conversion from the local unit row.
+        final rows = await txn.query(
+          'local_shop_item_unit',
+          columns: ['shop_item_id', 'conversion_to_base'],
+          where: 'shop_item_unit_id = ?',
+          whereArgs: [l.shopItemUnitId],
+          limit: 1,
+        );
+        if (rows.isEmpty) continue; // unit not in local mirror — skip
+        final shopItemId = rows.first['shop_item_id'] as String;
+        final conv = (rows.first['conversion_to_base'] as num).toDouble();
+        final baseDelta = l.quantity.toDouble() * conv * l.direction;
+        await txn.insert(
+          'local_stock_projection',
+          {
+            'pending_post_id': pendingPostId,
+            'shop_item_id': shopItemId,
+            'delta': baseDelta,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
   Future<void> clearProjectionsForPost(String pendingPostId) async {
     await (await _db).delete(
       'local_stock_projection',
@@ -653,6 +915,45 @@ class LocalRepository {
       whereArgs: [pendingPostId],
     );
   }
+}
+
+/// One line of a queued post that affects stock. [direction] is
+/// `-1` for sales (subtract from stock) and `+1` for receives
+/// (add to stock).
+class ProjectionLine {
+  const ProjectionLine({
+    required this.shopItemUnitId,
+    required this.quantity,
+    required this.direction,
+  });
+
+  final String shopItemUnitId;
+  final num quantity;
+  final int direction;
+}
+
+class LocalShopItemAlias {
+  const LocalShopItemAlias({
+    required this.shopItemId,
+    required this.alias,
+    required this.isDisplay,
+  });
+
+  final String shopItemId;
+  final String alias;
+  final bool isDisplay;
+}
+
+class LocalShopItemBarcode {
+  const LocalShopItemBarcode({
+    required this.barcode,
+    required this.shopItemUnitId,
+    required this.isPrimary,
+  });
+
+  final String barcode;
+  final String shopItemUnitId;
+  final bool isPrimary;
 }
 
 class ResourceSyncState {

@@ -33,6 +33,8 @@ import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/shared/stock_format.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/offline_mode.dart';
 
 class ShopItemDetailScreen extends StatefulWidget {
   const ShopItemDetailScreen({
@@ -113,15 +115,31 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
 
   Future<_ProductBootstrap> _fetch() async {
     final api = context.read<ShopApi>();
+    // #374: when offline_mode = full, compose the detail from the
+    // local mirror. Categories list still rides on the network
+    // path — it's small + rarely changes, and edit-tap on the
+    // category tile uses the resulting list directly. If the
+    // network is unavailable the detail still renders (categories
+    // = empty), the category picker just shows nothing.
+    if (offlineModeFull(context)) {
+      final repo = context.read<LocalRepository>();
+      final detail = await repo.getShopItemDetail(widget.shopItemId);
+      if (detail != null) {
+        List<CategoryOption> categories;
+        try {
+          categories = await api.listCategories(locale: _locale);
+        } catch (_) {
+          categories = const <CategoryOption>[];
+        }
+        _liveDisplayName = detail.header.displayName;
+        return _ProductBootstrap(detail: detail, categories: categories);
+      }
+      // Local row missing — fall through to the network so the
+      // screen still works for a newly-created item that hasn't
+      // been synced yet.
+    }
     // Detail + categories in parallel so the category picker is ready
     // the moment the user taps the tile.
-    //
-    // Previously this also fired one listAuditEntriesForEntity per
-    // packaging to surface a small "edited X ago" cue under each
-    // price row. That added N additional RPCs (3-packaging item =
-    // 3 extra round-trips) just for an informational line nobody was
-    // actually using; the proper audit log surfaces the same history.
-    // Dropped in #347 to make the screen feel snappy on iPhone.
     final detailF = api.getShopItem(
       shopId: widget.shop.id,
       shopItemId: widget.shopItemId,

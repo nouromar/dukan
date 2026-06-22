@@ -32,6 +32,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/offline_mode.dart';
 import 'package:dukan/receive/add_new_item_sheet.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_history_screen.dart';
@@ -277,8 +279,21 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     }
   }
 
-  Future<List<ItemSearchResult>> _fetch(String query) {
+  Future<List<ItemSearchResult>> _fetch(String query) async {
     final supplier = context.read<ReceiveController>().supplier;
+    // #374: local mirror when offline_mode = full. Supplier-scoped
+    // pricing (last_cost) isn't yet mirrored locally, so the
+    // supplier filter is dropped offline; shop-wide last_cost from
+    // the cached unit row is good enough for v1.
+    if (offlineModeFull(context)) {
+      final repo = context.read<LocalRepository>();
+      final items = await repo.searchItems(query, shopId: widget.shop.id);
+      final results = <ItemSearchResult>[];
+      for (final item in items) {
+        results.add(await repo.toItemSearchResult(item, screen: 'receive'));
+      }
+      return results;
+    }
     return context.read<ShopApi>().searchItems(
       shopId: widget.shop.id,
       query: query,
@@ -665,7 +680,34 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         ),
         queuedAt: DateTime.now(),
       );
-      await context.read<OfflineQueueController>().enqueue(post);
+      // #374: stock-add projection so the in-flight receive shows
+      // up in Products + Sale grid until the post drains. direction
+      // = +1 (Receive adds stock; Sale subtracts).
+      final useLocal = offlineModeFull(context);
+      final localRepo = useLocal ? context.read<LocalRepository>() : null;
+      final queue = context.read<OfflineQueueController>();
+      if (localRepo != null) {
+        try {
+          await localRepo.applyProjectionLines(
+            pendingPostId: post.id,
+            lines: lines
+                .map((l) => ProjectionLine(
+                      shopItemUnitId: l.shopItemUnitId,
+                      quantity: l.quantity,
+                      direction: 1,
+                    ))
+                .toList(),
+          );
+        } catch (e, st) {
+          FlutterError.reportError(FlutterErrorDetails(
+            exception: e,
+            stack: st,
+            library: 'dukan receive',
+            context: ErrorDescription('apply receive stock projection'),
+          ));
+        }
+      }
+      await queue.enqueue(post);
       if (mounted) {
         controller.clearAll();
         setState(() => _bonoDocumentId = null);

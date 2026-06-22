@@ -25,6 +25,8 @@ import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/shared/stock_format.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/offline_mode.dart';
 
 enum _ProductsSort { name, stockLowFirst }
 
@@ -138,6 +140,25 @@ class _ProductsScreenState extends State<ProductsScreen> {
       resolver = context.read<ConfigResolver>();
     } catch (_) {
       resolver = null;
+    }
+    // #374: when offline_mode = full, read from the local mirror.
+    if (offlineModeFull(context)) {
+      final repo = context.read<LocalRepository>();
+      final items = await repo.allActiveItems(widget.shop.id);
+      final summaries = <ShopItemSummary>[];
+      for (final item in items) {
+        // Apply name + category filters in-memory.
+        if (query.isNotEmpty &&
+            !item.displayName.toLowerCase().contains(query.toLowerCase())) {
+          continue;
+        }
+        if (_filters.categoryId != null &&
+            item.categoryId != _filters.categoryId) {
+          continue;
+        }
+        summaries.add(await repo.toShopItemSummary(item));
+      }
+      return summaries;
     }
     try {
       final items = await api.listShopItems(

@@ -24,6 +24,7 @@ import 'package:dukan/storage/device_config_dao.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
 import 'package:dukan/storage/shared_prefs_migration.dart';
 import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/realtime_listener.dart';
 import 'package:dukan/sync/sync_engine.dart';
 import 'package:dukan/config/config_keys.dart';
 import 'package:dukan/receive/receive_controller.dart';
@@ -71,6 +72,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   late final CacheDao _cacheDao;
   late final LocalRepository _localRepository;
   late final SyncEngine _syncEngine;
+  late final RealtimeListener _realtimeListener;
   bool _hadSession = false;
   String? _crashReportedUserId;
   String? _crashReportedShopId;
@@ -103,16 +105,28 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
       },
     );
     _cacheDao = CacheDao(database, configResolver: _configResolver);
+    _localRepository = LocalRepository(database);
     _offlineQueueController = OfflineQueueController(
       dao: _pendingPostDao,
       executor: PostExecutor(_shopApi).execute,
       configResolver: _configResolver,
+      // #374: clear projection rows when a queued post drains
+      // successfully OR transitions to failed_permanent. The
+      // local repo no-ops gracefully if no projections exist
+      // (light mode), so this is safe in both flag states.
+      onProjectionCleanup: _localRepository.clearProjectionsForPost,
     );
-    _localRepository = LocalRepository(database);
     _syncEngine = SyncEngine(
       shopApi: _shopApi,
       localRepository: _localRepository,
       pendingPostDao: _pendingPostDao,
+      reportError: (error, stack, hint) {
+        unawaited(CrashReporter.reportError(error, stack, hint: hint));
+      },
+    );
+    _realtimeListener = RealtimeListener(
+      client: widget.supabaseClient,
+      syncEngine: _syncEngine,
       reportError: (error, stack, hint) {
         unawaited(CrashReporter.reportError(error, stack, hint: hint));
       },
@@ -161,6 +175,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
       _configResolver.reset();
       _configLoadedForShopId = null;
       _syncEngine.stop();
+      unawaited(_realtimeListener.stop());
     }
     _hadSession = hasSession;
     _syncCrashReporter();
@@ -193,6 +208,12 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     if (mode == 'full') {
       try {
         await _syncEngine.start(shopId);
+        // #374: subscribe to postgres_changes for the active shop
+        // so other devices' writes (and admin-portal edits) land
+        // in the local mirror in near real-time. SyncEngine
+        // already handles self-echo + 200ms debounce; the
+        // listener just forwards.
+        await _realtimeListener.start(shopId);
       } catch (error, stack) {
         // fullSync rethrows on cold-no-local failure. Log + swallow:
         // screens still render via the existing network path.
@@ -229,6 +250,7 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   @override
   void dispose() {
     _authController.removeListener(_onAuthChanged);
+    unawaited(_realtimeListener.dispose());
     _syncEngine.dispose();
     _offlineQueueController.dispose();
     _expenseController.dispose();

@@ -9,6 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/offline_mode.dart';
 import 'package:dukan/sale/add_new_item_sheet.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
@@ -147,7 +149,19 @@ class _SaleScreenState extends State<SaleScreen> {
     }
   }
 
-  Future<List<ItemSearchResult>> _fetch(String query) {
+  Future<List<ItemSearchResult>> _fetch(String query) async {
+    // #374: when offline_mode = full, read from the local mirror.
+    // Light mode keeps the existing live RPC path (search_items
+    // with server-side ranking).
+    if (offlineModeFull(context)) {
+      final repo = context.read<LocalRepository>();
+      final items = await repo.searchItems(query, shopId: widget.shop.id);
+      final results = <ItemSearchResult>[];
+      for (final item in items) {
+        results.add(await repo.toItemSearchResult(item, screen: 'sale'));
+      }
+      return results;
+    }
     return context.read<ShopApi>().searchItems(
       shopId: widget.shop.id,
       query: query,
@@ -711,7 +725,36 @@ class _SaleScreenState extends State<SaleScreen> {
         ),
         queuedAt: DateTime.now(),
       );
-      await context.read<OfflineQueueController>().enqueue(post);
+      // #374: when offline_mode = full, project the stock effect
+      // locally BEFORE enqueueing so subsequent reads (Products
+      // list, Sale grid) reflect the in-flight sale. Cleared by
+      // the queue's onProjectionCleanup when the post drains or
+      // fails permanently. Capture repo + queue ahead of awaits.
+      final useLocal = offlineModeFull(context);
+      final localRepo = useLocal ? context.read<LocalRepository>() : null;
+      final queue = context.read<OfflineQueueController>();
+      if (localRepo != null) {
+        try {
+          await localRepo.applyProjectionLines(
+            pendingPostId: post.id,
+            lines: lines
+                .map((l) => ProjectionLine(
+                      shopItemUnitId: l.shopItemUnitId,
+                      quantity: l.quantity,
+                      direction: -1,
+                    ))
+                .toList(),
+          );
+        } catch (e, st) {
+          FlutterError.reportError(FlutterErrorDetails(
+            exception: e,
+            stack: st,
+            library: 'dukan sale',
+            context: ErrorDescription('apply sale stock projection'),
+          ));
+        }
+      }
+      await queue.enqueue(post);
       return;
     }
 

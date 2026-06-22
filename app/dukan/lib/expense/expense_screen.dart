@@ -25,6 +25,8 @@ import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/optimistic_save.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/offline_mode.dart';
 
 class ExpenseScreen extends StatefulWidget {
   const ExpenseScreen({required this.shop, super.key});
@@ -67,7 +69,15 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     super.dispose();
   }
 
-  Future<List<ExpenseCategoryOption>> _fetchCategories() {
+  Future<List<ExpenseCategoryOption>> _fetchCategories() async {
+    // #374: when offline_mode = full, categories come from the
+    // local mirror (synced by SyncEngine). Light mode keeps the
+    // existing live RPC path.
+    if (offlineModeFull(context)) {
+      final repo = context.read<LocalRepository>();
+      final rows = await repo.expenseCategories(shopId: widget.shop.id);
+      return rows.map(repo.toExpenseCategoryOption).toList(growable: false);
+    }
     return context.read<ShopApi>().listExpenseCategories(
       shopId: widget.shop.id,
       locale: Localizations.localeOf(context).languageCode,
