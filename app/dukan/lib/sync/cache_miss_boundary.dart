@@ -27,6 +27,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/config/config_keys.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -34,14 +36,9 @@ import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/offline_mode.dart';
 import 'package:dukan/sync/sync_engine.dart';
 
-/// Default threshold for "this sync looks stuck."
-const _kStaleSyncThreshold = Duration(hours: 24);
-
-/// How many queued posts is "too many" — surfaces State C.
-const _kPendingCountThreshold = 20;
-
-/// Realtime disconnected for longer than this counts as broken.
-const _kRealtimeDownThreshold = Duration(minutes: 10);
+// Thresholds resolve from `ConfigResolver` per #376 — defaults
+// match the previous hard-coded values (24 h / 20 / 10 min) but
+// shops can now tune them via platform_config without a build.
 
 class CacheMissBoundary extends StatefulWidget {
   const CacheMissBoundary({
@@ -200,17 +197,35 @@ class _CacheMissBoundaryState extends State<CacheMissBoundary> {
   ) {
     final lastSync = engine.lastSyncedAt;
     final now = DateTime.now();
-    if (lastSync != null && now.difference(lastSync) > _kStaleSyncThreshold) {
+    // Resolve thresholds from ConfigResolver when present (per
+    // #376). Falls back to the defaults baked into the keys when
+    // not wired (e.g., test contexts without a resolver in scope).
+    ConfigResolver? resolver;
+    try {
+      resolver = context.read<ConfigResolver>();
+    } catch (_) {
+      resolver = null;
+    }
+    final staleHours = resolver?.resolve(ConfigKeys.alertOfflineHours) ??
+        ConfigKeys.alertOfflineHours.defaultValue;
+    final pendingMax = resolver?.resolve(ConfigKeys.alertPendingThreshold) ??
+        ConfigKeys.alertPendingThreshold.defaultValue;
+    final rtDownMins =
+        resolver?.resolve(ConfigKeys.alertRealtimeDownMinutes) ??
+            ConfigKeys.alertRealtimeDownMinutes.defaultValue;
+    if (lastSync != null &&
+        now.difference(lastSync) > Duration(hours: staleHours)) {
       return lastSync;
     }
-    if (queue.pendingCount > _kPendingCountThreshold) {
+    if (queue.pendingCount > pendingMax) {
       // No "since" timestamp for queue-based issues — pick the
       // engine's last sync as the visible time so the banner has
       // a sensible label.
       return lastSync ?? now;
     }
     final rtDown = engine.realtimeDisconnectedAt;
-    if (rtDown != null && now.difference(rtDown) > _kRealtimeDownThreshold) {
+    if (rtDown != null &&
+        now.difference(rtDown) > Duration(minutes: rtDownMins)) {
       return rtDown;
     }
     return null;

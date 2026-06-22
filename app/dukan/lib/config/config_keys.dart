@@ -142,14 +142,44 @@ class ConfigKeys {
     parse: _parseInt,
   );
 
+  /// Realtime channel disconnected for longer than this counts as a
+  /// sync issue and surfaces the CacheMissBoundary banner. Tunable
+  /// per-shop / per-org for slow or flaky networks.
+  static const ConfigKey<int> alertRealtimeDownMinutes = ConfigKey<int>(
+    name: 'alert_realtime_down_minutes',
+    defaultValue: 10,
+    parse: _parseInt,
+  );
+
+  /// Debounce window for SyncEngine bulk-burst handling. Realtime
+  /// events that arrive within this window are coalesced into one
+  /// `_deltaForResource` call. Raise on slower devices that thrash
+  /// during big CSV imports; lower for snappier per-event updates.
+  static const ConfigKey<int> syncRealtimeDebounceMs = ConfigKey<int>(
+    name: 'sync_realtime_debounce_ms',
+    defaultValue: 200,
+    parse: _parseInt,
+  );
+
+  /// Periodic delta-sync interval. SyncEngine schedules a delta call
+  /// every N seconds as a backup to realtime. Lower → fresher local
+  /// data on poor realtime; higher → less network traffic.
+  static const ConfigKey<int> syncDeltaPollIntervalS = ConfigKey<int>(
+    name: 'sync_delta_poll_interval_s',
+    defaultValue: 300,
+    parse: _parseInt,
+  );
+
   // --- Offline-first feature flag (#373) --------------------------------
-  /// 'light' (default): existing behavior — queue + small caches; reads
-  /// hit the network. 'full': LocalRepository + SyncEngine active;
-  /// daily-flow reads come from the local sqflite mirror. Set per-shop
-  /// via `platform_config` or org-wide by system admin.
+  /// 'full' (default): LocalRepository + SyncEngine active; daily-flow
+  /// reads come from the local sqflite mirror. 'light': previous
+  /// behavior — queue + small caches; reads hit the network. Default
+  /// flipped to `full` per #376 once the local-first system was
+  /// validated end-to-end. Set per-shop via `platform_config` to
+  /// override.
   static const ConfigKey<String> offlineMode = ConfigKey<String>(
     name: 'offline_mode',
-    defaultValue: 'light',
+    defaultValue: 'full',
     parse: _parseString,
   );
 }

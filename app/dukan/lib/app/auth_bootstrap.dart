@@ -116,10 +116,22 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
       // (light mode), so this is safe in both flag states.
       onProjectionCleanup: _localRepository.clearProjectionsForPost,
     );
+    // #376: realtime debounce + delta poll interval resolve from
+    // ConfigResolver so they're tunable per-shop without a build.
+    // Defaults baked into the keys match the previous hard-coded
+    // values (200 ms / 5 min).
     _syncEngine = SyncEngine(
       shopApi: _shopApi,
       localRepository: _localRepository,
       pendingPostDao: _pendingPostDao,
+      realtimeDebounce: Duration(
+        milliseconds: _configResolver
+            .resolve(ConfigKeys.syncRealtimeDebounceMs),
+      ),
+      deltaPollInterval: Duration(
+        seconds: _configResolver
+            .resolve(ConfigKeys.syncDeltaPollIntervalS),
+      ),
       reportError: (error, stack, hint) {
         unawaited(CrashReporter.reportError(error, stack, hint: hint));
       },
