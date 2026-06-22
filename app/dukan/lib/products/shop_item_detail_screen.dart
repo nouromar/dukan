@@ -564,7 +564,12 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError || snapshot.data == null) {
-              return _ErrorView(onRetry: _reload);
+              return _ErrorView(
+                onRetry: _reload,
+                // #372 (extended): surface raw error so smoke
+                // testing reveals the actual server failure.
+                rawError: snapshot.error?.toString(),
+              );
             }
             return _DetailBody(
               bootstrap: snapshot.data!,
@@ -1188,9 +1193,10 @@ class _EditPriceDialogState extends State<_EditPriceDialog> {
 }
 
 class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.onRetry});
+  const _ErrorView({required this.onRetry, this.rawError});
 
   final VoidCallback onRetry;
+  final String? rawError;
 
   @override
   Widget build(BuildContext context) {
@@ -1206,6 +1212,16 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
+            if (rawError != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                rawError!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+              ),
+            ],
             const SizedBox(height: 16),
             FilledButton(onPressed: onRetry, child: Text(l.tryAgain)),
           ],

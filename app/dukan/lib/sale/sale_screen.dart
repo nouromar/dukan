@@ -749,11 +749,11 @@ class _SaleScreenState extends State<SaleScreen> {
     // stable — the sheet only appeared when the user touched
     // somewhere and forced one.
     //
-    // #371: re-check `mounted` immediately before opening — the
-    // network round-trip above can outlive the widget if the
-    // cashier navigated away. Awaiting (not `unawaited(...)`) +
-    // try/catch ensures any context-staleness error surfaces in
-    // Sentry instead of being silently swallowed.
+    // #371 + #372 (extended): re-check `mounted` immediately
+    // before opening — the network round-trip above can outlive
+    // the widget if the cashier navigated away. Awaiting +
+    // try/catch + visible toast on failure (was Sentry-only,
+    // which the cashier can't see during smoke testing).
     if (!mounted) return;
     try {
       await showSaleReceiptSheet(
@@ -770,6 +770,14 @@ class _SaleScreenState extends State<SaleScreen> {
           context: ErrorDescription('show sale receipt sheet'),
         ),
       );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Receipt sheet failed: $error'),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
     }
   }
 
