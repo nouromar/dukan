@@ -119,8 +119,12 @@ class _SupplierPickerScreenState extends State<SupplierPickerScreen> {
                       );
                     }
                     if (snapshot.hasError) {
+                      // #372: append raw error to surface the
+                      // actual server failure during smoke
+                      // testing. Temporary debug aid.
                       return _ErrorBlock(
-                        message: l.supplierPickerLoadFailedMessage,
+                        message: '${l.supplierPickerLoadFailedMessage}\n'
+                            '${snapshot.error}',
                       );
                     }
                     final results =

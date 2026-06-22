@@ -228,11 +228,19 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     if (snapshot.hasError) {
+                      // #372: append raw error to surface actual
+                      // server failure during smoke testing.
+                      // Temporary — revert to friendly-only once
+                      // root cause is identified.
                       return Center(
-                        child: Text(
-                          l.expenseLoadFailedMessage,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyLarge,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            '${l.expenseLoadFailedMessage}\n'
+                                '${snapshot.error}',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyLarge,
+                          ),
                         ),
                       );
                     }

@@ -166,7 +166,12 @@ void main() {
     await pumpProducts(tester);
     await tester.pumpAndSettle();
 
-    expect(find.text(en.productsLoadFailedMessage), findsOneWidget);
+    // #372: error text now includes the raw exception, so match
+    // by prefix instead of exact text.
+    expect(
+      find.textContaining(en.productsLoadFailedMessage),
+      findsOneWidget,
+    );
     await tester.tap(find.text(en.tryAgain));
     await tester.pumpAndSettle();
 

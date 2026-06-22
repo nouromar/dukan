@@ -154,10 +154,13 @@ class _PartyPickerBodyState extends State<_PartyPickerBody> {
                       );
                     }
                     if (snapshot.hasError) {
+                      // #372: append raw error to surface the
+                      // actual server failure during smoke
+                      // testing. Temporary debug aid.
                       return Padding(
                         padding: const EdgeInsets.all(20),
                         child: Text(
-                          loadFailedMessage,
+                          '$loadFailedMessage\n${snapshot.error}',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),

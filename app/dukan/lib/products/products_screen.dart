@@ -326,8 +326,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   // yet. Show the spinner.
                   if (loaded == null) {
                     if (snapshot.hasError) {
+                      // #372: append raw error so the next smoke
+                      // test surfaces the actual server failure
+                      // (e.g. "function does not exist" vs
+                      // "permission denied" vs network timeout).
+                      // Temporary debug aid — revert to friendly-
+                      // only copy once root cause is identified.
                       return _ProductsErrorMessage(
-                        message: l.productsLoadFailedMessage,
+                        message: '${l.productsLoadFailedMessage}\n'
+                            '${snapshot.error}',
                         onRetry: _reload,
                       );
                     }
