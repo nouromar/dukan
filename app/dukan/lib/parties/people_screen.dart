@@ -61,6 +61,11 @@ class PeopleScreen extends StatefulWidget {
 enum _PeopleSort { byBalance, byName }
 
 class _PeopleScreenState extends State<PeopleScreen> {
+  // #370: hold last-known list so explicit reloads (filter
+  // change, watcher fire, pull-to-refresh) don't transition
+  // through the spinner branch. Spinner only on cold start.
+  List<PartySearchResult>? _lastKnown;
+
   final _searchController = TextEditingController();
   Future<List<PartySearchResult>>? _future;
   String _query = '';
@@ -284,22 +289,26 @@ class _PeopleScreenState extends State<PeopleScreen> {
               child: FutureBuilder<List<PartySearchResult>>(
                 future: _future,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
+                  if (snapshot.connectionState == ConnectionState.done &&
+                      snapshot.hasData) {
+                    _lastKnown = snapshot.data;
+                  }
+                  final loaded = _lastKnown ?? snapshot.data;
+                  if (loaded == null) {
+                    if (snapshot.hasError) {
+                      return Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: Text(
+                            l.partiesLoadFailedMessage,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
+                    }
                     return const Center(child: CircularProgressIndicator());
                   }
-                  if (snapshot.hasError) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          l.partiesLoadFailedMessage,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    );
-                  }
-                  final rows =
-                      snapshot.data ?? const <PartySearchResult>[];
+                  final rows = loaded;
                   return RefreshIndicator(
                     onRefresh: () async => _reload(),
                     child: CustomScrollView(
@@ -332,6 +341,9 @@ class _PeopleScreenState extends State<PeopleScreen> {
                             separatorBuilder: (_, _) =>
                                 const Divider(height: 1),
                             itemBuilder: (context, i) => _PartyRow(
+                              // #370: stable key so unchanged
+                              // rows survive list rebuilds.
+                              key: ValueKey(rows[i].id),
                               row: rows[i],
                               shop: widget.shop,
                               isCustomer: _isCustomer,
@@ -420,6 +432,7 @@ class _HeadlineTile extends StatelessWidget {
 
 class _PartyRow extends StatelessWidget {
   const _PartyRow({
+    super.key,
     required this.row,
     required this.shop,
     required this.isCustomer,

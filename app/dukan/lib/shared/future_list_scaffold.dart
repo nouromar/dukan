@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 
-class FutureListScaffold<T> extends StatelessWidget {
+class FutureListScaffold<T> extends StatefulWidget {
   const FutureListScaffold({
     required this.future,
     required this.itemBuilder,
@@ -49,40 +49,64 @@ class FutureListScaffold<T> extends StatelessWidget {
   final EdgeInsets padding;
 
   @override
+  State<FutureListScaffold<T>> createState() => _FutureListScaffoldState<T>();
+}
+
+class _FutureListScaffoldState<T> extends State<FutureListScaffold<T>> {
+  // #370: hold the last successfully-resolved list so that
+  // explicit reloads (filter change, pull-to-refresh, parent
+  // setState with a new future) don't transition through the
+  // spinner branch. Spinner only fires on the truly-cold path
+  // where nothing was ever rendered. Used by every history screen
+  // (Sale, Receive, Payment, Expense) via this shared widget.
+  List<T>? _lastKnown;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return FutureBuilder<List<T>>(
-      future: future,
+      future: widget.future,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
+        // Capture newly-resolved data so subsequent builds paint
+        // from `_lastKnown` while a fresh load is in flight.
+        if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.hasData) {
+          _lastKnown = snapshot.data;
         }
-        if (snapshot.hasError) {
-          return Padding(
-            padding: const EdgeInsets.all(24),
-            child: Center(
-              child: Text(
-                errorMessage,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge,
+        final loaded = _lastKnown ?? snapshot.data;
+        // Truly cold — nothing ever rendered + nothing landed yet.
+        if (loaded == null) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          // Resolved with error and no previous data.
+          if (snapshot.hasError) {
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Text(
+                  widget.errorMessage,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyLarge,
+                ),
               ),
-            ),
-          );
+            );
+          }
         }
-        final all = snapshot.data ?? const <Never>[];
-        final rows = filter == null
+        final all = loaded ?? const <Never>[];
+        final rows = widget.filter == null
             ? all.cast<T>().toList(growable: false)
-            : all.cast<T>().where(filter!).toList(growable: false);
+            : all.cast<T>().where(widget.filter!).toList(growable: false);
         if (rows.isEmpty) {
           return RefreshIndicator(
-            onRefresh: onRefresh,
+            onRefresh: widget.onRefresh,
             // ListView so the empty state is pull-to-refreshable.
             child: ListView(
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
                   child: Text(
-                    emptyMessage,
+                    widget.emptyMessage,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge,
                   ),
@@ -92,12 +116,12 @@ class FutureListScaffold<T> extends StatelessWidget {
           );
         }
         return RefreshIndicator(
-          onRefresh: onRefresh,
+          onRefresh: widget.onRefresh,
           child: ListView.separated(
-            padding: padding,
+            padding: widget.padding,
             itemCount: rows.length,
             separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (context, i) => itemBuilder(context, rows[i], i),
+            itemBuilder: (context, i) => widget.itemBuilder(context, rows[i], i),
           ),
         );
       },

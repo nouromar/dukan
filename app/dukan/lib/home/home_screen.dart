@@ -253,6 +253,12 @@ class _TodayCard extends StatefulWidget {
 class _TodayCardState extends State<_TodayCard> with RouteAware {
   Future<TodaySummary>? _future;
   String? _locale;
+  // #370: hold the last successfully-resolved summary so that
+  // explicit reloads (return-from-subscreen, refresh-trigger bump)
+  // don't transition the FutureBuilder through its spinner branch.
+  // Spinner now only fires on the truly-cold path where nothing was
+  // ever rendered.
+  TodaySummary? _lastKnown;
 
   @override
   void initState() {
@@ -403,26 +409,46 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    final theme = Theme.of(context);
     return Card(
       margin: EdgeInsets.zero,
       child: FutureBuilder<TodaySummary>(
         future: _future,
         builder: (context, snapshot) {
+          // Capture newly-resolved data so future rebuilds during
+          // pending reloads can paint from `_lastKnown`.
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData) {
+            _lastKnown = snapshot.data;
+          }
+          // Prefer the most recent known value. Skips the spinner
+          // on explicit reloads — the existing values stay painted
+          // until the new ones land.
+          final s = _lastKnown ?? snapshot.data;
+          if (s != null) {
+            return _renderSummary(context, s);
+          }
+          // Truly cold — nothing ever rendered. Show spinner
+          // while the first fetch is in flight.
           if (snapshot.connectionState != ConnectionState.done) {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(child: CircularProgressIndicator()),
             );
           }
-          final s = snapshot.data;
-          if (s == null) {
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(l.reportLoadFailedMessage),
-            );
-          }
+          // Resolved with no data — empty / error state.
           return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(l.reportLoadFailedMessage),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _renderSummary(BuildContext context, TodaySummary s) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    return Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -518,9 +544,6 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
               ],
             ),
           );
-        },
-      ),
-    );
   }
 }
 

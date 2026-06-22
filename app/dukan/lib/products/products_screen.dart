@@ -40,6 +40,11 @@ class ProductsScreen extends StatefulWidget {
 class _ProductsScreenState extends State<ProductsScreen> {
   final _searchController = TextEditingController();
   late Future<List<ShopItemSummary>> _resultsFuture;
+  // #370: hold last-known results so explicit reloads
+  // (filter change, realtime watcher, return-from-detail) don't
+  // flash the spinner over an already-rendered list. Spinner only
+  // fires on the truly-cold path.
+  List<ShopItemSummary>? _lastKnown;
   String _activeQuery = '';
   Timer? _debounce;
   ProductsFilters _filters = ProductsFilters.initial();
@@ -310,17 +315,24 @@ class _ProductsScreenState extends State<ProductsScreen> {
               child: FutureBuilder<List<ShopItemSummary>>(
                 future: _resultsFuture,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
+                  // Capture newly-resolved data; subsequent rebuilds
+                  // during a pending reload paint from `_lastKnown`.
+                  if (snapshot.connectionState == ConnectionState.done &&
+                      snapshot.hasData) {
+                    _lastKnown = snapshot.data;
+                  }
+                  final loaded = _lastKnown ?? snapshot.data;
+                  // Truly cold — no previous data + nothing landed
+                  // yet. Show the spinner.
+                  if (loaded == null) {
+                    if (snapshot.hasError) {
+                      return _ProductsErrorMessage(
+                        message: l.productsLoadFailedMessage,
+                        onRetry: _reload,
+                      );
+                    }
                     return const Center(child: CircularProgressIndicator());
                   }
-                  if (snapshot.hasError) {
-                    return _ProductsErrorMessage(
-                      message: l.productsLoadFailedMessage,
-                      onRetry: _reload,
-                    );
-                  }
-                  final loaded =
-                      snapshot.data ?? const <ShopItemSummary>[];
                   // Client-side filtering for low-stock + no-price-only:
                   // server doesn't take these flags yet, and counts at
                   // small shop scale (≤ a few hundred) are cheap.
@@ -381,6 +393,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             itemBuilder: (context, index) {
                               final row = results[index];
                               return _ShopItemTile(
+                                // #370: stable key so Flutter
+                                // reconciles unchanged tiles in
+                                // place instead of remounting all
+                                // when the count changes.
+                                key: ValueKey(row.shopItemId),
                                 row: row,
                                 shop: widget.shop,
                                 onTap: () => _openDetail(row),
@@ -481,6 +498,7 @@ class _SortBar extends StatelessWidget {
 
 class _ShopItemTile extends StatelessWidget {
   const _ShopItemTile({
+    super.key,
     required this.row,
     required this.shop,
     required this.onTap,
