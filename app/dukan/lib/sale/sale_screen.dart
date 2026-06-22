@@ -747,13 +747,30 @@ class _SaleScreenState extends State<SaleScreen> {
     // the open to "the next frame," but on iOS in release mode the
     // engine had no reason to schedule a frame once the UI was
     // stable — the sheet only appeared when the user touched
-    // somewhere and forced one. Fire-and-forget — the cashier
-    // dismisses the sheet at their pace.
-    unawaited(showSaleReceiptSheet(
-      context,
-      shop: widget.shop,
-      txnId: txnId,
-    ));
+    // somewhere and forced one.
+    //
+    // #371: re-check `mounted` immediately before opening — the
+    // network round-trip above can outlive the widget if the
+    // cashier navigated away. Awaiting (not `unawaited(...)`) +
+    // try/catch ensures any context-staleness error surfaces in
+    // Sentry instead of being silently swallowed.
+    if (!mounted) return;
+    try {
+      await showSaleReceiptSheet(
+        context,
+        shop: widget.shop,
+        txnId: txnId,
+      );
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan sale',
+          context: ErrorDescription('show sale receipt sheet'),
+        ),
+      );
+    }
   }
 
   void _handleOptimisticSaveFailure(
