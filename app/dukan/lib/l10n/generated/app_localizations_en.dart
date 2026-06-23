@@ -2207,6 +2207,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get storageSyncFreeUpSpaceConfirmAction => 'CLEAR';
 
   @override
+  String get storageSyncResyncAllButton => 'Re-download all data';
+
+  @override
+  String get storageSyncResyncConfirmTitle => 'Re-download all data?';
+
+  @override
+  String get storageSyncResyncConfirmBody =>
+      'Fetches a fresh copy of items, customers, and recent transactions from the server. Your saved sales aren\'t touched.';
+
+  @override
+  String get storageSyncResyncConfirmAction => 'RE-DOWNLOAD';
+
+  @override
+  String get storageSyncResyncDoneToast => 'Re-downloaded all data';
+
+  @override
+  String get storageSyncResyncFailedToast => 'Couldn\'t re-download';
+
+  @override
   String get storageSyncCacheClearedToast => 'Cache cleared';
 
   @override

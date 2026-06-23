@@ -3636,6 +3636,42 @@ abstract class AppLocalizations {
   /// **'CLEAR'**
   String get storageSyncFreeUpSpaceConfirmAction;
 
+  /// No description provided for @storageSyncResyncAllButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-download all data'**
+  String get storageSyncResyncAllButton;
+
+  /// No description provided for @storageSyncResyncConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-download all data?'**
+  String get storageSyncResyncConfirmTitle;
+
+  /// No description provided for @storageSyncResyncConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetches a fresh copy of items, customers, and recent transactions from the server. Your saved sales aren\'t touched.'**
+  String get storageSyncResyncConfirmBody;
+
+  /// No description provided for @storageSyncResyncConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'RE-DOWNLOAD'**
+  String get storageSyncResyncConfirmAction;
+
+  /// No description provided for @storageSyncResyncDoneToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-downloaded all data'**
+  String get storageSyncResyncDoneToast;
+
+  /// No description provided for @storageSyncResyncFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t re-download'**
+  String get storageSyncResyncFailedToast;
+
   /// No description provided for @storageSyncCacheClearedToast.
   ///
   /// In en, this message translates to:

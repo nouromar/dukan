@@ -15,6 +15,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/config/config_keys.dart';
 import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
@@ -24,6 +25,7 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/storage/cache_dao.dart';
 import 'package:dukan/storage/failed_posts_screen.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
+import 'package:dukan/sync/sync_engine.dart';
 
 class StorageSyncScreen extends StatefulWidget {
   const StorageSyncScreen({super.key});
@@ -96,6 +98,56 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
     } catch (_) {
       if (!mounted) return;
       showError(context, l.storageSyncSyncFailedToast);
+    } finally {
+      if (mounted) setState(() => _syncing = false);
+      await _refresh();
+    }
+  }
+
+  /// #381: Re-download all server data. Used when the catalog
+  /// drifted (e.g., a backend RPC was extended after the device
+  /// did its initial full sync, so delta-sync misses historical
+  /// rows). Bypasses the 24h server-side rate limit with
+  /// `force: true`.
+  Future<void> _onResyncAll() async {
+    final l = tr(context);
+    SyncEngine? engine;
+    String? shopId;
+    try {
+      engine = context.read<SyncEngine>();
+      shopId = context.read<AuthController>().selectedShop?.id;
+    } catch (_) {
+      engine = null;
+    }
+    if (engine == null || shopId == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.storageSyncResyncConfirmTitle),
+        content: Text(l.storageSyncResyncConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l.storageSyncResyncConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _syncing = true);
+    try {
+      await engine.fullSync(shopId, force: true);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.storageSyncResyncDoneToast)),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      showError(context, '${l.storageSyncResyncFailedToast}\n$error');
     } finally {
       if (mounted) setState(() => _syncing = false);
       await _refresh();
@@ -314,7 +366,7 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _onFreeUpSpace,
+                    onPressed: _syncing ? null : _onFreeUpSpace,
                     icon: const Icon(Icons.cleaning_services_outlined),
                     label: Text(l.storageSyncFreeUpSpaceButton),
                     style: OutlinedButton.styleFrom(
@@ -323,6 +375,22 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            // #381: Re-download all server data. Used when the
+            // server-side payload was extended (e.g., a new RPC
+            // version) and the device's existing rows are missing
+            // historical entries that delta-sync can't pick up.
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _syncing ? null : _onResyncAll,
+                icon: const Icon(Icons.cloud_download_outlined),
+                label: Text(l.storageSyncResyncAllButton),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                ),
+              ),
             ),
             const SizedBox(height: 32),
 

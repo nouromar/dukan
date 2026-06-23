@@ -1002,6 +1002,12 @@
   "storageSyncFreeUpSpaceConfirmTitle": "Clear cached data?",
   "storageSyncFreeUpSpaceConfirmBody": "This refreshes prices and lists from the server. Your saved sales aren't touched.",
   "storageSyncFreeUpSpaceConfirmAction": "CLEAR",
+  "storageSyncResyncAllButton": "Re-download all data",
+  "storageSyncResyncConfirmTitle": "Re-download all data?",
+  "storageSyncResyncConfirmBody": "Fetches a fresh copy of items, customers, and recent transactions from the server. Your saved sales aren't touched.",
+  "storageSyncResyncConfirmAction": "RE-DOWNLOAD",
+  "storageSyncResyncDoneToast": "Re-downloaded all data",
+  "storageSyncResyncFailedToast": "Couldn't re-download",
   "storageSyncCacheClearedToast": "Cache cleared",
   "storageSyncSyncedToast": "{count, plural, =0{Already up to date} =1{Synced 1 post} other{Synced {count} posts}}",
   "@storageSyncSyncedToast": {

@@ -2227,6 +2227,26 @@ class AppLocalizationsSo extends AppLocalizations {
   String get storageSyncFreeUpSpaceConfirmAction => 'TIRTIR';
 
   @override
+  String get storageSyncResyncAllButton => 'Dib u soo deji xogta oo dhan';
+
+  @override
+  String get storageSyncResyncConfirmTitle => 'Dib u soo deji xogta oo dhan?';
+
+  @override
+  String get storageSyncResyncConfirmBody =>
+      'Waxaa la soo dejinayaa nuqul cusub oo ka kooban alaab, macaamiil, iyo wax iibinta dhowaan. Iibyada aad kaydisay ma taabankaro.';
+
+  @override
+  String get storageSyncResyncConfirmAction => 'DIB U SOO DEJI';
+
+  @override
+  String get storageSyncResyncDoneToast =>
+      'Xogta oo dhan dib ayaa loo soo dejiyay';
+
+  @override
+  String get storageSyncResyncFailedToast => 'Lama soo dejin karin';
+
+  @override
   String get storageSyncCacheClearedToast => 'Kaydka waa la tirtiray';
 
   @override

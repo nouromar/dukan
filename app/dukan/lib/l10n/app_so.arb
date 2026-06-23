@@ -992,6 +992,12 @@
   "storageSyncFreeUpSpaceConfirmTitle": "Tirtir xogta la kaydiyay?",
   "storageSyncFreeUpSpaceConfirmBody": "Tani waxay cusbooneysiisaa qiimaha iyo liiska serfarka. Iibyada aad kaydisay ma taabankaro.",
   "storageSyncFreeUpSpaceConfirmAction": "TIRTIR",
+  "storageSyncResyncAllButton": "Dib u soo deji xogta oo dhan",
+  "storageSyncResyncConfirmTitle": "Dib u soo deji xogta oo dhan?",
+  "storageSyncResyncConfirmBody": "Waxaa la soo dejinayaa nuqul cusub oo ka kooban alaab, macaamiil, iyo wax iibinta dhowaan. Iibyada aad kaydisay ma taabankaro.",
+  "storageSyncResyncConfirmAction": "DIB U SOO DEJI",
+  "storageSyncResyncDoneToast": "Xogta oo dhan dib ayaa loo soo dejiyay",
+  "storageSyncResyncFailedToast": "Lama soo dejin karin",
   "storageSyncCacheClearedToast": "Kaydka waa la tirtiray",
   "storageSyncSyncedToast": "{count, plural, =0{Horeyba u cusub} =1{1 la diray} other{{count} la diray}}",
   "@storageSyncSyncedToast": {
