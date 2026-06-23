@@ -222,7 +222,12 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     final canSave = controller.category != null && controller.amount > 0;
     return Scaffold(
       appBar: dukanAppBar(context, l.expenseTitle),
+      // #379: SAVE moved to `bottomNavigationBar` so it floats
+      // above the soft keyboard. Body is unchanged otherwise —
+      // Expanded categories area shrinks naturally when the
+      // keyboard takes screen space.
       body: SafeArea(
+        bottom: false,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -312,15 +317,20 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                   labelText: l.expenseNotesLabel,
                 ),
               ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: canSave ? _save : null,
-                  child: Text(l.expenseSaveButton),
-                ),
-              ),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: FilledButton(
+              onPressed: canSave ? _save : null,
+              child: Text(l.expenseSaveButton),
+            ),
           ),
         ),
       ),

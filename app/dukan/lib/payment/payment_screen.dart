@@ -268,9 +268,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     return Scaffold(
       appBar: dukanAppBar(context, l.paymentTitle),
+      // #379: SAVE lives in `bottomNavigationBar` so it floats
+      // above the soft keyboard. Form content is scrollable so
+      // the cashier can reach the invoice-allocation chip and
+      // notes field when the keyboard is up.
       body: SafeArea(
-        child: Padding(
+        bottom: false,
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -374,15 +380,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                 ),
               ],
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: canSave ? _save : null,
-                  child: Text(l.paymentSaveButton),
-                ),
-              ),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: FilledButton(
+              onPressed: canSave ? _save : null,
+              child: Text(l.paymentSaveButton),
+            ),
           ),
         ),
       ),
