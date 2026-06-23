@@ -48,6 +48,11 @@ class LocalShopItem {
   final int serverUpdatedAtMs;
 
   factory LocalShopItem._fromRow(Map<String, Object?> r) => LocalShopItem(
+        // #378: sqflite type-affinity — INTEGER columns can come
+        // back as `double` if anything ever wrote a non-int value
+        // (e.g., JSON `1.0`). Cast via `num.toInt()` defensively
+        // so we never throw "type 'double' is not a subtype of
+        // type 'int' in type cast" on read.
         shopItemId: r['shop_item_id'] as String,
         shopId: r['shop_id'] as String,
         itemId: r['item_id'] as String?,
@@ -57,8 +62,8 @@ class LocalShopItem {
         currentStock: r['current_stock'] as num,
         avgCost: r['avg_cost'] as num,
         reorderThreshold: r['reorder_threshold'] as num?,
-        isActive: (r['is_active'] as int) == 1,
-        serverUpdatedAtMs: r['server_updated_at'] as int,
+        isActive: (r['is_active'] as num).toInt() == 1,
+        serverUpdatedAtMs: (r['server_updated_at'] as num).toInt(),
       );
 }
 
@@ -98,10 +103,10 @@ class LocalShopItemUnit {
         conversionToBase: r['conversion_to_base'] as num,
         salePrice: r['sale_price'] as num?,
         lastCost: r['last_cost'] as num?,
-        isDefaultSale: (r['is_default_sale'] as int) == 1,
-        isDefaultReceive: (r['is_default_receive'] as int) == 1,
-        isActive: (r['is_active'] as int) == 1,
-        serverUpdatedAtMs: r['server_updated_at'] as int,
+        isDefaultSale: (r['is_default_sale'] as num).toInt() == 1,
+        isDefaultReceive: (r['is_default_receive'] as num).toInt() == 1,
+        isActive: (r['is_active'] as num).toInt() == 1,
+        serverUpdatedAtMs: (r['server_updated_at'] as num).toInt(),
       );
 }
 
@@ -136,8 +141,8 @@ class LocalParty {
         typeCode: r['type_code'] as String,
         receivable: r['receivable'] as num,
         payable: r['payable'] as num,
-        isActive: (r['is_active'] as int) == 1,
-        serverUpdatedAtMs: r['server_updated_at'] as int,
+        isActive: (r['is_active'] as num).toInt() == 1,
+        serverUpdatedAtMs: (r['server_updated_at'] as num).toInt(),
       );
 }
 
@@ -162,7 +167,7 @@ class LocalExpenseCategory {
         shopId: r['shop_id'] as String,
         code: r['code'] as String,
         name: r['name'] as String,
-        isActive: (r['is_active'] as int) == 1,
+        isActive: (r['is_active'] as num).toInt() == 1,
       );
 }
 
@@ -206,11 +211,11 @@ class LocalTransaction {
       txnId: r['txn_id'] as String,
       shopId: r['shop_id'] as String,
       typeCode: r['type_code'] as String,
-      occurredAtMs: r['occurred_at'] as int,
+      occurredAtMs: (r['occurred_at'] as num).toInt(),
       total: r['total'] as num,
       partyId: r['party_id'] as String?,
-      isVoided: (r['is_voided'] as int) == 1,
-      serverUpdatedAtMs: r['server_updated_at'] as int,
+      isVoided: (r['is_voided'] as num).toInt() == 1,
+      serverUpdatedAtMs: (r['server_updated_at'] as num).toInt(),
       payload: payload,
     );
   }
