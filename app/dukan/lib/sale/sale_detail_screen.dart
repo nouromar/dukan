@@ -29,7 +29,7 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/relative_time.dart';
 import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/offline_mode.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 /// Outcome of the void confirmation dialog. `null` = cashier
 /// cancelled. A returned record means "go ahead and void"; the
@@ -258,7 +258,7 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
     // snapshot the SAVE flow handed us. Only fall through to the
     // network as a last resort (and only when light, since `full`
     // mode is meant to never block on network).
-    if (offlineModeFull(context)) {
+    if (useLocalDb(context)) {
       try {
         final repo = context.read<LocalRepository>();
         final localTxn = await repo.getTransaction(widget.txnId);

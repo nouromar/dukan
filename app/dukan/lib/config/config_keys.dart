@@ -48,6 +48,20 @@ T _parseString<T>(Object? raw) {
   throw FormatException('expected String, got ${raw.runtimeType}: $raw');
 }
 
+T _parseBool<T>(Object? raw) {
+  if (raw is bool) return raw as T;
+  if (raw is String) {
+    if (raw == 'true') return true as T;
+    if (raw == 'false') return false as T;
+  }
+  if (raw is num) {
+    // Postgres jsonb sometimes round-trips boolean shorthand as 0/1.
+    if (raw == 0) return false as T;
+    if (raw == 1) return true as T;
+  }
+  throw FormatException('expected bool, got ${raw.runtimeType}: $raw');
+}
+
 class ConfigKeys {
   // --- Queue mechanics --------------------------------------------------
   static const ConfigKey<int> queueMaxPending = ConfigKey<int>(
@@ -170,13 +184,31 @@ class ConfigKeys {
     parse: _parseInt,
   );
 
-  // --- Offline-first feature flag (#373) --------------------------------
-  /// 'full' (default): LocalRepository + SyncEngine active; daily-flow
-  /// reads come from the local sqflite mirror. 'light': previous
-  /// behavior — queue + small caches; reads hit the network. Default
-  /// flipped to `full` per #376 once the local-first system was
-  /// validated end-to-end. Set per-shop via `platform_config` to
-  /// override.
+  // --- Local-DB feature flag (#382) -------------------------------------
+  /// `true` (default): app uses its on-device sqflite mirror for
+  /// daily-flow reads, queues writes for background drain, and runs
+  /// the sync engine + realtime listener.
+  /// `false`: thin-client mode — every operation talks to the server
+  /// directly; failures surface immediately to the cashier; no local
+  /// DB writes.
+  ///
+  /// Note on naming: "useLocalDb" is the feature toggle. The word
+  /// "offline" elsewhere in copy refers to phone connectivity (no
+  /// internet), which is a separate axis. See
+  /// `docs/offline-first-architecture.md`.
+  static const ConfigKey<bool> useLocalDb = ConfigKey<bool>(
+    name: 'use_local_db',
+    defaultValue: true,
+    parse: _parseBool,
+  );
+
+  /// Legacy alias for `useLocalDb` — accepted for one release of
+  /// backwards compatibility with `platform_config` / `shop_setting`
+  /// rows set before `#382`. Mapped by the `useLocalDb()` helper:
+  /// `'full'` → true, `'light'` → false. Drop in `#385`.
+  ///
+  /// Do NOT use directly in new code; resolve via `useLocalDb()`.
+  @Deprecated('use ConfigKeys.useLocalDb — kept only for legacy override mapping. Drop in #385.')
   static const ConfigKey<String> offlineMode = ConfigKey<String>(
     name: 'offline_mode',
     defaultValue: 'full',

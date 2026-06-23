@@ -34,7 +34,7 @@ import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/shared/stock_format.dart';
 import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/offline_mode.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 class ShopItemDetailScreen extends StatefulWidget {
   const ShopItemDetailScreen({
@@ -121,7 +121,7 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     // category tile uses the resulting list directly. If the
     // network is unavailable the detail still renders (categories
     // = empty), the category picker just shows nothing.
-    if (offlineModeFull(context)) {
+    if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
       final detail = await repo.getShopItemDetail(widget.shopItemId);
       if (detail != null) {

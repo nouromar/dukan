@@ -33,7 +33,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/offline_mode.dart';
+import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/receive/add_new_item_sheet.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_history_screen.dart';
@@ -285,7 +285,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     // pricing (last_cost) isn't yet mirrored locally, so the
     // supplier filter is dropped offline; shop-wide last_cost from
     // the cached unit row is good enough for v1.
-    if (offlineModeFull(context)) {
+    if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
       final items = await repo.searchItems(query, shopId: widget.shop.id);
       final results = <ItemSearchResult>[];
@@ -683,7 +683,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       // #374: stock-add projection so the in-flight receive shows
       // up in Products + Sale grid until the post drains. direction
       // = +1 (Receive adds stock; Sale subtracts).
-      final useLocal = offlineModeFull(context);
+      final useLocal = useLocalDb(context);
       final localRepo = useLocal ? context.read<LocalRepository>() : null;
       final queue = context.read<OfflineQueueController>();
       if (localRepo != null) {

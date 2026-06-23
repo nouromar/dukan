@@ -1,11 +1,12 @@
 // Widget tests for #375 CacheMissBoundary — the 3-state UX wrapper.
 //
-// - State A: no local data + flag=full → first-time-setup card.
+// - State A: no local data + useLocalDb=true → first-time-setup card.
 // - State B: has data + healthy sync → pass-through.
 // - State C: lastSyncedAt stale → sync-issue banner.
 //
-// Light mode (flag=light) is asserted by the absence of a
-// ConfigResolver in scope: `offlineModeFull` defaults to false.
+// useLocalDb=false (thin-client mode) is asserted by the absence
+// of a ConfigResolver in scope: `useLocalDb` defaults to false in
+// that case (preserves legacy test default — see use_local_db.dart).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -47,14 +48,17 @@ void main() {
   Widget harness({
     required SyncEngine engine,
     required OfflineQueueController queue,
-    required String mode,
+    required bool useLocalDb,
     required Widget child,
   }) {
     return wrapWithApp(
       MultiProvider(
         providers: [
           ChangeNotifierProvider<ConfigResolver>.value(
-            value: _FixedConfigResolver({'offline_mode': mode}, database),
+            value: _FixedConfigResolver(
+              {'use_local_db': useLocalDb},
+              database,
+            ),
           ),
           Provider<LocalRepository>.value(value: repo),
           ChangeNotifierProvider<SyncEngine>.value(value: engine),
@@ -65,7 +69,7 @@ void main() {
     );
   }
 
-  testWidgets('light mode renders child as a pass-through',
+  testWidgets('useLocalDb=false renders child as a pass-through',
       (tester) async {
     final engine = SyncEngine(
       shopApi: api,
@@ -85,7 +89,7 @@ void main() {
     await tester.pumpWidget(harness(
       engine: engine,
       queue: queue,
-      mode: 'light',
+      useLocalDb: false,
       child: const Scaffold(body: Text('child-body')),
     ));
     await tester.pump();
@@ -99,8 +103,9 @@ void main() {
   // fake-async (same Material ticker hazard documented for
   // State C in #375). Behavior covered by sync_engine_test +
   // manual iPhone smoke.
+  // skip: flutter_test ticker hazard — covered by manual smoke.
   testWidgets('full + no local data → auto-triggers first sync (loading variant)',
-      skip: 'flutter_test ticker hazard — covered by manual smoke',
+      skip: true,
       (tester) async {
     // #377: the card now auto-triggers fullSync on mount instead
     // of asking the user to tap Retry. The "Setting up your
@@ -123,7 +128,7 @@ void main() {
     await tester.pumpWidget(harness(
       engine: engine,
       queue: queue,
-      mode: 'full',
+      useLocalDb: true,
       child: const Scaffold(body: Text('child-body')),
     ));
     // Use runAsync so the sqflite hasAnyData probe completes against
@@ -174,5 +179,14 @@ class _FixedConfigResolver extends ConfigResolver {
   T resolve<T>(ConfigKey<T> key) {
     if (_values.containsKey(key.name)) return _values[key.name] as T;
     return key.defaultValue;
+  }
+
+  /// #382: `useLocalDb()` helper reads via `rawOverride`, not
+  /// `resolve`, so the fixture also needs to expose its values
+  /// through that surface.
+  @override
+  Object? rawOverride(String keyName) {
+    if (_values.containsKey(keyName)) return _values[keyName];
+    return super.rawOverride(keyName);
   }
 }

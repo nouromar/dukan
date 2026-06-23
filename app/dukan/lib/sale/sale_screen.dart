@@ -10,7 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/offline_mode.dart';
+import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/sale/add_new_item_sheet.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
@@ -153,7 +153,7 @@ class _SaleScreenState extends State<SaleScreen> {
     // #374: when offline_mode = full, read from the local mirror.
     // Light mode keeps the existing live RPC path (search_items
     // with server-side ranking).
-    if (offlineModeFull(context)) {
+    if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
       final items = await repo.searchItems(query, shopId: widget.shop.id);
       final results = <ItemSearchResult>[];
@@ -730,7 +730,7 @@ class _SaleScreenState extends State<SaleScreen> {
       // list, Sale grid) reflect the in-flight sale. Cleared by
       // the queue's onProjectionCleanup when the post drains or
       // fails permanently. Capture repo + queue ahead of awaits.
-      final useLocal = offlineModeFull(context);
+      final useLocal = useLocalDb(context);
       final localRepo = useLocal ? context.read<LocalRepository>() : null;
       final queue = context.read<OfflineQueueController>();
       if (localRepo != null) {

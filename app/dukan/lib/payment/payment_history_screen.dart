@@ -16,7 +16,7 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/offline_mode.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 class PaymentHistoryScreen extends StatefulWidget {
   const PaymentHistoryScreen({required this.shop, super.key});
@@ -49,7 +49,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
   Future<List<PaymentSummary>> _fetch() async {
     // #375: local mirror when offline_mode = full.
-    if (offlineModeFull(context)) {
+    if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
       final rows = await repo.historyPayments(
         shopId: widget.shop.id,

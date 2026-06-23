@@ -28,7 +28,7 @@ import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/offline_mode.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 /// Which side of the party world this screen renders.
 enum PeopleKind { customer, supplier }
@@ -144,7 +144,7 @@ class _PeopleScreenState extends State<PeopleScreen> {
     // #374: when offline_mode = full, read from the local mirror.
     // hasBalanceOnly is applied client-side after the read; same
     // semantics as the network path (RPC also returns active only).
-    if (offlineModeFull(context)) {
+    if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
       final parties = await repo.searchParties(
         _query,

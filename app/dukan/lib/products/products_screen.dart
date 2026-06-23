@@ -26,7 +26,7 @@ import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/shared/stock_format.dart';
 import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/offline_mode.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 enum _ProductsSort { name, stockLowFirst }
 
@@ -142,7 +142,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       resolver = null;
     }
     // #374: when offline_mode = full, read from the local mirror.
-    if (offlineModeFull(context)) {
+    if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
       final items = await repo.allActiveItems(widget.shop.id);
       final summaries = <ShopItemSummary>[];

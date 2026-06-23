@@ -80,19 +80,45 @@ internet — Square, Loyverse, Vend.
 
 ### Per-shop feature flag
 
-`platform_config` already exists (#365). Add key `offline_mode`
-with values `light` (current behavior — queue + a few caches)
-or `full` (this plan).
+`platform_config` already exists (#365). The feature toggle is
+`use_local_db` (bool, default `true`). Per `#382`:
 
-`ConfigResolver.resolve(ConfigKeys.offlineMode)` returns the
-shop's setting. The app's read paths branch at the
+- `true` (default): LocalRepository + SyncEngine active; reads
+  from sqflite mirror, writes queue for background drain.
+- `false`: thin-client mode — every read/write goes to the
+  server directly. No queue, no local mirror writes. (Future
+  `#383` work — current code still queues writes when this
+  flag is false; the behavioral change ships separately.)
+
+**Vocabulary discipline.** "useLocalDb" names the feature
+toggle. "Offline" elsewhere refers strictly to phone
+connectivity state (the device has no internet) — a separate
+axis from the toggle. The app's response to connectivity loss
+varies based on the flag, but the flag itself does not mean
+"offline."
+
+`useLocalDb(BuildContext)` from `lib/sync/use_local_db.dart` is
+the canonical resolver. The app's read paths branch at the
 `LocalRepository` layer:
-- `full`: read from sqflite, sync engine maintains it.
-- `light`: read from network (existing behavior); local
-  caches per #369 still work as a small win.
+- `useLocalDb == true`: read from sqflite, sync engine maintains it.
+- `useLocalDb == false`: read from network (legacy SWR-cache
+  path); local caches per #369 still work as a small win.
 
-Default for v1: `light`. Enable `full` per-shop via the
-shop-admin web (or system-admin portal) once we're confident.
+**Backwards compatibility (one release).** The resolver also
+accepts legacy `offline_mode` rows in `platform_config` /
+`shop_setting`:
+
+| Legacy value | Resolves to |
+|---|---|
+| `offline_mode = 'full'` | `useLocalDb = true` |
+| `offline_mode = 'light'` | `useLocalDb = false` |
+
+Drop the legacy mapping in `#385` after rows in the wild have
+been migrated to the new key.
+
+Default for v1: `useLocalDb = true`. Set `false` per shop via
+the shop-admin web Setup tab (planned in `#384`) or directly
+via `set_platform_config` SQL.
 
 ## What goes into the local mirror
 
@@ -466,31 +492,40 @@ realtime is down.
 
 ## Feature flag
 
-`platform_config` key `offline_mode`:
-- `light` (default): existing behavior. Light caches per #369,
-  queue for posts. Reads hit the network.
-- `full`: this plan. LocalRepository + sync engine active.
+`platform_config` / `shop_setting` key `use_local_db` (bool):
+- `true` (default): LocalRepository + sync engine active.
+  Reads from local sqflite mirror; writes queue for background
+  drain.
+- `false`: thin-client mode. Reads hit the network; SWR caches
+  per #369 accelerate. Writes — see `#383` — will go direct to
+  server (no queue) once that commit lands.
 
-Resolution: `ConfigResolver.resolve(ConfigKeys.offlineMode)`.
-Read at session load + on shop switch.
+Resolution: `useLocalDb(context)` / `resolveUseLocalDb(resolver)`
+from `lib/sync/use_local_db.dart`. Read at session load + on
+shop switch.
+
+**Legacy `offline_mode` rows** set before `#382` continue to
+resolve via the dual-key parser (`'full'` → true, `'light'` →
+false) for one release. Drop in `#385`.
 
 UI surfaces the choice in two places:
-- **Shop-admin web** (owner-tunable): Setup → Sync & storage
-  → "Offline mode: Light / Full". Defaults to Light.
+- **Shop-admin web** (owner-tunable, planned in `#384`):
+  Setup tab → "Use local DB: On / Off". Defaults to On.
 - **System-admin portal** (per-org overrides): platform staff
-  can enable Full for an entire org for staged rollout.
+  can flip for an entire org for staged rollout (future).
 
 The app's read paths branch at `LocalRepository`:
 ```dart
 Future<List<ShopItemRow>> searchItems(String q) {
-  if (config.offlineMode == OfflineMode.full) {
+  if (useLocalDb(context)) {
     return _local.searchItems(q);  // sqflite
   }
-  return _api.searchItems(q);       // network, current behavior
+  return _api.searchItems(q);       // network
 }
 ```
 
-Mutations work the same in both modes (queue + post).
+Mutations: queued + drained in `useLocalDb=true`; direct +
+fail-fast in `useLocalDb=false` (per `#383`).
 
 ## Phased delivery
 

@@ -19,7 +19,7 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/offline_mode.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 class ReceiveHistoryScreen extends StatefulWidget {
   const ReceiveHistoryScreen({required this.shop, super.key});
@@ -48,7 +48,7 @@ class _ReceiveHistoryScreenState extends State<ReceiveHistoryScreen> {
 
   Future<List<ReceiveSummary>> _fetch() async {
     // #375: local mirror when offline_mode = full.
-    if (offlineModeFull(context)) {
+    if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
       final rows = await repo.historyReceives(
         shopId: widget.shop.id,

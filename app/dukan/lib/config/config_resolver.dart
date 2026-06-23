@@ -70,6 +70,24 @@ class ConfigResolver extends ChangeNotifier {
     return key.defaultValue;
   }
 
+  /// Returns the raw (un-parsed) override value for [keyName] from
+  /// the highest layer that has it set, or null if no layer
+  /// overrode it. Used by helpers that need to detect "was this
+  /// key explicitly set anywhere?" — e.g., the `useLocalDb()`
+  /// helper's legacy-key fallback (#382).
+  ///
+  /// Device-layer values are stored JSON-encoded; this method
+  /// returns the decoded value so callers don't need to know.
+  Object? rawOverride(String keyName) {
+    final deviceRaw = _deviceValues[keyName];
+    if (deviceRaw != null) return _maybeJsonDecode(deviceRaw);
+    final shopRaw = _shopValues[keyName];
+    if (shopRaw != null) return shopRaw;
+    final orgRaw = _orgValues[keyName];
+    if (orgRaw != null) return orgRaw;
+    return null;
+  }
+
   T? _tryParse<T>(ConfigKey<T> key, Object? raw, {required String layer}) {
     try {
       return key.parse(raw);

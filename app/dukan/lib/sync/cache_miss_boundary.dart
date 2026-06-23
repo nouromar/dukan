@@ -33,7 +33,7 @@ import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/offline_mode.dart';
+import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/sync/sync_engine.dart';
 
 // Thresholds resolve from `ConfigResolver` per #376 — defaults
@@ -75,7 +75,7 @@ class _CacheMissBoundaryState extends State<CacheMissBoundary> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final newFlag = offlineModeFull(context);
+    final newFlag = useLocalDb(context);
     if (newFlag != _isFlagFull) {
       _isFlagFull = newFlag;
       _hasLocalFuture = newFlag ? _probeHasLocal() : Future.value(true);

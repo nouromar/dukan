@@ -10,7 +10,7 @@ import 'package:dukan/shared/add_party_sheet.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/offline_mode.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 /// Bottom-sheet party picker, used by both Sale (typeCode='customer'
 /// for debt sales) and Payment (either type). Returns the chosen party
@@ -61,7 +61,7 @@ class _PartyPickerBodyState extends State<_PartyPickerBody> {
 
   Future<List<PartySearchResult>> _fetch(String query) async {
     // #374: local mirror when offline_mode = full.
-    if (offlineModeFull(context)) {
+    if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
       final rows = await repo.searchParties(
         query,

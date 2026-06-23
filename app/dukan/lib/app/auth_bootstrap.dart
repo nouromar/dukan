@@ -26,6 +26,7 @@ import 'package:dukan/storage/shared_prefs_migration.dart';
 import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/realtime_listener.dart';
 import 'package:dukan/sync/sync_engine.dart';
+import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/config/config_keys.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/sale/cart_controller.dart';
@@ -209,15 +210,15 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     unawaited(_loadConfigAndMaybeStartSync(shop.id));
   }
 
-  /// Load the hierarchical config then start the sync engine if the
-  /// resolved `offline_mode` is `full`. Errors in config load are
-  /// non-fatal (defaults still resolve); a failing sync start is
-  /// reported but doesn't block the screen — light-mode reads still
-  /// work because the existing CacheDao + ShopApi paths are intact.
+  /// Load the hierarchical config then start the sync engine if
+  /// `useLocalDb` is true. Errors in config load are non-fatal
+  /// (defaults still resolve); a failing sync start is reported
+  /// but doesn't block the screen — the thin-client paths still
+  /// work because the existing CacheDao + ShopApi reads are
+  /// intact.
   Future<void> _loadConfigAndMaybeStartSync(String shopId) async {
     await _configResolver.loadForSession(shopId: shopId);
-    final mode = _configResolver.resolve(ConfigKeys.offlineMode);
-    if (mode == 'full') {
+    if (resolveUseLocalDb(_configResolver)) {
       try {
         await _syncEngine.start(shopId);
         // #374: subscribe to postgres_changes for the active shop
