@@ -1015,6 +1015,8 @@
   "syncFirstTimeSetupTitle": "Ku xidh internet si aad u soo dejiso xogta dukaankaaga",
   "syncFirstTimeSetupBody": "Waxaan mar u baahanahay inaan soo dejino alaabtaada, macaamiishaada, iyo wax iibinta dhowaan ka hor inta aanad shaqayn karin marka aad offline-tahay. Fur Wi-Fi ama internet-ka taleefanka, ka dibna taabo MAR KALE.",
   "syncFirstTimeSetupRetryButton": "MAR KALE",
+  "syncFirstTimeLoadingTitle": "Dukaankaaga waa la diyaarinayaa…",
+  "syncFirstTimeLoadingBody": "Waxaa la soo dejinayaa alaabtaada, macaamiishaada, iyo dhaqdhaqaaqyada dhowaan. Tani hal mar ayey dhacaysaa.",
   "syncIssueBannerLabel": "⚠ Offline tan iyo {time}. Taabo si aad mar kale isku daydid.",
   "@syncIssueBannerLabel": {
     "placeholders": {

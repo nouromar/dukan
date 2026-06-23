@@ -2287,6 +2287,13 @@ class AppLocalizationsSo extends AppLocalizations {
   String get syncFirstTimeSetupRetryButton => 'MAR KALE';
 
   @override
+  String get syncFirstTimeLoadingTitle => 'Dukaankaaga waa la diyaarinayaa…';
+
+  @override
+  String get syncFirstTimeLoadingBody =>
+      'Waxaa la soo dejinayaa alaabtaada, macaamiishaada, iyo dhaqdhaqaaqyada dhowaan. Tani hal mar ayey dhacaysaa.';
+
+  @override
   String syncIssueBannerLabel(String time) {
     return '⚠ Offline tan iyo $time. Taabo si aad mar kale isku daydid.';
   }

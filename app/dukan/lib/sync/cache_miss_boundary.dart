@@ -57,6 +57,18 @@ class CacheMissBoundary extends StatefulWidget {
 class _CacheMissBoundaryState extends State<CacheMissBoundary> {
   Future<bool>? _hasLocalFuture;
   bool _syncing = false;
+  // #377: capture the last sync failure so the card can SHOW it
+  // instead of silently looping. Without this the cashier taps
+  // Retry, the RPC fails, and they see the same card again with
+  // no signal what went wrong (the original "card already says
+  // tap Retry" theory turned out to read as a dead-end screen
+  // during smoke testing).
+  String? _lastSyncError;
+  // #377: auto-trigger the first sync on State A — the previous
+  // "wait for user tap" design made a normal first launch look
+  // like an error screen. Set true once we've attempted (so we
+  // don't loop forever on persistent failure).
+  bool _autoSyncAttempted = false;
 
   bool _isFlagFull = false;
 
@@ -67,6 +79,8 @@ class _CacheMissBoundaryState extends State<CacheMissBoundary> {
     if (newFlag != _isFlagFull) {
       _isFlagFull = newFlag;
       _hasLocalFuture = newFlag ? _probeHasLocal() : Future.value(true);
+      _autoSyncAttempted = false;
+      _lastSyncError = null;
     }
     _hasLocalFuture ??= newFlag ? _probeHasLocal() : Future.value(true);
   }
@@ -129,14 +143,22 @@ class _CacheMissBoundaryState extends State<CacheMissBoundary> {
       engine = null;
     }
     if (engine == null) return;
-    setState(() => _syncing = true);
+    if (mounted) {
+      setState(() {
+        _syncing = true;
+        _lastSyncError = null;
+      });
+    }
     try {
       await engine.fullSync(widget.shop.id, force: true);
+      if (!mounted) return;
       _refreshLocalProbe();
-    } catch (_) {
-      // Error surfaces via the SyncEngine state — the boundary will
-      // re-render itself once the failure flag flips. No toast: the
-      // first-sync card already says "tap Retry," not "synced".
+    } catch (error) {
+      // #377: surface the actual error so the cashier knows WHY
+      // the sync failed instead of seeing the same card again
+      // with no feedback. The card renders `_lastSyncError`
+      // inline so smoke testing can paste it back.
+      if (mounted) setState(() => _lastSyncError = error.toString());
     } finally {
       if (mounted) setState(() => _syncing = false);
     }
@@ -159,9 +181,21 @@ class _CacheMissBoundaryState extends State<CacheMissBoundary> {
         }
         final hasLocal = snapshot.data ?? true;
         if (!hasLocal) {
+          // #377: auto-trigger the first sync the first time we
+          // land on State A. The previous "wait for user tap"
+          // design made a normal first launch look like an error
+          // screen. Schedule the auto-attempt via post-frame so
+          // we don't setState during build.
+          if (!_autoSyncAttempted && !_syncing && _lastSyncError == null) {
+            _autoSyncAttempted = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _onTapFirstSync();
+            });
+          }
           return _FirstSyncCard(
             syncing: _syncing,
             onRetry: _onTapFirstSync,
+            lastError: _lastSyncError,
           );
         }
         return Consumer2<SyncEngine, OfflineQueueController>(
@@ -233,14 +267,62 @@ class _CacheMissBoundaryState extends State<CacheMissBoundary> {
 }
 
 class _FirstSyncCard extends StatelessWidget {
-  const _FirstSyncCard({required this.syncing, required this.onRetry});
+  const _FirstSyncCard({
+    required this.syncing,
+    required this.onRetry,
+    this.lastError,
+  });
 
   final bool syncing;
   final VoidCallback onRetry;
+  final String? lastError;
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
+    final theme = Theme.of(context);
+    // Three visual modes per #377:
+    //   * syncing: friendly "Setting up your shop..." with a
+    //     spinner. This is the typical first-launch path now
+    //     that we auto-trigger. Doesn't look like an error.
+    //   * lastError != null: the error/dead-end shape — DNS
+    //     failure or RPC missing. Shows raw error so smoke
+    //     testing can paste it back.
+    //   * idle (neither): pre-attempt fallback. Rarely seen now
+    //     that auto-trigger is on, but stays as a defensive
+    //     state in case the post-frame callback didn't fire.
+    if (syncing) {
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 20),
+                  Text(
+                    l.syncFirstTimeLoadingTitle,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l.syncFirstTimeLoadingBody,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    final hasError = lastError != null;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -254,32 +336,40 @@ class _FirstSyncCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Icon(
-                      Icons.cloud_off_outlined,
+                      hasError
+                          ? Icons.error_outline
+                          : Icons.cloud_off_outlined,
                       size: 56,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: hasError
+                          ? theme.colorScheme.error
+                          : theme.colorScheme.primary,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       l.syncFirstTimeSetupTitle,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: theme.textTheme.titleLarge,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       l.syncFirstTimeSetupBody,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium,
                     ),
+                    if (hasError) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        lastError!,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     FilledButton(
-                      onPressed: syncing ? null : onRetry,
-                      child: syncing
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(l.syncFirstTimeSetupRetryButton),
+                      onPressed: onRetry,
+                      child: Text(l.syncFirstTimeSetupRetryButton),
                     ),
                   ],
                 ),

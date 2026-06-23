@@ -3732,6 +3732,18 @@ abstract class AppLocalizations {
   /// **'RETRY'**
   String get syncFirstTimeSetupRetryButton;
 
+  /// No description provided for @syncFirstTimeLoadingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Setting up your shop…'**
+  String get syncFirstTimeLoadingTitle;
+
+  /// No description provided for @syncFirstTimeLoadingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading your items, customers, and recent activity. This only happens once.'**
+  String get syncFirstTimeLoadingBody;
+
   /// No description provided for @syncIssueBannerLabel.
   ///
   /// In en, this message translates to:

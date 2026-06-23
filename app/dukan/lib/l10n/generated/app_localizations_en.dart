@@ -2267,6 +2267,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncFirstTimeSetupRetryButton => 'RETRY';
 
   @override
+  String get syncFirstTimeLoadingTitle => 'Setting up your shop…';
+
+  @override
+  String get syncFirstTimeLoadingBody =>
+      'Loading your items, customers, and recent activity. This only happens once.';
+
+  @override
   String syncIssueBannerLabel(String time) {
     return '⚠ Working offline since $time. Tap to retry sync.';
   }

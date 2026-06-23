@@ -1025,6 +1025,8 @@
   "syncFirstTimeSetupTitle": "Connect to load your shop's data",
   "syncFirstTimeSetupBody": "We need to fetch your items, customers, and recent transactions one time before you can work offline. Open Wi-Fi or mobile data, then tap Retry.",
   "syncFirstTimeSetupRetryButton": "RETRY",
+  "syncFirstTimeLoadingTitle": "Setting up your shop…",
+  "syncFirstTimeLoadingBody": "Loading your items, customers, and recent activity. This only happens once.",
   "syncIssueBannerLabel": "⚠ Working offline since {time}. Tap to retry sync.",
   "@syncIssueBannerLabel": {
     "placeholders": {
