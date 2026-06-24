@@ -797,6 +797,11 @@ void main() {
           shopApi: api,
           cartController: cart,
           offlineQueueController: queue,
+          // #383-fixup: queue + snapshot path only runs when
+          // useLocalDb=true. wrapWithApp auto-wires
+          // FakeLocalRepository for reads.
+          configResolver:
+              FakeConfigResolver(values: const {'use_local_db': true}),
         ),
       );
       await tester.pumpAndSettle();
@@ -852,6 +857,9 @@ void main() {
           shopApi: api,
           cartController: cart,
           offlineQueueController: queue,
+          // #383-fixup: queue path lives in useLocalDb=true branch.
+          configResolver:
+              FakeConfigResolver(values: const {'use_local_db': true}),
         ),
       );
       await tester.pumpAndSettle();

@@ -19,7 +19,9 @@ import 'dart:async';
 import 'package:dukan/auth/capabilities.dart';
 import 'package:dukan/config/config_keys.dart';
 import 'package:dukan/config/config_resolver.dart';
+import 'package:dukan/storage/app_database.dart';
 import 'package:dukan/storage/device_config_dao.dart';
+import 'package:dukan/sync/local_repository.dart';
 
 // --- FakeConfigResolver ---------------------------------------------------
 
@@ -50,6 +52,151 @@ class FakeConfigResolver extends ConfigResolver {
   Object? rawOverride(String keyName) {
     if (_values.containsKey(keyName)) return _values[keyName];
     return null;
+  }
+}
+
+// --- FakeLocalRepository --------------------------------------------------
+
+/// Thin test stand-in for [LocalRepository]. Delegates reads to the
+/// supplied [FakeShopApi] so queue-path tests can opt into the
+/// useLocalDb=true branch without wiring a real sqflite database
+/// or seeding mirror rows.
+///
+/// The screens' read path calls:
+///   - `searchItems(query, shopId)` → forwards to FakeShopApi.onSearchItems
+///   - `toItemSearchResult(item, screen)` → reuses the cached
+///     ItemSearchResult from the most recent searchItems call (so
+///     prices/units round-trip exactly)
+///   - `searchParties(query, shopId, typeCode)` → forwards
+///   - `expenseCategories(shopId)` → forwards
+///   - `applyProjectionLines` → no-op (queue tests don't assert on
+///     projections)
+///
+/// Everything else falls back to the base [LocalRepository], which
+/// will throw if you try to call it (no real DB). Add overrides
+/// only when a test actually needs them.
+class FakeLocalRepository extends LocalRepository {
+  FakeLocalRepository({required this.shopApi})
+      : super(Completer<AppDatabase>().future);
+
+  final FakeShopApi shopApi;
+
+  final Map<String, ItemSearchResult> _itemCache = {};
+
+  @override
+  Future<List<LocalShopItem>> searchItems(
+    String query, {
+    required String shopId,
+    int limit = 50,
+  }) async {
+    final results = await shopApi.searchItems(
+      shopId: shopId,
+      query: query,
+      screen: 'sale',
+      locale: 'en',
+    );
+    final out = <LocalShopItem>[];
+    for (final r in results) {
+      final id = r.shopItemId;
+      if (id == null) continue;  // global-catalog hits aren't usable here
+      _itemCache[id] = r;
+      out.add(LocalShopItem(
+        shopItemId: id,
+        shopId: shopId,
+        itemId: r.itemId,
+        displayName: r.displayName,
+        categoryId: null,
+        baseUnitCode: r.baseUnitCode,
+        currentStock: r.currentStock ?? 0,
+        avgCost: 0,
+        reorderThreshold: r.reorderThreshold,
+        isActive: true,
+        serverUpdatedAtMs: 0,
+      ));
+    }
+    return out;
+  }
+
+  @override
+  Future<ItemSearchResult> toItemSearchResult(
+    LocalShopItem item, {
+    required String screen,
+  }) async {
+    final cached = _itemCache[item.shopItemId];
+    if (cached != null) return cached;
+    return ItemSearchResult(
+      shopItemId: item.shopItemId,
+      itemId: item.itemId,
+      displayName: item.displayName,
+      baseUnitCode: item.baseUnitCode,
+      baseUnitLabel: item.baseUnitCode,
+      defaultShopItemUnitId: '${item.shopItemId}-base',
+      defaultUnitCode: item.baseUnitCode,
+      defaultUnitLabel: item.baseUnitCode,
+      defaultUnitConversionToBase: 1,
+      defaultUnitSalePrice: null,
+      defaultUnitLastCost: null,
+      currentStock: item.currentStock.toDouble(),
+      reorderThreshold: item.reorderThreshold?.toDouble(),
+      packagingLabel: item.baseUnitCode,
+      isActivated: true,
+      rankReason: null,
+    );
+  }
+
+  @override
+  Future<List<LocalParty>> searchParties(
+    String query, {
+    required String shopId,
+    required String typeCode,
+    int limit = 50,
+  }) async {
+    final results = await shopApi.searchParties(
+      shopId: shopId,
+      query: query,
+      type: typeCode,
+      limit: limit,
+    );
+    return results
+        .map((p) => LocalParty(
+              partyId: p.id,
+              shopId: shopId,
+              name: p.name,
+              phone: p.phone,
+              typeCode: p.typeCode,
+              receivable: p.receivable,
+              payable: p.payable,
+              isActive: true,
+              serverUpdatedAtMs: 0,
+            ))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<List<LocalExpenseCategory>> expenseCategories({
+    required String shopId,
+  }) async {
+    final cats = await shopApi.listExpenseCategories(
+      shopId: shopId,
+      locale: 'en',
+    );
+    return cats
+        .map((c) => LocalExpenseCategory(
+              categoryId: c.id,
+              shopId: shopId,
+              code: c.code,
+              name: c.name,
+              isActive: true,
+            ))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<void> applyProjectionLines({
+    required String pendingPostId,
+    required List<ProjectionLine> lines,
+  }) async {
+    // No-op — queue-path tests don't assert on projection rows.
   }
 }
 

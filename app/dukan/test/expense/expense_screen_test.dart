@@ -151,6 +151,9 @@ void main() {
           shopApi: api,
           expenseController: expense,
           offlineQueueController: queue,
+          // #383-fixup: queue path lives in useLocalDb=true branch.
+          configResolver:
+              FakeConfigResolver(values: const {'use_local_db': true}),
         ),
       );
       await tester.pumpAndSettle();

@@ -10,6 +10,7 @@ import 'package:provider/single_child_widget.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/config/config_keys.dart';
 import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
@@ -21,6 +22,9 @@ import 'package:dukan/storage/pending_post_dao.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/shared/fallback_localizations.dart';
 import 'package:dukan/shared/locale_controller.dart';
+import 'package:dukan/sync/local_repository.dart';
+
+import 'fakes.dart';
 
 /// Wraps [child] in the providers + localization scaffolding the screens
 /// expect at runtime.
@@ -41,6 +45,7 @@ Widget wrapWithApp(
   LocaleController? localeController,
   OfflineQueueController? offlineQueueController,
   ConfigResolver? configResolver,
+  LocalRepository? localRepository,
   Locale locale = const Locale('en'),
 }) {
   // Default no-op offline queue so the QueueStatusPill in app bars
@@ -88,6 +93,20 @@ Widget wrapWithApp(
     // their own FakeConfigResolver with use_local_db: true.
     if (configResolver != null)
       ChangeNotifierProvider<ConfigResolver>.value(value: configResolver),
+    // #383-fixup: when a test opts into useLocalDb=true via
+    // configResolver, the screens' READ path looks up a
+    // LocalRepository from context. Auto-wire a thin
+    // FakeLocalRepository that forwards reads to the test's
+    // FakeShopApi so the read side keeps working. Tests can
+    // pass their own LocalRepository to override.
+    if (configResolver != null &&
+        configResolver.resolve(ConfigKeys.useLocalDb))
+      Provider<LocalRepository>.value(
+        value: localRepository ??
+            FakeLocalRepository(
+              shopApi: (shopApi is FakeShopApi) ? shopApi : FakeShopApi(),
+            ),
+      ),
   ];
 
   return MultiProvider(
