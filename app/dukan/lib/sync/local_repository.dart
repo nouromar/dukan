@@ -182,6 +182,7 @@ class LocalTransaction {
     required this.isVoided,
     required this.serverUpdatedAtMs,
     required this.payload,
+    this.clientOpId,
   });
 
   final String txnId;
@@ -194,9 +195,21 @@ class LocalTransaction {
   final int serverUpdatedAtMs;
 
   /// Denormalized display payload (party_name, payment_method_code,
-  /// lines summary). Mirrors what `get_transactions_delta` returns
+  /// lines_summary). Mirrors what `get_transactions_delta` returns
   /// for a single row.
   final Map<String, dynamic> payload;
+
+  /// Set on optimistic rows (#385) so the server-side authoritative
+  /// copy can replace this row when it arrives via delta sync. Also
+  /// populated by the server payload itself (post-0071) so foreign
+  /// devices can identify a row's origin.
+  final String? clientOpId;
+
+  /// True if this row was written optimistically at queue-enqueue
+  /// time and hasn't been replaced by the server-authoritative copy
+  /// yet. Drives the "Sale details syncing..." spinner on detail
+  /// screens, etc.
+  bool get isOptimistic => serverUpdatedAtMs == 0;
 
   factory LocalTransaction._fromRow(Map<String, Object?> r) {
     Map<String, dynamic> payload;
@@ -217,6 +230,7 @@ class LocalTransaction {
       isVoided: (r['is_voided'] as num).toInt() == 1,
       serverUpdatedAtMs: (r['server_updated_at'] as num).toInt(),
       payload: payload,
+      clientOpId: r['client_op_id'] as String?,
     );
   }
 }
@@ -775,12 +789,15 @@ class LocalRepository {
       );
 
   /// Lines for a sale txn, rendered from the denormalized
-  /// `lines` array stored in payload_json. Returns empty list if
-  /// the row isn't in the local mirror or doesn't carry lines.
+  /// `lines_summary` array stored in payload_json (server-side
+  /// key from `_build_transactions_payload`). Falls back to
+  /// `lines` for backwards compat with any older payload shapes
+  /// optimistically written before #385. Returns empty list if
+  /// the row isn't in the local mirror or carries no lines.
   Future<List<SaleLineDetail>> saleLinesFromLocal(String txnId) async {
     final t = await getTransaction(txnId);
     if (t == null) return const [];
-    final raw = t.payload['lines'];
+    final raw = t.payload['lines_summary'] ?? t.payload['lines'];
     if (raw is! List) return const [];
     return raw
         .whereType<Map>()
@@ -966,6 +983,22 @@ class LocalRepository {
     await db.transaction((txn) async {
       for (final raw in (payload['transactions'] as List? ?? const [])) {
         if (raw is! Map) continue;
+        final clientOpId = raw['client_op_id'] as String?;
+        // #385: dedupe-and-replace by client_op_id. The mobile app
+        // writes an optimistic row at queue-enqueue time with the
+        // client_op_id as a placeholder txn_id; when the server's
+        // authoritative row arrives here it has a different
+        // server-assigned UUID, so a plain INSERT-REPLACE on
+        // txn_id wouldn't collide. DELETE the optimistic row
+        // inside this same sqflite transaction so history never
+        // sees a duplicate or a brief "row missing" flash.
+        if (clientOpId != null && clientOpId.isNotEmpty) {
+          await txn.delete(
+            'local_transaction',
+            where: 'client_op_id = ? AND txn_id != ?',
+            whereArgs: [clientOpId, raw['txn_id']],
+          );
+        }
         await txn.insert(
           'local_transaction',
           {
@@ -977,12 +1010,65 @@ class LocalRepository {
             'party_id': raw['party_id'],
             'is_voided': (raw['is_voided'] == true) ? 1 : 0,
             'server_updated_at': raw['server_updated_at_ms'],
+            'client_op_id': clientOpId,
             'payload_json': jsonEncode(raw),
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
     });
+  }
+
+  /// #385: writes an optimistic `local_transaction` row at
+  /// queue-enqueue time so the cashier sees the sale / receive /
+  /// payment / expense in history INSTANTLY instead of waiting
+  /// for the queue drain → server insert → realtime → delta-sync
+  /// round-trip. The row carries:
+  ///
+  /// * `txn_id`   = [clientOpId] as a placeholder (we don't know
+  ///                the server-assigned UUID yet);
+  /// * `client_op_id` = same, so `applyTransactionsPayload` can
+  ///                    dedupe-and-replace when the server row
+  ///                    arrives;
+  /// * `server_updated_at` = 0, signalling "not yet synced from
+  ///                          server". `LocalTransaction
+  ///                          .isOptimistic` returns true for
+  ///                          these.
+  /// * `payload_json` = the supplied [payload] map (typically
+  ///                    includes `party_name`,
+  ///                    `payment_method_code`, `lines_summary`,
+  ///                    ...).
+  Future<void> writeOptimisticTransaction({
+    required String clientOpId,
+    required String shopId,
+    required String typeCode,
+    required int occurredAtMs,
+    required num total,
+    String? partyId,
+    required Map<String, dynamic> payload,
+  }) async {
+    final db = await _db;
+    final enriched = <String, dynamic>{
+      ...payload,
+      'client_op_id': clientOpId,
+      'server_updated_at_ms': 0,
+    };
+    await db.insert(
+      'local_transaction',
+      {
+        'txn_id': clientOpId,
+        'shop_id': shopId,
+        'type_code': typeCode,
+        'occurred_at': occurredAtMs,
+        'total': total,
+        'party_id': partyId,
+        'is_voided': 0,
+        'server_updated_at': 0,
+        'client_op_id': clientOpId,
+        'payload_json': jsonEncode(enriched),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   // ---- Sync state ----------------------------------------------------------

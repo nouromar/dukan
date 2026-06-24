@@ -146,6 +146,33 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       actorId = '';
     }
 
+    // #385: optimistic write to local_transaction so Expense
+    // History reflects this expense instantly.
+    try {
+      await context.read<LocalRepository>().writeOptimisticTransaction(
+            clientOpId: clientOpId,
+            shopId: widget.shop.id,
+            typeCode: 'expense',
+            occurredAtMs: DateTime.now().millisecondsSinceEpoch,
+            total: amount,
+            payload: <String, dynamic>{
+              'payment_method_code': 'cash',
+              'category_id': categoryId,
+              'category_name': category.name,
+              'notes': notes,
+              'lines_summary': const <Map<String, dynamic>>[],
+            },
+          );
+    } catch (e, st) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: e,
+        stack: st,
+        library: 'dukan expense',
+        context: ErrorDescription('write optimistic expense transaction'),
+      ));
+    }
+
+    if (!mounted) return;
     final messenger = runOptimisticSaveShell(
       context: context,
       savedToast: l.expenseSavedToast,

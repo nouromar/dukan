@@ -99,26 +99,9 @@ class SaleReceiptFallback {
   });
 
   factory SaleReceiptFallback.fromCart(CartSnapshot snapshot) {
-    final total = snapshot.lines.values
-        .fold<double>(0, (sum, line) => sum + line.subtotal.toDouble());
+    final lines = buildSaleLineDetails(snapshot);
+    final total = lines.fold<double>(0, (sum, l) => sum + l.lineTotal);
     final cashSale = !snapshot.debt;
-    final lines = <SaleLineDetail>[];
-    var i = 1;
-    for (final line in snapshot.lines.values) {
-      lines.add(
-        SaleLineDetail(
-          lineNo: i++,
-          itemId: line.itemId,
-          shopItemUnitId: line.shopItemUnitId,
-          itemName: line.displayName,
-          quantity: line.quantity.toDouble(),
-          unitLabel: line.baseUnitLabel,
-          unitAmount: line.unitPrice.toDouble(),
-          lineTotal: line.subtotal.toDouble(),
-          packagingLabel: line.packagingLabel,
-        ),
-      );
-    }
     return SaleReceiptFallback(
       totalAmount: total,
       paidAmount: cashSale ? total : 0,
@@ -135,6 +118,57 @@ class SaleReceiptFallback {
   final String? partyName;
   final DateTime occurredAt;
   final List<SaleLineDetail> lines;
+}
+
+/// #385: builds the `SaleLineDetail` list a cart [snapshot]
+/// represents. Shared between [SaleReceiptFallback.fromCart] (the
+/// post-CONFIRM receipt sheet) and the optimistic-write path in
+/// `_postSaleAndAfter` (so the row written to `local_transaction`
+/// at enqueue time carries the same line shape the eventual
+/// server payload will overwrite it with).
+List<SaleLineDetail> buildSaleLineDetails(CartSnapshot snapshot) {
+  final lines = <SaleLineDetail>[];
+  var i = 1;
+  for (final line in snapshot.lines.values) {
+    lines.add(
+      SaleLineDetail(
+        lineNo: i++,
+        itemId: line.itemId,
+        shopItemUnitId: line.shopItemUnitId,
+        itemName: line.displayName,
+        quantity: line.quantity.toDouble(),
+        unitLabel: line.baseUnitLabel,
+        unitAmount: line.unitPrice.toDouble(),
+        lineTotal: line.subtotal.toDouble(),
+        packagingLabel: line.packagingLabel,
+      ),
+    );
+  }
+  return lines;
+}
+
+/// JSON shape matching server `_build_transactions_payload`
+/// `lines_summary` entries (per 0071). Used by the optimistic
+/// write path to populate `local_transaction.payload_json.lines_
+/// summary`.
+List<Map<String, dynamic>> buildLinesSummaryJson(CartSnapshot snapshot) {
+  final out = <Map<String, dynamic>>[];
+  var i = 1;
+  for (final line in snapshot.lines.values) {
+    out.add(<String, dynamic>{
+      'line_no': i++,
+      'item_id': line.itemId,
+      'shop_item_unit_id': line.shopItemUnitId,
+      'item_name': line.displayName,
+      'unit_code': line.baseUnitLabel,
+      'unit_label': line.baseUnitLabel,
+      'packaging_label': line.packagingLabel,
+      'quantity': line.quantity.toDouble(),
+      'unit_amount': line.unitPrice.toDouble(),
+      'line_total': line.subtotal.toDouble(),
+    });
+  }
+  return out;
 }
 
 class _SaleReceiptSheet extends StatelessWidget {

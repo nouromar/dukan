@@ -634,6 +634,55 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       return;
     }
 
+    // #385: optimistic write to local_transaction BEFORE we
+    // clear the lines so Receive History reflects this bono
+    // instantly (no waiting for delta sync or realtime). The
+    // server-authoritative row replaces this one (dedup by
+    // client_op_id) when delta sync brings it back, whether
+    // the post goes through the direct path or the queue.
+    final localRepoForOptimistic = context.read<LocalRepository>();
+    try {
+      final total = snapshot.lines.values
+          .fold<num>(0, (sum, l) => sum + l.lineTotal);
+      var lineNo = 1;
+      final linesSummary = snapshot.lines.values
+          .map((l) => <String, dynamic>{
+                'line_no': lineNo++,
+                'item_id': l.itemId,
+                'shop_item_unit_id': l.shopItemUnitId,
+                'item_name': l.displayName,
+                'unit_code': l.baseUnitLabel,
+                'unit_label': l.baseUnitLabel,
+                'packaging_label': l.packagingLabel,
+                'quantity': l.quantity.toDouble(),
+                'unit_amount': l.unitCost.toDouble(),
+                'line_total': l.lineTotal.toDouble(),
+              })
+          .toList();
+      await localRepoForOptimistic.writeOptimisticTransaction(
+        clientOpId: clientOpId,
+        shopId: widget.shop.id,
+        typeCode: 'receive',
+        occurredAtMs: DateTime.now().millisecondsSinceEpoch,
+        total: total,
+        partyId: supplier.id,
+        payload: <String, dynamic>{
+          'party_name': supplier.name,
+          'payment_method_code': null,
+          'paid_amount': 0,
+          'lines_summary': linesSummary,
+        },
+      );
+    } catch (e, st) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: e,
+        stack: st,
+        library: 'dukan receive',
+        context: ErrorDescription('write optimistic receive transaction'),
+      ));
+    }
+
+    if (!mounted) return;
     // Optimistic clear (useLocalDb=true) so the screen returns to
     // fresh state immediately. Lines wipe; supplier stays so the
     // cashier could resume a second bono from the same supplier
@@ -697,9 +746,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         ),
         queuedAt: DateTime.now(),
       );
-      // #374: stock-add projection so the in-flight receive shows
-      // up in Products + Sale grid until the post drains. direction
-      // = +1 (Receive adds stock; Sale subtracts).
+      // #374: stock-add projection so the in-flight receive
+      // shows up in Products + Sale grid until the post drains.
+      // The optimistic local_transaction row was already
+      // written up-front in _save (#385).
       final useLocal = useLocalDb(context);
       final localRepo = useLocal ? context.read<LocalRepository>() : null;
       final queue = context.read<OfflineQueueController>();

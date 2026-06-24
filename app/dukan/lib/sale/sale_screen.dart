@@ -640,17 +640,53 @@ class _SaleScreenState extends State<SaleScreen> {
       return;
     }
 
+    // #385: optimistic write to local_transaction BEFORE we
+    // clear the cart so Sales History reflects the sale
+    // instantly (no waiting for delta sync or realtime). The
+    // server-authoritative row replaces this one (dedup by
+    // client_op_id) when delta sync brings it back, whether
+    // the post goes through the direct path or the queue.
+    final localRepoForOptimistic =
+        useLocalDb(context) ? context.read<LocalRepository>() : null;
+    if (localRepoForOptimistic != null) {
+      try {
+        await localRepoForOptimistic.writeOptimisticTransaction(
+          clientOpId: clientOpId,
+          shopId: widget.shop.id,
+          typeCode: 'sale',
+          occurredAtMs: DateTime.now().millisecondsSinceEpoch,
+          total: total,
+          partyId: partyId,
+          payload: <String, dynamic>{
+            'party_name': snapshot.customer?.name,
+            'payment_method_code': cashSale ? 'cash' : null,
+            'paid_amount': cashSale ? total : 0,
+            'lines_summary': buildLinesSummaryJson(snapshot),
+          },
+        );
+      } catch (e, st) {
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan sale',
+          context: ErrorDescription('write optimistic sale transaction'),
+        ));
+      }
+    }
+
     // Optimistic SAVE (useLocalDb=true) — per CLAUDE.md's speed
     // contract. Snapshot the cart, clear it synchronously so the
     // cashier sees a fresh screen within the 100ms tap-response
-    // budget, then fire the post in the background.
+    // budget, then fire the post in the background. Capture
+    // Timing's context before the awaits to avoid the async-gap
+    // lint (`use_build_context_synchronously`).
     cart.clearAll();
     setState(() {
       _cartExpanded = false;
       _saving = false;
     });
     Timing.mark('cart.cleared');
-    Timing.endFlow(context);
+    if (mounted) Timing.endFlow(context);
 
     await _postSaleAndAfter(
       api: api,
@@ -832,11 +868,12 @@ class _SaleScreenState extends State<SaleScreen> {
         ),
         queuedAt: DateTime.now(),
       );
-      // #374: when offline_mode = full, project the stock effect
-      // locally BEFORE enqueueing so subsequent reads (Products
-      // list, Sale grid) reflect the in-flight sale. Cleared by
-      // the queue's onProjectionCleanup when the post drains or
-      // fails permanently. Capture repo + queue ahead of awaits.
+      // #374: stock projection so subsequent reads (Products
+      // list, Sale grid) reflect the in-flight queued sale.
+      // Cleared by the queue's onProjectionCleanup when the
+      // post drains or fails permanently. The optimistic
+      // local_transaction row was already written up-front in
+      // _save (#385), so history reflects this sale either way.
       final useLocal = useLocalDb(context);
       final localRepo = useLocal ? context.read<LocalRepository>() : null;
       final queue = context.read<OfflineQueueController>();

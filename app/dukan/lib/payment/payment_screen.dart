@@ -15,6 +15,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/payment/allocation_sheet.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/queue/post_executor.dart';
@@ -167,6 +168,35 @@ class _PaymentScreenState extends State<PaymentScreen> {
       actorId = '';
     }
 
+    // #385: optimistic write to local_transaction so Payment
+    // History reflects this payment instantly.
+    try {
+      await context.read<LocalRepository>().writeOptimisticTransaction(
+            clientOpId: clientOpId,
+            shopId: widget.shop.id,
+            typeCode: 'payment',
+            occurredAtMs: DateTime.now().millisecondsSinceEpoch,
+            total: amount,
+            partyId: partyId,
+            payload: <String, dynamic>{
+              'party_name': party.name,
+              'payment_method_code': 'cash',
+              'direction': direction,
+              'notes': notes,
+              'is_refund': false,
+              'lines_summary': const <Map<String, dynamic>>[],
+            },
+          );
+    } catch (e, st) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: e,
+        stack: st,
+        library: 'dukan payment',
+        context: ErrorDescription('write optimistic payment transaction'),
+      ));
+    }
+
+    if (!mounted) return;
     final messenger = runOptimisticSaveShell(
       context: context,
       savedToast: l.paymentSavedToast,
