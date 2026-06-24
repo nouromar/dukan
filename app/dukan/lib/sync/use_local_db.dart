@@ -50,9 +50,9 @@ bool resolveUseLocalDb(ConfigResolver resolver) {
 
 /// Widget-context wrapper around [resolveUseLocalDb]. Returns
 /// false when no [ConfigResolver] is in scope (e.g. widget tests
-/// that don't wire one). This preserves the legacy
-/// `offlineModeFull` test default — production paths always have
-/// a resolver via `AuthBootstrap`.
+/// that don't wire one). Tests that exercise the queue path must
+/// wire a ConfigResolver with `use_local_db = true` (matches
+/// production default).
 bool useLocalDb(BuildContext context) {
   try {
     return resolveUseLocalDb(context.read<ConfigResolver>());

@@ -114,14 +114,30 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     }
 
     final api = context.read<ShopApi>();
-    final queue = context.read<OfflineQueueController>();
     final categoryId = category.id;
     final amount = controller.amount;
     final clientOpId = generateClientOpId('expense');
-    final failureMessage = l.expensePostFailedMessage;
     final rawNotes = _notesController.text.trim();
     final notes = rawNotes.isEmpty ? null : rawNotes;
 
+    // #383: when useLocalDb=false, post directly to the server and
+    // surface success/failure inline — no queue, no optimistic
+    // clear. See docs/offline-first-architecture.md.
+    if (!useLocalDb(context)) {
+      await _saveDirect(
+        api: api,
+        controller: controller,
+        categoryId: categoryId,
+        amount: amount,
+        clientOpId: clientOpId,
+        notes: notes,
+        failureMessage: l.expensePostFailedMessage,
+        savedToast: l.expenseSavedToast,
+      );
+      return;
+    }
+
+    final queue = context.read<OfflineQueueController>();
     // Capture cashier id before pop; #367 stamps onto the queued post.
     String actorId = '';
     try {
@@ -151,9 +167,52 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         clientOpId: clientOpId,
         notes: notes,
         messenger: messenger,
-        failureMessage: failureMessage,
+        failureMessage: l.expensePostFailedMessage,
       ),
     );
+  }
+
+  /// #383: direct-post path for useLocalDb=false. Awaits the
+  /// server response; on success clears the form + pops; on
+  /// failure shows the error and keeps form state so the cashier
+  /// can retry.
+  Future<void> _saveDirect({
+    required ShopApi api,
+    required ExpenseController controller,
+    required String categoryId,
+    required num amount,
+    required String clientOpId,
+    required String? notes,
+    required String failureMessage,
+    required String savedToast,
+  }) async {
+    try {
+      await api.postExpense(
+        shopId: widget.shop.id,
+        expenseCategoryId: categoryId,
+        amount: amount,
+        paymentMethodCode: 'cash',
+        clientOpId: clientOpId,
+        notes: notes,
+      );
+      if (!mounted) return;
+      controller.clearAll();
+      _amountController.clear();
+      _notesController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(savedToast)),
+      );
+      Navigator.of(context).maybePop();
+    } catch (error, stackTrace) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan expense',
+        context: ErrorDescription('post_expense (useLocalDb=false)'),
+      ));
+      if (!mounted) return;
+      showError(context, '$failureMessage\n$error');
+    }
   }
 
   Future<void> _postExpenseInBackground({

@@ -245,4 +245,72 @@ void main() {
     expect(stopwatch.elapsed, lessThan(const Duration(seconds: 1)));
     slow.dispose();
   });
+
+  // #383: when useLocalDb=false the drain timer is suppressed.
+  // Pre-existing pending rows stay frozen until either the user
+  // flips back to ON or auth_bootstrap fires `drainNow()` once at
+  // startup.
+  group('useLocalDb=false', () {
+    test(
+        'drain timer is suppressed; enqueue persists but does NOT auto-execute',
+        () async {
+      final dbFuture = AppDatabase.instance();
+      final dao2 = PendingPostDao(dbFuture);
+      final executed2 = <String>[];
+      final controller2 = OfflineQueueController(
+        dao: dao2,
+        executor: (post) async => executed2.add(post.id),
+        configResolver:
+            _StubResolver({'use_local_db': false}, dbFuture),
+        backoff: (_) => Duration.zero,
+      );
+      addTearDown(controller2.dispose);
+      await controller2.start();
+      await controller2.enqueue(_post('frozen-1'));
+      // Pump a few microtasks — with the gate ON for OFF mode, no
+      // executor invocation should fire.
+      for (var i = 0; i < 8; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
+      expect(executed2, isEmpty);
+      expect(controller2.pendingCount, greaterThanOrEqualTo(1));
+    });
+
+    test('drainNow() still works as the explicit one-shot path',
+        () async {
+      final dbFuture = AppDatabase.instance();
+      final dao2 = PendingPostDao(dbFuture);
+      final executed2 = <String>[];
+      final controller2 = OfflineQueueController(
+        dao: dao2,
+        executor: (post) async => executed2.add(post.id),
+        configResolver:
+            _StubResolver({'use_local_db': false}, dbFuture),
+        backoff: (_) => Duration.zero,
+      );
+      addTearDown(controller2.dispose);
+      await dao2.insert(_post('one-shot-1'));
+      await controller2.start();
+      // start() loaded the row but did NOT schedule the timer.
+      expect(executed2, isEmpty);
+      // Explicit drain works even in OFF mode.
+      await controller2.drainNow();
+      expect(executed2, contains('one-shot-1'));
+    });
+  });
+}
+
+class _StubResolver extends ConfigResolver {
+  _StubResolver(this._values, Future<AppDatabase> dbFuture)
+      : super(
+          shopApi: FakeShopApi(),
+          deviceConfigDao: DeviceConfigDao(dbFuture),
+        );
+  final Map<String, dynamic> _values;
+
+  @override
+  Object? rawOverride(String keyName) {
+    if (_values.containsKey(keyName)) return _values[keyName];
+    return super.rawOverride(keyName);
+  }
 }

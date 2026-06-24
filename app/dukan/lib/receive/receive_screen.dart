@@ -607,18 +607,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     setState(() => _saving = true);
     final api = context.read<ShopApi>();
     final snapshot = controller.snapshot();
-
-    // Optimistic clear so the screen returns to fresh state immediately.
-    // Lines wipe; supplier stays so the cashier could resume a second
-    // bono from the same supplier without re-picking.
-    controller.clearLines();
-    setState(() => _linesExpanded = false);
-    Timing.mark('lines.cleared');
-    Timing.endFlow(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l.receiveSavedToast)),
-    );
-
     final clientOpId = generateClientOpId('receive');
     final lines = <ReceiveLinePayload>[
       for (final line in snapshot.lines.values)
@@ -628,6 +616,35 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           lineTotal: line.lineTotal,
         ),
     ];
+
+    // #383: useLocalDb=false → direct-await path. No optimistic
+    // clear, no queue, no projection. Lines stay on screen until
+    // server confirms success (or shows error on failure so
+    // cashier can retry).
+    if (!useLocalDb(context)) {
+      await _saveDirect(
+        api: api,
+        controller: controller,
+        l: l,
+        supplierId: supplier.id,
+        snapshot: snapshot,
+        lines: lines,
+        clientOpId: clientOpId,
+      );
+      return;
+    }
+
+    // Optimistic clear (useLocalDb=true) so the screen returns to
+    // fresh state immediately. Lines wipe; supplier stays so the
+    // cashier could resume a second bono from the same supplier
+    // without re-picking.
+    controller.clearLines();
+    setState(() => _linesExpanded = false);
+    Timing.mark('lines.cleared');
+    Timing.endFlow(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l.receiveSavedToast)),
+    );
 
     try {
       await api.postReceive(
@@ -728,6 +745,47 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     if (!mounted) return;
     context.read<ReceiveController>().restore(snapshot);
     showError(context, message);
+  }
+
+  /// #383: direct-post path for useLocalDb=false. Awaits the
+  /// post inline; clears form + pops on success; shows error and
+  /// keeps lines on failure so cashier can retry.
+  Future<void> _saveDirect({
+    required ShopApi api,
+    required ReceiveController controller,
+    required L10n l,
+    required String supplierId,
+    required ReceiveSnapshot snapshot,
+    required List<ReceiveLinePayload> lines,
+    required String clientOpId,
+  }) async {
+    try {
+      await api.postReceive(
+        shopId: widget.shop.id,
+        partyId: supplierId,
+        lines: lines,
+        paidAmount: 0,
+        paymentMethodCode: null,
+        documentId: _bonoDocumentId,
+        clientOpId: clientOpId,
+      );
+      if (!mounted) return;
+      controller.clearAll();
+      setState(() {
+        _bonoDocumentId = null;
+        _linesExpanded = false;
+        _saving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.receiveSavedToast)),
+      );
+      Navigator.of(context).maybePop();
+    } catch (error, stackTrace) {
+      _reportError(error, stackTrace, 'post_receive (useLocalDb=false)');
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showError(context, '${l.receivePostFailedMessage}\n$error');
+    }
   }
 
   void _reportError(Object error, StackTrace stackTrace, String op) {

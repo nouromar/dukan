@@ -596,22 +596,12 @@ class _SaleScreenState extends State<SaleScreen> {
     }
     Timing.mark('save.tapped');
 
-    // Optimistic SAVE — per CLAUDE.md's speed contract. Snapshot the
-    // cart, clear it synchronously so the cashier sees a fresh screen
-    // within the 100ms tap-response budget, then fire the post in the
-    // background. On rare failure restore the snapshot and toast the
-    // error. The CartController is already designed for this dance
-    // (snapshot/restore on cart_controller.dart line 67).
     final api = context.read<ShopApi>();
     final snapshot = cart.snapshot();
     final cashSale = !snapshot.debt;
     final partyId = snapshot.debt ? snapshot.customer!.id : null;
     final total = snapshot.lines.values
         .fold<double>(0, (sum, line) => sum + line.subtotal.toDouble());
-    // Track which packagings need their stored sale_price refreshed
-    // after a successful post. The cart line carries `priceWasEntered`
-    // for editor-sourced prices; persist those so the next tap on the
-    // same packaging fast-adds at the new price.
     final priceWriteBacks = <({String shopItemUnitId, num salePrice})>[];
     final lines = <SaleLine>[];
     for (final line in snapshot.lines.values) {
@@ -630,6 +620,30 @@ class _SaleScreenState extends State<SaleScreen> {
     }
     final clientOpId = generateClientOpId('sale');
 
+    // #383: useLocalDb=false → direct-await path. No optimistic
+    // cart clear, no queue, no projection. Cart stays on screen
+    // until server confirms success (or shows error on failure
+    // so the cashier can retry).
+    if (!useLocalDb(context)) {
+      await _saveDirect(
+        api: api,
+        cart: cart,
+        l: l,
+        snapshot: snapshot,
+        cashSale: cashSale,
+        total: total,
+        partyId: partyId,
+        lines: lines,
+        priceWriteBacks: priceWriteBacks,
+        clientOpId: clientOpId,
+      );
+      return;
+    }
+
+    // Optimistic SAVE (useLocalDb=true) — per CLAUDE.md's speed
+    // contract. Snapshot the cart, clear it synchronously so the
+    // cashier sees a fresh screen within the 100ms tap-response
+    // budget, then fire the post in the background.
     cart.clearAll();
     setState(() {
       _cartExpanded = false;
@@ -649,6 +663,99 @@ class _SaleScreenState extends State<SaleScreen> {
       priceWriteBacks: priceWriteBacks,
       clientOpId: clientOpId,
     );
+  }
+
+  /// #383: direct-post path for useLocalDb=false. Awaits the post
+  /// inline; clears cart + opens receipt on success; shows error
+  /// and keeps cart on failure so cashier can retry.
+  Future<void> _saveDirect({
+    required ShopApi api,
+    required CartController cart,
+    required L10n l,
+    required CartSnapshot snapshot,
+    required bool cashSale,
+    required double total,
+    required String? partyId,
+    required List<SaleLine> lines,
+    required List<({String shopItemUnitId, num salePrice})> priceWriteBacks,
+    required String clientOpId,
+  }) async {
+    setState(() => _saving = true);
+    String txnId;
+    try {
+      txnId = await api.postSale(
+        shopId: widget.shop.id,
+        lines: lines,
+        paidAmount: cashSale ? total : 0,
+        partyId: partyId,
+        paymentMethodCode: cashSale ? 'cash' : null,
+        clientOpId: clientOpId,
+      );
+    } catch (error, stackTrace) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan sale',
+        context: ErrorDescription('post_sale (useLocalDb=false)'),
+      ));
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showError(context, '${l.salePostFailedMessage}\n$error');
+      return;
+    }
+
+    if (!mounted) return;
+    cart.clearAll();
+    setState(() {
+      _cartExpanded = false;
+      _saving = false;
+    });
+
+    // Price write-backs run in the background — never block the
+    // receipt or surface a blocking error.
+    for (final write in priceWriteBacks) {
+      unawaited(
+        api
+            .setShopItemUnitSalePrice(
+              shopId: widget.shop.id,
+              shopItemUnitId: write.shopItemUnitId,
+              salePrice: write.salePrice,
+            )
+            .catchError((Object error, StackTrace stackTrace) {
+          FlutterError.reportError(FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'dukan sale',
+            context: ErrorDescription('set_shop_item_unit_sale_price'),
+          ));
+        }),
+      );
+    }
+
+    if (!mounted) return;
+    try {
+      await showSaleReceiptSheet(
+        context,
+        shop: widget.shop,
+        txnId: txnId,
+        fallback: SaleReceiptFallback.fromCart(snapshot),
+      );
+    } catch (error, stackTrace) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan sale',
+        context: ErrorDescription('show sale receipt sheet'),
+      ));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Receipt sheet failed: $error'),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+    }
   }
 
   /// Fires the post in the background, then on success runs the

@@ -15,6 +15,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/payment/allocation_sheet.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/shared/client_op_id.dart';
@@ -127,7 +128,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
 
     final api = context.read<ShopApi>();
-    final queue = context.read<OfflineQueueController>();
     final amount = controller.amount;
     final partyId = party.id;
     final direction = controller.type.direction;
@@ -137,6 +137,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final rawNotes = _notesController.text.trim();
     final notes = rawNotes.isEmpty ? null : rawNotes;
 
+    // #383: useLocalDb=false → direct-post path; no queue, no
+    // optimistic clear. Failure surfaces an inline toast so the
+    // cashier knows the operation didn't land.
+    if (!useLocalDb(context)) {
+      await _saveDirect(
+        api: api,
+        controller: controller,
+        partyId: partyId,
+        direction: direction,
+        amount: amount,
+        clientOpId: clientOpId,
+        allocations: allocations,
+        notes: notes,
+        failureMessage: failureMessage,
+        savedToast: l.paymentSavedToast,
+      );
+      return;
+    }
+
+    final queue = context.read<OfflineQueueController>();
     // Capture cashier's user id before the screen pops; #367 stamps
     // it onto the queued post so Phase 5A's audit-stamping preserves
     // who originated the payment even if a different user drains.
@@ -173,6 +193,52 @@ class _PaymentScreenState extends State<PaymentScreen> {
         failureMessage: failureMessage,
       ),
     );
+  }
+
+  /// #383: direct-post path when useLocalDb=false. Awaits the
+  /// server response; success clears form + pops; failure shows
+  /// the error and keeps form state so the cashier can retry.
+  Future<void> _saveDirect({
+    required ShopApi api,
+    required PaymentController controller,
+    required String partyId,
+    required String direction,
+    required num amount,
+    required String clientOpId,
+    required List<PaymentAllocationInput>? allocations,
+    required String? notes,
+    required String failureMessage,
+    required String savedToast,
+  }) async {
+    try {
+      await api.postPayment(
+        shopId: widget.shop.id,
+        partyId: partyId,
+        direction: direction,
+        amount: amount,
+        paymentMethodCode: 'cash',
+        clientOpId: clientOpId,
+        allocations: allocations,
+        notes: notes,
+      );
+      if (!mounted) return;
+      controller.clearAll();
+      _amountController.clear();
+      _notesController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(savedToast)),
+      );
+      Navigator.of(context).maybePop();
+    } catch (error, stackTrace) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan payment',
+        context: ErrorDescription('post_payment (useLocalDb=false)'),
+      ));
+      if (!mounted) return;
+      showError(context, '$failureMessage\n$error');
+    }
   }
 
   Future<void> _postPaymentInBackground({

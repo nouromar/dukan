@@ -14,7 +14,44 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
+import 'dart:async';
+
 import 'package:dukan/auth/capabilities.dart';
+import 'package:dukan/config/config_keys.dart';
+import 'package:dukan/config/config_resolver.dart';
+import 'package:dukan/storage/device_config_dao.dart';
+
+// --- FakeConfigResolver ---------------------------------------------------
+
+/// Test stand-in for ConfigResolver. Defaults to production values
+/// (e.g. `use_local_db = true`); pass [values] to override specific
+/// keys (e.g. `{'use_local_db': false}` for OFF-mode tests).
+class FakeConfigResolver extends ConfigResolver {
+  /// Uses a never-completing database future so the underlying
+  /// DeviceConfigDao never actually opens a connection. Tests
+  /// only exercise [resolve] / [rawOverride], which we override
+  /// directly off the in-memory [values] map.
+  FakeConfigResolver({Map<String, dynamic>? values})
+      : _values = values ?? const {},
+        super(
+          shopApi: FakeShopApi(),
+          deviceConfigDao: DeviceConfigDao(Completer().future.then((v) => v)),
+        );
+
+  final Map<String, dynamic> _values;
+
+  @override
+  T resolve<T>(ConfigKey<T> key) {
+    if (_values.containsKey(key.name)) return _values[key.name] as T;
+    return key.defaultValue;
+  }
+
+  @override
+  Object? rawOverride(String keyName) {
+    if (_values.containsKey(keyName)) return _values[keyName];
+    return null;
+  }
+}
 
 // --- FakeAuthController ---------------------------------------------------
 

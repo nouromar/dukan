@@ -236,6 +236,24 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
           hint: 'auth_bootstrap.syncEngine.start',
         ));
       }
+    } else {
+      // #383: useLocalDb=false → flush any pending posts left over
+      // from a previous ON session, then leave the queue idle (the
+      // drain timer is already gated on this flag in
+      // OfflineQueueController._scheduleDrain). Sync engine +
+      // realtime stay off. Drain failure is non-fatal — surviving
+      // rows show up in Storage & sync for cashier review.
+      try {
+        if (_offlineQueueController.pendingCount > 0) {
+          await _offlineQueueController.drainNow();
+        }
+      } catch (error, stack) {
+        unawaited(CrashReporter.reportError(
+          error,
+          stack,
+          hint: 'auth_bootstrap.useLocalDbOff.drainNow',
+        ));
+      }
     }
   }
 

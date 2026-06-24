@@ -10,6 +10,7 @@ import 'package:provider/single_child_widget.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/payment/payment_controller.dart';
@@ -39,6 +40,7 @@ Widget wrapWithApp(
   ExpenseController? expenseController,
   LocaleController? localeController,
   OfflineQueueController? offlineQueueController,
+  ConfigResolver? configResolver,
   Locale locale = const Locale('en'),
 }) {
   // Default no-op offline queue so the QueueStatusPill in app bars
@@ -79,6 +81,13 @@ Widget wrapWithApp(
         value: expenseController,
       ),
     ChangeNotifierProvider<OfflineQueueController>.value(value: queue),
+    // #383: only provide ConfigResolver when the test asks for
+    // one. With no resolver in scope `useLocalDb` returns false,
+    // which is the pre-existing test default (network path).
+    // Queue-path tests that need the local-first branch pass
+    // their own FakeConfigResolver with use_local_db: true.
+    if (configResolver != null)
+      ChangeNotifierProvider<ConfigResolver>.value(value: configResolver),
   ];
 
   return MultiProvider(

@@ -28,6 +28,7 @@ import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
 import 'package:dukan/storage/storage_defaults.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 typedef PostExecutorFn = Future<void> Function(PendingPost post);
 
@@ -215,9 +216,24 @@ class OfflineQueueController extends ChangeNotifier {
     await _drain();
   }
 
+  /// #383: When `useLocalDb` is false the app behaves as a thin
+  /// client — every post must go directly to the server with no
+  /// queue fallback. The drain timer is suppressed in that mode so
+  /// that any pre-existing pending rows (from a prior ON session)
+  /// stay frozen until either the user flips back to ON or
+  /// auth_bootstrap explicitly calls `drainNow()` at startup.
+  /// Tests without a ConfigResolver in scope keep the legacy
+  /// behavior (timer always armed).
+  bool get _drainTimerAllowed {
+    final r = configResolver;
+    if (r == null) return true;
+    return resolveUseLocalDb(r);
+  }
+
   void _scheduleDrain({bool immediate = false}) {
     _retryTimer?.cancel();
     if (_disposed || _pending.isEmpty) return;
+    if (!_drainTimerAllowed) return;
     if (immediate) {
       _retryTimer = Timer(Duration.zero, _drain);
       return;
