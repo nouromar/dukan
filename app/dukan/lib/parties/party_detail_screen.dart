@@ -5,11 +5,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/payment/payment_screen.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -18,6 +23,7 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/shared/relative_time.dart';
+import 'package:dukan/sync/local_repository.dart';
 
 class PartyDetailScreen extends StatefulWidget {
   const PartyDetailScreen({
@@ -128,13 +134,41 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
       builder: (ctx) => _EditPartyDialog(initial: detail.header),
     );
     if (result == null || !mounted) return;
+    // #390: queue the rename + optimistic local mirror update so
+    // the new name shows immediately and the post drains when
+    // online. Server-side idempotency (0074) makes retries safe.
+    final clientOpId = generateClientOpId('rename_party');
+    String actorId = '';
     try {
-      await context.read<ShopApi>().updateParty(
-            shopId: widget.shop.id,
-            partyId: widget.partyId,
-            name: result.name,
-            phone: result.phone,
-          );
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {}
+    final queue = context.read<OfflineQueueController>();
+    final repo = context.read<LocalRepository>();
+    try {
+      try {
+        await repo.renameLocalParty(
+          partyId: widget.partyId,
+          name: result.name,
+          phone: result.phone,
+        );
+      } catch (_) {
+        // Mirror write failure non-fatal — queue + delta will
+        // reconcile.
+      }
+      final post = PendingPost(
+        id: generateClientOpId('post'),
+        clientOpId: clientOpId,
+        shopId: widget.shop.id,
+        originalActorUserId: actorId,
+        rpc: 'update_party',
+        params: buildUpdatePartyParams(
+          partyId: widget.partyId,
+          name: result.name,
+          phone: result.phone,
+        ),
+        queuedAt: DateTime.now(),
+      );
+      await queue.enqueue(post);
       if (!mounted) return;
       setState(() { _future = _load(); });
       ScaffoldMessenger.of(context).showSnackBar(

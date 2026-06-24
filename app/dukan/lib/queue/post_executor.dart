@@ -17,6 +17,13 @@ class PostExecutor {
   final ShopApi _api;
 
   Future<void> execute(PendingPost post) async {
+    // Mutation RPCs (#390) — no entity-id to audit-stamp; return early
+    // after dispatch. The server-side `mutation_idempotency` table from
+    // 0074 makes a retry of the same `client_op_id` a safe no-op.
+    if (_isMutationRpc(post.rpc)) {
+      await _executeMutation(post);
+      return;
+    }
     final String entityId;
     switch (post.rpc) {
       case 'post_sale':
@@ -131,6 +138,111 @@ class PostExecutor {
       notes: p['notes'] as String?,
     );
   }
+
+  // #390: admin-side mutation dispatch ----------------------------------
+
+  static bool _isMutationRpc(String rpc) {
+    switch (rpc) {
+      case 'add_shop_item_alias':
+      case 'remove_shop_item_alias':
+      case 'set_shop_item_unit_sale_price':
+      case 'set_shop_item_unit_default_flags':
+      case 'set_shop_item_category':
+      case 'remove_or_disable_shop_item_unit':
+      case 'add_shop_item_barcode':
+      case 'remove_shop_item_barcode':
+      case 'set_primary_shop_item_barcode':
+      case 'update_party':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  Future<void> _executeMutation(PendingPost post) async {
+    final p = post.params;
+    final shopId = post.shopId;
+    final clientOpId = post.clientOpId;
+    switch (post.rpc) {
+      case 'add_shop_item_alias':
+        await _api.addShopItemAlias(
+          shopId: shopId,
+          shopItemId: p['shop_item_id'] as String,
+          aliasText: p['alias_text'] as String,
+          languageCode: p['language_code'] as String?,
+          isDisplay: (p['is_display'] as bool?) ?? false,
+          source: (p['source'] as String?) ?? 'manual',
+          clientOpId: clientOpId,
+        );
+      case 'remove_shop_item_alias':
+        await _api.removeShopItemAlias(
+          shopId: shopId,
+          aliasId: p['alias_id'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'set_shop_item_unit_sale_price':
+        await _api.setShopItemUnitSalePrice(
+          shopId: shopId,
+          shopItemUnitId: p['shop_item_unit_id'] as String,
+          salePrice: p['sale_price'] as num?,
+          clientOpId: clientOpId,
+        );
+      case 'set_shop_item_unit_default_flags':
+        await _api.setShopItemUnitDefaultFlags(
+          shopId: shopId,
+          shopItemUnitId: p['shop_item_unit_id'] as String,
+          isDefaultSale: p['is_default_sale'] as bool,
+          isDefaultReceive: p['is_default_receive'] as bool,
+          clientOpId: clientOpId,
+        );
+      case 'set_shop_item_category':
+        await _api.setShopItemCategory(
+          shopId: shopId,
+          shopItemId: p['shop_item_id'] as String,
+          categoryId: p['category_id'] as String?,
+          clientOpId: clientOpId,
+        );
+      case 'remove_or_disable_shop_item_unit':
+        await _api.removeOrDisableShopItemUnit(
+          shopId: shopId,
+          shopItemUnitId: p['shop_item_unit_id'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'add_shop_item_barcode':
+        await _api.addShopItemBarcode(
+          shopId: shopId,
+          shopItemUnitId: p['shop_item_unit_id'] as String,
+          barcode: p['barcode'] as String,
+          isPrimary: (p['is_primary'] as bool?) ?? false,
+          symbology: p['symbology'] as String?,
+          clientOpId: clientOpId,
+        );
+      case 'remove_shop_item_barcode':
+        await _api.removeShopItemBarcode(
+          shopId: shopId,
+          barcodeId: p['barcode_id'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'set_primary_shop_item_barcode':
+        await _api.setPrimaryShopItemBarcode(
+          shopId: shopId,
+          barcodeId: p['barcode_id'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'update_party':
+        await _api.updateParty(
+          shopId: shopId,
+          partyId: p['party_id'] as String,
+          name: p['name'] as String,
+          phone: p['phone'] as String?,
+          clientOpId: clientOpId,
+        );
+      default:
+        throw UnsupportedError(
+          'PostExecutor mutation branch missing for ${post.rpc}',
+        );
+    }
+  }
 }
 
 /// Helper that builds the params map for a post_sale enqueue. Lives
@@ -212,5 +324,95 @@ Map<String, dynamic> buildPostExpenseParams({
       'amount': amount,
       'payment_method_code': paymentMethodCode,
       if (notes != null) 'notes': notes,
+    };
+
+// #390: builders for admin-side mutation params ------------------------
+
+Map<String, dynamic> buildAddShopItemAliasParams({
+  required String shopItemId,
+  required String aliasText,
+  String? languageCode,
+  bool isDisplay = false,
+  String source = 'manual',
+}) =>
+    <String, dynamic>{
+      'shop_item_id': shopItemId,
+      'alias_text': aliasText,
+      if (languageCode != null) 'language_code': languageCode,
+      'is_display': isDisplay,
+      'source': source,
+    };
+
+Map<String, dynamic> buildRemoveShopItemAliasParams({
+  required String aliasId,
+}) =>
+    <String, dynamic>{'alias_id': aliasId};
+
+Map<String, dynamic> buildSetShopItemUnitSalePriceParams({
+  required String shopItemUnitId,
+  required num? salePrice,
+}) =>
+    <String, dynamic>{
+      'shop_item_unit_id': shopItemUnitId,
+      'sale_price': salePrice,
+    };
+
+Map<String, dynamic> buildSetShopItemUnitDefaultFlagsParams({
+  required String shopItemUnitId,
+  required bool isDefaultSale,
+  required bool isDefaultReceive,
+}) =>
+    <String, dynamic>{
+      'shop_item_unit_id': shopItemUnitId,
+      'is_default_sale': isDefaultSale,
+      'is_default_receive': isDefaultReceive,
+    };
+
+Map<String, dynamic> buildSetShopItemCategoryParams({
+  required String shopItemId,
+  required String? categoryId,
+}) =>
+    <String, dynamic>{
+      'shop_item_id': shopItemId,
+      'category_id': categoryId,
+    };
+
+Map<String, dynamic> buildRemoveOrDisableShopItemUnitParams({
+  required String shopItemUnitId,
+}) =>
+    <String, dynamic>{'shop_item_unit_id': shopItemUnitId};
+
+Map<String, dynamic> buildAddShopItemBarcodeParams({
+  required String shopItemUnitId,
+  required String barcode,
+  bool isPrimary = false,
+  String? symbology,
+}) =>
+    <String, dynamic>{
+      'shop_item_unit_id': shopItemUnitId,
+      'barcode': barcode,
+      'is_primary': isPrimary,
+      if (symbology != null) 'symbology': symbology,
+    };
+
+Map<String, dynamic> buildRemoveShopItemBarcodeParams({
+  required String barcodeId,
+}) =>
+    <String, dynamic>{'barcode_id': barcodeId};
+
+Map<String, dynamic> buildSetPrimaryShopItemBarcodeParams({
+  required String barcodeId,
+}) =>
+    <String, dynamic>{'barcode_id': barcodeId};
+
+Map<String, dynamic> buildUpdatePartyParams({
+  required String partyId,
+  required String name,
+  String? phone,
+}) =>
+    <String, dynamic>{
+      'party_id': partyId,
+      'name': name,
+      if (phone != null) 'phone': phone,
     };
 // ignore_for_file: use_null_aware_elements

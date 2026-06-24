@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- BAG-B "Classic grocery bag, gold D" — green bag, warm gold D accent -->
+  <path d="M196 246 C196 198 248 198 248 246" fill="none" stroke="#005C46" stroke-width="16" stroke-linecap="round"/>
+  <path d="M264 246 C264 198 316 198 316 246" fill="none" stroke="#005C46" stroke-width="16" stroke-linecap="round"/>
+  <rect x="160" y="242" width="192" height="196" rx="16" fill="#005C46"/>
+  <path fill="#F2B441" fill-rule="evenodd"
+        d="M232 290 L274 290 A34 34 0 0 1 274 392 L232 392 Z
+           M256 316 L274 316 A16 16 0 0 1 274 366 L256 366 Z"/>
+</svg>

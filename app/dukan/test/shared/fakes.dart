@@ -686,6 +686,7 @@ class FakeShopApi implements ShopApi {
     required String shopId,
     required String shopItemUnitId,
     required num? salePrice,
+    String? clientOpId,
   }) async {
     setShopItemUnitSalePriceCalls
         .add((shopItemUnitId: shopItemUnitId, salePrice: salePrice));
@@ -817,6 +818,7 @@ class FakeShopApi implements ShopApi {
     String? languageCode,
     bool isDisplay = false,
     String source = 'manual',
+    String? clientOpId,
   }) async {
     addShopItemAliasCalls.add((
       shopItemId: shopItemId,
@@ -982,6 +984,7 @@ class FakeShopApi implements ShopApi {
     required String partyId,
     required String name,
     String? phone,
+    String? clientOpId,
   }) async {
     updatePartyCalls.add((partyId: partyId, name: name, phone: phone));
     if (onUpdateParty != null) {
@@ -1522,6 +1525,7 @@ class FakeShopApi implements ShopApi {
     required String shopItemUnitId,
     required bool isDefaultSale,
     required bool isDefaultReceive,
+    String? clientOpId,
   }) async {
     setShopItemUnitDefaultFlagsCalls.add((
       shopItemUnitId: shopItemUnitId,
@@ -1554,6 +1558,7 @@ class FakeShopApi implements ShopApi {
     required String shopId,
     required String shopItemId,
     required String? categoryId,
+    String? clientOpId,
   }) async {
     setShopItemCategoryCalls
         .add((shopItemId: shopItemId, categoryId: categoryId));
@@ -1589,6 +1594,7 @@ class FakeShopApi implements ShopApi {
   Future<String> removeOrDisableShopItemUnit({
     required String shopId,
     required String shopItemUnitId,
+    String? clientOpId,
   }) async {
     removeOrDisableShopItemUnitCalls.add(shopItemUnitId);
     return removeOrDisableShopItemUnitResult;
@@ -1600,6 +1606,7 @@ class FakeShopApi implements ShopApi {
   Future<void> removeShopItemAlias({
     required String shopId,
     required String aliasId,
+    String? clientOpId,
   }) async {
     removeShopItemAliasCalls.add(aliasId);
   }
@@ -1624,6 +1631,7 @@ class FakeShopApi implements ShopApi {
     required String barcode,
     bool isPrimary = false,
     String? symbology,
+    String? clientOpId,
   }) async {
     addShopItemBarcodeCalls.add((
       shopItemUnitId: shopItemUnitId,
@@ -1643,6 +1651,7 @@ class FakeShopApi implements ShopApi {
   Future<void> removeShopItemBarcode({
     required String shopId,
     required String barcodeId,
+    String? clientOpId,
   }) async {
     removeShopItemBarcodeCalls.add(barcodeId);
   }
@@ -1653,6 +1662,7 @@ class FakeShopApi implements ShopApi {
   Future<void> setPrimaryShopItemBarcode({
     required String shopId,
     required String barcodeId,
+    String? clientOpId,
   }) async {
     setPrimaryShopItemBarcodeCalls.add(barcodeId);
   }

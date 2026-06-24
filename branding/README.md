@@ -33,6 +33,17 @@ app icon.
 | `new-c-bag-d.svg`          | Shopping bag with the "D" cut in. Reads as "any business", not only a storefront. Green + cream.                   |
 | `new-d-wordmark.svg`       | Lowercase "dukan" wordmark for splash / app-bar / web portal. Outline the `<text>` to paths before shipping.       |
 
+### Bag + D variations — exploring the `new-c` direction
+
+| File                          | Bag style                                  | Colour                          |
+| ----------------------------- | ------------------------------------------ | ------------------------------- |
+| `bag-a-grocery-cream-d.svg`   | Classic grocery bag, two punched handles   | Green bag, cream D              |
+| `bag-b-grocery-gold-d.svg`    | Same grocery bag                           | Green bag, **gold** D (warm)    |
+| `bag-c-gold-bag-green-d.svg`  | Single-arc handle bag                      | **Gold bag**, green D (brightest) |
+| `bag-d-kraft-cuff.svg`        | Folded-cuff kraft bag (cream top band)     | Green bag, cream cuff + cream D |
+| `bag-e-lineart.svg`           | Minimal line-art, stroked D                | Single green stroke (lightest)  |
+| `bag-f-tote.svg`              | Tote bag, open loop handles                | Green bag, cream D (modern)     |
+
 All canvases are 512 × 512 (the wordmark is 360 × 120), paths inside the
 **adaptive-icon safe zone** (centre ~66% of canvas) so Android's circular /
 squircle / rounded-square masks won't clip the mark.

@@ -495,6 +495,7 @@ class ShopApi {
     String? languageCode,
     bool isDisplay = false,
     String source = 'manual',
+    String? clientOpId,
   }) async {
     final result = await _client.rpc(
       'add_shop_item_alias',
@@ -505,6 +506,7 @@ class ShopApi {
         'p_language_code': languageCode,
         'p_is_display': isDisplay,
         'p_source': source,
+        'p_client_op_id': clientOpId,
       },
     );
     return result as String;
@@ -547,6 +549,7 @@ class ShopApi {
     required String shopId,
     required String shopItemUnitId,
     required num? salePrice,
+    String? clientOpId,
   }) async {
     await _client.rpc(
       'set_shop_item_unit_sale_price',
@@ -554,6 +557,7 @@ class ShopApi {
         'p_shop_id': shopId,
         'p_shop_item_unit_id': shopItemUnitId,
         'p_sale_price': salePrice,
+        'p_client_op_id': clientOpId,
       },
     );
   }
@@ -778,6 +782,7 @@ class ShopApi {
     required String partyId,
     required String name,
     String? phone,
+    String? clientOpId,
   }) async {
     await _client.rpc(
       'update_party',
@@ -786,6 +791,7 @@ class ShopApi {
         'p_party_id': partyId,
         'p_name': name,
         'p_phone': phone,
+        'p_client_op_id': clientOpId,
       },
     );
   }
@@ -1695,6 +1701,7 @@ class ShopApi {
     required String shopItemUnitId,
     required bool isDefaultSale,
     required bool isDefaultReceive,
+    String? clientOpId,
   }) async {
     await _client.rpc(
       'set_shop_item_unit_default_flags',
@@ -1703,6 +1710,7 @@ class ShopApi {
         'p_shop_item_unit_id': shopItemUnitId,
         'p_is_default_sale': isDefaultSale,
         'p_is_default_receive': isDefaultReceive,
+        'p_client_op_id': clientOpId,
       },
     );
   }
@@ -1714,6 +1722,7 @@ class ShopApi {
     required String shopId,
     required String shopItemId,
     required String? categoryId,
+    String? clientOpId,
   }) async {
     await _client.rpc(
       'set_shop_item_category',
@@ -1721,6 +1730,7 @@ class ShopApi {
         'p_shop_id': shopId,
         'p_shop_item_id': shopItemId,
         'p_category_id': categoryId,
+        'p_client_op_id': clientOpId,
       },
     );
   }
@@ -1750,12 +1760,14 @@ class ShopApi {
   Future<String> removeOrDisableShopItemUnit({
     required String shopId,
     required String shopItemUnitId,
+    String? clientOpId,
   }) async {
     final result = await _client.rpc(
       'remove_or_disable_shop_item_unit',
       params: {
         'p_shop_id': shopId,
         'p_shop_item_unit_id': shopItemUnitId,
+        'p_client_op_id': clientOpId,
       },
     );
     return (result as String?) ?? 'disabled';
@@ -1766,12 +1778,14 @@ class ShopApi {
   Future<void> removeShopItemAlias({
     required String shopId,
     required String aliasId,
+    String? clientOpId,
   }) async {
     await _client.rpc(
       'remove_shop_item_alias',
       params: {
         'p_shop_id': shopId,
         'p_alias_id': aliasId,
+        'p_client_op_id': clientOpId,
       },
     );
   }
@@ -1785,6 +1799,7 @@ class ShopApi {
     required String barcode,
     bool isPrimary = false,
     String? symbology,
+    String? clientOpId,
   }) async {
     final result = await _client.rpc(
       'add_shop_item_barcode',
@@ -1794,6 +1809,7 @@ class ShopApi {
         'p_barcode': barcode,
         'p_is_primary': isPrimary,
         'p_symbology': symbology,
+        'p_client_op_id': clientOpId,
       },
     );
     return result as String;
@@ -1802,12 +1818,14 @@ class ShopApi {
   Future<void> removeShopItemBarcode({
     required String shopId,
     required String barcodeId,
+    String? clientOpId,
   }) async {
     await _client.rpc(
       'remove_shop_item_barcode',
       params: {
         'p_shop_id': shopId,
         'p_barcode_id': barcodeId,
+        'p_client_op_id': clientOpId,
       },
     );
   }
@@ -1817,12 +1835,14 @@ class ShopApi {
   Future<void> setPrimaryShopItemBarcode({
     required String shopId,
     required String barcodeId,
+    String? clientOpId,
   }) async {
     await _client.rpc(
       'set_primary_shop_item_barcode',
       params: {
         'p_shop_id': shopId,
         'p_barcode_id': barcodeId,
+        'p_client_op_id': clientOpId,
       },
     );
   }

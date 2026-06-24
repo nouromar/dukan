@@ -18,13 +18,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/products/stock_adjust_sheet.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/receive/add_packaging_sheet.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -161,6 +166,55 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     });
   }
 
+  /// #390: queue + optimistic-local-update helper for the
+  /// 10 admin mutations on this screen. Generates a client_op_id,
+  /// runs the optimistic local mirror write, enqueues the
+  /// PendingPost (server-side idempotency via 0074 makes retries
+  /// safe), reloads the screen, surfaces errors uniformly.
+  Future<void> _enqueueMutation({
+    required String rpc,
+    required String prefix,
+    required Map<String, dynamic> params,
+    required Future<void> Function() optimistic,
+    required String errorContext,
+  }) async {
+    final clientOpId = generateClientOpId(prefix);
+    String actorId = '';
+    try {
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {}
+    final queue = context.read<OfflineQueueController>();
+    final repo = context.read<LocalRepository>();
+    try {
+      // Optimistic mirror write first so the screen reflects the
+      // change on next render — even if the queue drain stalls.
+      try {
+        await optimistic();
+      } catch (_) {
+        // Mirror write failure shouldn't sink the post; queue
+        // still runs and the next delta will overwrite.
+      }
+      final post = PendingPost(
+        id: generateClientOpId('post'),
+        clientOpId: clientOpId,
+        shopId: widget.shop.id,
+        originalActorUserId: actorId,
+        rpc: rpc,
+        params: params,
+        queuedAt: DateTime.now(),
+      );
+      await queue.enqueue(post);
+      if (!mounted) return;
+      _reload();
+      _showSaved();
+    } catch (error, stackTrace) {
+      _reportAndShow(error, stackTrace, errorContext);
+    }
+    // Avoid unused after _enqueueMutation return — repo is used
+    // by the optimistic closure callers wire in.
+    repo.toString();
+  }
+
   Future<void> _onEditPrice(ShopItemUnitDetail unit) async {
     final newPrice = await showDialog<num?>(
       context: context,
@@ -170,26 +224,21 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       ),
     );
     if (newPrice == null || !mounted) return;
-    final l = tr(context);
-    try {
-      await context.read<ShopApi>().setShopItemUnitSalePrice(
-        shopId: widget.shop.id,
+    final normalized = newPrice < 0 ? null : newPrice;
+    final repo = context.read<LocalRepository>();
+    await _enqueueMutation(
+      rpc: 'set_shop_item_unit_sale_price',
+      prefix: 'set_price',
+      params: buildSetShopItemUnitSalePriceParams(
         shopItemUnitId: unit.shopItemUnitId,
-        salePrice: newPrice < 0 ? null : newPrice,
-      );
-      if (!mounted) return;
-      _reload();
-    } catch (error, stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'dukan products',
-          context: ErrorDescription('editing sale price'),
-        ),
-      );
-      if (mounted) showError(context, l.addPackagingFailedMessage);
-    }
+        salePrice: normalized,
+      ),
+      optimistic: () => repo.updateLocalShopItemUnitPrice(
+        shopItemUnitId: unit.shopItemUnitId,
+        salePrice: normalized,
+      ),
+      errorContext: 'editing sale price',
+    );
   }
 
   /// Toggle either default flag from the detail screen. Persists via
@@ -200,27 +249,22 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     required bool isDefaultSale,
     required bool isDefaultReceive,
   }) async {
-    final l = tr(context);
-    try {
-      await context.read<ShopApi>().setShopItemUnitDefaultFlags(
-            shopId: widget.shop.id,
-            shopItemUnitId: unit.shopItemUnitId,
-            isDefaultSale: isDefaultSale,
-            isDefaultReceive: isDefaultReceive,
-          );
-      if (!mounted) return;
-      _reload();
-    } catch (error, stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'dukan products',
-          context: ErrorDescription('toggling default flag'),
-        ),
-      );
-      if (mounted) showError(context, l.addPackagingFailedMessage);
-    }
+    final repo = context.read<LocalRepository>();
+    await _enqueueMutation(
+      rpc: 'set_shop_item_unit_default_flags',
+      prefix: 'set_default',
+      params: buildSetShopItemUnitDefaultFlagsParams(
+        shopItemUnitId: unit.shopItemUnitId,
+        isDefaultSale: isDefaultSale,
+        isDefaultReceive: isDefaultReceive,
+      ),
+      optimistic: () => repo.updateLocalShopItemUnitDefaultFlags(
+        shopItemUnitId: unit.shopItemUnitId,
+        isDefaultSale: isDefaultSale,
+        isDefaultReceive: isDefaultReceive,
+      ),
+      errorContext: 'toggling default flag',
+    );
   }
 
   Future<void> _onAddPackaging() async {
@@ -259,35 +303,38 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       builder: (ctx) => const _AddAliasDialog(),
     );
     if (picked == null || !mounted) return;
-    try {
-      await context.read<ShopApi>().addShopItemAlias(
-            shopId: widget.shop.id,
-            shopItemId: widget.shopItemId,
-            aliasText: picked.text,
-            languageCode: picked.language,
-            isDisplay: false,
-          );
-      if (!mounted) return;
-      _reload();
-      _showSaved();
-    } catch (error, stackTrace) {
-      _reportAndShow(error, stackTrace, 'adding alias');
-    }
+    final repo = context.read<LocalRepository>();
+    await _enqueueMutation(
+      rpc: 'add_shop_item_alias',
+      prefix: 'add_alias',
+      params: buildAddShopItemAliasParams(
+        shopItemId: widget.shopItemId,
+        aliasText: picked.text,
+        languageCode: picked.language,
+        isDisplay: false,
+      ),
+      optimistic: () => repo.insertLocalShopItemAlias(
+        shopItemId: widget.shopItemId,
+        aliasText: picked.text,
+        isDisplay: false,
+      ),
+      errorContext: 'adding alias',
+    );
   }
 
   Future<void> _onRemoveAlias(ShopItemAliasRow alias) async {
     if (alias.isDisplay) return; // server refuses anyway; UI hides the X
-    try {
-      await context.read<ShopApi>().removeShopItemAlias(
-            shopId: widget.shop.id,
-            aliasId: alias.aliasId,
-          );
-      if (!mounted) return;
-      _reload();
-      _showSaved();
-    } catch (error, stackTrace) {
-      _reportAndShow(error, stackTrace, 'removing alias');
-    }
+    final repo = context.read<LocalRepository>();
+    await _enqueueMutation(
+      rpc: 'remove_shop_item_alias',
+      prefix: 'rm_alias',
+      params: buildRemoveShopItemAliasParams(aliasId: alias.aliasId),
+      optimistic: () => repo.deleteLocalShopItemAliasByText(
+        shopItemId: widget.shopItemId,
+        aliasText: alias.aliasText,
+      ),
+      errorContext: 'removing alias',
+    );
   }
 
   Future<void> _onAddBarcode(ShopItemUnitDetail unit) async {
@@ -296,19 +343,22 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       builder: (ctx) => const _AddBarcodeDialog(),
     );
     if (picked == null || !mounted) return;
-    try {
-      await context.read<ShopApi>().addShopItemBarcode(
-            shopId: widget.shop.id,
-            shopItemUnitId: unit.shopItemUnitId,
-            barcode: picked.code,
-            isPrimary: picked.primary,
-          );
-      if (!mounted) return;
-      _reload();
-      _showSaved();
-    } catch (error, stackTrace) {
-      _reportAndShow(error, stackTrace, 'adding barcode');
-    }
+    final repo = context.read<LocalRepository>();
+    await _enqueueMutation(
+      rpc: 'add_shop_item_barcode',
+      prefix: 'add_barcode',
+      params: buildAddShopItemBarcodeParams(
+        shopItemUnitId: unit.shopItemUnitId,
+        barcode: picked.code,
+        isPrimary: picked.primary,
+      ),
+      optimistic: () => repo.insertLocalShopItemBarcode(
+        shopItemUnitId: unit.shopItemUnitId,
+        barcode: picked.code,
+        isPrimary: picked.primary,
+      ),
+      errorContext: 'adding barcode',
+    );
   }
 
   /// Scan-to-bind: opens the single-scan viewfinder; on a decode the
@@ -319,22 +369,26 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
   Future<void> _onScanBindBarcode(ShopItemUnitDetail unit) async {
     final event = await Scanner.open(context);
     if (event == null || !mounted) return;
-    try {
-      await context.read<ShopApi>().addShopItemBarcode(
-            shopId: widget.shop.id,
-            shopItemUnitId: unit.shopItemUnitId,
-            barcode: event.code,
-            isPrimary: false,
-          );
-      if (!mounted) return;
-      _reload();
+    final repo = context.read<LocalRepository>();
+    await _enqueueMutation(
+      rpc: 'add_shop_item_barcode',
+      prefix: 'scan_barcode',
+      params: buildAddShopItemBarcodeParams(
+        shopItemUnitId: unit.shopItemUnitId,
+        barcode: event.code,
+        isPrimary: false,
+      ),
+      optimistic: () => repo.insertLocalShopItemBarcode(
+        shopItemUnitId: unit.shopItemUnitId,
+        barcode: event.code,
+        isPrimary: false,
+      ),
+      errorContext: 'scan-binding barcode',
+    );
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(tr(context).barcodeBoundToPackagingMessage),
-        ),
+        SnackBar(content: Text(tr(context).barcodeBoundToPackagingMessage)),
       );
-    } catch (error, stackTrace) {
-      _reportAndShow(error, stackTrace, 'scan-binding barcode');
     }
   }
 
@@ -365,25 +419,32 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       ),
     );
     if (action == null || !mounted) return;
-    try {
-      final api = context.read<ShopApi>();
-      switch (action) {
-        case _BarcodeAction.makePrimary:
-          await api.setPrimaryShopItemBarcode(
-            shopId: widget.shop.id,
+    final repo = context.read<LocalRepository>();
+    switch (action) {
+      case _BarcodeAction.makePrimary:
+        await _enqueueMutation(
+          rpc: 'set_primary_shop_item_barcode',
+          prefix: 'set_primary_barcode',
+          params: buildSetPrimaryShopItemBarcodeParams(
             barcodeId: row.barcodeId,
-          );
-        case _BarcodeAction.remove:
-          await api.removeShopItemBarcode(
-            shopId: widget.shop.id,
+          ),
+          optimistic: () => repo.setPrimaryLocalShopItemBarcode(
+            barcode: row.barcode,
+          ),
+          errorContext: 'making barcode primary',
+        );
+      case _BarcodeAction.remove:
+        await _enqueueMutation(
+          rpc: 'remove_shop_item_barcode',
+          prefix: 'rm_barcode',
+          params: buildRemoveShopItemBarcodeParams(
             barcodeId: row.barcodeId,
-          );
-      }
-      if (!mounted) return;
-      _reload();
-      _showSaved();
-    } catch (error, stackTrace) {
-      _reportAndShow(error, stackTrace, 'editing barcode');
+          ),
+          optimistic: () => repo.deleteLocalShopItemBarcodeByValue(
+            barcode: row.barcode,
+          ),
+          errorContext: 'removing barcode',
+        );
     }
   }
 
@@ -399,21 +460,25 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     if (newName == null || !mounted) return;
     final trimmed = newName.trim();
     if (trimmed.isEmpty || trimmed == currentName) return;
-    try {
-      await context.read<ShopApi>().addShopItemAlias(
-            shopId: widget.shop.id,
-            shopItemId: widget.shopItemId,
-            aliasText: trimmed,
-            languageCode: Localizations.localeOf(context).languageCode,
-            isDisplay: true,
-          );
-      if (!mounted) return;
-      setState(() => _liveDisplayName = trimmed);
-      _reload();
-      _showSaved();
-    } catch (error, stackTrace) {
-      _reportAndShow(error, stackTrace, 'renaming shop item');
-    }
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final repo = context.read<LocalRepository>();
+    setState(() => _liveDisplayName = trimmed);
+    await _enqueueMutation(
+      rpc: 'add_shop_item_alias',
+      prefix: 'rename',
+      params: buildAddShopItemAliasParams(
+        shopItemId: widget.shopItemId,
+        aliasText: trimmed,
+        languageCode: languageCode,
+        isDisplay: true,
+      ),
+      optimistic: () => repo.insertLocalShopItemAlias(
+        shopItemId: widget.shopItemId,
+        aliasText: trimmed,
+        isDisplay: true,
+      ),
+      errorContext: 'renaming shop item',
+    );
   }
 
   /// Category change — picker sheet → setShopItemCategory.
@@ -454,18 +519,20 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     if (picked == null || !mounted) return;
     final newId = picked.option?.id;
     if (newId == currentId) return;
-    try {
-      await context.read<ShopApi>().setShopItemCategory(
-            shopId: widget.shop.id,
-            shopItemId: widget.shopItemId,
-            categoryId: newId,
-          );
-      if (!mounted) return;
-      _reload();
-      _showSaved();
-    } catch (error, stackTrace) {
-      _reportAndShow(error, stackTrace, 'changing shop item category');
-    }
+    final repo = context.read<LocalRepository>();
+    await _enqueueMutation(
+      rpc: 'set_shop_item_category',
+      prefix: 'set_cat',
+      params: buildSetShopItemCategoryParams(
+        shopItemId: widget.shopItemId,
+        categoryId: newId,
+      ),
+      optimistic: () => repo.updateLocalShopItemCategory(
+        shopItemId: widget.shopItemId,
+        categoryId: newId,
+      ),
+      errorContext: 'changing shop item category',
+    );
   }
 
   /// Delete a packaging — confirm dialog → removeOrDisableShopItemUnit.
@@ -494,17 +561,18 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    try {
-      await context.read<ShopApi>().removeOrDisableShopItemUnit(
-            shopId: widget.shop.id,
-            shopItemUnitId: unit.shopItemUnitId,
-          );
-      if (!mounted) return;
-      _reload();
-      _showSaved();
-    } catch (error, stackTrace) {
-      _reportAndShow(error, stackTrace, 'removing packaging');
-    }
+    final repo = context.read<LocalRepository>();
+    await _enqueueMutation(
+      rpc: 'remove_or_disable_shop_item_unit',
+      prefix: 'rm_packaging',
+      params: buildRemoveOrDisableShopItemUnitParams(
+        shopItemUnitId: unit.shopItemUnitId,
+      ),
+      optimistic: () => repo.softDisableLocalShopItemUnit(
+        shopItemUnitId: unit.shopItemUnitId,
+      ),
+      errorContext: 'removing packaging',
+    );
   }
 
   void _showSaved() {

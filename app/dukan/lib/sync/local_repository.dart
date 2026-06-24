@@ -1052,6 +1052,246 @@ class LocalRepository {
   ///                    includes `party_name`,
   ///                    `payment_method_code`, `lines_summary`,
   ///                    ...).
+  // ---- #390: optimistic admin-side mutation writes -----------------------
+
+  /// Set a packaging's `sale_price`. Null clears it (un-priced).
+  Future<void> updateLocalShopItemUnitPrice({
+    required String shopItemUnitId,
+    required num? salePrice,
+  }) async {
+    final db = await _db;
+    await db.update(
+      'local_shop_item_unit',
+      {'sale_price': salePrice},
+      where: 'shop_item_unit_id = ?',
+      whereArgs: [shopItemUnitId],
+    );
+  }
+
+  /// Toggle default-sale / default-receive on a packaging. When a flag
+  /// goes true, clears that flag on any sibling row under the same
+  /// `shop_item_id` first — mirrors the server-side single-default
+  /// invariant (one default per side per item).
+  Future<void> updateLocalShopItemUnitDefaultFlags({
+    required String shopItemUnitId,
+    required bool isDefaultSale,
+    required bool isDefaultReceive,
+  }) async {
+    final db = await _db;
+    await db.transaction((txn) async {
+      final parent = await txn.query(
+        'local_shop_item_unit',
+        columns: ['shop_item_id'],
+        where: 'shop_item_unit_id = ?',
+        whereArgs: [shopItemUnitId],
+        limit: 1,
+      );
+      if (parent.isEmpty) return;
+      final shopItemId = parent.first['shop_item_id'] as String;
+      if (isDefaultSale) {
+        await txn.update(
+          'local_shop_item_unit',
+          {'is_default_sale': 0},
+          where: 'shop_item_id = ? AND shop_item_unit_id != ?',
+          whereArgs: [shopItemId, shopItemUnitId],
+        );
+      }
+      if (isDefaultReceive) {
+        await txn.update(
+          'local_shop_item_unit',
+          {'is_default_receive': 0},
+          where: 'shop_item_id = ? AND shop_item_unit_id != ?',
+          whereArgs: [shopItemId, shopItemUnitId],
+        );
+      }
+      await txn.update(
+        'local_shop_item_unit',
+        {
+          'is_default_sale': isDefaultSale ? 1 : 0,
+          'is_default_receive': isDefaultReceive ? 1 : 0,
+        },
+        where: 'shop_item_unit_id = ?',
+        whereArgs: [shopItemUnitId],
+      );
+    });
+  }
+
+  /// Set / clear category on an item.
+  Future<void> updateLocalShopItemCategory({
+    required String shopItemId,
+    required String? categoryId,
+  }) async {
+    final db = await _db;
+    await db.update(
+      'local_shop_item',
+      {'category_id': categoryId},
+      where: 'shop_item_id = ?',
+      whereArgs: [shopItemId],
+    );
+  }
+
+  /// Soft-delete a packaging — sets is_active=0 + clears default flags.
+  /// The Products + Sale grids filter on `is_active = 1`, so the row
+  /// disappears from view immediately.
+  Future<void> softDisableLocalShopItemUnit({
+    required String shopItemUnitId,
+  }) async {
+    final db = await _db;
+    await db.update(
+      'local_shop_item_unit',
+      {
+        'is_active': 0,
+        'is_default_sale': 0,
+        'is_default_receive': 0,
+      },
+      where: 'shop_item_unit_id = ?',
+      whereArgs: [shopItemUnitId],
+    );
+  }
+
+  /// Insert (or upsert on natural key) a search alias.
+  ///
+  /// The local mirror keys aliases on `(shop_item_id, alias)` — the
+  /// server uses a synthetic alias_id, but we never need to look one
+  /// up locally. INSERT OR REPLACE keeps the retry case (same
+  /// client_op_id reaching us twice) idempotent at the local layer.
+  Future<void> insertLocalShopItemAlias({
+    required String shopItemId,
+    required String aliasText,
+    bool isDisplay = false,
+  }) async {
+    final db = await _db;
+    await db.insert(
+      'local_shop_item_alias',
+      {
+        'shop_item_id': shopItemId,
+        'alias': aliasText,
+        'is_display': isDisplay ? 1 : 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    if (isDisplay) {
+      // Also flip the item's display_name optimistically so the
+      // products list + detail header reflect the rename without
+      // waiting for the delta.
+      await db.update(
+        'local_shop_item',
+        {'display_name': aliasText},
+        where: 'shop_item_id = ?',
+        whereArgs: [shopItemId],
+      );
+    }
+  }
+
+  /// Remove a search alias by its (shop_item_id, alias_text) natural
+  /// key. Screen handlers pass both — the server's alias_id is only
+  /// used in the queued ShopApi call.
+  Future<void> deleteLocalShopItemAliasByText({
+    required String shopItemId,
+    required String aliasText,
+  }) async {
+    final db = await _db;
+    await db.delete(
+      'local_shop_item_alias',
+      where: 'shop_item_id = ? AND alias = ?',
+      whereArgs: [shopItemId, aliasText],
+    );
+  }
+
+  /// Insert a barcode bound to a packaging. The barcode VALUE is the
+  /// local PK; INSERT OR REPLACE makes the retry case idempotent. When
+  /// `isPrimary`, demote any existing primary on the same packaging.
+  Future<void> insertLocalShopItemBarcode({
+    required String shopItemUnitId,
+    required String barcode,
+    bool isPrimary = false,
+  }) async {
+    final db = await _db;
+    await db.transaction((txn) async {
+      if (isPrimary) {
+        await txn.update(
+          'local_shop_item_barcode',
+          {'is_primary': 0},
+          where: 'shop_item_unit_id = ? AND barcode != ?',
+          whereArgs: [shopItemUnitId, barcode],
+        );
+      }
+      await txn.insert(
+        'local_shop_item_barcode',
+        {
+          'barcode': barcode,
+          'shop_item_unit_id': shopItemUnitId,
+          'is_primary': isPrimary ? 1 : 0,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
+  }
+
+  /// Delete a barcode by its VALUE (local PK). Screen handlers pass
+  /// the value alongside the server-side barcode_id used by the queued
+  /// post.
+  Future<void> deleteLocalShopItemBarcodeByValue({
+    required String barcode,
+  }) async {
+    final db = await _db;
+    await db.delete(
+      'local_shop_item_barcode',
+      where: 'barcode = ?',
+      whereArgs: [barcode],
+    );
+  }
+
+  /// Promote one barcode to primary, atomically demoting the rest under
+  /// the same packaging.
+  Future<void> setPrimaryLocalShopItemBarcode({
+    required String barcode,
+  }) async {
+    final db = await _db;
+    await db.transaction((txn) async {
+      final row = await txn.query(
+        'local_shop_item_barcode',
+        columns: ['shop_item_unit_id'],
+        where: 'barcode = ?',
+        whereArgs: [barcode],
+        limit: 1,
+      );
+      if (row.isEmpty) return;
+      final shopItemUnitId = row.first['shop_item_unit_id'] as String;
+      await txn.update(
+        'local_shop_item_barcode',
+        {'is_primary': 0},
+        where: 'shop_item_unit_id = ? AND barcode != ?',
+        whereArgs: [shopItemUnitId, barcode],
+      );
+      await txn.update(
+        'local_shop_item_barcode',
+        {'is_primary': 1},
+        where: 'barcode = ?',
+        whereArgs: [barcode],
+      );
+    });
+  }
+
+  /// Rename + optionally update phone on a party.
+  Future<void> renameLocalParty({
+    required String partyId,
+    required String name,
+    String? phone,
+  }) async {
+    final db = await _db;
+    final changes = <String, Object?>{'name': name};
+    if (phone != null) changes['phone'] = phone;
+    await db.update(
+      'local_party',
+      changes,
+      where: 'party_id = ?',
+      whereArgs: [partyId],
+    );
+  }
+
+  // ---- #385: optimistic transaction write -----------------------------
+
   Future<void> writeOptimisticTransaction({
     required String clientOpId,
     required String shopId,
