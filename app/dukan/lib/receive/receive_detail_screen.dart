@@ -28,6 +28,8 @@ import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 class ReceiveDetailScreen extends StatefulWidget {
   const ReceiveDetailScreen({
@@ -55,7 +57,41 @@ class _ReceiveDetailScreenState extends State<ReceiveDetailScreen> {
   }
 
   Future<_ReceiveBundle> _load() async {
+    // Capture context-derived dependencies up front so the rest of
+    // the method is await-safe (no use_build_context_synchronously).
     final api = context.read<ShopApi>();
+    final useLocal = useLocalDb(context);
+    LocalRepository? localRepo;
+    if (useLocal) {
+      try {
+        localRepo = context.read<LocalRepository>();
+      } catch (_) {
+        localRepo = null;
+      }
+    }
+    // #385-fixup: in useLocalDb=on mode, the history shows optimistic
+    // rows whose txn_id = client_op_id (placeholder per #385). The
+    // server has no record with that ID, so a direct api.getReceive
+    // would return null and throw → empty page. Mirror what
+    // sale_detail_screen.dart did in #385: try the local mirror first,
+    // fall through to network as last resort.
+    if (localRepo != null) {
+      try {
+        final localTxn = await localRepo.getTransaction(widget.txnId);
+        if (localTxn != null) {
+          final lines = await localRepo.receiveLinesFromLocal(widget.txnId);
+          return _ReceiveBundle(
+            header: localRepo.toReceiveSummary(localTxn),
+            lines: lines,
+          );
+        }
+      } catch (_) {
+        // Local probe failure shouldn't sink the page — fall through.
+      }
+      // No local row yet — fall through to network as last resort
+      // (covers the newly-arrived-from-realtime case before the
+      // delta sync has filled the mirror).
+    }
     final header = await api.getReceive(
       shopId: widget.shop.id,
       txnId: widget.txnId,

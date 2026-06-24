@@ -743,9 +743,17 @@ class LocalRepository {
   SaleSummary toSaleSummary(LocalTransaction t) => SaleSummary(
         txnId: t.txnId,
         occurredAt: DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs),
-        postedAt: t.payload['posted_at'] == null
-            ? null
-            : DateTime.tryParse(t.payload['posted_at'] as String),
+        // #385-fixup: server's _build_transactions_payload doesn't
+        // include posted_at — only server_updated_at_ms. Fall back to
+        // that so the void affordance (which gates on postedAt) shows
+        // up once the server has acknowledged the row. Optimistic
+        // pre-sync rows still resolve to null (serverUpdatedAtMs=0),
+        // which is correct: can't void a sale the server hasn't seen.
+        postedAt: t.payload['posted_at'] != null
+            ? DateTime.tryParse(t.payload['posted_at'] as String)
+            : (t.serverUpdatedAtMs > 0
+                ? DateTime.fromMillisecondsSinceEpoch(t.serverUpdatedAtMs)
+                : null),
         partyId: t.partyId,
         partyName: t.payload['party_name'] as String?,
         totalAmount: t.total.toDouble(),
@@ -804,6 +812,12 @@ class LocalRepository {
         .map((m) => SaleLineDetail.fromJson(Map<String, dynamic>.from(m)))
         .toList(growable: false);
   }
+
+  /// #385-fixup: receive detail screen reads via this alias.
+  /// `ReceiveLineDetail` is a typedef for `SaleLineDetail`, so the
+  /// underlying logic and lines_summary payload shape is identical.
+  Future<List<ReceiveLineDetail>> receiveLinesFromLocal(String txnId) =>
+      saleLinesFromLocal(txnId);
 
   /// Effective stock for an item, taking in-flight queued posts
   /// into account. `current_stock` from local_shop_item plus the

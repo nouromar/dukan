@@ -192,4 +192,52 @@ void main() {
     expect(lines, hasLength(1));
     expect(lines.single.itemName, 'X');
   });
+
+  // #385-fixup: toSaleSummary must derive postedAt from
+  // serverUpdatedAtMs when payload['posted_at'] is missing — the
+  // server's _build_transactions_payload doesn't include posted_at,
+  // so without this fallback the void affordance stays hidden
+  // forever in useLocalDb=on mode. Optimistic rows
+  // (serverUpdatedAtMs=0) intentionally still resolve to null —
+  // you can't void a sale the server hasn't acknowledged.
+  test('toSaleSummary postedAt: null for optimistic, derived for synced',
+      () async {
+    await repo.writeOptimisticTransaction(
+      clientOpId: 'sale-optimistic',
+      shopId: shopId,
+      typeCode: 'sale',
+      occurredAtMs: 1_000_000,
+      total: 5.0,
+      partyId: null,
+      payload: <String, dynamic>{'lines_summary': <Map<String, dynamic>>[]},
+    );
+    final optimistic =
+        await repo.getTransaction('sale-optimistic');
+    expect(optimistic, isNotNull);
+    expect(optimistic!.serverUpdatedAtMs, 0);
+    expect(repo.toSaleSummary(optimistic).postedAt, isNull,
+        reason: 'optimistic pre-sync row must have null postedAt');
+
+    await repo.applyTransactionsPayload(<String, dynamic>{
+      'transactions': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'txn_id': 'sale-synced',
+          'shop_id': shopId,
+          'type_code': 'sale',
+          'occurred_at_ms': 1_500_000,
+          'total': 7.0,
+          'is_voided': false,
+          'server_updated_at_ms': 1_600_000,
+          'lines_summary': <Map<String, dynamic>>[],
+        },
+      ],
+    });
+    final synced = await repo.getTransaction('sale-synced');
+    expect(synced, isNotNull);
+    expect(synced!.serverUpdatedAtMs, 1_600_000);
+    final postedAt = repo.toSaleSummary(synced).postedAt;
+    expect(postedAt, isNotNull,
+        reason: 'server-acknowledged row must have non-null postedAt');
+    expect(postedAt!.millisecondsSinceEpoch, 1_600_000);
+  });
 }
