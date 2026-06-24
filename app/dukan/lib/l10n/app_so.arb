@@ -1008,6 +1008,41 @@
     }
   },
   "storageSyncSyncFailedToast": "Lama waafajin karin — hubi xidhiidhka.",
+  "storageSyncAlreadyUpToDateToast": "Hadda way cusub tahay",
+  "storageSyncPushedToast": "{count, plural, =1{La diray 1 sugaya} other{La diray {count} sugaya}}",
+  "@storageSyncPushedToast": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "storageSyncPulledToast": "{count, plural, =1{La helay 1 cusbooneysiin} other{La helay {count} cusbooneysiin}}",
+  "@storageSyncPulledToast": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "storageSyncPushedAndPulledToast": "La diray {pushed} sugaya, la helay {pulled} cusbooneysiin",
+  "@storageSyncPushedAndPulledToast": {
+    "placeholders": {
+      "pushed": { "type": "int" },
+      "pulled": { "type": "int" }
+    }
+  },
+  "storageSyncResetButton": "Dib u dejis xogta",
+  "storageSyncResetConfirmTitle": "Dib u dejis xogta maxalliga?",
+  "storageSyncResetConfirmBody": "Tani waxay TIRTIRTAA dhammaan xogta uu taleefankaan ka soo dejiyey serverka. Xogta dukaankaaga waxaa dib loo soo dejin doonaa marka xiga ee la xidhiidho. Iibyada aan loo dirin server-ka way lumi doonaan. Tan hel kaliya marka taageerada ay ku weydiisto.",
+  "storageSyncResetTypePrompt": "Ku qor TIRTIR si aad u xaqiijiso",
+  "storageSyncResetTypeWord": "TIRTIR",
+  "storageSyncResetOfflineBlocker": "Marka hore internet-ka ku xidh — waxaa jira iibyo sugaya in la diro server-ka kahor dib-u-dejinta.",
+  "storageSyncResetPendingFailedBlocker": "{count, plural, =1{1 dirka ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-dejinta.} other{{count} dir ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-dejinta.}}",
+  "@storageSyncResetPendingFailedBlocker": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "storageSyncResetConfirmAction": "TIRTIR",
+  "storageSyncResetDoneToast": "Xogta maxalliga waa la dib u dejiyey. Soo dejinta xog cusub...",
+  "storageSyncResetFailedToast": "Dib-u-dejinta way fashilantay",
   "storageSyncSettingsHeader": "Dejinta",
   "storageSyncWifiOnlyLabel": "Kaliya marka Wi-Fi jiro",
   "storageSyncDrawerEntry": "Kayd & is-waafajin",

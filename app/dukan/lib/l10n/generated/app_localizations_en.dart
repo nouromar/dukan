@@ -2245,6 +2245,78 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not sync — check your connection.';
 
   @override
+  String get storageSyncAlreadyUpToDateToast => 'Already up to date';
+
+  @override
+  String storageSyncPushedToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sent $count pending',
+      one: 'Sent 1 pending',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String storageSyncPulledToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Got $count updates',
+      one: 'Got 1 update',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String storageSyncPushedAndPulledToast(int pushed, int pulled) {
+    return 'Sent $pushed pending, got $pulled updates';
+  }
+
+  @override
+  String get storageSyncResetButton => 'Reset local data';
+
+  @override
+  String get storageSyncResetConfirmTitle => 'Reset local data?';
+
+  @override
+  String get storageSyncResetConfirmBody =>
+      'This DELETES all data this device has downloaded from the server. Your shop\'s data will be re-downloaded on next sync. Any sales that haven\'t been sent will be lost. Only do this if support tells you to.';
+
+  @override
+  String get storageSyncResetTypePrompt => 'Type RESET to confirm';
+
+  @override
+  String get storageSyncResetTypeWord => 'RESET';
+
+  @override
+  String get storageSyncResetOfflineBlocker =>
+      'Connect to internet first — you have pending sales that need to send before reset.';
+
+  @override
+  String storageSyncResetPendingFailedBlocker(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count posts couldn\'t send. Review them in Failed posts before reset.',
+      one: '1 post couldn\'t send. Review it in Failed posts before reset.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageSyncResetConfirmAction => 'RESET';
+
+  @override
+  String get storageSyncResetDoneToast =>
+      'Local data reset. Downloading fresh data...';
+
+  @override
+  String get storageSyncResetFailedToast => 'Reset failed';
+
+  @override
   String get storageSyncSettingsHeader => 'Settings';
 
   @override

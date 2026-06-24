@@ -1212,6 +1212,71 @@ class LocalRepository {
       whereArgs: [pendingPostId],
     );
   }
+
+  /// #387: nuke every local mirror + projection + sync-state row for
+  /// [shopId]. Used by the destructive "Reset local data" action on
+  /// the Storage & sync screen. Runs in one sqflite transaction so a
+  /// failure midway rolls back the whole wipe — no half-empty state.
+  ///
+  /// Does NOT touch `pending_post` / `failed_post` (queue rows) or
+  /// `cache_entry` (FavoritesCache / TodaySummaryCache /
+  /// AuthStateCache). Callers should drain the queue first.
+  Future<void> wipeAllLocalData(String shopId) async {
+    final db = await _db;
+    await db.transaction((txn) async {
+      // Order: children before parents (FKs are advisory in sqflite
+      // but the order documents intent).
+      await txn.delete('local_stock_projection');
+      await txn.delete(
+        'local_shop_item_alias',
+        where: 'shop_item_id IN '
+            '(SELECT shop_item_id FROM local_shop_item WHERE shop_id = ?)',
+        whereArgs: [shopId],
+      );
+      await txn.delete(
+        'local_shop_item_barcode',
+        where: 'shop_item_unit_id IN '
+            '(SELECT shop_item_unit_id FROM local_shop_item_unit '
+            ' WHERE shop_item_id IN '
+            '  (SELECT shop_item_id FROM local_shop_item WHERE shop_id = ?))',
+        whereArgs: [shopId],
+      );
+      await txn.delete(
+        'local_shop_item_unit',
+        where: 'shop_item_id IN '
+            '(SELECT shop_item_id FROM local_shop_item WHERE shop_id = ?)',
+        whereArgs: [shopId],
+      );
+      await txn.delete(
+        'local_shop_item',
+        where: 'shop_id = ?',
+        whereArgs: [shopId],
+      );
+      await txn.delete(
+        'local_party',
+        where: 'shop_id = ?',
+        whereArgs: [shopId],
+      );
+      await txn.delete(
+        'local_expense_category',
+        where: 'shop_id = ?',
+        whereArgs: [shopId],
+      );
+      await txn.delete(
+        'local_transaction',
+        where: 'shop_id = ?',
+        whereArgs: [shopId],
+      );
+      await txn.delete(
+        'local_sync_state',
+        where: 'shop_id = ?',
+        whereArgs: [shopId],
+      );
+      // Reference tables (local_unit, local_category) are global —
+      // not scoped to shop. Leave them alone; they re-sync via the
+      // next full_sync regardless.
+    });
+  }
 }
 
 /// One line of a queued post that affects stock. [direction] is

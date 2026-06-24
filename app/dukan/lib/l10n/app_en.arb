@@ -1018,6 +1018,41 @@
     }
   },
   "storageSyncSyncFailedToast": "Could not sync — check your connection.",
+  "storageSyncAlreadyUpToDateToast": "Already up to date",
+  "storageSyncPushedToast": "{count, plural, =1{Sent 1 pending} other{Sent {count} pending}}",
+  "@storageSyncPushedToast": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "storageSyncPulledToast": "{count, plural, =1{Got 1 update} other{Got {count} updates}}",
+  "@storageSyncPulledToast": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "storageSyncPushedAndPulledToast": "Sent {pushed} pending, got {pulled} updates",
+  "@storageSyncPushedAndPulledToast": {
+    "placeholders": {
+      "pushed": { "type": "int" },
+      "pulled": { "type": "int" }
+    }
+  },
+  "storageSyncResetButton": "Reset local data",
+  "storageSyncResetConfirmTitle": "Reset local data?",
+  "storageSyncResetConfirmBody": "This DELETES all data this device has downloaded from the server. Your shop's data will be re-downloaded on next sync. Any sales that haven't been sent will be lost. Only do this if support tells you to.",
+  "storageSyncResetTypePrompt": "Type RESET to confirm",
+  "storageSyncResetTypeWord": "RESET",
+  "storageSyncResetOfflineBlocker": "Connect to internet first — you have pending sales that need to send before reset.",
+  "storageSyncResetPendingFailedBlocker": "{count, plural, =1{1 post couldn't send. Review it in Failed posts before reset.} other{{count} posts couldn't send. Review them in Failed posts before reset.}}",
+  "@storageSyncResetPendingFailedBlocker": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "storageSyncResetConfirmAction": "RESET",
+  "storageSyncResetDoneToast": "Local data reset. Downloading fresh data...",
+  "storageSyncResetFailedToast": "Reset failed",
   "storageSyncSettingsHeader": "Settings",
   "storageSyncWifiOnlyLabel": "Sync only on Wi-Fi",
   "storageSyncDrawerEntry": "Storage & sync",

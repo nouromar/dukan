@@ -185,6 +185,65 @@ void main() {
     expect(state['items']!.lastSyncedAtMs, 2000);
     expect(state['items']!.fullSyncDone, isTrue);
   });
+
+  test('#387: wipeAllLocalData clears every per-shop mirror table',
+      () async {
+    await repo.applyItemsPayload({
+      'items': [_item('si-1', 'Rice')],
+      'units': [_unit('siu-1', 'si-1', 'kg', 'kg', 1)],
+      'aliases': [
+        {'shop_item_id': 'si-1', 'alias': 'bariis', 'is_display': false},
+      ],
+      'barcodes': [
+        {'shop_item_unit_id': 'siu-1', 'barcode': '123', 'is_primary': true},
+      ],
+    });
+    await repo.applyPartiesPayload({
+      'parties': [_party('p-1', 'Ahmed', type: 'customer')],
+    });
+    await repo.applyCategoriesPayload({
+      'expense_categories': [
+        {
+          'category_id': 'c-1',
+          'shop_id': shopId,
+          'code': 'rent',
+          'name': 'Rent',
+          'is_active': true,
+        },
+      ],
+    });
+    await repo.applyTransactionsPayload({
+      'transactions': [_txn('t-1', 'sale', occurredMs: 1700, total: 50)],
+    });
+    await repo.writeSyncState(
+      shopId: shopId,
+      resource: 'items',
+      lastSyncedAtMs: 9999,
+      fullSyncDone: true,
+    );
+    // Pre-assert there is something to wipe.
+    expect((await repo.allActiveItems(shopId)), isNotEmpty);
+    expect(
+      (await repo.searchParties('', shopId: shopId, typeCode: 'customer')),
+      isNotEmpty,
+    );
+    expect((await repo.expenseCategories(shopId: shopId)), isNotEmpty);
+    expect((await repo.historySales(shopId: shopId)), isNotEmpty);
+    expect((await repo.loadSyncState(shopId)), isNotEmpty);
+
+    await repo.wipeAllLocalData(shopId);
+
+    expect((await repo.allActiveItems(shopId)), isEmpty);
+    expect(
+      (await repo.searchParties('', shopId: shopId, typeCode: 'customer')),
+      isEmpty,
+    );
+    expect((await repo.expenseCategories(shopId: shopId)), isEmpty);
+    expect((await repo.historySales(shopId: shopId)), isEmpty);
+    expect((await repo.loadSyncState(shopId)), isEmpty);
+    expect(await repo.lookupBarcode('123'), isNull);
+    expect(await repo.packagingsForItem('si-1'), isEmpty);
+  });
 }
 
 // --- Fixture helpers -----------------------------------------------------

@@ -2266,6 +2266,79 @@ class AppLocalizationsSo extends AppLocalizations {
       'Lama waafajin karin — hubi xidhiidhka.';
 
   @override
+  String get storageSyncAlreadyUpToDateToast => 'Hadda way cusub tahay';
+
+  @override
+  String storageSyncPushedToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'La diray $count sugaya',
+      one: 'La diray 1 sugaya',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String storageSyncPulledToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'La helay $count cusbooneysiin',
+      one: 'La helay 1 cusbooneysiin',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String storageSyncPushedAndPulledToast(int pushed, int pulled) {
+    return 'La diray $pushed sugaya, la helay $pulled cusbooneysiin';
+  }
+
+  @override
+  String get storageSyncResetButton => 'Dib u dejis xogta';
+
+  @override
+  String get storageSyncResetConfirmTitle => 'Dib u dejis xogta maxalliga?';
+
+  @override
+  String get storageSyncResetConfirmBody =>
+      'Tani waxay TIRTIRTAA dhammaan xogta uu taleefankaan ka soo dejiyey serverka. Xogta dukaankaaga waxaa dib loo soo dejin doonaa marka xiga ee la xidhiidho. Iibyada aan loo dirin server-ka way lumi doonaan. Tan hel kaliya marka taageerada ay ku weydiisto.';
+
+  @override
+  String get storageSyncResetTypePrompt => 'Ku qor TIRTIR si aad u xaqiijiso';
+
+  @override
+  String get storageSyncResetTypeWord => 'TIRTIR';
+
+  @override
+  String get storageSyncResetOfflineBlocker =>
+      'Marka hore internet-ka ku xidh — waxaa jira iibyo sugaya in la diro server-ka kahor dib-u-dejinta.';
+
+  @override
+  String storageSyncResetPendingFailedBlocker(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count dir ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-dejinta.',
+      one:
+          '1 dirka ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-dejinta.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get storageSyncResetConfirmAction => 'TIRTIR';
+
+  @override
+  String get storageSyncResetDoneToast =>
+      'Xogta maxalliga waa la dib u dejiyey. Soo dejinta xog cusub...';
+
+  @override
+  String get storageSyncResetFailedToast => 'Dib-u-dejinta way fashilantay';
+
+  @override
   String get storageSyncSettingsHeader => 'Dejinta';
 
   @override

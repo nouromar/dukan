@@ -3690,6 +3690,90 @@ abstract class AppLocalizations {
   /// **'Could not sync — check your connection.'**
   String get storageSyncSyncFailedToast;
 
+  /// No description provided for @storageSyncAlreadyUpToDateToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Already up to date'**
+  String get storageSyncAlreadyUpToDateToast;
+
+  /// No description provided for @storageSyncPushedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Sent 1 pending} other{Sent {count} pending}}'**
+  String storageSyncPushedToast(int count);
+
+  /// No description provided for @storageSyncPulledToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Got 1 update} other{Got {count} updates}}'**
+  String storageSyncPulledToast(int count);
+
+  /// No description provided for @storageSyncPushedAndPulledToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent {pushed} pending, got {pulled} updates'**
+  String storageSyncPushedAndPulledToast(int pushed, int pulled);
+
+  /// No description provided for @storageSyncResetButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset local data'**
+  String get storageSyncResetButton;
+
+  /// No description provided for @storageSyncResetConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset local data?'**
+  String get storageSyncResetConfirmTitle;
+
+  /// No description provided for @storageSyncResetConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This DELETES all data this device has downloaded from the server. Your shop\'s data will be re-downloaded on next sync. Any sales that haven\'t been sent will be lost. Only do this if support tells you to.'**
+  String get storageSyncResetConfirmBody;
+
+  /// No description provided for @storageSyncResetTypePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Type RESET to confirm'**
+  String get storageSyncResetTypePrompt;
+
+  /// No description provided for @storageSyncResetTypeWord.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get storageSyncResetTypeWord;
+
+  /// No description provided for @storageSyncResetOfflineBlocker.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to internet first — you have pending sales that need to send before reset.'**
+  String get storageSyncResetOfflineBlocker;
+
+  /// No description provided for @storageSyncResetPendingFailedBlocker.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 post couldn\'t send. Review it in Failed posts before reset.} other{{count} posts couldn\'t send. Review them in Failed posts before reset.}}'**
+  String storageSyncResetPendingFailedBlocker(int count);
+
+  /// No description provided for @storageSyncResetConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get storageSyncResetConfirmAction;
+
+  /// No description provided for @storageSyncResetDoneToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data reset. Downloading fresh data...'**
+  String get storageSyncResetDoneToast;
+
+  /// No description provided for @storageSyncResetFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset failed'**
+  String get storageSyncResetFailedToast;
+
   /// No description provided for @storageSyncSettingsHeader.
   ///
   /// In en, this message translates to:
