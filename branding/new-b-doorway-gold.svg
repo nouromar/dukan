@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    NEW-B "D in doorway, gold glow"
+    Identical geometry to v1, but the arched doorway glows GOLD instead
+    of cream = warmth / "the shop is open". Introduces a warm accent the
+    all-green set lacks. Green shop + gold doorway + green D inset.
+  -->
+  <path fill="#005C46" d="M80 432 L80 200 L256 104 L432 200 L432 432 Z"/>
+  <path fill="#F2B441" d="M200 432 L200 280 A56 56 0 0 1 312 280 L312 432 Z"/>
+  <path fill="#005C46" fill-rule="evenodd"
+        d="M220 304 L264 304 A36 36 0 0 1 264 408 L220 408 Z
+           M244 328 L264 328 A12 12 0 0 1 264 384 L244 384 Z"/>
+</svg>

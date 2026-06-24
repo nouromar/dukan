@@ -6231,6 +6231,138 @@ $$;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 
+-- ---------------------------------------------------------------------------
+-- §TT mutation_idempotency (0074). Verify the new p_client_op_id
+-- short-circuit on three representative RPCs (one add, one set,
+-- one remove) — the other 7 RPCs follow the same mechanical
+-- pattern.
+--   1. add_shop_item_alias: same client_op_id → same alias_id
+--      returned, no duplicate row.
+--   2. set_shop_item_unit_sale_price: same client_op_id → second
+--      call is a no-op (we mutate the price between calls and
+--      assert the second invocation does NOT overwrite).
+--   3. remove_shop_item_alias: same client_op_id called twice is
+--      a no-op on the second call (the row is already gone, but
+--      the RPC must not raise).
+--   4. Smoke: calling without p_client_op_id (null) behaves
+--      exactly like the pre-0074 path.
+-- ---------------------------------------------------------------------------
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+do $$
+declare
+  v_shop_id           uuid;
+  v_shop_item_id      uuid;
+  v_default_unit_id   uuid;
+  v_alias_id_1        uuid;
+  v_alias_id_2        uuid;
+  v_alias_count       int;
+  v_price             numeric;
+  v_idem_count        int;
+  v_throwaway_id      uuid;
+begin
+  select id into v_shop_id from public.shop where name = 'Hodan Shop' limit 1;
+  if v_shop_id is null then
+    raise exception 'TT pre: Hodan Shop fixture missing';
+  end if;
+
+  -- Fresh shop_item so the assertions are deterministic.
+  select shop_item_id, default_shop_item_unit_id
+    into v_shop_item_id, v_default_unit_id
+    from public.create_shop_item(
+      v_shop_id, 'TT Idempotency Test', 'en', 'kg', null, null
+    );
+
+  -- (1) add_shop_item_alias dedup: two calls with the same
+  -- client_op_id should return the same alias_id and create
+  -- exactly ONE alias row beyond the display alias.
+  v_alias_id_1 := public.add_shop_item_alias(
+    v_shop_id, v_shop_item_id, 'tt-alpha', 'en',
+    false, 'manual', 'tt-client-1'
+  );
+  v_alias_id_2 := public.add_shop_item_alias(
+    v_shop_id, v_shop_item_id, 'tt-alpha', 'en',
+    false, 'manual', 'tt-client-1'
+  );
+  if v_alias_id_1 is null or v_alias_id_1 <> v_alias_id_2 then
+    raise exception 'TT (1): dup add_shop_item_alias should return same id (got % vs %)',
+      v_alias_id_1, v_alias_id_2;
+  end if;
+
+  -- (2) set_shop_item_unit_sale_price dedup: first call sets
+  -- price=11.0; we then DIRECTLY UPDATE the price to 22.0 (out
+  -- of band) and re-call the RPC with the same client_op_id.
+  -- The RPC must short-circuit and leave the price at 22.0.
+  perform public.set_shop_item_unit_sale_price(
+    v_shop_id, v_default_unit_id, 11.0, 'tt-client-2'
+  );
+  update public.shop_item_unit set sale_price = 22.0
+   where shop_id = v_shop_id and id = v_default_unit_id;
+  perform public.set_shop_item_unit_sale_price(
+    v_shop_id, v_default_unit_id, 11.0, 'tt-client-2'
+  );
+  select sale_price into v_price from public.shop_item_unit
+   where shop_id = v_shop_id and id = v_default_unit_id;
+  if v_price <> 22.0 then
+    raise exception 'TT (2): dup set price should have been a no-op (price=%)', v_price;
+  end if;
+
+  -- (3) remove_shop_item_alias dedup: first call deletes, second
+  -- call with the same client_op_id is a no-op (must NOT raise
+  -- "Alias not found").
+  perform public.remove_shop_item_alias(
+    v_shop_id, v_alias_id_1, 'tt-client-3'
+  );
+  -- Sanity: row is gone.
+  if exists (
+    select 1 from public.shop_item_alias where id = v_alias_id_1
+  ) then
+    raise exception 'TT (3): remove_shop_item_alias did not delete';
+  end if;
+  -- Duplicate call must NOT raise.
+  perform public.remove_shop_item_alias(
+    v_shop_id, v_alias_id_1, 'tt-client-3'
+  );
+
+  -- (4) Null client_op_id keeps legacy behavior — calling
+  -- add_shop_item_alias twice without an idempotency key should
+  -- be naturally idempotent via the existing on-conflict-do-
+  -- update path (returns the same id; no duplicate row), and no
+  -- mutation_idempotency row is recorded.
+  v_throwaway_id := public.add_shop_item_alias(
+    v_shop_id, v_shop_item_id, 'tt-beta', 'en'
+  );
+  v_throwaway_id := public.add_shop_item_alias(
+    v_shop_id, v_shop_item_id, 'tt-beta', 'en'
+  );
+  select count(*) into v_alias_count
+    from public.shop_item_alias
+   where shop_id = v_shop_id
+     and shop_item_id = v_shop_item_id
+     and alias_text = 'tt-beta';
+  if v_alias_count <> 1 then
+    raise exception 'TT (4): legacy path produced % rows for tt-beta', v_alias_count;
+  end if;
+
+  -- Confirm the idempotency table has exactly the expected three
+  -- entries from steps 1-3 (not the legacy step 4).
+  select count(*) into v_idem_count
+    from public.mutation_idempotency
+   where shop_id = v_shop_id
+     and client_op_id like 'tt-client-%';
+  if v_idem_count <> 3 then
+    raise exception 'TT (5): expected 3 mutation_idempotency rows, got %', v_idem_count;
+  end if;
+
+  raise notice 'TT: mutation_idempotency tests passed';
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+reset role;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';

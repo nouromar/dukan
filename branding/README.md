@@ -24,9 +24,18 @@ app icon.
 | `v3-d-on-canopy-sign.svg`           | Flat-roof modern shop; "D" lives on the canopy band like a real shopfront sign. Two-colour.                     |
 | `v4-tall-d-in-door.svg`             | Bold "D" almost fills the doorway. D is the hero, shop is the frame. Two-colour.                                |
 
-All canvases are 512 × 512, paths inside the **adaptive-icon safe
-zone** (centre ~66% of canvas) so Android's circular / squircle /
-rounded-square masks won't clip the mark.
+### Second-pass additions — fill the gaps (warmth, market read, business-not-just-shop, wordmark)
+
+| File                       | Treatment                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `new-a-awning.svg`         | Scalloped awning over shop + cream doorway. Warmer/friendlier than the pitched-roof marks. Green + cream.          |
+| `new-b-doorway-gold.svg`   | Same geometry as `v1` but the doorway glows **gold** `#F2B441` — "the shop is open". Introduces a warm accent.     |
+| `new-c-bag-d.svg`          | Shopping bag with the "D" cut in. Reads as "any business", not only a storefront. Green + cream.                   |
+| `new-d-wordmark.svg`       | Lowercase "dukan" wordmark for splash / app-bar / web portal. Outline the `<text>` to paths before shipping.       |
+
+All canvases are 512 × 512 (the wordmark is 360 × 120), paths inside the
+**adaptive-icon safe zone** (centre ~66% of canvas) so Android's circular /
+squircle / rounded-square masks won't clip the mark.
 
 ## Brand colour
 
