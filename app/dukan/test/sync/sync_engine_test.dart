@@ -220,6 +220,143 @@ void main() {
     engine.dispose();
   });
 
+  test(
+    '#385-fixup-2: self-echo on `txn` still schedules transactions delta',
+    () async {
+      // Optimistic local rows only carry server_updated_at_ms=0 +
+      // empty lines_summary. We need the delta to fetch the real
+      // server row (with lines + posted_at) so void becomes
+      // available. Other tables (shop_item, party) ARE complete in
+      // their WAL row, so skip-on-self-echo stays correct for them.
+      final post = PendingPost(
+        id: 'pp-2',
+        clientOpId: 'op-txn',
+        shopId: shopId,
+        originalActorUserId: 'u-1',
+        rpc: 'post_sale',
+        params: const <String, dynamic>{},
+        queuedAt: DateTime.utc(2026, 1, 1),
+      );
+      await postDao.insert(post);
+      for (final resource in SyncResource.all) {
+        await repo.writeSyncState(
+          shopId: shopId,
+          resource: resource,
+          lastSyncedAtMs: 1700000000000,
+          fullSyncDone: true,
+        );
+      }
+      var txnDeltaCalls = 0;
+      var itemsDeltaCalls = 0;
+      api.onGetTransactionsDelta =
+          ({required shopId, required since, int limit = 200}) async {
+        txnDeltaCalls += 1;
+        return const {'transactions': []};
+      };
+      api.onGetShopItemsDelta = ({required shopId, required since}) async {
+        itemsDeltaCalls += 1;
+        return const {
+          'items': [],
+          'units': [],
+          'aliases': [],
+          'barcodes': [],
+        };
+      };
+      api.onGetPartiesDelta = ({required shopId, required since}) async =>
+          const {'parties': []};
+      api.onGetCategoriesDelta = ({required shopId, required since}) async =>
+          const {'expense_categories': [], 'categories': [], 'units': []};
+
+      final engine = SyncEngine(
+        shopApi: api,
+        localRepository: repo,
+        pendingPostDao: postDao,
+        realtimeDebounce: const Duration(milliseconds: 20),
+      );
+      await engine.start(shopId);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      final baselineTxn = txnDeltaCalls;
+      final baselineItems = itemsDeltaCalls;
+
+      engine.notifyEvent(const RealtimeEvent(
+        table: 'txn',
+        eventType: 'INSERT',
+        newRow: {'id': 'txn-echo', 'client_op_id': 'op-txn'},
+        oldRow: null,
+      ));
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+
+      expect(txnDeltaCalls - baselineTxn, 1,
+          reason: 'self-echo on txn must schedule a transactions delta');
+      expect(itemsDeltaCalls - baselineItems, 0,
+          reason: 'txn echo must not trigger items delta');
+      engine.dispose();
+    },
+  );
+
+  test(
+    '#385-fixup-2: self-echo on non-txn tables still skips delta',
+    () async {
+      final post = PendingPost(
+        id: 'pp-3',
+        clientOpId: 'op-item',
+        shopId: shopId,
+        originalActorUserId: 'u-1',
+        rpc: 'set_shop_item_unit_sale_price',
+        params: const <String, dynamic>{},
+        queuedAt: DateTime.utc(2026, 1, 1),
+      );
+      await postDao.insert(post);
+      for (final resource in SyncResource.all) {
+        await repo.writeSyncState(
+          shopId: shopId,
+          resource: resource,
+          lastSyncedAtMs: 1700000000000,
+          fullSyncDone: true,
+        );
+      }
+      var itemsDeltaCalls = 0;
+      api.onGetShopItemsDelta = ({required shopId, required since}) async {
+        itemsDeltaCalls += 1;
+        return const {
+          'items': [],
+          'units': [],
+          'aliases': [],
+          'barcodes': [],
+        };
+      };
+      api.onGetPartiesDelta = ({required shopId, required since}) async =>
+          const {'parties': []};
+      api.onGetCategoriesDelta = ({required shopId, required since}) async =>
+          const {'expense_categories': [], 'categories': [], 'units': []};
+      api.onGetTransactionsDelta =
+          ({required shopId, required since, int limit = 200}) async =>
+              const {'transactions': []};
+
+      final engine = SyncEngine(
+        shopApi: api,
+        localRepository: repo,
+        pendingPostDao: postDao,
+        realtimeDebounce: const Duration(milliseconds: 20),
+      );
+      await engine.start(shopId);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      final baseline = itemsDeltaCalls;
+
+      engine.notifyEvent(const RealtimeEvent(
+        table: 'shop_item',
+        eventType: 'UPDATE',
+        newRow: {'shop_item_id': 'si-1', 'client_op_id': 'op-item'},
+        oldRow: null,
+      ));
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+
+      expect(itemsDeltaCalls - baseline, 0,
+          reason: 'shop_item self-echo must NOT trigger an items delta');
+      engine.dispose();
+    },
+  );
+
   test('bulk burst: many events in the debounce window flush once',
       () async {
     for (final resource in SyncResource.all) {

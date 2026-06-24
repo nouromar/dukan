@@ -37,13 +37,16 @@ class RealtimeListener {
   bool _disposed = false;
 
   /// Tables we subscribe to. Aligned with the architecture doc.
-  /// `transaction` is the table name in Postgres; the local mirror
-  /// stores it under `local_transaction`.
+  /// Key = Postgres table name (passed to `onPostgresChanges`);
+  /// value = SyncEngine resource key. The Postgres table is `txn`
+  /// (not `transaction` — see migration 0009); the local mirror
+  /// stores it under `local_transaction`. #385-fixup-2: was
+  /// silently subscribing to a non-existent `transaction` table.
   static const _subscribedTables = <String, String>{
     'shop_item': 'shop_item',
     'shop_item_unit': 'shop_item_unit',
     'party': 'party',
-    'transaction': 'txn',
+    'txn': 'txn',
   };
 
   /// Begin listening for [shopId]. Idempotent — calling with the

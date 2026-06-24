@@ -350,6 +350,19 @@ class SyncEngine extends ChangeNotifier {
           await _local.clearProjectionsForPost(post.id);
           clearedAnyProjection = true;
         }
+        // #385-fixup-2: for transactions, still schedule the
+        // delta. The WAL row for a `txn` lacks `transaction_line`
+        // children and the optimistic local row has
+        // `serverUpdatedAtMs = 0` (which keeps `postedAt` null
+        // and hides the void affordance). The delta fetches the
+        // full payload with lines_summary and the dedup-by-
+        // client_op_id in `applyTransactionsPayload` replaces
+        // the optimistic row atomically. Other tables' WAL rows
+        // ARE the new state, so skip-on-self-echo stays correct
+        // for them.
+        if (_resourceForTable(event.table) == SyncResource.transactions) {
+          resourcesToRefresh.add(SyncResource.transactions);
+        }
         continue;
       }
       final resource = _resourceForTable(event.table);
