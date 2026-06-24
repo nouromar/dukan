@@ -2090,4 +2090,23 @@ class ShopApi {
     if (raw is Map) return Map<String, dynamic>.from(raw);
     return const <String, dynamic>{};
   }
+
+  /// #391: incremental delta of unpaid invoices for the shop. Rows
+  /// where `remaining <= 0` are tombstones — the local mirror
+  /// deletes them. Full sync arrives via `get_shop_full_sync`'s
+  /// `unpaid_invoices_payload` field.
+  Future<Map<String, dynamic>> getUnpaidInvoicesDelta({
+    required String shopId,
+    required DateTime since,
+  }) async {
+    final raw = await _client.rpc(
+      'get_unpaid_invoices_delta',
+      params: {
+        'p_shop_id': shopId,
+        'p_since': since.toUtc().toIso8601String(),
+      },
+    );
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return const <String, dynamic>{};
+  }
 }

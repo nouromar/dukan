@@ -34,7 +34,16 @@ class SyncResource {
   static const parties = 'parties';
   static const categories = 'categories';
   static const transactions = 'transactions';
-  static const all = [items, parties, categories, transactions];
+  // #391: outstanding invoices cache backing the Payment allocation
+  // sheet's offline read path.
+  static const unpaidInvoices = 'unpaid_invoices';
+  static const all = [
+    items,
+    parties,
+    categories,
+    transactions,
+    unpaidInvoices,
+  ];
 }
 
 /// Sync engine state. Exposed to consumers so a future first-sync
@@ -206,6 +215,9 @@ class SyncEngine extends ChangeNotifier {
       await _local.applyTransactionsPayload(
         _mapOrEmpty(payload['transactions_payload']),
       );
+      await _local.applyUnpaidInvoicesPayload(
+        _mapOrEmpty(payload['unpaid_invoices_payload']),
+      );
       for (final resource in SyncResource.all) {
         await _local.writeSyncState(
           shopId: shopId,
@@ -283,6 +295,19 @@ class SyncEngine extends ChangeNotifier {
         shopId: shopId,
         resource: SyncResource.transactions,
         lastSyncedAtMs: _serverNowOrLocal(txnsPayload),
+      );
+      // Unpaid invoices (#391)
+      final invSince =
+          _sinceFromState(state[SyncResource.unpaidInvoices]);
+      final invPayload = await _shopApi.getUnpaidInvoicesDelta(
+        shopId: shopId,
+        since: invSince,
+      );
+      await _local.applyUnpaidInvoicesPayload(invPayload);
+      await _local.writeSyncState(
+        shopId: shopId,
+        resource: SyncResource.unpaidInvoices,
+        lastSyncedAtMs: _serverNowOrLocal(invPayload),
       );
       _lastError = null;
       _lastSyncedAt = _clock();
@@ -396,6 +421,12 @@ class SyncEngine extends ChangeNotifier {
         return SyncResource.categories;
       case 'txn':
         return SyncResource.transactions;
+      // #391: payment + payment_allocation events change the
+      // `remaining` of cached unpaid invoices — schedule the
+      // unpaidInvoices delta to refresh the local mirror.
+      case 'payment':
+      case 'payment_allocation':
+        return SyncResource.unpaidInvoices;
       default:
         return null;
     }
@@ -426,6 +457,11 @@ class SyncEngine extends ChangeNotifier {
           payload = await _shopApi.getTransactionsDelta(
               shopId: shopId, since: since);
           await _local.applyTransactionsPayload(payload);
+          break;
+        case SyncResource.unpaidInvoices:
+          payload = await _shopApi.getUnpaidInvoicesDelta(
+              shopId: shopId, since: since);
+          await _local.applyUnpaidInvoicesPayload(payload);
           break;
         default:
           return;

@@ -78,7 +78,8 @@ void main() {
     expect(hit!.displayName, 'Rice 5kg');
 
     final state = await repo.loadSyncState(shopId);
-    expect(state.length, 4);
+    // #391: added SyncResource.unpaidInvoices → 5 resources.
+    expect(state.length, 5);
     for (final s in state.values) {
       expect(s.fullSyncDone, isTrue);
       expect(s.lastSyncedAtMs, 1700000000000);

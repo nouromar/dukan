@@ -47,6 +47,11 @@ class RealtimeListener {
     'shop_item_unit': 'shop_item_unit',
     'party': 'party',
     'txn': 'txn',
+    // #391: new allocations / payments change `remaining` on cached
+    // unpaid invoices. SyncEngine._resourceForTable routes both to
+    // SyncResource.unpaidInvoices → triggers a debounced delta.
+    'payment': 'payment',
+    'payment_allocation': 'payment_allocation',
   };
 
   /// Begin listening for [shopId]. Idempotent — calling with the

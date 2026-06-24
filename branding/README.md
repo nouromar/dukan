@@ -44,6 +44,20 @@ app icon.
 | `bag-e-lineart.svg`           | Minimal line-art, stroked D                | Single green stroke (lightest)  |
 | `bag-f-tote.svg`              | Tote bag, open loop handles                | Green bag, cream D (modern)     |
 
+### Inventory / saving / organizing family — drops the shop+D idea entirely
+
+A different concept: signal what the app *does* (track inventory, organize
+stock, save & manage money) rather than "shopping". Gold `#F2B441` = money.
+
+| File                          | Symbol                              | Theme                                  |
+| ----------------------------- | ----------------------------------- | -------------------------------------- |
+| `inv-a-stacked-boxes.svg`     | Three stacked taped cartons         | Inventory / organizing (purest)        |
+| `inv-b-box-coin.svg`          | Carton + gold coin                  | Inventory **+** money (unified)        |
+| `inv-c-coin-stack.svg`        | Stack of 4 gold coins               | Saving / money (currency-neutral)      |
+| `inv-d-organizer-grid.svg`    | 2×2 grid, one cell gold             | Organizing; gold cell = value tracked  |
+| `inv-e-savings-jar.svg`       | Cream glass jar + gold coins + slot | Saving money                           |
+| `inv-f-vault.svg`             | Green safe + gold dial              | Keep business money safe               |
+
 All canvases are 512 × 512 (the wordmark is 360 × 120), paths inside the
 **adaptive-icon safe zone** (centre ~66% of canvas) so Android's circular /
 squircle / rounded-square masks won't clip the mark.

@@ -1949,6 +1949,13 @@ class FakeShopApi implements ShopApi {
   final List<({String shopId, DateTime since, int limit})>
       getTransactionsDeltaCalls = [];
 
+  Future<Map<String, dynamic>> Function({
+    required String shopId,
+    required DateTime since,
+  })? onGetUnpaidInvoicesDelta;
+  final List<({String shopId, DateTime since})>
+      getUnpaidInvoicesDeltaCalls = [];
+
   @override
   Future<Map<String, dynamic>> getShopFullSync({
     required String shopId,
@@ -2004,6 +2011,17 @@ class FakeShopApi implements ShopApi {
     final hook = onGetTransactionsDelta;
     if (hook == null) return const <String, dynamic>{};
     return hook(shopId: shopId, since: since, limit: limit);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getUnpaidInvoicesDelta({
+    required String shopId,
+    required DateTime since,
+  }) async {
+    getUnpaidInvoicesDeltaCalls.add((shopId: shopId, since: since));
+    final hook = onGetUnpaidInvoicesDelta;
+    if (hook == null) return const <String, dynamic>{};
+    return hook(shopId: shopId, since: since);
   }
 }
 

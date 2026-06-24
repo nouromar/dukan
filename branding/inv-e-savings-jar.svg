@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- INV-E "Savings jar" — saving money. Cream glass jar + green rim, gold coins, slotted lid -->
+  <rect x="198" y="186" width="116" height="28" rx="10" fill="#005C46"/>
+  <rect x="240" y="196" width="32" height="8" rx="4" fill="#F5EFE6"/>
+  <path fill="#F5EFE6" stroke="#005C46" stroke-width="10"
+        d="M196 226 H316 V370 a40 40 0 0 1 -40 40 H236 a40 40 0 0 1 -40 -40 Z"/>
+  <ellipse cx="256" cy="356" rx="64" ry="18" fill="#F2B441"/>
+  <ellipse cx="256" cy="330" rx="52" ry="16" fill="#F2B441"/>
+  <ellipse cx="256" cy="306" rx="40" ry="14" fill="#F2B441"/>
+</svg>

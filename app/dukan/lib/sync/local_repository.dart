@@ -12,7 +12,7 @@ import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:dukan/api/shop_api.dart' show ShopItemDetail, ShopItemAliasRow,
-    ShopItemBarcodeRow;
+    ShopItemBarcodeRow, UnpaidInvoice;
 import 'package:dukan/api/types.dart';
 import 'package:dukan/storage/app_database.dart';
 
@@ -990,6 +990,86 @@ class LocalRepository {
         );
       }
     });
+  }
+
+  /// #391: applies the unpaid-invoices delta or full-sync payload
+  /// to `local_unpaid_invoice`. Rows with `remaining <= 0` are
+  /// treated as tombstones — DELETE rather than upsert — so paid-
+  /// off invoices vanish from the allocation sheet on next open.
+  ///
+  /// Server-side `_build_unpaid_invoices_payload` (migration 0075)
+  /// includes recently paid-off rows for one delta window so this
+  /// dedup completes without a separate tombstone table.
+  Future<void> applyUnpaidInvoicesPayload(Map<String, dynamic> payload) async {
+    final db = await _db;
+    await db.transaction((txn) async {
+      for (final raw in (payload['unpaid_invoices'] as List? ?? const [])) {
+        if (raw is! Map) continue;
+        final remaining = (raw['remaining'] as num?)?.toDouble() ?? 0.0;
+        final partyId = raw['party_id'] as String?;
+        final direction = raw['direction'] as String?;
+        final txnId = raw['txn_id'] as String?;
+        if (partyId == null || direction == null || txnId == null) continue;
+        if (remaining <= 0) {
+          // Tombstone — the invoice has been fully paid (or voided).
+          await txn.delete(
+            'local_unpaid_invoice',
+            where: 'party_id = ? AND direction = ? AND txn_id = ?',
+            whereArgs: [partyId, direction, txnId],
+          );
+          continue;
+        }
+        await txn.insert(
+          'local_unpaid_invoice',
+          {
+            'shop_id': raw['shop_id'],
+            'party_id': partyId,
+            'direction': direction,
+            'txn_id': txnId,
+            'occurred_at_ms': (raw['occurred_at_ms'] as num).toInt(),
+            'original_amount':
+                (raw['original_amount'] as num).toDouble(),
+            'already_paid': (raw['already_paid'] as num).toDouble(),
+            'remaining': remaining,
+            'document_id': raw['document_id'],
+            'server_updated_at_ms':
+                (raw['server_updated_at_ms'] as num).toInt(),
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
+  /// #391: reads unpaid invoices for the (party, direction) tuple
+  /// from the local mirror. Mirrors `ShopApi.listUnpaidInvoices`
+  /// shape (`List<UnpaidInvoice>` ordered oldest-first by
+  /// occurred_at). The Payment allocation sheet branches on
+  /// `useLocalDb(context)` to call either this or the live RPC.
+  Future<List<UnpaidInvoice>> listUnpaidInvoices({
+    required String shopId,
+    required String partyId,
+    required String direction,
+  }) async {
+    final db = await _db;
+    final rows = await db.query(
+      'local_unpaid_invoice',
+      where: 'shop_id = ? AND party_id = ? AND direction = ?',
+      whereArgs: [shopId, partyId, direction],
+      orderBy: 'occurred_at_ms ASC, txn_id ASC',
+    );
+    return rows
+        .map((r) => UnpaidInvoice(
+              transactionId: r['txn_id'] as String,
+              occurredAt: DateTime.fromMillisecondsSinceEpoch(
+                (r['occurred_at_ms'] as num).toInt(),
+              ),
+              originalAmount: (r['original_amount'] as num).toDouble(),
+              alreadyPaid: (r['already_paid'] as num).toDouble(),
+              remaining: (r['remaining'] as num).toDouble(),
+              documentId: r['document_id'] as String?,
+            ))
+        .toList(growable: false);
   }
 
   Future<void> applyTransactionsPayload(Map<String, dynamic> payload) async {

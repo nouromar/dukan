@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- INV-C "Coin stack" — saving / money for business. Gold coins, green rims, currency-neutral -->
+  <ellipse cx="256" cy="384" rx="86" ry="26" fill="#F2B441" stroke="#005C46" stroke-width="6"/>
+  <ellipse cx="256" cy="344" rx="86" ry="26" fill="#F2B441" stroke="#005C46" stroke-width="6"/>
+  <ellipse cx="256" cy="304" rx="86" ry="26" fill="#F2B441" stroke="#005C46" stroke-width="6"/>
+  <ellipse cx="256" cy="264" rx="86" ry="26" fill="#F2B441" stroke="#005C46" stroke-width="6"/>
+</svg>

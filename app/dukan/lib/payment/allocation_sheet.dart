@@ -14,6 +14,8 @@ import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 /// Returns the cashier-chosen allocations, or null if they dismissed
 /// the sheet without applying.
@@ -76,12 +78,25 @@ class _AllocationSheetState extends State<_AllocationSheet> {
 
   Future<void> _load() async {
     try {
-      final api = context.read<ShopApi>();
-      final invoices = await api.listUnpaidInvoices(
-        shopId: widget.shop.id,
-        partyId: widget.partyId,
-        direction: widget.direction,
-      );
+      // #391: useLocalDb=true reads from local_unpaid_invoice
+      // mirror so the allocation sheet works offline. Behavior
+      // unchanged in useLocalDb=false (live RPC).
+      final List<UnpaidInvoice> invoices;
+      if (useLocalDb(context)) {
+        final repo = context.read<LocalRepository>();
+        invoices = await repo.listUnpaidInvoices(
+          shopId: widget.shop.id,
+          partyId: widget.partyId,
+          direction: widget.direction,
+        );
+      } else {
+        final api = context.read<ShopApi>();
+        invoices = await api.listUnpaidInvoices(
+          shopId: widget.shop.id,
+          partyId: widget.partyId,
+          direction: widget.direction,
+        );
+      }
       if (!mounted) return;
       _seedAllocations(invoices);
       setState(() => _invoices = invoices);
