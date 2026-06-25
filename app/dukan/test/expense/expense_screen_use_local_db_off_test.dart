@@ -5,7 +5,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 
 import 'package:dukan/api/types.dart';
 import 'package:dukan/config/config_keys.dart';
@@ -53,14 +52,12 @@ void main() {
     );
     await tester.pumpWidget(
       wrapWithApp(
-        Provider<ConfigResolver>.value(
-          value: resolver,
-          child: ExpenseScreen(shop: shop),
-        ),
+        ExpenseScreen(shop: shop),
         authController: auth,
         shopApi: api,
         expenseController: expense,
         offlineQueueController: queue,
+        configResolver: resolver,
       ),
     );
   }
@@ -85,7 +82,7 @@ void main() {
       expect(method, 'cash');
       return 'fake-expense-id';
     };
-    final before = (await postDao.load()).length;
+    final before = (await tester.runAsync(() => postDao.load()))!.length;
 
     await pumpWithUseLocalDbOff(tester);
     await tester.pumpAndSettle();
@@ -99,7 +96,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(postCalls, 1);
-    final after = (await postDao.load()).length;
+    final after = (await tester.runAsync(() => postDao.load()))!.length;
     expect(after, before, reason: 'no pending_post row should be written');
   });
 
@@ -111,7 +108,7 @@ void main() {
     api.onPostExpense = (_, _, _, _, _, _) async {
       throw StateError('network down');
     };
-    final before = (await postDao.load()).length;
+    final before = (await tester.runAsync(() => postDao.load()))!.length;
 
     await pumpWithUseLocalDbOff(tester);
     await tester.pumpAndSettle();
@@ -124,11 +121,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // _saveDirect reports the post failure via FlutterError.reportError
+    // (observability) before showing the inline error — consume that
+    // expected error so it doesn't fail the test.
+    expect(tester.takeException(), isA<StateError>());
     expect(
       find.textContaining(en.expensePostFailedMessage),
       findsWidgets,
     );
-    final after = (await postDao.load()).length;
+    final after = (await tester.runAsync(() => postDao.load()))!.length;
     expect(after, before, reason: 'failure must NOT enqueue');
   });
 }
