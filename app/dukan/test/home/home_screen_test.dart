@@ -45,7 +45,7 @@ void main() {
     expect(find.text(en.drawerProducts), findsAtLeastNWidgets(1));
   });
 
-  testWidgets('drawer hamburger + sign-out icons appear when shop and onSignOut are set', (
+  testWidgets('AppBar shows drawer hamburger + language globe (logout moved to drawer)', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -59,7 +59,11 @@ void main() {
 
     // Scaffold's drawer auto-installs the hamburger menu icon.
     expect(find.byIcon(Icons.menu), findsOneWidget);
-    expect(find.byIcon(Icons.logout), findsOneWidget);
+    // Language picker globe on the AppBar (replaces the old
+    // logout button — logout is now inside the drawer).
+    expect(find.byIcon(Icons.language), findsOneWidget);
+    // Logout is no longer in the AppBar.
+    expect(find.byIcon(Icons.logout), findsNothing);
   });
 
   testWidgets('opening drawer shows the grouped destinations', (tester) async {
@@ -107,7 +111,7 @@ void main() {
     expect(find.text(en.drawerSettings), findsOneWidget);
   });
 
-  testWidgets('sign-out icon hidden when onSignOut is null', (tester) async {
+  testWidgets('drawer sign-out tile hidden when onSignOut is null', (tester) async {
     await tester.pumpWidget(
       wrapWithApp(
         HomeScreen(shop: fakeShop()),
@@ -117,6 +121,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // Open the drawer and verify the logout tile is absent.
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
     expect(find.byIcon(Icons.logout), findsNothing);
   });
 

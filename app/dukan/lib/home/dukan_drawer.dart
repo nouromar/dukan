@@ -24,8 +24,9 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/storage/storage_sync_screen.dart';
 
 class DukanDrawer extends StatelessWidget {
-  const DukanDrawer({required this.shop, super.key});
+  const DukanDrawer({required this.shop, this.onSignOut, super.key});
   final ShopSummary shop;
+  final VoidCallback? onSignOut;
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +134,21 @@ class DukanDrawer extends StatelessWidget {
               label: l.storageSyncDrawerEntry,
               builder: (_) => const StorageSyncScreen(),
             ),
+            if (onSignOut != null) ...[
+              const Divider(height: 24),
+              // Logout sits at the bottom of the drawer (moved
+              // from the home AppBar) so the daily-flow screens
+              // don't show a destructive action above the fold.
+              ListTile(
+                dense: true,
+                leading: const Icon(Icons.logout),
+                title: Text(l.signOut),
+                onTap: () {
+                  Navigator.of(context).pop();  // close drawer
+                  onSignOut!.call();
+                },
+              ),
+            ],
           ],
         ),
       ),

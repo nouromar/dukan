@@ -18,6 +18,7 @@ import 'package:dukan/parties/suppliers_screen.dart';
 import 'package:dukan/reports/low_stock_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/sale/sale_screen.dart';
+import 'package:dukan/settings/language_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/favorites_cache.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -72,7 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildScaffold(BuildContext context, ShopSummary? shop, l) {
     return Scaffold(
-      drawer: shop != null ? DukanDrawer(shop: shop) : null,
+      drawer: shop != null
+          ? DukanDrawer(shop: shop, onSignOut: widget.onSignOut)
+          : null,
       // AppBar title carries the shop name when one is selected — the
       // shopkeeper opens the app to act on THIS shop, and "Dukan"
       // (the brand) is on the splash + Play Store. Falls back to the
@@ -81,12 +84,15 @@ class _HomeScreenState extends State<HomeScreen> {
         context,
         shop?.name ?? l.appTitle,
         actions: [
-          if (widget.onSignOut != null)
-            IconButton(
-              tooltip: l.signOut,
-              onPressed: widget.onSignOut,
-              icon: const Icon(Icons.logout),
-            ),
+          // Language picker — bottom sheet with English / Somali.
+          // Logout moved to the drawer (Setup section) per UX
+          // simplification — daily flows shouldn't display a
+          // logout button in eyesight.
+          IconButton(
+            tooltip: l.languageEnglish,  // generic "language" hint
+            onPressed: () => showLanguageSheet(context),
+            icon: const Icon(Icons.language),
+          ),
         ],
       ),
       body: SafeArea(
