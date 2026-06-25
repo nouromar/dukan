@@ -6360,6 +6360,165 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------------
+-- §CAT manage categories (0076): owner CRUD on shop product + expense
+-- categories, idempotency, shop isolation, global-row protection, the
+-- set_shop_item_category scope guard, and cashier/unrelated denial.
+-- ---------------------------------------------------------------------------
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';  -- owner
+
+do $$
+declare
+  v_shop_id    uuid;
+  v_other_shop uuid;
+  v_cat_id     uuid := gen_random_uuid();
+  v_exp_id     uuid := gen_random_uuid();
+  v_item_id    uuid;
+  v_global_cat uuid;
+  v_row_shop   uuid;
+  v_name       text;
+  v_active     boolean;
+  v_count      integer;
+  v_failed     boolean;
+begin
+  select id into v_shop_id    from public.shop where name = 'Setup Checklist Shop';
+  select id into v_other_shop from public.shop where name = 'Main Shop';
+
+  -- create_shop_category (owner happy path)
+  perform public.create_shop_category(v_shop_id, v_cat_id, 'Khat', 'op-cat-1');
+  select name, is_active, shop_id into v_name, v_active, v_row_shop
+    from public.category where id = v_cat_id;
+  if v_name <> 'Khat' or not v_active or v_row_shop is distinct from v_shop_id then
+    raise exception 'CAT: create_shop_category did not persist correctly';
+  end if;
+
+  -- idempotent: same client_op_id + id → still one row
+  perform public.create_shop_category(v_shop_id, v_cat_id, 'Khat', 'op-cat-1');
+  select count(*) into v_count from public.category where id = v_cat_id;
+  if v_count <> 1 then
+    raise exception 'CAT: create_shop_category not idempotent (% rows)', v_count;
+  end if;
+
+  -- appears in list_categories for this shop, flagged is_custom...
+  if not exists (
+    select 1 from public.list_categories('en', v_shop_id)
+     where id = v_cat_id and is_custom
+  ) then
+    raise exception 'CAT: custom category missing from list_categories';
+  end if;
+  -- ...and NOT for a shop that does not own it
+  if exists (
+    select 1 from public.list_categories('en', v_other_shop) where id = v_cat_id
+  ) then
+    raise exception 'CAT: custom category leaked to another shop';
+  end if;
+
+  -- rename
+  perform public.rename_shop_category(v_shop_id, v_cat_id, 'Khat Leaves', null);
+  if (select name from public.category where id = v_cat_id) <> 'Khat Leaves' then
+    raise exception 'CAT: rename_shop_category did not persist';
+  end if;
+
+  -- cannot rename a GLOBAL category (shop_id null)
+  select id into v_global_cat from public.category where shop_id is null limit 1;
+  v_failed := false;
+  begin
+    perform public.rename_shop_category(v_shop_id, v_global_cat, 'Hijack', null);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'CAT: owner renamed a global category';
+  end if;
+
+  -- hide removes it from list_categories; re-activate restores
+  perform public.set_shop_category_active(v_shop_id, v_cat_id, false, null);
+  if exists (
+    select 1 from public.list_categories('en', v_shop_id) where id = v_cat_id
+  ) then
+    raise exception 'CAT: hidden category still listed';
+  end if;
+  perform public.set_shop_category_active(v_shop_id, v_cat_id, true, null);
+
+  -- scope guard: cannot assign this shop's custom category to an item in
+  -- another shop (both owned by user1 → auth passes; scope check fires)
+  select id into v_item_id from public.shop_item where shop_id = v_other_shop limit 1;
+  if v_item_id is not null then
+    v_failed := false;
+    begin
+      perform public.set_shop_item_category(v_other_shop, v_item_id, v_cat_id);
+    exception when raise_exception then v_failed := true;
+    end;
+    if not v_failed then
+      raise exception 'CAT: set_shop_item_category accepted a foreign-shop category';
+    end if;
+  end if;
+
+  -- expense category CRUD
+  perform public.create_expense_category(v_shop_id, v_exp_id, 'Generator Fuel', 'op-exp-1');
+  if (select name from public.expense_category where id = v_exp_id) <> 'Generator Fuel' then
+    raise exception 'CAT: create_expense_category did not persist';
+  end if;
+  perform public.rename_expense_category(v_shop_id, v_exp_id, 'Fuel', null);
+  if (select name from public.expense_category where id = v_exp_id) <> 'Fuel' then
+    raise exception 'CAT: rename_expense_category did not persist';
+  end if;
+  perform public.set_expense_category_active(v_shop_id, v_exp_id, false, null);
+  if (select is_active from public.expense_category where id = v_exp_id) then
+    raise exception 'CAT: set_expense_category_active did not hide';
+  end if;
+
+  raise notice 'CAT: owner happy-path + scope tests passed';
+end;
+$$;
+
+-- Cashier (user2) cannot manage categories (config = setup-only)
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+do $$
+declare
+  v_shop_id uuid;
+  v_failed  boolean;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  v_failed := false;
+  begin
+    perform public.create_shop_category(v_shop_id, gen_random_uuid(), 'CashierCat', null);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'CAT: cashier created a product category';
+  end if;
+
+  v_failed := false;
+  begin
+    perform public.create_expense_category(v_shop_id, gen_random_uuid(), 'CashierExp', null);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'CAT: cashier created an expense category';
+  end if;
+  raise notice 'CAT: cashier denial passed';
+end;
+$$;
+
+-- Unrelated user (user3) denied
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+do $$
+declare
+  v_shop_id uuid;
+  v_failed  boolean := false;
+begin
+  select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
+  begin
+    perform public.create_shop_category(v_shop_id, gen_random_uuid(), 'IntruderCat', null);
+  exception when raise_exception then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'CAT: unrelated user created a category';
+  end if;
+  raise notice 'CAT: unrelated denial passed';
+end;
+$$;
+
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 

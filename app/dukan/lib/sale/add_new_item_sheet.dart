@@ -169,7 +169,8 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
       final api = context.read<ShopApi>();
       _optionsFuture =
           api.fetchNewItemOptions(categoryId: _categoryId, locale: current);
-      _categoriesFuture = api.listCategories(locale: current);
+      _categoriesFuture =
+          api.listCategories(locale: current, shopId: widget.shop.id);
     }
   }
 

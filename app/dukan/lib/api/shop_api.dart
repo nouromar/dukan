@@ -985,11 +985,15 @@ class ShopApi {
   /// Catalog top-level categories for the Add new item + editor
   /// dropdowns. Locale-resolved server-side; the UI just renders
   /// `name`.
-  Future<List<CategoryOption>> listCategories({String? locale}) async {
+  Future<List<CategoryOption>> listCategories({
+    String? locale,
+    String? shopId,
+  }) async {
     final rows = await _client.rpc(
       'list_categories',
       params: {
         if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (shopId != null) 'p_shop_id': shopId, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];
@@ -1733,6 +1737,103 @@ class ShopApi {
         'p_client_op_id': clientOpId,
       },
     );
+  }
+
+  // ---- Owner-managed categories (0076) ---------------------------------
+  // Product categories live in the shared `category` table with a
+  // per-shop `shop_id`; the create RPC takes a client-generated id so an
+  // offline-created row reconciles to the same server row on sync.
+
+  Future<String> createShopCategory({
+    required String shopId,
+    required String categoryId,
+    required String name,
+    String? clientOpId,
+  }) async {
+    final id = await _client.rpc(
+      'create_shop_category',
+      params: {
+        'p_shop_id': shopId,
+        'p_category_id': categoryId,
+        'p_name': name,
+        'p_client_op_id': clientOpId,
+      },
+    );
+    return id as String? ?? categoryId;
+  }
+
+  Future<void> renameShopCategory({
+    required String shopId,
+    required String categoryId,
+    required String name,
+    String? clientOpId,
+  }) async {
+    await _client.rpc('rename_shop_category', params: {
+      'p_shop_id': shopId,
+      'p_category_id': categoryId,
+      'p_name': name,
+      'p_client_op_id': clientOpId,
+    });
+  }
+
+  Future<void> setShopCategoryActive({
+    required String shopId,
+    required String categoryId,
+    required bool isActive,
+    String? clientOpId,
+  }) async {
+    await _client.rpc('set_shop_category_active', params: {
+      'p_shop_id': shopId,
+      'p_category_id': categoryId,
+      'p_is_active': isActive,
+      'p_client_op_id': clientOpId,
+    });
+  }
+
+  Future<String> createExpenseCategory({
+    required String shopId,
+    required String categoryId,
+    required String name,
+    String? clientOpId,
+  }) async {
+    final id = await _client.rpc(
+      'create_expense_category',
+      params: {
+        'p_shop_id': shopId,
+        'p_category_id': categoryId,
+        'p_name': name,
+        'p_client_op_id': clientOpId,
+      },
+    );
+    return id as String? ?? categoryId;
+  }
+
+  Future<void> renameExpenseCategory({
+    required String shopId,
+    required String categoryId,
+    required String name,
+    String? clientOpId,
+  }) async {
+    await _client.rpc('rename_expense_category', params: {
+      'p_shop_id': shopId,
+      'p_category_id': categoryId,
+      'p_name': name,
+      'p_client_op_id': clientOpId,
+    });
+  }
+
+  Future<void> setExpenseCategoryActive({
+    required String shopId,
+    required String categoryId,
+    required bool isActive,
+    String? clientOpId,
+  }) async {
+    await _client.rpc('set_expense_category_active', params: {
+      'p_shop_id': shopId,
+      'p_category_id': categoryId,
+      'p_is_active': isActive,
+      'p_client_op_id': clientOpId,
+    });
   }
 
   /// Owner-only. Soft-removes a non-base packaging — flips is_active

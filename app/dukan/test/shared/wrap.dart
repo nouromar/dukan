@@ -10,12 +10,12 @@ import 'package:provider/single_child_widget.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/auth/auth_controller.dart';
-import 'package:dukan/config/config_keys.dart';
 import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/expense/expense_controller.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/storage/app_database.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
@@ -57,7 +57,13 @@ Widget wrapWithApp(
   final queue = offlineQueueController ??
       OfflineQueueController(
         dao: PendingPostDao(AppDatabase.instance()),
-        executor: (_) async {},
+        // Drain enqueued posts to the provided (fake) ShopApi so the
+        // mutation path (#390) reaches it and tests can assert the RPC
+        // fired. Falls back to a no-op when no api is supplied. Tests
+        // wanting custom drain/failure semantics inject their own
+        // controller and bypass this default.
+        executor:
+            shopApi != null ? PostExecutor(shopApi).execute : (_) async {},
         // Zero backoff so the retry timer is effectively synchronous
         // and pumpAndSettle drains it without holding pending timers
         // past the test.
@@ -93,20 +99,17 @@ Widget wrapWithApp(
     // their own FakeConfigResolver with use_local_db: true.
     if (configResolver != null)
       ChangeNotifierProvider<ConfigResolver>.value(value: configResolver),
-    // #383-fixup: when a test opts into useLocalDb=true via
-    // configResolver, the screens' READ path looks up a
-    // LocalRepository from context. Auto-wire a thin
-    // FakeLocalRepository that forwards reads to the test's
-    // FakeShopApi so the read side keeps working. Tests can
-    // pass their own LocalRepository to override.
-    if (configResolver != null &&
-        configResolver.resolve(ConfigKeys.useLocalDb))
-      Provider<LocalRepository>.value(
-        value: localRepository ??
-            FakeLocalRepository(
-              shopApi: (shopApi is FakeShopApi) ? shopApi : FakeShopApi(),
-            ),
-      ),
+    // Always provide a LocalRepository: production (auth_bootstrap.dart)
+    // provides it unconditionally, and the screens' mutation path (#390
+    // optimistic mirror writes) reads it regardless of useLocalDb. The
+    // default thin FakeLocalRepository forwards reads to the test's
+    // FakeShopApi; tests can pass their own to override.
+    Provider<LocalRepository>.value(
+      value: localRepository ??
+          FakeLocalRepository(
+            shopApi: (shopApi is FakeShopApi) ? shopApi : FakeShopApi(),
+          ),
+    ),
   ];
 
   return MultiProvider(

@@ -117,9 +117,15 @@ Spins up a disposable Postgres in Docker, mocks `auth` and `storage` schemas, ap
 ```bash
 flutter pub get
 flutter analyze
-flutter test                                   # all tests
+flutter test                                   # all tests (pre-commit gate)
 flutter test test/auth_controller_test.dart    # single test file
 flutter test --name "createFirstShop"          # single test by name
+tool/test.sh                                   # FAST inner loop: unit tests only (skips widget tests)
+tool/test.sh full                              # whole suite via the helper
+tool/test.sh test/sync                         # targeted path(s)
+# NOTE: never run two `flutter test` at once — they share build/ + .dart_tool/
+# and corrupt each other (phantom "_pendingExceptionDetails" failures).
+# tool/test.sh refuses to start if another run is active.
 flutter run                                    # prototype mode (no Supabase)
 flutter run \
   --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \

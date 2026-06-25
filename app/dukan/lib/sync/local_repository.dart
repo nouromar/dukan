@@ -171,6 +171,32 @@ class LocalExpenseCategory {
       );
 }
 
+/// A product category from the local mirror. `shopId` is null for the
+/// global, platform-curated categories and set for this shop's custom
+/// ones (`isCustom`). Only the latter are owner-editable.
+class LocalCategory {
+  const LocalCategory({
+    required this.categoryId,
+    required this.shopId,
+    required this.name,
+    required this.isActive,
+  });
+
+  final String categoryId;
+  final String? shopId;
+  final String name;
+  final bool isActive;
+
+  bool get isCustom => shopId != null;
+
+  factory LocalCategory._fromRow(Map<String, Object?> r) => LocalCategory(
+        categoryId: r['category_id'] as String,
+        shopId: r['shop_id'] as String?,
+        name: r['name'] as String,
+        isActive: (r['is_active'] as num).toInt() == 1,
+      );
+}
+
 class LocalTransaction {
   const LocalTransaction({
     required this.txnId,
@@ -595,6 +621,25 @@ class LocalRepository {
     return rows.map(LocalExpenseCategory._fromRow).toList(growable: false);
   }
 
+  /// Product categories for the Manage Categories screen + pickers:
+  /// the global set (shop_id NULL) plus this shop's custom ones. Global
+  /// first, then alphabetical.
+  Future<List<LocalCategory>> productCategories({
+    required String shopId,
+    bool includeHidden = false,
+  }) async {
+    final db = await _db;
+    final activeClause = includeHidden ? '' : ' AND is_active = 1';
+    final rows = await db.query(
+      'local_category',
+      where:
+          'parent_id IS NULL AND (shop_id IS NULL OR shop_id = ?)$activeClause',
+      whereArgs: [shopId],
+      orderBy: '(shop_id IS NOT NULL) ASC, name COLLATE NOCASE ASC',
+    );
+    return rows.map(LocalCategory._fromRow).toList(growable: false);
+  }
+
   /// Recent sales — most-recent first. Used by Sales History.
   Future<List<LocalTransaction>> historySales({
     required String shopId,
@@ -968,6 +1013,7 @@ class LocalRepository {
           'local_category',
           {
             'category_id': raw['id'],
+            'shop_id': raw['shop_id'],
             'code': raw['code'],
             'parent_id': raw['parent_id'],
             'name': raw['name'],
@@ -1208,6 +1254,98 @@ class LocalRepository {
       where: 'shop_item_id = ?',
       whereArgs: [shopItemId],
     );
+  }
+
+  // ---- Optimistic category mirror writes (0076) ------------------------
+  // The `code` column is NOT NULL in the mirror but never displayed
+  // (the UI shows `name`); we store a local placeholder slug that the
+  // server's real code overwrites on the next categories sync.
+
+  static String _localCategoryCode(String name, String fallbackId) {
+    final slug = name
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+    if (slug.isEmpty) return 'c_${fallbackId.replaceAll('-', '').substring(0, 8)}';
+    return slug;
+  }
+
+  Future<void> upsertLocalProductCategory({
+    required String categoryId,
+    required String shopId,
+    required String name,
+    bool isActive = true,
+  }) async {
+    final db = await _db;
+    await db.insert(
+      'local_category',
+      {
+        'category_id': categoryId,
+        'shop_id': shopId,
+        'code': _localCategoryCode(name, categoryId),
+        'parent_id': null,
+        'name': name,
+        'sort_order': 0,
+        'is_active': isActive ? 1 : 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> renameLocalProductCategory({
+    required String categoryId,
+    required String name,
+  }) async {
+    final db = await _db;
+    await db.update('local_category', {'name': name},
+        where: 'category_id = ?', whereArgs: [categoryId]);
+  }
+
+  Future<void> setLocalProductCategoryActive({
+    required String categoryId,
+    required bool isActive,
+  }) async {
+    final db = await _db;
+    await db.update('local_category', {'is_active': isActive ? 1 : 0},
+        where: 'category_id = ?', whereArgs: [categoryId]);
+  }
+
+  Future<void> upsertLocalExpenseCategory({
+    required String categoryId,
+    required String shopId,
+    required String name,
+    bool isActive = true,
+  }) async {
+    final db = await _db;
+    await db.insert(
+      'local_expense_category',
+      {
+        'category_id': categoryId,
+        'shop_id': shopId,
+        'code': _localCategoryCode(name, categoryId),
+        'name': name,
+        'is_active': isActive ? 1 : 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> renameLocalExpenseCategory({
+    required String categoryId,
+    required String name,
+  }) async {
+    final db = await _db;
+    await db.update('local_expense_category', {'name': name},
+        where: 'category_id = ?', whereArgs: [categoryId]);
+  }
+
+  Future<void> setLocalExpenseCategoryActive({
+    required String categoryId,
+    required bool isActive,
+  }) async {
+    final db = await _db;
+    await db.update('local_expense_category', {'is_active': isActive ? 1 : 0},
+        where: 'category_id = ?', whereArgs: [categoryId]);
   }
 
   /// Soft-delete a packaging — sets is_active=0 + clears default flags.

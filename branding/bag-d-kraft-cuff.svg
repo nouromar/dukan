@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- BAG-D "Folded-cuff kraft bag" — green body, cream folded top band + cream D -->
-  <path d="M216 256 a40 40 0 0 1 80 0" fill="none" stroke="#005C46" stroke-width="14" stroke-linecap="round"/>
-  <rect x="168" y="252" width="176" height="186" rx="14" fill="#005C46"/>
-  <path d="M160 252 H352 L336 290 H176 Z" fill="#F5EFE6"/>
-  <path fill="#F5EFE6" fill-rule="evenodd"
-        d="M236 312 L274 312 A32 32 0 0 1 274 404 L236 404 Z
-           M258 336 L274 336 A14 14 0 0 1 274 380 L258 380 Z"/>
-</svg>

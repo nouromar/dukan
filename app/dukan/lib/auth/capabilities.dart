@@ -71,6 +71,7 @@ class Capabilities {
   bool get canActivateFromCatalog => has('inventory.product.activate');
   bool get canBindBarcode => has('inventory.barcode.bind');
   bool get canAdjustStock => has('inventory.adjustment.post');
+  bool get canManageCategories => has('inventory.category.manage');
 
   // ---- People ----
   bool get canViewParties => has('people.party.view');

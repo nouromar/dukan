@@ -76,8 +76,12 @@ class FakeConfigResolver extends ConfigResolver {
 /// will throw if you try to call it (no real DB). Add overrides
 /// only when a test actually needs them.
 class FakeLocalRepository extends LocalRepository {
+  // Back onto the per-test seeded in-memory AppDatabase (flutter_test_config)
+  // so non-overridden writes (e.g. the #390 optimistic mirror writes the
+  // mutation path makes) complete as no-ops against empty tables instead of
+  // hanging on a never-completing future. Reads stay overridden below.
   FakeLocalRepository({required this.shopApi})
-      : super(Completer<AppDatabase>().future);
+      : super(AppDatabase.instance());
 
   final FakeShopApi shopApi;
 
@@ -1170,7 +1174,60 @@ class FakeShopApi implements ShopApi {
   Future<List<CategoryOption>> Function(String? locale)? onListCategories;
 
   @override
-  Future<List<CategoryOption>> listCategories({String? locale}) async {
+  Future<String> createShopCategory({
+    required String shopId,
+    required String categoryId,
+    required String name,
+    String? clientOpId,
+  }) async =>
+      categoryId;
+
+  @override
+  Future<void> renameShopCategory({
+    required String shopId,
+    required String categoryId,
+    required String name,
+    String? clientOpId,
+  }) async {}
+
+  @override
+  Future<void> setShopCategoryActive({
+    required String shopId,
+    required String categoryId,
+    required bool isActive,
+    String? clientOpId,
+  }) async {}
+
+  @override
+  Future<String> createExpenseCategory({
+    required String shopId,
+    required String categoryId,
+    required String name,
+    String? clientOpId,
+  }) async =>
+      categoryId;
+
+  @override
+  Future<void> renameExpenseCategory({
+    required String shopId,
+    required String categoryId,
+    required String name,
+    String? clientOpId,
+  }) async {}
+
+  @override
+  Future<void> setExpenseCategoryActive({
+    required String shopId,
+    required String categoryId,
+    required bool isActive,
+    String? clientOpId,
+  }) async {}
+
+  @override
+  Future<List<CategoryOption>> listCategories({
+    String? locale,
+    String? shopId,
+  }) async {
     if (onListCategories != null) return onListCategories!(locale);
     return const [
       CategoryOption(id: 'cat-grocery', code: 'grocery', name: 'Grocery'),

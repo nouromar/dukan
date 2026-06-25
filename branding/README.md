@@ -1,88 +1,31 @@
-# Dukan branding — app icon concepts
+# Dukan branding — app icon
 
-Open each `.svg` in a browser (drag onto a Chrome / Safari window) to
-preview at full size. Resize the window down to ~48 px to test the
-mark still reads — that's the only test that actually matters for an
-app icon.
+## Final mark
 
-## What's here
+`vault-d-c-disc-d.svg` — a green **vault/safe** with a gold dial disc and the
+**"D" knocked out** of the disc in negative space. It reads as "keep the
+business's money safe" while tying back to Dukan via the D.
 
-### First-pass directions (mixed colours, exploratory)
+512 × 512, transparent background, mark inside the Android adaptive-icon
+**safe zone** (centre ~66% of canvas) so circular / squircle / rounded-square
+masks won't clip it.
 
-| File                          | Direction                                                                                                          |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `concept-d-letter.svg`        | Bold letterform "D". Most scalable; reads at 48dp. Single colour.                                                  |
-| `concept-shop-arch.svg`       | Storefront silhouette with arched doorway. Single colour. Not letter-dependent.                                    |
-| `concept-shop-with-d.svg`     | Shop body + canopy + "D" inset in the doorway. Two colours.                                                        |
+### Colours
+| Token | Hex | Use |
+| ----- | --- | --- |
+| Green (primary) | `#005C46` | safe body + D (matches `seedColor`, `app/dukan/lib/main.dart`) |
+| Gold (accent)   | `#F2B441` | dial disc / money |
+| Cream           | `#F5EFE6` | door seam + handle |
 
-### Variations around "shop + D" — all in brand green `#005C46`
+## Next step — ship it
 
-| File                                | Treatment                                                                                                       |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `v1-d-in-arched-doorway.svg`        | Arched doorway, "D" inset inside. Most figurative — shop reads first, D rewards a second look.                  |
-| `v2-d-shaped-doorway-mono.svg`      | The doorway IS a D (upright, curved-right). Single colour, cleanest scaling, fewest moving parts.               |
-| `v3-d-on-canopy-sign.svg`           | Flat-roof modern shop; "D" lives on the canopy band like a real shopfront sign. Two-colour.                     |
-| `v4-tall-d-in-door.svg`             | Bold "D" almost fills the doorway. D is the hero, shop is the frame. Two-colour.                                |
+1. Export `vault-d-c-disc-d.svg` to `icon.png` (1024 × 1024, transparent),
+   plus `icon_foreground.png` and `icon_background.png` (`#005C46`) for the
+   Android adaptive icon.
+2. Add `flutter_launcher_icons` to `app/dukan/pubspec.yaml` dev_dependencies
+   with a config block, then run `dart run flutter_launcher_icons` to generate
+   every Android density + iOS size + web favicon, replacing the default
+   Flutter `ic_launcher.png`.
 
-### Second-pass additions — fill the gaps (warmth, market read, business-not-just-shop, wordmark)
-
-| File                       | Treatment                                                                                                          |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `new-a-awning.svg`         | Scalloped awning over shop + cream doorway. Warmer/friendlier than the pitched-roof marks. Green + cream.          |
-| `new-b-doorway-gold.svg`   | Same geometry as `v1` but the doorway glows **gold** `#F2B441` — "the shop is open". Introduces a warm accent.     |
-| `new-c-bag-d.svg`          | Shopping bag with the "D" cut in. Reads as "any business", not only a storefront. Green + cream.                   |
-| `new-d-wordmark.svg`       | Lowercase "dukan" wordmark for splash / app-bar / web portal. Outline the `<text>` to paths before shipping.       |
-
-### Bag + D variations — exploring the `new-c` direction
-
-| File                          | Bag style                                  | Colour                          |
-| ----------------------------- | ------------------------------------------ | ------------------------------- |
-| `bag-a-grocery-cream-d.svg`   | Classic grocery bag, two punched handles   | Green bag, cream D              |
-| `bag-b-grocery-gold-d.svg`    | Same grocery bag                           | Green bag, **gold** D (warm)    |
-| `bag-c-gold-bag-green-d.svg`  | Single-arc handle bag                      | **Gold bag**, green D (brightest) |
-| `bag-d-kraft-cuff.svg`        | Folded-cuff kraft bag (cream top band)     | Green bag, cream cuff + cream D |
-| `bag-e-lineart.svg`           | Minimal line-art, stroked D                | Single green stroke (lightest)  |
-| `bag-f-tote.svg`              | Tote bag, open loop handles                | Green bag, cream D (modern)     |
-
-### Inventory / saving / organizing family — drops the shop+D idea entirely
-
-A different concept: signal what the app *does* (track inventory, organize
-stock, save & manage money) rather than "shopping". Gold `#F2B441` = money.
-
-| File                          | Symbol                              | Theme                                  |
-| ----------------------------- | ----------------------------------- | -------------------------------------- |
-| `inv-a-stacked-boxes.svg`     | Three stacked taped cartons         | Inventory / organizing (purest)        |
-| `inv-b-box-coin.svg`          | Carton + gold coin                  | Inventory **+** money (unified)        |
-| `inv-c-coin-stack.svg`        | Stack of 4 gold coins               | Saving / money (currency-neutral)      |
-| `inv-d-organizer-grid.svg`    | 2×2 grid, one cell gold             | Organizing; gold cell = value tracked  |
-| `inv-e-savings-jar.svg`       | Cream glass jar + gold coins + slot | Saving money                           |
-| `inv-f-vault.svg`             | Green safe + gold dial              | Keep business money safe               |
-
-All canvases are 512 × 512 (the wordmark is 360 × 120), paths inside the
-**adaptive-icon safe zone** (centre ~66% of canvas) so Android's circular /
-squircle / rounded-square masks won't clip the mark.
-
-## Brand colour
-
-Primary `#005C46` (deep forest green) — matches `seedColor` in
-`app/dukan/lib/main.dart`. Every shipped variation uses this so the
-icon is consistent with the app's primary buttons.
-
-Cream secondary `#F5EFE6` is used only for negative-space affordances
-(doorway openings, canopy bands) — never as a brand-bearing colour.
-
-## Next step
-
-1. Pick one of v1 – v4. Refine if you want — a Fiverr / Dribbble
-   designer pass (~$50-200) will give you a polished SVG + 1024×1024
-   PNG + adaptive-icon foreground / background layers split for
-   Android.
-2. Save the chosen master as `branding/icon.png` (1024×1024, transparent
-   background) plus `branding/icon_foreground.png` and
-   `branding/icon_background.png` for Android adaptive icons.
-3. Add `flutter_launcher_icons` to `app/dukan/pubspec.yaml`
-   dev_dependencies and run `dart run flutter_launcher_icons` —
-   generates every Android density + iOS size + web favicons in one go.
-
-When you've picked + have the PNG master, ask me to wire
-`flutter_launcher_icons`.
+Test: open the SVG in a browser and shrink to ~48 px — the D should stay
+legible inside the disc and not fill in.

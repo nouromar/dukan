@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Dukan'**
+  /// **'DukanPro'**
   String get appTitle;
 
   /// No description provided for @languageEnglish.
@@ -1115,7 +1115,7 @@ abstract class AppLocalizations {
   /// No description provided for @supabaseConfigTitle.
   ///
   /// In en, this message translates to:
-  /// **'Connect Dukan to Supabase'**
+  /// **'Connect DukanPro to Supabase'**
   String get supabaseConfigTitle;
 
   /// No description provided for @supabaseConfigMessage.
@@ -1163,7 +1163,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginBody.
   ///
   /// In en, this message translates to:
-  /// **'We will send a one-time code. Dukan can deliver it by WhatsApp from the backend.'**
+  /// **'We will send a one-time code. DukanPro can deliver it by WhatsApp from the backend.'**
   String get loginBody;
 
   /// No description provided for @loginEmailHeadline.
@@ -3791,6 +3791,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Storage & sync'**
   String get storageSyncDrawerEntry;
+
+  /// No description provided for @drawerManageCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get drawerManageCategories;
+
+  /// No description provided for @manageCategoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get manageCategoriesTitle;
+
+  /// No description provided for @manageCategoriesProductsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get manageCategoriesProductsTab;
+
+  /// No description provided for @manageCategoriesExpensesTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get manageCategoriesExpensesTab;
+
+  /// No description provided for @manageCategoriesAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get manageCategoriesAdd;
+
+  /// No description provided for @manageCategoriesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories yet. Tap + to add one.'**
+  String get manageCategoriesEmpty;
+
+  /// No description provided for @manageCategoriesDefaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get manageCategoriesDefaultBadge;
+
+  /// No description provided for @manageCategoriesNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category name'**
+  String get manageCategoriesNameLabel;
+
+  /// No description provided for @manageCategoriesNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New category'**
+  String get manageCategoriesNewTitle;
+
+  /// No description provided for @manageCategoriesRenameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename category'**
+  String get manageCategoriesRenameTitle;
+
+  /// No description provided for @manageCategoriesSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get manageCategoriesSave;
+
+  /// No description provided for @manageCategoriesRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get manageCategoriesRename;
+
+  /// No description provided for @manageCategoriesHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get manageCategoriesHide;
+
+  /// No description provided for @manageCategoriesHideConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide category?'**
+  String get manageCategoriesHideConfirmTitle;
+
+  /// No description provided for @manageCategoriesHideConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It will no longer appear when adding or editing items. Items already using it keep it until you change them.'**
+  String get manageCategoriesHideConfirmBody;
 
   /// No description provided for @failedPostsTitle.
   ///

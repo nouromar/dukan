@@ -9,7 +9,7 @@ class AppLocalizationsSo extends AppLocalizations {
   AppLocalizationsSo([String locale = 'so']) : super(locale);
 
   @override
-  String get appTitle => 'Dukaan';
+  String get appTitle => 'DukanPro';
 
   @override
   String get languageEnglish => 'Ingiriis';
@@ -586,7 +586,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get other => 'Kale';
 
   @override
-  String get supabaseConfigTitle => 'Dukaan ku xir Supabase';
+  String get supabaseConfigTitle => 'DukanPro ku xir Supabase';
 
   @override
   String get supabaseConfigMessage =>
@@ -2346,6 +2346,53 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get storageSyncDrawerEntry => 'Kayd & is-waafajin';
+
+  @override
+  String get drawerManageCategories => 'Qaybaha';
+
+  @override
+  String get manageCategoriesTitle => 'Qaybaha';
+
+  @override
+  String get manageCategoriesProductsTab => 'Alaabta';
+
+  @override
+  String get manageCategoriesExpensesTab => 'Kharashyada';
+
+  @override
+  String get manageCategoriesAdd => 'Ku dar qayb';
+
+  @override
+  String get manageCategoriesEmpty =>
+      'Wali qaybo ma jiraan. Taabo + si aad u darto.';
+
+  @override
+  String get manageCategoriesDefaultBadge => 'Guud';
+
+  @override
+  String get manageCategoriesNameLabel => 'Magaca qaybta';
+
+  @override
+  String get manageCategoriesNewTitle => 'Qayb cusub';
+
+  @override
+  String get manageCategoriesRenameTitle => 'Magac-beddel qaybta';
+
+  @override
+  String get manageCategoriesSave => 'Kaydi';
+
+  @override
+  String get manageCategoriesRename => 'Magac beddel';
+
+  @override
+  String get manageCategoriesHide => 'Qari';
+
+  @override
+  String get manageCategoriesHideConfirmTitle => 'Qari qaybta?';
+
+  @override
+  String get manageCategoriesHideConfirmBody =>
+      'Mar dambe kama soo bixi doonto marka aad alaab dartid ama wax ka beddeshid. Alaabta hadda isticmaasha way sii haysanaysaa ilaa aad beddesho.';
 
   @override
   String get failedPostsTitle => 'Kuwa guul-darreystay';

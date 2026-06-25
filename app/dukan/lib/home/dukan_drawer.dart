@@ -8,8 +8,10 @@
 // daily action.
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/expense/expense_history_screen.dart';
 import 'package:dukan/parties/customers_screen.dart';
 import 'package:dukan/parties/suppliers_screen.dart';
@@ -19,6 +21,7 @@ import 'package:dukan/products/top_movers_screen.dart';
 import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/reports/low_stock_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
+import 'package:dukan/settings/manage_categories_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/storage/storage_sync_screen.dart';
@@ -32,6 +35,7 @@ class DukanDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     final theme = Theme.of(context);
+    final caps = context.watch<AuthController>().capabilities;
     return Drawer(
       child: SafeArea(
         child: ListView(
@@ -129,6 +133,12 @@ class DukanDrawer extends StatelessWidget {
               label: l.drawerSettings,
               builder: (_) => SettingsScreen(shop: shop),
             ),
+            if (caps.canManageCategories)
+              _DrawerItem(
+                icon: Icons.category_outlined,
+                label: l.drawerManageCategories,
+                builder: (_) => ManageCategoriesScreen(shop: shop),
+              ),
             _DrawerItem(
               icon: Icons.cloud_sync_outlined,
               label: l.storageSyncDrawerEntry,

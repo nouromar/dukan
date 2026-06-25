@@ -132,7 +132,8 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       if (detail != null) {
         List<CategoryOption> categories;
         try {
-          categories = await api.listCategories(locale: _locale);
+          categories =
+              await api.listCategories(locale: _locale, shopId: widget.shop.id);
         } catch (_) {
           categories = const <CategoryOption>[];
         }
@@ -150,7 +151,8 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       shopItemId: widget.shopItemId,
       locale: _locale,
     );
-    final categoriesF = api.listCategories(locale: _locale);
+    final categoriesF =
+        api.listCategories(locale: _locale, shopId: widget.shop.id);
     final results = await Future.wait([detailF, categoriesF]);
     final detail = results[0] as ShopItemDetail;
     _liveDisplayName = detail.header.displayName;

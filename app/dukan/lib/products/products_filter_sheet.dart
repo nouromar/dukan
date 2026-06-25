@@ -55,18 +55,21 @@ class ProductsFilters {
 Future<ProductsFilters?> showProductsFilterSheet(
   BuildContext context, {
   required ProductsFilters current,
+  required String shopId,
 }) {
   return showModalBottomSheet<ProductsFilters>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (sheetContext) => _ProductsFilterSheetBody(initial: current),
+    builder: (sheetContext) =>
+        _ProductsFilterSheetBody(initial: current, shopId: shopId),
   );
 }
 
 class _ProductsFilterSheetBody extends StatefulWidget {
-  const _ProductsFilterSheetBody({required this.initial});
+  const _ProductsFilterSheetBody({required this.initial, required this.shopId});
   final ProductsFilters initial;
+  final String shopId;
 
   @override
   State<_ProductsFilterSheetBody> createState() =>
@@ -88,6 +91,7 @@ class _ProductsFilterSheetBodyState extends State<_ProductsFilterSheetBody> {
     super.didChangeDependencies();
     _categoriesFuture ??= context.read<ShopApi>().listCategories(
           locale: Localizations.localeOf(context).languageCode,
+          shopId: widget.shopId,
         );
   }
 

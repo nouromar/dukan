@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- BAG-F "Tote bag" — open loop handles, green body, cream D (modern retail) -->
-  <path d="M200 252 C200 192 252 192 252 252" fill="none" stroke="#005C46" stroke-width="18"/>
-  <path d="M262 252 C262 192 314 192 314 252" fill="none" stroke="#005C46" stroke-width="18"/>
-  <path fill="#005C46" d="M168 250 H346 L332 422 a22 22 0 0 1 -22 20 H202 a22 22 0 0 1 -22 -20 Z"/>
-  <path fill="#F5EFE6" fill-rule="evenodd"
-        d="M236 296 L276 296 A32 32 0 0 1 276 392 L236 392 Z
-           M258 320 L276 320 A14 14 0 0 1 276 368 L258 368 Z"/>
-</svg>

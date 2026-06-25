@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Dukan';
+  String get appTitle => 'DukanPro';
 
   @override
   String get languageEnglish => 'English';
@@ -585,7 +585,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get other => 'Other';
 
   @override
-  String get supabaseConfigTitle => 'Connect Dukan to Supabase';
+  String get supabaseConfigTitle => 'Connect DukanPro to Supabase';
 
   @override
   String get supabaseConfigMessage =>
@@ -612,7 +612,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginBody =>
-      'We will send a one-time code. Dukan can deliver it by WhatsApp from the backend.';
+      'We will send a one-time code. DukanPro can deliver it by WhatsApp from the backend.';
 
   @override
   String get loginEmailHeadline => 'Use your email';
@@ -2324,6 +2324,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get storageSyncDrawerEntry => 'Storage & sync';
+
+  @override
+  String get drawerManageCategories => 'Categories';
+
+  @override
+  String get manageCategoriesTitle => 'Categories';
+
+  @override
+  String get manageCategoriesProductsTab => 'Products';
+
+  @override
+  String get manageCategoriesExpensesTab => 'Expenses';
+
+  @override
+  String get manageCategoriesAdd => 'Add category';
+
+  @override
+  String get manageCategoriesEmpty => 'No categories yet. Tap + to add one.';
+
+  @override
+  String get manageCategoriesDefaultBadge => 'Default';
+
+  @override
+  String get manageCategoriesNameLabel => 'Category name';
+
+  @override
+  String get manageCategoriesNewTitle => 'New category';
+
+  @override
+  String get manageCategoriesRenameTitle => 'Rename category';
+
+  @override
+  String get manageCategoriesSave => 'Save';
+
+  @override
+  String get manageCategoriesRename => 'Rename';
+
+  @override
+  String get manageCategoriesHide => 'Hide';
+
+  @override
+  String get manageCategoriesHideConfirmTitle => 'Hide category?';
+
+  @override
+  String get manageCategoriesHideConfirmBody =>
+      'It will no longer appear when adding or editing items. Items already using it keep it until you change them.';
 
   @override
   String get failedPostsTitle => 'Failed posts';

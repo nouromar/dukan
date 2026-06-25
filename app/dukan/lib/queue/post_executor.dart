@@ -153,6 +153,12 @@ class PostExecutor {
       case 'remove_shop_item_barcode':
       case 'set_primary_shop_item_barcode':
       case 'update_party':
+      case 'create_shop_category':
+      case 'rename_shop_category':
+      case 'set_shop_category_active':
+      case 'create_expense_category':
+      case 'rename_expense_category':
+      case 'set_expense_category_active':
         return true;
       default:
         return false;
@@ -235,6 +241,48 @@ class PostExecutor {
           partyId: p['party_id'] as String,
           name: p['name'] as String,
           phone: p['phone'] as String?,
+          clientOpId: clientOpId,
+        );
+      case 'create_shop_category':
+        await _api.createShopCategory(
+          shopId: shopId,
+          categoryId: p['category_id'] as String,
+          name: p['name'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'rename_shop_category':
+        await _api.renameShopCategory(
+          shopId: shopId,
+          categoryId: p['category_id'] as String,
+          name: p['name'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'set_shop_category_active':
+        await _api.setShopCategoryActive(
+          shopId: shopId,
+          categoryId: p['category_id'] as String,
+          isActive: p['is_active'] as bool,
+          clientOpId: clientOpId,
+        );
+      case 'create_expense_category':
+        await _api.createExpenseCategory(
+          shopId: shopId,
+          categoryId: p['category_id'] as String,
+          name: p['name'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'rename_expense_category':
+        await _api.renameExpenseCategory(
+          shopId: shopId,
+          categoryId: p['category_id'] as String,
+          name: p['name'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'set_expense_category_active':
+        await _api.setExpenseCategoryActive(
+          shopId: shopId,
+          categoryId: p['category_id'] as String,
+          isActive: p['is_active'] as bool,
           clientOpId: clientOpId,
         );
       default:
@@ -376,6 +424,26 @@ Map<String, dynamic> buildSetShopItemCategoryParams({
       'shop_item_id': shopItemId,
       'category_id': categoryId,
     };
+
+// Manage-categories (0076). Create passes a client-generated category_id
+// so the optimistic mirror row and the server row share one id.
+Map<String, dynamic> buildCreateCategoryParams({
+  required String categoryId,
+  required String name,
+}) =>
+    <String, dynamic>{'category_id': categoryId, 'name': name};
+
+Map<String, dynamic> buildRenameCategoryParams({
+  required String categoryId,
+  required String name,
+}) =>
+    <String, dynamic>{'category_id': categoryId, 'name': name};
+
+Map<String, dynamic> buildSetCategoryActiveParams({
+  required String categoryId,
+  required bool isActive,
+}) =>
+    <String, dynamic>{'category_id': categoryId, 'is_active': isActive};
 
 Map<String, dynamic> buildRemoveOrDisableShopItemUnitParams({
   required String shopItemUnitId,

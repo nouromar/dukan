@@ -224,6 +224,15 @@ begin
     raise exception 'shop_item_unit not found in this shop';
   end if;
 
+  -- Audit (restored — instrumented in 0051; must survive this redefinition).
+  perform public._audit_log(
+    p_shop_id      => p_shop_id,
+    p_action_code  => 'inventory.unit.price_edit',
+    p_entity_type  => 'shop_item_unit',
+    p_entity_id    => p_shop_item_unit_id,
+    p_after        => pg_catalog.jsonb_build_object('sale_price', p_sale_price)
+  );
+
   if p_client_op_id is not null then
     insert into public.mutation_idempotency(
       shop_id, client_op_id, rpc_name, return_value
@@ -788,8 +797,9 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_name  text;
-  v_phone text;
+  v_name   text;
+  v_phone  text;
+  v_before jsonb;
 begin
   if p_client_op_id is not null and exists (
     select 1 from public.mutation_idempotency
@@ -811,6 +821,12 @@ begin
   end if;
   v_phone := nullif(pg_catalog.btrim(coalesce(p_phone, '')), '');
 
+  -- Snapshot pre-edit values for the audit before the write.
+  select pg_catalog.jsonb_build_object('name', p.name, 'phone', p.phone)
+    into v_before
+    from public.party p
+   where p.shop_id = p_shop_id and p.id = p_party_id;
+
   update public.party
      set name       = v_name,
          phone      = v_phone,
@@ -820,6 +836,16 @@ begin
   if not found then
     raise exception 'Party not found in this shop';
   end if;
+
+  -- Audit (restored — instrumented in 0051; must survive this redefinition).
+  perform public._audit_log(
+    p_shop_id      => p_shop_id,
+    p_action_code  => 'people.party.edit',
+    p_entity_type  => 'party',
+    p_entity_id    => p_party_id,
+    p_before       => v_before,
+    p_after        => pg_catalog.jsonb_build_object('name', v_name, 'phone', v_phone)
+  );
 
   if p_client_op_id is not null then
     insert into public.mutation_idempotency(

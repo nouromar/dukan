@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- BAG-E "Minimal line-art" — single green stroke, bag outline + stroked D -->
-  <path d="M176 250 H336 L350 420 a16 16 0 0 1 -16 18 H192 a16 16 0 0 1 -16 -18 Z" fill="none" stroke="#005C46" stroke-width="16" stroke-linejoin="round"/>
-  <path d="M216 252 a40 40 0 0 1 80 0" fill="none" stroke="#005C46" stroke-width="16" stroke-linecap="round"/>
-  <path d="M236 300 V388 M236 300 H266 A44 44 0 0 1 266 388 H236" fill="none" stroke="#005C46" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>
-</svg>

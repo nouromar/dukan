@@ -204,6 +204,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     final next = await showProductsFilterSheet(
       context,
       current: _filters,
+      shopId: widget.shop.id,
     );
     if (next == null || !mounted) return;
     setState(() {

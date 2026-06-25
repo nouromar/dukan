@@ -156,7 +156,8 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     final api = context.read<ShopApi>();
     final locale = Localizations.localeOf(context).languageCode;
     final units = await api.listUnits();
-    final categories = await api.listCategories(locale: locale);
+    final categories =
+        await api.listCategories(locale: locale, shopId: widget.shop.id);
     return _EditorBootstrap(units: units, categories: categories);
   }
 

@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- BAG-C "Gold bag, green D" — inverted / brightest. Single-arc handle -->
-  <path d="M216 252 a40 40 0 0 1 80 0" fill="none" stroke="#005C46" stroke-width="16" stroke-linecap="round"/>
-  <path fill="#F2B441" d="M176 250 H336 L350 420 a16 16 0 0 1 -16 18 H192 a16 16 0 0 1 -16 -18 Z"/>
-  <path fill="#005C46" fill-rule="evenodd"
-        d="M232 296 L272 296 A32 32 0 0 1 272 392 L232 392 Z
-           M254 320 L272 320 A14 14 0 0 1 272 368 L254 368 Z"/>
-</svg>

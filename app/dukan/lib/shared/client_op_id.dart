@@ -15,3 +15,16 @@ String generateClientOpId(String prefix) {
   final r = _random.nextInt(1 << 32);
   return '$prefix-$ts-$r';
 }
+
+/// A random v4 UUID, for client-generated row ids that the backend
+/// stores in a `uuid` column (e.g. an offline-created category id that
+/// must match the server row on sync). Self-contained so we don't pull
+/// the transitive `uuid` package into a direct dependency.
+String generateUuidV4() {
+  final b = List<int>.generate(16, (_) => _random.nextInt(256));
+  b[6] = (b[6] & 0x0f) | 0x40; // version 4
+  b[8] = (b[8] & 0x3f) | 0x80; // variant 10xx
+  final hex = b.map((x) => x.toRadixString(16).padLeft(2, '0')).join();
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+      '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
+}
