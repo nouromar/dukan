@@ -34,6 +34,8 @@ class PostExecutor {
         entityId = await _executePayment(post);
       case 'post_expense':
         entityId = await _executeExpense(post);
+      case 'post_inventory_adjustment':
+        entityId = await _executeInventoryAdjustment(post);
       default:
         throw UnsupportedError(
           'OfflineQueue does not yet know how to retry ${post.rpc}',
@@ -134,6 +136,19 @@ class PostExecutor {
       expenseCategoryId: p['expense_category_id'] as String,
       amount: (p['amount'] as num),
       paymentMethodCode: p['payment_method_code'] as String,
+      clientOpId: post.clientOpId,
+      notes: p['notes'] as String?,
+    );
+  }
+
+  Future<String> _executeInventoryAdjustment(PendingPost post) async {
+    final p = post.params;
+    return _api.postInventoryAdjustment(
+      shopId: post.shopId,
+      reasonCode: p['reason_code'] as String,
+      shopItemId: p['shop_item_id'] as String,
+      quantityDelta: p['quantity_delta'] as num,
+      unitCost: p['unit_cost'] as num?,
       clientOpId: post.clientOpId,
       notes: p['notes'] as String?,
     );
@@ -371,6 +386,21 @@ Map<String, dynamic> buildPostExpenseParams({
       'expense_category_id': expenseCategoryId,
       'amount': amount,
       'payment_method_code': paymentMethodCode,
+      if (notes != null) 'notes': notes,
+    };
+
+Map<String, dynamic> buildPostInventoryAdjustmentParams({
+  required String reasonCode,
+  required String shopItemId,
+  required num quantityDelta,
+  num? unitCost,
+  String? notes,
+}) =>
+    <String, dynamic>{
+      'reason_code': reasonCode,
+      'shop_item_id': shopItemId,
+      'quantity_delta': quantityDelta,
+      if (unitCost != null) 'unit_cost': unitCost,
       if (notes != null) 'notes': notes,
     };
 

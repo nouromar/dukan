@@ -97,4 +97,38 @@ void main() {
         partyId: 'cust', direction: 'I', amount: 1000);
     expect(await readBalances('cust'), [0, 0]);
   });
+
+  test('projectionDeltas sums per item; toShopItemSummary shows projected',
+      () async {
+    await database.db.insert('local_shop_item', {
+      'shop_item_id': 'si-1',
+      'shop_id': 'shop-1',
+      'item_id': 'i-1',
+      'display_name': 'Bariis',
+      'base_unit_code': 'kg',
+      'current_stock': 50,
+      'avg_cost': 0,
+      'is_active': 1,
+      'updated_at': 0,
+      'server_updated_at': 0,
+    });
+    // Two queued posts touch this item: -8 and +3 → net -5.
+    await database.db.insert('local_stock_projection',
+        {'pending_post_id': 'p1', 'shop_item_id': 'si-1', 'delta': -8});
+    await database.db.insert('local_stock_projection',
+        {'pending_post_id': 'p2', 'shop_item_id': 'si-1', 'delta': 3});
+
+    final deltas = await repo.projectionDeltas();
+    expect(deltas['si-1'], -5);
+
+    final item = (await repo.allActiveItems('shop-1'))
+        .firstWhere((i) => i.shopItemId == 'si-1');
+    final summary =
+        await repo.toShopItemSummary(item, projectionDelta: deltas['si-1'] ?? 0);
+    expect(summary.currentStock, 45); // 50 + (-5)
+
+    // No-projection default keeps the raw value.
+    final raw = await repo.toShopItemSummary(item);
+    expect(raw.currentStock, 50);
+  });
 }

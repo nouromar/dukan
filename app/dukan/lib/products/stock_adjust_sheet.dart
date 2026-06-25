@@ -13,9 +13,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/digit_input.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -186,6 +190,30 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
       _errorMessage = null;
     });
     final repo = context.read<LocalRepository>();
+    final queue = context.read<OfflineQueueController>();
+    final clientOpId = generateClientOpId('adjust');
+    final notes = _notesController.text.trim().isEmpty
+        ? null
+        : _notesController.text.trim();
+    String actorId = '';
+    try {
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {}
+    final post = PendingPost(
+      id: generateClientOpId('post'),
+      clientOpId: clientOpId,
+      shopId: widget.shop.id,
+      originalActorUserId: actorId,
+      rpc: 'post_inventory_adjustment',
+      params: buildPostInventoryAdjustmentParams(
+        reasonCode: change.reason,
+        shopItemId: widget.shopItemId,
+        quantityDelta: change.delta,
+        unitCost: unitCost,
+        notes: notes,
+      ),
+      queuedAt: DateTime.now(),
+    );
     try {
       await context.read<ShopApi>().postInventoryAdjustment(
             shopId: widget.shop.id,
@@ -193,15 +221,12 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
             shopItemId: widget.shopItemId,
             quantityDelta: change.delta,
             unitCost: unitCost,
-            clientOpId: generateClientOpId('adjust'),
-            notes: _notesController.text.trim().isEmpty
-                ? null
-                : _notesController.text.trim(),
+            clientOpId: clientOpId,
+            notes: notes,
           );
-      // Optimistically bump the mirrored stock so the item detail +
-      // product list show the new count immediately (the server has it;
-      // the local mirror would otherwise lag until the next sync). The
-      // delta is already in base units. Best-effort — sync reconciles.
+      // Online success: bump the mirror directly so the item detail +
+      // product list show the new count immediately (the server already
+      // has it; sync reconciles). Delta is already in base units.
       try {
         await repo.applyOptimisticStockDelta(
           shopItemId: widget.shopItemId,
@@ -210,23 +235,43 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
       } catch (_) {}
       if (!mounted) return;
       Navigator.of(context).pop(true);
-    } catch (error, stackTrace) {
+    } on PostgrestException catch (error, stackTrace) {
+      // Server validation reject (e.g. "reason_code 'opening' not allowed
+      // after setup", permission denied) — a retry won't help, so surface
+      // it inline and do NOT queue.
       FlutterError.reportError(FlutterErrorDetails(
         exception: error,
         stack: stackTrace,
         library: 'dukan products',
-        context: ErrorDescription('post_inventory_adjustment'),
+        context: ErrorDescription('post_inventory_adjustment (reject)'),
       ));
       if (!mounted) return;
-      // Render the server message inline when present (PostgrestException
-      // surfaces a useful message most of the time — e.g. "permission
-      // denied", "reason_code 'opening' not allowed after setup"). Fall
-      // back to the generic copy when the message is empty.
       final raw = _errorDetail(error);
       setState(() {
-        _errorMessage =
-            raw == null ? l.stockAdjustFailedMessage : '${l.stockAdjustFailedMessage}\n$raw';
+        _errorMessage = raw == null
+            ? l.stockAdjustFailedMessage
+            : '${l.stockAdjustFailedMessage}\n$raw';
       });
+    } catch (error, stackTrace) {
+      // Transient / offline — queue for retry and project the delta so the
+      // UI reflects the adjustment now; the projection clears when the
+      // post drains (or reverts on permanent failure).
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan products',
+        context: ErrorDescription('post_inventory_adjustment (queuing)'),
+      ));
+      try {
+        await repo.writeProjection(
+          pendingPostId: post.id,
+          shopItemId: widget.shopItemId,
+          delta: change.delta,
+        );
+      } catch (_) {}
+      await queue.enqueue(post);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

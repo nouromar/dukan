@@ -145,6 +145,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
     if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
       final items = await repo.allActiveItems(widget.shop.id);
+      // One batched read of pending queued stock deltas so each row shows
+      // projected stock without an N-item lookup.
+      final deltas = await repo.projectionDeltas();
       final summaries = <ShopItemSummary>[];
       for (final item in items) {
         // Apply name + category filters in-memory.
@@ -156,7 +159,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
             item.categoryId != _filters.categoryId) {
           continue;
         }
-        summaries.add(await repo.toShopItemSummary(item));
+        summaries.add(await repo.toShopItemSummary(
+          item,
+          projectionDelta: deltas[item.shopItemId] ?? 0,
+        ));
       }
       return summaries;
     }

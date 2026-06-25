@@ -506,7 +506,11 @@ class LocalRepository {
     final unitRows = await packagingsForItem(shopItemId);
     final aliasRows = await aliasesForItem(shopItemId);
     final barcodeRows = await barcodesForItem(shopItemId);
-    final summary = await toShopItemSummary(item);
+    final projected = await projectedStock(shopItemId);
+    final summary = await toShopItemSummary(
+      item,
+      projectionDelta: projected - item.currentStock,
+    );
     return ShopItemDetail(
       header: summary,
       units: unitRows
@@ -549,7 +553,10 @@ class LocalRepository {
   /// `defaultSalePrice` / `anyPriceSet` flags fall out of the unit
   /// rows so the "no price yet" indicator behaves the same way
   /// offline.
-  Future<ShopItemSummary> toShopItemSummary(LocalShopItem item) async {
+  Future<ShopItemSummary> toShopItemSummary(
+    LocalShopItem item, {
+    num projectionDelta = 0,
+  }) async {
     final units = await packagingsForItem(item.shopItemId);
     LocalShopItemUnit? defaultSale;
     LocalShopItemUnit? baseUnit;
@@ -567,13 +574,30 @@ class LocalRepository {
       categoryName: null,
       baseUnitCode: item.baseUnitCode,
       baseUnitLabel: item.baseUnitCode,
-      currentStock: item.currentStock.toDouble(),
+      // Show projected stock (mirror + pending queued deltas) so a queued
+      // sale/receive/adjustment reflects instantly; sync reconciles.
+      currentStock: (item.currentStock + projectionDelta).toDouble(),
       reorderThreshold: item.reorderThreshold?.toDouble(),
       unitCount: units.length,
       isActive: item.isActive,
       defaultSalePrice: preferred?.salePrice?.toDouble(),
       anyPriceSet: anyPriceSet,
     );
+  }
+
+  /// Sum of pending projection deltas per shop_item across the (single,
+  /// selected) shop's mirror — one query so the product list can show
+  /// projected stock without an N-item lookup. Items with no pending
+  /// delta are absent from the map (treat as 0).
+  Future<Map<String, num>> projectionDeltas() async {
+    final db = await _db;
+    final rows = await db.rawQuery(
+      'SELECT shop_item_id, SUM(delta) AS d '
+      'FROM local_stock_projection GROUP BY shop_item_id',
+    );
+    return {
+      for (final r in rows) r['shop_item_id'] as String: (r['d'] as num?) ?? 0,
+    };
   }
 
   /// Parties matching [query] within [shopId] filtered to
