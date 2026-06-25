@@ -5984,9 +5984,9 @@ declare
   v_after_set   uuid;
   v_random_ent  uuid := extensions.gen_random_uuid();
 begin
-  select id into v_shop_id from public.shop where name = 'Hodan Shop' limit 1;
+  select id into v_shop_id from public.shop where name = 'Main Shop' limit 1;
   if v_shop_id is null then
-    raise exception 'RR pre: Hodan Shop fixture missing';
+    raise exception 'RR pre: Main Shop fixture missing';
   end if;
 
   -- Insert a fixture audit row (use _audit_log helper).
@@ -6041,7 +6041,7 @@ declare
   v_synthetic   uuid := '22222222-2222-2222-2222-222222222222';
   v_failed      boolean := false;
 begin
-  select id into v_shop_id from public.shop where name = 'Hodan Shop' limit 1;
+  select id into v_shop_id from public.shop where name = 'Main Shop' limit 1;
   begin
     perform public.set_audit_original_actor(
       v_shop_id, v_synthetic, '00000000-0000-0000-0000-000000000099'
@@ -6082,9 +6082,9 @@ declare
   v_cutoff       timestamptz;
   v_audit_count  int;
 begin
-  select id into v_shop_id from public.shop where name = 'Hodan Shop' limit 1;
+  select id into v_shop_id from public.shop where name = 'Main Shop' limit 1;
   if v_shop_id is null then
-    raise exception 'SS pre: Hodan Shop fixture missing';
+    raise exception 'SS pre: Main Shop fixture missing';
   end if;
 
   -- (1) full_sync returns a populated payload + writes audit row.
@@ -6178,8 +6178,8 @@ declare
   v_failed   boolean;
 begin
   -- This user (000...3) was set up in earlier sections as NOT a
-  -- member of Hodan Shop.
-  select id into v_shop_id from public.shop where name = 'Hodan Shop' limit 1;
+  -- member of Main Shop.
+  select id into v_shop_id from public.shop where name = 'Main Shop' limit 1;
 
   v_failed := false;
   begin
@@ -6263,9 +6263,9 @@ declare
   v_idem_count        int;
   v_throwaway_id      uuid;
 begin
-  select id into v_shop_id from public.shop where name = 'Hodan Shop' limit 1;
+  select id into v_shop_id from public.shop where name = 'Main Shop' limit 1;
   if v_shop_id is null then
-    raise exception 'TT pre: Hodan Shop fixture missing';
+    raise exception 'TT pre: Main Shop fixture missing';
   end if;
 
   -- Fresh shop_item so the assertions are deterministic.

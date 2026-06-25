@@ -66,6 +66,10 @@ create policy mutation_idempotency_select on public.mutation_idempotency
   for select to authenticated
   using (public.auth_can_access_shop(shop_id));
 
+-- Table-level SELECT grant so the policy above is reachable (RLS gates
+-- the rows; without a grant the table is opaque). Writes stay RPC-only.
+grant select on public.mutation_idempotency to authenticated;
+
 -- No INSERT/UPDATE/DELETE policy — only the SECURITY DEFINER
 -- RPCs write here.
 

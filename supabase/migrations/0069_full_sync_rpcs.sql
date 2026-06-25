@@ -78,6 +78,10 @@ create policy shop_sync_audit_select on public.shop_sync_audit
   for select to authenticated
   using (public.auth_can_access_shop(shop_id));
 
+-- Table-level SELECT grant so the policy above is reachable (RLS gates
+-- the rows; without a grant the table is opaque). Writes stay RPC-only.
+grant select on public.shop_sync_audit to authenticated;
+
 -- INSERT/UPDATE/DELETE: no direct client writes — only the RPCs
 -- (SECURITY DEFINER, bypassing RLS for their own bookkeeping).
 -- Withhold all DML by NOT defining a policy.
