@@ -24,19 +24,23 @@
 --     upsert. p_org_id NULL = platform default.
 
 create table public.platform_config (
+  id          uuid primary key default extensions.gen_random_uuid(),
   org_id      uuid references public.organization(id) on delete cascade,
   key         text not null,
   value       jsonb not null,
   updated_at  timestamptz not null default now(),
-  updated_by  uuid references auth.users(id),
-  primary key (org_id, key)
+  updated_by  uuid references auth.users(id)
 );
 
--- NULL org_id is allowed by the PK because Postgres treats NULL
--- as not-equal-to-anything (so (NULL, 'foo') is permitted alongside
--- (some-uuid, 'foo')). Add an explicit unique index for the
--- platform-default row to enforce one-per-key uniqueness on the
--- NULL slot.
+-- org_id is NULLABLE on purpose: a NULL-org row is the platform-wide
+-- default for a key (the bottom of the override stack). A surrogate `id`
+-- is the primary key so org_id can be null — Postgres forces every PK
+-- column NOT NULL, so org_id must NOT be part of the PK. Uniqueness is
+-- enforced per scope by two partial unique indexes: one (org_id, key)
+-- for org-scoped rows, and one (key) for the single NULL-org default.
+create unique index platform_config_org_key_uq
+  on public.platform_config(org_id, key)
+  where org_id is not null;
 create unique index platform_config_default_uq
   on public.platform_config(key)
   where org_id is null;
@@ -60,6 +64,12 @@ create policy platform_config_write on public.platform_config
   for all to authenticated
   using (public.auth_is_platform_staff())
   with check (public.auth_is_platform_staff());
+
+-- Table-level SELECT grant so the platform_config_select policy is
+-- reachable (RLS gates the rows; without a grant the table is opaque).
+-- Writes go only through set_platform_config (SECURITY DEFINER), per the
+-- "RPC-only writes" convention — no direct insert/update/delete grant.
+grant select on public.platform_config to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- get_platform_config: returns merged keys for an org. Org-scoped rows
@@ -131,12 +141,19 @@ begin
     raise exception 'platform_config value cannot be null';
   end if;
 
-  insert into public.platform_config (org_id, key, value, updated_at, updated_by)
-  values (p_org_id, p_key, p_value, pg_catalog.now(), auth.uid())
-  on conflict (org_id, key) do update
-    set value      = excluded.value,
-        updated_at = pg_catalog.now(),
-        updated_by = auth.uid();
+  -- NULL-safe upsert: `org_id is not distinct from p_org_id` matches the
+  -- platform-default row (both NULL) as well as an org row. Avoids the
+  -- ON CONFLICT-with-partial-index ambiguity now that org_id is nullable.
+  update public.platform_config
+     set value      = p_value,
+         updated_at = pg_catalog.now(),
+         updated_by = auth.uid()
+   where key = p_key
+     and org_id is not distinct from p_org_id;
+  if not found then
+    insert into public.platform_config (org_id, key, value, updated_at, updated_by)
+    values (p_org_id, p_key, p_value, pg_catalog.now(), auth.uid());
+  end if;
 end;
 $$;
 
