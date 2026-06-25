@@ -16,8 +16,10 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/digit_input.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/shared/quantity_format.dart';
 
 enum StockAdjustMode { opening, add, subtract, setExact }
@@ -183,6 +185,7 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
       _saving = true;
       _errorMessage = null;
     });
+    final repo = context.read<LocalRepository>();
     try {
       await context.read<ShopApi>().postInventoryAdjustment(
             shopId: widget.shop.id,
@@ -190,10 +193,21 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
             shopItemId: widget.shopItemId,
             quantityDelta: change.delta,
             unitCost: unitCost,
+            clientOpId: generateClientOpId('adjust'),
             notes: _notesController.text.trim().isEmpty
                 ? null
                 : _notesController.text.trim(),
           );
+      // Optimistically bump the mirrored stock so the item detail +
+      // product list show the new count immediately (the server has it;
+      // the local mirror would otherwise lag until the next sync). The
+      // delta is already in base units. Best-effort — sync reconciles.
+      try {
+        await repo.applyOptimisticStockDelta(
+          shopItemId: widget.shopItemId,
+          baseUnitDelta: change.delta,
+        );
+      } catch (_) {}
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (error, stackTrace) {

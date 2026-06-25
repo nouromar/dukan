@@ -1256,6 +1256,40 @@ class LocalRepository {
     );
   }
 
+  /// Optimistic: bump the mirrored base-unit stock by [baseUnitDelta] so the
+  /// product list + item detail reflect a just-saved stock adjustment
+  /// instantly (the server already has the value; the local mirror would
+  /// otherwise lag until the next sync, which overwrites this with truth).
+  Future<void> applyOptimisticStockDelta({
+    required String shopItemId,
+    required num baseUnitDelta,
+  }) async {
+    final db = await _db;
+    await db.rawUpdate(
+      'UPDATE local_shop_item SET current_stock = current_stock + ? '
+      'WHERE shop_item_id = ?',
+      [baseUnitDelta, shopItemId],
+    );
+  }
+
+  /// Optimistic: decrement the mirrored party balance after a payment so the
+  /// customers/suppliers LIST reflects it instantly (the list reads these
+  /// columns directly; the detail page re-fetches from the server). Mirrors
+  /// post_payment's sign math: direction 'I' (customer) reduces receivable,
+  /// 'O' (supplier) reduces payable. Clamped at 0; sync reconciles to truth.
+  Future<void> applyOptimisticPartyPayment({
+    required String partyId,
+    required String direction,
+    required num amount,
+  }) async {
+    final db = await _db;
+    final col = direction == 'I' ? 'receivable' : 'payable';
+    await db.rawUpdate(
+      'UPDATE local_party SET $col = MAX(0, $col - ?) WHERE party_id = ?',
+      [amount, partyId],
+    );
+  }
+
   // ---- Optimistic category mirror writes (0076) ------------------------
   // The `code` column is NOT NULL in the mirror but never displayed
   // (the UI shows `name`); we store a local placeholder slug that the

@@ -158,6 +158,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
 
     final queue = context.read<OfflineQueueController>();
+    final repo = context.read<LocalRepository>();
     // Capture cashier's user id before the screen pops; #367 stamps
     // it onto the queued post so Phase 5A's audit-stamping preserves
     // who originated the payment even if a different user drains.
@@ -171,7 +172,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // #385: optimistic write to local_transaction so Payment
     // History reflects this payment instantly.
     try {
-      await context.read<LocalRepository>().writeOptimisticTransaction(
+      await repo.writeOptimisticTransaction(
             clientOpId: clientOpId,
             shopId: widget.shop.id,
             typeCode: 'payment',
@@ -193,6 +194,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
         stack: st,
         library: 'dukan payment',
         context: ErrorDescription('write optimistic payment transaction'),
+      ));
+    }
+
+    // Optimistically decrement the mirrored party balance so the
+    // customers/suppliers LIST reflects the payment instantly (the list
+    // reads local_party.receivable/payable directly; the detail page
+    // re-fetches from the server). Sync reconciles to truth.
+    try {
+      await repo.applyOptimisticPartyPayment(
+            partyId: partyId,
+            direction: direction,
+            amount: amount,
+          );
+    } catch (e, st) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: e,
+        stack: st,
+        library: 'dukan payment',
+        context: ErrorDescription('optimistic party balance update'),
       ));
     }
 
