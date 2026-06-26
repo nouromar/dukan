@@ -163,17 +163,19 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sends a 6-digit OTP to the given email. shouldCreateUser:false enforces
-  /// "account must already exist" — matches the pre-onboarding model where
-  /// org+shop+user are created up-front by support staff (see #285 / web
-  /// portal #284). For Supabase to email the code (not a magic link), the
-  /// "Magic Link" email template must include {{ .Token }} alongside or
-  /// instead of {{ .ConfirmationURL }}.
+  /// Sends a 6-digit OTP to the given email. shouldCreateUser:true so a new
+  /// email self-onboards: Supabase creates the account, then a signed-in user
+  /// with no shops is routed to owner onboarding (create org/shop → pick
+  /// template). An *invited* email instead claims its pending invite on
+  /// sign-in (see _claimPendingInvitesSilently), joining that shop. For
+  /// Supabase to email the code (not a magic link), the "Magic Link" email
+  /// template must include {{ .Token }} alongside or instead of
+  /// {{ .ConfirmationURL }}.
   Future<void> sendEmailOtp(String rawEmail) async {
     final email = normalizeEmail(rawEmail);
     await _client.auth.signInWithOtp(
       email: email,
-      shouldCreateUser: false,
+      shouldCreateUser: true,
     );
     _pendingEmail = email;
     _pendingPhone = null;
