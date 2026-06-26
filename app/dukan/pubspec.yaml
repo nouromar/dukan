@@ -42,6 +42,7 @@ dependencies:
   supabase_flutter: ^2.12.4
   image_picker: ^1.1.2
   mobile_scanner: ^5.0.0
+  connectivity_plus: ^6.1.0
   sentry_flutter: ^8.13.0
   shared_preferences: ^2.2.0
   sqflite: ^2.3.3

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
@@ -60,7 +61,8 @@ class AuthBootstrap extends StatefulWidget {
   State<AuthBootstrap> createState() => _AuthBootstrapState();
 }
 
-class _AuthBootstrapState extends State<AuthBootstrap> {
+class _AuthBootstrapState extends State<AuthBootstrap>
+    with WidgetsBindingObserver {
   late final ShopApi _shopApi;
   late final AuthController _authController;
   late final CartController _cartController;
@@ -78,10 +80,21 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
   String? _crashReportedUserId;
   String? _crashReportedShopId;
   String? _configLoadedForShopId;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  // Assume connected at launch so the first connectivity event doesn't fire a
+  // redundant recovery; we only act on a none -> connected transition.
+  bool _lastHadConnectivity = true;
 
   @override
   void initState() {
     super.initState();
+    // Recover the live connection (resubscribe realtime + delta catch-up) when
+    // the app returns to the foreground or the OS regains connectivity — both
+    // cross-platform (Android + iOS). Without this, a drop while backgrounded
+    // leaves the app passively waiting on the stale "Working offline" banner.
+    WidgetsBinding.instance.addObserver(this);
+    _connectivitySub =
+        Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
     _shopApi = ShopApi(widget.supabaseClient);
     _authController =
         AuthController(client: widget.supabaseClient, shopApi: _shopApi)
@@ -149,6 +162,48 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
     // session transitions to null (sign-out or session expiry). Stops
     // state from leaking across users sharing the same device.
     _authController.addListener(_onAuthChanged);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_recoverConnection());
+    }
+  }
+
+  void _onConnectivityChanged(List<ConnectivityResult> results) {
+    final hasNet = results.any((r) => r != ConnectivityResult.none);
+    // Only on the none -> connected edge, so we don't hammer recovery on every
+    // interface change (e.g. wifi <-> cellular handoff while already online).
+    if (hasNet && !_lastHadConnectivity) {
+      unawaited(_recoverConnection());
+    }
+    _lastHadConnectivity = hasNet;
+  }
+
+  /// Re-establish the live connection after a network drop / suspension:
+  /// force a clean realtime resubscribe + a delta catch-up. A successful delta
+  /// also clears the "Working offline" banner (see SyncEngine.deltaSync).
+  /// No-op without a selected shop or when useLocalDb is off (no mirror /
+  /// realtime). Each step is independent so one failing doesn't block the other.
+  Future<void> _recoverConnection() async {
+    final shop = _authController.selectedShop;
+    if (shop == null || !resolveUseLocalDb(_configResolver)) return;
+    // A stale realtime channel survives a network drop; start() early-returns
+    // on a non-null channel, so tear down first to force a fresh subscribe.
+    try {
+      await _realtimeListener.stop();
+      await _realtimeListener.start(shop.id);
+    } catch (error, stack) {
+      unawaited(CrashReporter.reportError(error, stack,
+          hint: 'auth_bootstrap.recover.realtime'));
+    }
+    try {
+      await _syncEngine.forceDelta(shop.id);
+    } catch (error, stack) {
+      unawaited(CrashReporter.reportError(error, stack,
+          hint: 'auth_bootstrap.recover.delta'));
+    }
   }
 
   /// Run the one-shot SharedPreferences migration if needed, then
@@ -280,6 +335,8 @@ class _AuthBootstrapState extends State<AuthBootstrap> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_connectivitySub?.cancel());
     _authController.removeListener(_onAuthChanged);
     unawaited(_realtimeListener.dispose());
     _syncEngine.dispose();
