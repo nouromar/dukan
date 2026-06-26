@@ -1,0 +1,15 @@
+# Copy this to android/key.properties (gitignored) and fill in real values.
+# It is read by android/app/build.gradle.kts to sign Play release builds.
+#
+# Generate an upload keystore once (keep the .jks + passwords safe — losing
+# them means you can't update the app):
+#
+#   keytool -genkey -v -keystore upload-keystore.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# Then put the absolute path to that .jks in storeFile below.
+
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks

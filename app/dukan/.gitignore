@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Release signing secrets (never commit) — see android/key.properties.example
+**/key.properties
+**/*.jks
+**/*.keystore
+upload-keystore.jks
+
+# Production build-time config (Supabase URL/keys) — see dart_defines.example.json
+dart_defines.json

@@ -1,0 +1,5 @@
+{
+  "_comment": "Copy to dart_defines.json (gitignored) with your hosted Supabase values. Used by tool/build-release.sh via --dart-define-from-file. These are the same values that make the app work on your test phone.",
+  "SUPABASE_URL": "https://YOUR-PROJECT-REF.supabase.co",
+  "SUPABASE_ANON_KEY": "YOUR-SUPABASE-ANON-KEY"
+}

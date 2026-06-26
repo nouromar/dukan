@@ -49,5 +49,7 @@
 	<string>DukanPro uses the camera to scan product barcodes and to take photos of supplier delivery notes (bono).</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>DukanPro lets you attach a photo of a supplier delivery note (bono) from your photo library to a stock receipt.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
