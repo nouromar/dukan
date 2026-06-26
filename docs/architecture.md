@@ -173,13 +173,16 @@ item(id pk, shop_id fk, name, name_translations jsonb null,
 item_unit(id pk, shop_id fk, item_id fk item, unit_id fk unit,
          conversion_to_base numeric(14,6), -- 1 entered unit = N base units
          is_base_unit bool default false,
-         allow_sale bool default true,
-         allow_receive bool default true,
+         is_default_sale bool default false,
+         is_default_receive bool default false,
+         is_active bool default true,
          sort_order int,
          unique(shop_id, item_id, unit_id))
 -- Example: Candy ABC has base unit=piece. item_unit rows:
---   piece conversion_to_base=1,   allow_sale=true,  allow_receive=false
---   bag   conversion_to_base=100, allow_sale=true,  allow_receive=true
+--   piece conversion_to_base=1,   is_default_sale=true,  is_default_receive=false
+--   bag   conversion_to_base=100, is_default_sale=false, is_default_receive=true
+-- Any active unit can be used for both sale and receive; is_default_* only
+-- picks the default packaging shown on each screen.
 -- Receive 10 bags => +1000 pieces. Sale 3 pieces => -3 pieces.
 
 party(id pk, shop_id fk, name, phone, type_id fk party_type,
@@ -206,7 +209,7 @@ catalog_item_revision(id pk, catalog_item_id fk, revision_number int,
                       suggested_sale_price numeric(14,2) null)
 catalog_item_unit(id pk, catalog_item_id fk, revision_id fk,
                   unit_code text, conversion_to_base numeric(14,6),
-                  is_base_unit bool, allow_sale bool, allow_receive bool)
+                  is_base_unit bool, is_default_sale bool, is_default_receive bool)
 ```
 
 Examples:
@@ -416,8 +419,9 @@ template_item(template_id fk, catalog_item_id fk null,
               suggested_sale_price_override numeric(14,2) null,
               reorder_threshold_override numeric(14,3) null, sort_order int)
 template_item_unit(template_id fk, item_code text, unit_code text,
-                   conversion_to_base numeric(14,6),
-                   allow_sale bool, allow_receive bool, sort_order int)
+                   conversion_to_base numeric(14,6), sort_order int)
+-- No per-unit default flags; the default sale/receive units are set at the
+-- item level (template_item.default_sale_unit_code / default_receive_unit_code).
 template_expense_category(template_id fk, code, name, name_translations jsonb)
 template_unit(template_id fk, code, name, name_translations jsonb)
 template_adjustment_reason(template_id fk, code, name, name_translations jsonb,

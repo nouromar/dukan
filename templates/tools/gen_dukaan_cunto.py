@@ -351,7 +351,8 @@ for code, name_en, name_so, full in [
                 "sort_order": i,
                 "aliases_so": it["aliases"], "aliases_en": it["aliases"],
                 "unit_conversions": [{"unit_code": it["base_unit"], "conversion_to_base": 1,
-                                      "allow_sale": True, "allow_receive": True, "sort_order": 1}],
+                                      "is_default_sale": True, "is_default_receive": True,
+                                      "sort_order": 1}],
             } for i, it in enumerate(items, 1)],
         })
         write_json(f"{d}/quick-actions.json", {

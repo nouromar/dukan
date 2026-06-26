@@ -339,8 +339,8 @@ catalog_item_unit(
   unit_code references unit(code),
   conversion_to_base numeric(14,6),
   is_base_unit bool,
-  allow_sale bool,
-  allow_receive bool,
+  is_default_sale bool,
+  is_default_receive bool,
   unique(catalog_item_id, revision_id, unit_code)
 )
 
@@ -412,8 +412,8 @@ template_item_unit(
   item_code,
   unit_code,
   conversion_to_base numeric(14,6),
-  allow_sale bool,
-  allow_receive bool,
+  -- no per-unit default flags; defaults are set at the item level
+  -- (template_item.default_sale_unit_code / default_receive_unit_code)
   sort_order int,
   unique(template_id, item_code, unit_code)
 )
@@ -619,8 +619,9 @@ item_unit(
   source text,                -- catalog/template/manual/override
   conversion_to_base numeric(14,6), -- 1 entered unit = N base units
   is_base_unit bool default false,
-  allow_sale bool default true,
-  allow_receive bool default true,
+  is_default_sale bool default false,
+  is_default_receive bool default false,
+  is_active bool default true,
   sort_order int,
   unique(shop_id, item_id, unit_id),
   unique(shop_id, id),

@@ -64,8 +64,8 @@
         {
           "unit_code": "bag",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -93,8 +93,8 @@
         {
           "unit_code": "bag",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -122,8 +122,8 @@
         {
           "unit_code": "kg",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -151,8 +151,8 @@
         {
           "unit_code": "bag",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -180,8 +180,8 @@
         {
           "unit_code": "kg",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -211,8 +211,8 @@
         {
           "unit_code": "bag",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -240,8 +240,8 @@
         {
           "unit_code": "kg",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -269,8 +269,8 @@
         {
           "unit_code": "kg",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -300,8 +300,8 @@
         {
           "unit_code": "jerrycan",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -329,8 +329,8 @@
         {
           "unit_code": "jerrycan",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -358,8 +358,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -387,8 +387,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -418,8 +418,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -447,8 +447,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -476,8 +476,8 @@
         {
           "unit_code": "kg",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -505,8 +505,8 @@
         {
           "unit_code": "kg",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -534,8 +534,8 @@
         {
           "unit_code": "kg",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -565,8 +565,8 @@
         {
           "unit_code": "kg",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -594,8 +594,8 @@
         {
           "unit_code": "kg",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -623,8 +623,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -654,8 +654,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -683,8 +683,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -712,8 +712,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -743,8 +743,8 @@
         {
           "unit_code": "tin",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -772,8 +772,8 @@
         {
           "unit_code": "tin",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -801,8 +801,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -830,8 +830,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -859,8 +859,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -888,8 +888,8 @@
         {
           "unit_code": "carton",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -919,8 +919,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -948,8 +948,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -977,8 +977,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1006,8 +1006,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1035,8 +1035,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1066,8 +1066,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1095,8 +1095,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1126,8 +1126,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1155,8 +1155,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1186,8 +1186,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1215,8 +1215,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1244,8 +1244,8 @@
         {
           "unit_code": "box",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1271,8 +1271,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1300,8 +1300,8 @@
         {
           "unit_code": "jar",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1329,8 +1329,8 @@
         {
           "unit_code": "tin",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1356,8 +1356,8 @@
         {
           "unit_code": "jar",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1385,8 +1385,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1416,8 +1416,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1445,8 +1445,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1474,8 +1474,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1503,8 +1503,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1532,8 +1532,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1561,8 +1561,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1592,8 +1592,8 @@
         {
           "unit_code": "box",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1621,8 +1621,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1650,8 +1650,8 @@
         {
           "unit_code": "can",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1679,8 +1679,8 @@
         {
           "unit_code": "can",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1708,8 +1708,8 @@
         {
           "unit_code": "can",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1737,8 +1737,8 @@
         {
           "unit_code": "can",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1766,8 +1766,8 @@
         {
           "unit_code": "can",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1795,8 +1795,8 @@
         {
           "unit_code": "can",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1824,8 +1824,8 @@
         {
           "unit_code": "can",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1853,8 +1853,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1884,8 +1884,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1913,8 +1913,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1942,8 +1942,8 @@
         {
           "unit_code": "bottle",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -1973,8 +1973,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2002,8 +2002,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2031,8 +2031,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2060,8 +2060,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2089,8 +2089,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2118,8 +2118,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2147,8 +2147,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2176,8 +2176,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2205,8 +2205,8 @@
         {
           "unit_code": "piece",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2234,8 +2234,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2263,8 +2263,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
@@ -2292,8 +2292,8 @@
         {
           "unit_code": "packet",
           "conversion_to_base": 1,
-          "allow_sale": true,
-          "allow_receive": true,
+          "is_default_sale": true,
+          "is_default_receive": true,
           "sort_order": 1
         }
       ]
