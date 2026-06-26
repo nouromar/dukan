@@ -42,21 +42,11 @@ alter table public.shop
     'hid_min_burst_length', 4
   );
 
--- 2. Template seed for grocery. Same values as the column default;
---    they live here too so the source-of-truth chain works for an
---    admin portal that wants to view "what does grocery ship with?"
-
-insert into public.template_setting (template_id, key, value)
-select t.id, s.key, s.value
-from public.template t
-cross join (values
-  ('scanner_rearm_ms',                 to_jsonb(800)),
-  ('scanner_hid_max_inter_key_gap_ms', to_jsonb(50)),
-  ('scanner_hid_max_burst_window_ms',  to_jsonb(200)),
-  ('scanner_hid_min_burst_length',     to_jsonb(4))
-) as s(key, value)
-where t.code = 'grocery' and t.version = 1
-on conflict (template_id, key) do nothing;
+-- 2. Scanner defaults ship via the column DEFAULT above (every shop gets
+--    the baseline) and the projection helper below. The grocery
+--    template_setting seed that used to live here was removed with the
+--    grocery template; a shipped template may seed scanner_* keys to
+--    override the baseline.
 
 -- 3. Projection helper. Rebuilds shop.scanner_settings from every
 --    scanner_* key in shop_setting. Defaults survive when a key is

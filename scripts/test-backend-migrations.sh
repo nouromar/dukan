@@ -89,6 +89,16 @@ for seed in "$ROOT_DIR"/supabase/seeds/templates/*.sql; do
   docker exec -i "$CONTAINER_NAME" psql -U postgres -v ON_ERROR_STOP=1 -d postgres < "$seed" >/dev/null
 done
 
+# Harness-only test fixtures. Grocery is no longer a shipped template, but the
+# harness still needs its multi-unit catalog (rice with kg + 25kg-bag + 10kg-bag
+# packagings) and the 'grocery' category to exercise multi-packaging receive/sale,
+# conversion math, and suggestion RPCs. Loaded here only — never by db reset.
+for fixture in "$ROOT_DIR"/scripts/fixtures/*.sql; do
+  [ -e "$fixture" ] || continue
+  echo "Fixture $(basename "$fixture")"
+  docker exec -i "$CONTAINER_NAME" psql -U postgres -v ON_ERROR_STOP=1 -d postgres < "$fixture" >/dev/null
+done
+
 docker exec -i "$CONTAINER_NAME" psql -U postgres -v ON_ERROR_STOP=1 -d postgres <<'SQL'
 -- =====================================================================
 -- Backend migration harness — v2 schema (data-model-v2 §12 test plan)

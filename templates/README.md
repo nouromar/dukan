@@ -6,21 +6,12 @@ Each shop-kind template is a folder with a `manifest.json` plus independent conf
 
 ## Current templates
 
+The only shipped templates are the two Dukaan Cunto starters below. (Grocery was
+removed as a shop-starter; its multi-unit catalog now lives solely as a backend-harness
+test fixture at `scripts/fixtures/grocery_fixture.sql`, never shipped.)
+
 ```text
 templates/
-  grocery.json                 # legacy v1 single-file snapshot
-  grocery/
-    manifest.json
-    catalog.json
-    settings.json
-    quick-actions.json
-    supplier-mappings.json
-    quantity-suggestions.json
-    aliases.json
-    ocr-mappings.json
-    expense-categories.json
-    dashboard.json
-    _legacy-grocery-v1.json    # copy of the old single-file template
   test_dukaan_cunto/           # Somali dukaan cunto — full catalog (~77 items)
     manifest.json
     catalog.json
@@ -73,15 +64,6 @@ is deterministic). The apply path is covered by `§DC` in `scripts/test-backend-
 | `expense-categories.json` | Starter expense categories in English and Somali |
 | `dashboard.json` | Default dashboard cards and reports |
 
-## Grocery pack status
-
-- Catalog items: **131**
-- Unit-conversion examples: **2**
-- Sale favorites: **40**
-- Quantity suggestions: **949**
-- Supplier-item mappings: **110**
-- Expense categories: **10**
-
 ## Catalog naming rule
 
 Translate only the **product concept** and description.
@@ -123,8 +105,9 @@ Run:
 
 ```bash
 cd ~/dukan/templates
-python3 -m json.tool grocery/manifest.json >/dev/null
-for f in grocery/*.json; do python3 -m json.tool "$f" >/dev/null || exit 1; done
+for d in test_dukaan_cunto empty_dukaan_cunto; do
+  for f in "$d"/*.json; do python3 -m json.tool "$f" >/dev/null || exit 1; done
+done
 ```
 
 ## Update rules

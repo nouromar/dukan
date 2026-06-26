@@ -1,4 +1,13 @@
--- Seed the grocery starter template against the v2 catalog (no
+-- HARNESS TEST FIXTURE — not a shipped template.
+--
+-- Grocery was removed as a user-facing shop-starter template (the shipped
+-- templates are Test/Empty Dukaan Cunto, seeded from supabase/seeds/templates/).
+-- Its multi-unit catalog (rice with kg + 25kg-bag packagings, sugar, etc.) and
+-- the 'grocery' category survive ONLY here, loaded exclusively by
+-- scripts/test-backend-migrations.sh to exercise multi-packaging receive/sale,
+-- conversion math, and suggestion RPCs. NEVER loaded by `db reset` or shipped.
+--
+-- Seed the grocery test catalog against the v2 catalog (no
 -- revisions, no concepts). Layout:
 --
 --   1. category rows (grocery, beverages, staples, household).
@@ -13,7 +22,7 @@
 --   7. template_item_alias rows carrying the en/so display labels.
 --
 -- Idempotent: all inserts use on conflict do nothing / do update.
--- Authoritative apply path is `supabase db reset`.
+-- Loaded only by the backend harness, after all migrations.
 
 ----------------------------------------------------------------------
 -- 1. Categories
@@ -25,7 +34,9 @@ values
   ('staples',   'Staples',   jsonb_build_object('en', 'Staples',   'so', 'Raashinka'),  2),
   ('beverages', 'Beverages', jsonb_build_object('en', 'Beverages', 'so', 'Cabbitooyin'), 3),
   ('household', 'Household', jsonb_build_object('en', 'Household', 'so', 'Guriga'),     4)
-on conflict (code) do nothing;
+-- 0076 made category.code unique only WHERE shop_id is null (partial index);
+-- this fixture runs after all migrations, so name that predicate for inference.
+on conflict (code) where shop_id is null do nothing;
 
 ----------------------------------------------------------------------
 -- 2. Items (global SKUs, slim shape — display name lives in item_alias)
