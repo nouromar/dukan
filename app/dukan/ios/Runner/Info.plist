@@ -46,6 +46,8 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>DukanPro uses the camera to scan product barcodes. Photos of the barcode never leave your phone.</string>
+	<string>DukanPro uses the camera to scan product barcodes and to take photos of supplier delivery notes (bono).</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>DukanPro lets you attach a photo of a supplier delivery note (bono) from your photo library to a stock receipt.</string>
 </dict>
 </plist>
