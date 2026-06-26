@@ -23,19 +23,16 @@ CATS = {
 }
 # units not yet in the global unit table (0002) -> (en, so)
 NEW_UNITS = {
-    "jerrycan": ("Jerrycan", "Jerigan"),
-    "can":      ("Can",      "Qasacad"),
-    "tin":      ("Tin",      "Tini"),
-    "jar":      ("Jar",      "Jaar"),
+    "sack": ("Sack", "Loor"),
+    "can":  ("Can",  "Qasacad"),
 }
-# template_unit labels for every unit the catalog uses (+ standard)
+# template_unit labels — the basic unit set: litre, kg, gram, piece, box,
+# sack, carton, bottle, can.
 UNIT_LABELS = {
     "piece": ("Piece", "Xabba"), "kg": ("Kg", "Kiilo"), "gram": ("Gram", "Garaam"),
-    "litre": ("Litre", "Liitir"), "ml": ("ml", "ml"), "bag": ("Bag", "Bac"),
-    "box": ("Box", "Sanduuq"), "carton": ("Carton", "Kartoon"),
-    "bottle": ("Bottle", "Dhalo"), "packet": ("Packet", "Baakad"),
-    "jerrycan": ("Jerrycan", "Jerigan"), "can": ("Can", "Qasacad"),
-    "tin": ("Tin", "Tini"), "jar": ("Jar", "Jaar"),
+    "litre": ("Litre", "Liitir"), "box": ("Box", "Sanduuq"),
+    "carton": ("Carton", "Kartoon"), "bottle": ("Bottle", "Dhalo"),
+    "sack": ("Sack", "Loor"), "can": ("Can", "Qasacad"),
 }
 SETTINGS = [
     ("locale_default", "so"), ("currency_default", "USD"),
@@ -81,8 +78,12 @@ with open(CSV) as f:
             "aliases": aliases,
         })
 
-units_used = sorted({it["base_unit"] for it in items} | {u for u, _ in SETTINGS if False})
-tmpl_units = sorted({it["base_unit"] for it in items})
+units_used = sorted({it["base_unit"] for it in items})
+# The template's available unit set — the basic 9. Declared explicitly (not
+# derived from items) so litre + gram stay in the dropdown even though the
+# seed catalog sells oil/spices as whole pieces; a shopkeeper adding loose
+# items can still pick them.
+tmpl_units = ["bottle", "box", "can", "carton", "gram", "kg", "litre", "piece", "sack"]
 
 # ---- emit SQL ----
 out = []
