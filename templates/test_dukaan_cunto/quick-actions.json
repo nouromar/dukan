@@ -1,0 +1,58 @@
+{
+  "kind": "configuration_pack",
+  "pack": "quick_actions",
+  "template_code": "test_dukaan_cunto",
+  "version": 1,
+  "favorites": [
+    {
+      "screen": "sale",
+      "position": 1,
+      "item_code": "bariis_basmati_25kg"
+    },
+    {
+      "screen": "sale",
+      "position": 2,
+      "item_code": "sonkor_kg"
+    },
+    {
+      "screen": "sale",
+      "position": 3,
+      "item_code": "saliid_1l"
+    },
+    {
+      "screen": "sale",
+      "position": 4,
+      "item_code": "baasto_500g"
+    },
+    {
+      "screen": "sale",
+      "position": 5,
+      "item_code": "shaah_caleen_250g"
+    },
+    {
+      "screen": "sale",
+      "position": 6,
+      "item_code": "biyo_500ml"
+    },
+    {
+      "screen": "receive",
+      "position": 1,
+      "item_code": "bariis_basmati_25kg"
+    },
+    {
+      "screen": "receive",
+      "position": 2,
+      "item_code": "sonkor_kg"
+    },
+    {
+      "screen": "receive",
+      "position": 3,
+      "item_code": "saliid_1l"
+    },
+    {
+      "screen": "receive",
+      "position": 4,
+      "item_code": "shaah_caleen_250g"
+    }
+  ]
+}

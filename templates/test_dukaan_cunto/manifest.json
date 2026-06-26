@@ -1,0 +1,32 @@
+{
+  "kind": "shop_starter",
+  "code": "test_dukaan_cunto",
+  "name_en": "Test Dukaan Cunto",
+  "name_so": "Dukaan Cunto (Tijaabo)",
+  "version": 1,
+  "locale_default": "so",
+  "currency_default": "USD",
+  "description": "Somali dukaan cunto starter — full catalog.",
+  "packs": [
+    {
+      "code": "catalog",
+      "file": "catalog.json",
+      "required": true
+    },
+    {
+      "code": "settings",
+      "file": "settings.json",
+      "required": true
+    },
+    {
+      "code": "expense_categories",
+      "file": "expense-categories.json",
+      "required": true
+    },
+    {
+      "code": "quick_actions",
+      "file": "quick-actions.json",
+      "required": false
+    }
+  ]
+}

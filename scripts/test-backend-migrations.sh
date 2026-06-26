@@ -6519,6 +6519,81 @@ begin
 end;
 $$;
 
+-- =====================================================================
+-- §DC Dukaan Cunto templates (0017). Test template seeds the full
+--     catalog + quick actions; Empty template seeds config (settings +
+--     expense categories) only — zero inventory, no quick actions.
+-- =====================================================================
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+do $$
+declare
+  v_org_id     uuid;
+  v_test_shop  uuid;
+  v_empty_shop uuid;
+  v_test_tmpl  uuid;
+  v_empty_tmpl uuid;
+  v_item_count int;
+  v_tmpl_items int;
+begin
+  select id into v_org_id from public.organization where name = 'Owner Org';
+  if v_org_id is null then
+    raise exception 'DC pre: Owner Org fixture missing';
+  end if;
+
+  select id into v_test_tmpl  from public.template where code = 'test_dukaan_cunto'  and version = 1;
+  select id into v_empty_tmpl from public.template where code = 'empty_dukaan_cunto' and version = 1;
+  if v_test_tmpl is null or v_empty_tmpl is null then
+    raise exception 'DC pre: dukaan cunto templates not seeded by 0017';
+  end if;
+  -- Both must be active so they appear in the shop-type picker.
+  if not (select is_active from public.template where id = v_test_tmpl)
+     or not (select is_active from public.template where id = v_empty_tmpl) then
+    raise exception 'DC: a dukaan cunto template is inactive (would not show in picker)';
+  end if;
+
+  v_test_shop  := public.create_shop(v_org_id, 'DC Test Shop');
+  v_empty_shop := public.create_shop(v_org_id, 'DC Empty Shop');
+
+  -- TEST template: every curated item is activated onto the shop.
+  perform public.apply_template(v_test_shop, v_test_tmpl);
+  select count(*) into v_item_count from public.shop_item where shop_id = v_test_shop;
+  select count(*) into v_tmpl_items from public.template_item where template_id = v_test_tmpl;
+  if v_tmpl_items = 0 then
+    raise exception 'DC: test template has no template_item rows';
+  end if;
+  if v_item_count < v_tmpl_items then
+    raise exception 'DC: test apply activated % of % items', v_item_count, v_tmpl_items;
+  end if;
+  if not exists (
+    select 1 from public.shop_item si join public.item i on i.id = si.item_id
+    where si.shop_id = v_test_shop and i.code = 'bariis_basmati_25kg'
+  ) then
+    raise exception 'DC: bariis not activated by test template';
+  end if;
+  if (select count(*) from public.expense_category where shop_id = v_test_shop) = 0 then
+    raise exception 'DC: test template seeded no expense categories';
+  end if;
+
+  -- EMPTY template: config only — zero inventory, but settings + expense cats.
+  perform public.apply_template(v_empty_shop, v_empty_tmpl);
+  if (select count(*) from public.shop_item where shop_id = v_empty_shop) <> 0 then
+    raise exception 'DC: empty template must seed zero items';
+  end if;
+  if (select count(*) from public.expense_category where shop_id = v_empty_shop) = 0 then
+    raise exception 'DC: empty template seeded no expense categories';
+  end if;
+  if not exists (
+    select 1 from public.shop_setting where shop_id = v_empty_shop and key = 'currency_default'
+  ) then
+    raise exception 'DC: empty template seeded no settings';
+  end if;
+
+  raise notice 'DC: dukaan cunto template tests passed (test=% items, empty=0)', v_item_count;
+end;
+$$;
+
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 

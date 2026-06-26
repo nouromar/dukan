@@ -1,0 +1,14 @@
+{
+  "kind": "configuration_pack",
+  "pack": "settings",
+  "template_code": "empty_dukaan_cunto",
+  "version": 1,
+  "settings": {
+    "locale_default": "so",
+    "currency_default": "USD",
+    "timezone_default": "Africa/Mogadishu",
+    "sale_payment_default": "cash",
+    "receive_payment_default": "credit",
+    "negative_stock_policy": "warn"
+  }
+}

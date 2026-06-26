@@ -1,0 +1,43 @@
+{
+  "kind": "configuration_pack",
+  "pack": "expense_categories",
+  "template_code": "empty_dukaan_cunto",
+  "version": 1,
+  "expense_categories": [
+    {
+      "code": "rent",
+      "name_en": "Rent",
+      "name_so": "Kiro"
+    },
+    {
+      "code": "electricity",
+      "name_en": "Electricity",
+      "name_so": "Koronto"
+    },
+    {
+      "code": "water",
+      "name_en": "Water",
+      "name_so": "Biyo"
+    },
+    {
+      "code": "salary",
+      "name_en": "Salary",
+      "name_so": "Mushahar"
+    },
+    {
+      "code": "transport",
+      "name_en": "Transport",
+      "name_so": "Gaadiid"
+    },
+    {
+      "code": "supplies",
+      "name_en": "Supplies",
+      "name_so": "Alaab"
+    },
+    {
+      "code": "other",
+      "name_en": "Other",
+      "name_so": "Kale"
+    }
+  ]
+}

@@ -1,0 +1,2302 @@
+{
+  "kind": "configuration_pack",
+  "pack": "catalog",
+  "template_code": "test_dukaan_cunto",
+  "version": 1,
+  "units": [
+    {
+      "code": "bag"
+    },
+    {
+      "code": "bottle"
+    },
+    {
+      "code": "box"
+    },
+    {
+      "code": "can"
+    },
+    {
+      "code": "carton"
+    },
+    {
+      "code": "jar"
+    },
+    {
+      "code": "jerrycan"
+    },
+    {
+      "code": "kg"
+    },
+    {
+      "code": "packet"
+    },
+    {
+      "code": "piece"
+    },
+    {
+      "code": "tin"
+    }
+  ],
+  "items": [
+    {
+      "code": "bariis_basmati_25kg",
+      "category": "raashin",
+      "display_name_en": "Basmati Rice 25kg",
+      "display_name_so": "Bariis Basmati 25kg",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 26.0,
+      "reorder_threshold": 2.0,
+      "sort_order": 1,
+      "aliases_so": [
+        "bariis",
+        "basmati",
+        "rice"
+      ],
+      "aliases_en": [
+        "bariis",
+        "basmati",
+        "rice"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "bariis_cad_25kg",
+      "category": "raashin",
+      "display_name_en": "White Rice 25kg",
+      "display_name_so": "Bariis Cad 25kg",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 22.0,
+      "reorder_threshold": 2.0,
+      "sort_order": 2,
+      "aliases_so": [
+        "bariis cad",
+        "white rice"
+      ],
+      "aliases_en": [
+        "bariis cad",
+        "white rice"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "bariis_kg",
+      "category": "raashin",
+      "display_name_en": "Rice 1kg",
+      "display_name_so": "Bariis 1kg",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 10.0,
+      "sort_order": 3,
+      "aliases_so": [
+        "bariis",
+        "rice"
+      ],
+      "aliases_en": [
+        "bariis",
+        "rice"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "sonkor_50kg",
+      "category": "raashin",
+      "display_name_en": "Sugar 50kg",
+      "display_name_so": "Sonkor 50kg",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 45.0,
+      "reorder_threshold": 1.0,
+      "sort_order": 4,
+      "aliases_so": [
+        "sonkor",
+        "sugar"
+      ],
+      "aliases_en": [
+        "sonkor",
+        "sugar"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "sonkor_kg",
+      "category": "raashin",
+      "display_name_en": "Sugar 1kg",
+      "display_name_so": "Sonkor 1kg",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.4,
+      "reorder_threshold": 10.0,
+      "sort_order": 5,
+      "aliases_so": [
+        "sonkor",
+        "sugar"
+      ],
+      "aliases_en": [
+        "sonkor",
+        "sugar"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "daqiiq_50kg",
+      "category": "raashin",
+      "display_name_en": "Wheat Flour 50kg",
+      "display_name_so": "Daqiiq 50kg",
+      "base_unit_code": "bag",
+      "default_sale_unit_code": "bag",
+      "default_receive_unit_code": "bag",
+      "suggested_sale_price_usd": 30.0,
+      "reorder_threshold": 1.0,
+      "sort_order": 6,
+      "aliases_so": [
+        "daqiiq",
+        "bur",
+        "flour"
+      ],
+      "aliases_en": [
+        "daqiiq",
+        "bur",
+        "flour"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bag",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "daqiiq_kg",
+      "category": "raashin",
+      "display_name_en": "Wheat Flour 1kg",
+      "display_name_so": "Daqiiq 1kg",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 10.0,
+      "sort_order": 7,
+      "aliases_so": [
+        "daqiiq",
+        "flour"
+      ],
+      "aliases_en": [
+        "daqiiq",
+        "flour"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "bur_caws_kg",
+      "category": "raashin",
+      "display_name_en": "Semolina 1kg",
+      "display_name_so": "Bur Caws 1kg",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 6.0,
+      "sort_order": 8,
+      "aliases_so": [
+        "bur caws",
+        "semolina"
+      ],
+      "aliases_en": [
+        "bur caws",
+        "semolina"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "saliid_20l",
+      "category": "raashin",
+      "display_name_en": "Cooking Oil 20L",
+      "display_name_so": "Saliid Cunto 20L",
+      "base_unit_code": "jerrycan",
+      "default_sale_unit_code": "jerrycan",
+      "default_receive_unit_code": "jerrycan",
+      "suggested_sale_price_usd": 38.0,
+      "reorder_threshold": 1.0,
+      "sort_order": 9,
+      "aliases_so": [
+        "saliid",
+        "oil",
+        "saliid cunto"
+      ],
+      "aliases_en": [
+        "saliid",
+        "oil",
+        "saliid cunto"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "jerrycan",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "saliid_5l",
+      "category": "raashin",
+      "display_name_en": "Cooking Oil 5L",
+      "display_name_so": "Saliid Cunto 5L",
+      "base_unit_code": "jerrycan",
+      "default_sale_unit_code": "jerrycan",
+      "default_receive_unit_code": "jerrycan",
+      "suggested_sale_price_usd": 10.5,
+      "reorder_threshold": 3.0,
+      "sort_order": 10,
+      "aliases_so": [
+        "saliid",
+        "oil"
+      ],
+      "aliases_en": [
+        "saliid",
+        "oil"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "jerrycan",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "saliid_1l",
+      "category": "raashin",
+      "display_name_en": "Cooking Oil 1L",
+      "display_name_so": "Saliid Cunto 1L",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 2.2,
+      "reorder_threshold": 8.0,
+      "sort_order": 11,
+      "aliases_so": [
+        "saliid",
+        "oil"
+      ],
+      "aliases_en": [
+        "saliid",
+        "oil"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "baasto_500g",
+      "category": "raashin",
+      "display_name_en": "Pasta 500g",
+      "display_name_so": "Baasto 500g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 15.0,
+      "sort_order": 12,
+      "aliases_so": [
+        "baasto",
+        "pasta"
+      ],
+      "aliases_en": [
+        "baasto",
+        "pasta"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "spageti_500g",
+      "category": "raashin",
+      "display_name_en": "Spaghetti 500g",
+      "display_name_so": "Spageti 500g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 15.0,
+      "sort_order": 13,
+      "aliases_so": [
+        "spageti",
+        "baasto",
+        "spaghetti"
+      ],
+      "aliases_en": [
+        "spageti",
+        "baasto",
+        "spaghetti"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "macrooni_400g",
+      "category": "raashin",
+      "display_name_en": "Macaroni 400g",
+      "display_name_so": "Macrooni 400g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.75,
+      "reorder_threshold": 12.0,
+      "sort_order": 14,
+      "aliases_so": [
+        "macrooni",
+        "macaroni"
+      ],
+      "aliases_en": [
+        "macrooni",
+        "macaroni"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "digir_kg",
+      "category": "raashin",
+      "display_name_en": "Beans 1kg",
+      "display_name_so": "Digir 1kg",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 8.0,
+      "sort_order": 15,
+      "aliases_so": [
+        "digir",
+        "beans"
+      ],
+      "aliases_en": [
+        "digir",
+        "beans"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "misir_kg",
+      "category": "raashin",
+      "display_name_en": "Lentils 1kg",
+      "display_name_so": "Misir 1kg",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.6,
+      "reorder_threshold": 8.0,
+      "sort_order": 16,
+      "aliases_so": [
+        "misir",
+        "lentils"
+      ],
+      "aliases_en": [
+        "misir",
+        "lentils"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "loobiya_kg",
+      "category": "raashin",
+      "display_name_en": "Cowpeas 1kg",
+      "display_name_so": "Loobiya 1kg",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 1.7,
+      "reorder_threshold": 6.0,
+      "sort_order": 17,
+      "aliases_so": [
+        "loobiya",
+        "cowpeas"
+      ],
+      "aliases_en": [
+        "loobiya",
+        "cowpeas"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "galley_kg",
+      "category": "raashin",
+      "display_name_en": "Maize 1kg",
+      "display_name_so": "Galley 1kg",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 8.0,
+      "sort_order": 18,
+      "aliases_so": [
+        "galley",
+        "maize",
+        "corn"
+      ],
+      "aliases_en": [
+        "galley",
+        "maize",
+        "corn"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "cusbo_kg",
+      "category": "raashin",
+      "display_name_en": "Salt 1kg",
+      "display_name_so": "Cusbo 1kg",
+      "base_unit_code": "kg",
+      "default_sale_unit_code": "kg",
+      "default_receive_unit_code": "kg",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 10.0,
+      "sort_order": 19,
+      "aliases_so": [
+        "cusbo",
+        "salt"
+      ],
+      "aliases_en": [
+        "cusbo",
+        "salt"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "kg",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "timir_500g",
+      "category": "raashin",
+      "display_name_en": "Dates 500g",
+      "display_name_so": "Timir 500g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 8.0,
+      "sort_order": 20,
+      "aliases_so": [
+        "timir",
+        "dates"
+      ],
+      "aliases_en": [
+        "timir",
+        "dates"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "shaah_caleen_250g",
+      "category": "cabitaan",
+      "display_name_en": "Tea Leaves 250g",
+      "display_name_so": "Shaah Caleen 250g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 12.0,
+      "sort_order": 21,
+      "aliases_so": [
+        "shaah",
+        "tea",
+        "caleen"
+      ],
+      "aliases_en": [
+        "shaah",
+        "tea",
+        "caleen"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "shaah_caleen_500g",
+      "category": "cabitaan",
+      "display_name_en": "Tea Leaves 500g",
+      "display_name_so": "Shaah Caleen 500g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.8,
+      "reorder_threshold": 8.0,
+      "sort_order": 22,
+      "aliases_so": [
+        "shaah",
+        "tea"
+      ],
+      "aliases_en": [
+        "shaah",
+        "tea"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "bun_250g",
+      "category": "cabitaan",
+      "display_name_en": "Coffee 250g",
+      "display_name_so": "Bun 250g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 6.0,
+      "sort_order": 23,
+      "aliases_so": [
+        "bun",
+        "coffee"
+      ],
+      "aliases_en": [
+        "bun",
+        "coffee"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "caano_budo_400g",
+      "category": "cabitaan",
+      "display_name_en": "Milk Powder 400g",
+      "display_name_so": "Caano Budo 400g",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 4.0,
+      "reorder_threshold": 8.0,
+      "sort_order": 24,
+      "aliases_so": [
+        "caano",
+        "milk",
+        "caano budo"
+      ],
+      "aliases_en": [
+        "caano",
+        "milk",
+        "caano budo"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "caano_budo_2500g",
+      "category": "cabitaan",
+      "display_name_en": "Milk Powder 2.5kg",
+      "display_name_so": "Caano Budo 2.5kg",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 18.0,
+      "reorder_threshold": 3.0,
+      "sort_order": 25,
+      "aliases_so": [
+        "caano",
+        "milk powder"
+      ],
+      "aliases_en": [
+        "caano",
+        "milk powder"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "caano_fariid_1l",
+      "category": "cabitaan",
+      "display_name_en": "Fresh Milk 1L",
+      "display_name_so": "Caano Fariid 1L",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 10.0,
+      "sort_order": 26,
+      "aliases_so": [
+        "caano",
+        "milk"
+      ],
+      "aliases_en": [
+        "caano",
+        "milk"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "biyo_500ml",
+      "category": "cabitaan",
+      "display_name_en": "Water 500ml",
+      "display_name_so": "Biyo 500ml",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 0.3,
+      "reorder_threshold": 40.0,
+      "sort_order": 27,
+      "aliases_so": [
+        "biyo",
+        "water"
+      ],
+      "aliases_en": [
+        "biyo",
+        "water"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "biyo_1500ml",
+      "category": "cabitaan",
+      "display_name_en": "Water 1.5L",
+      "display_name_so": "Biyo 1.5L",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 0.6,
+      "reorder_threshold": 30.0,
+      "sort_order": 28,
+      "aliases_so": [
+        "biyo",
+        "water"
+      ],
+      "aliases_en": [
+        "biyo",
+        "water"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "biyo_carton",
+      "category": "cabitaan",
+      "display_name_en": "Water Carton 12x1.5L",
+      "display_name_so": "Biyo Carton 12x1.5L",
+      "base_unit_code": "carton",
+      "default_sale_unit_code": "carton",
+      "default_receive_unit_code": "carton",
+      "suggested_sale_price_usd": 6.5,
+      "reorder_threshold": 5.0,
+      "sort_order": 29,
+      "aliases_so": [
+        "biyo carton",
+        "water carton"
+      ],
+      "aliases_en": [
+        "biyo carton",
+        "water carton"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "carton",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "soda_300ml",
+      "category": "cabitaan",
+      "display_name_en": "Soda 300ml",
+      "display_name_so": "Cabitaan 300ml",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 40.0,
+      "sort_order": 30,
+      "aliases_so": [
+        "cabitaan",
+        "soda",
+        "coca"
+      ],
+      "aliases_en": [
+        "cabitaan",
+        "soda",
+        "coca"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "soda_1500ml",
+      "category": "cabitaan",
+      "display_name_en": "Soda 1.5L",
+      "display_name_so": "Cabitaan 1.5L",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 15.0,
+      "sort_order": 31,
+      "aliases_so": [
+        "cabitaan",
+        "soda"
+      ],
+      "aliases_en": [
+        "cabitaan",
+        "soda"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "casiir_1l",
+      "category": "cabitaan",
+      "display_name_en": "Juice 1L",
+      "display_name_so": "Casiir 1L",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 10.0,
+      "sort_order": 32,
+      "aliases_so": [
+        "casiir",
+        "juice"
+      ],
+      "aliases_en": [
+        "casiir",
+        "juice"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "vimto_1l",
+      "category": "cabitaan",
+      "display_name_en": "Vimto 1L",
+      "display_name_so": "Vimto 1L",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 8.0,
+      "sort_order": 33,
+      "aliases_so": [
+        "vimto",
+        "sharaab"
+      ],
+      "aliases_en": [
+        "vimto",
+        "sharaab"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "tamar_hindi_1l",
+      "category": "cabitaan",
+      "display_name_en": "Tamarind Drink 1L",
+      "display_name_so": "Tamar Hindi 1L",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 6.0,
+      "sort_order": 34,
+      "aliases_so": [
+        "tamar hindi",
+        "tamarind"
+      ],
+      "aliases_en": [
+        "tamar hindi",
+        "tamarind"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "biskut_packet",
+      "category": "macmacaan",
+      "display_name_en": "Biscuits",
+      "display_name_so": "Biskut",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 20.0,
+      "sort_order": 35,
+      "aliases_so": [
+        "biskut",
+        "biscuit",
+        "cabis"
+      ],
+      "aliases_en": [
+        "biskut",
+        "biscuit",
+        "cabis"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "shukulaato",
+      "category": "macmacaan",
+      "display_name_en": "Chocolate",
+      "display_name_so": "Shukulaato",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.6,
+      "reorder_threshold": 20.0,
+      "sort_order": 36,
+      "aliases_so": [
+        "shukulaato",
+        "chocolate"
+      ],
+      "aliases_en": [
+        "shukulaato",
+        "chocolate"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "nacnac",
+      "category": "macmacaan",
+      "display_name_en": "Sweets",
+      "display_name_so": "Nacnac",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.4,
+      "reorder_threshold": 20.0,
+      "sort_order": 37,
+      "aliases_so": [
+        "nacnac",
+        "sweets",
+        "candy"
+      ],
+      "aliases_en": [
+        "nacnac",
+        "sweets",
+        "candy"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "cadar_xabag",
+      "category": "macmacaan",
+      "display_name_en": "Chewing Gum",
+      "display_name_so": "Cadar",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.3,
+      "reorder_threshold": 20.0,
+      "sort_order": 38,
+      "aliases_so": [
+        "cadar",
+        "gum"
+      ],
+      "aliases_en": [
+        "cadar",
+        "gum"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "shibis",
+      "category": "macmacaan",
+      "display_name_en": "Crisps",
+      "display_name_so": "Shibis",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 20.0,
+      "sort_order": 39,
+      "aliases_so": [
+        "shibis",
+        "crisps",
+        "chips"
+      ],
+      "aliases_en": [
+        "shibis",
+        "crisps",
+        "chips"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "macsaro",
+      "category": "macmacaan",
+      "display_name_en": "Popcorn",
+      "display_name_so": "Macsaro",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 12.0,
+      "sort_order": 40,
+      "aliases_so": [
+        "macsaro",
+        "popcorn"
+      ],
+      "aliases_en": [
+        "macsaro",
+        "popcorn"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "kornfaleeks_375g",
+      "category": "macmacaan",
+      "display_name_en": "Cornflakes 375g",
+      "display_name_so": "Kornfaleeks 375g",
+      "base_unit_code": "box",
+      "default_sale_unit_code": "box",
+      "default_receive_unit_code": "box",
+      "suggested_sale_price_usd": 3.0,
+      "reorder_threshold": 6.0,
+      "sort_order": 41,
+      "aliases_so": [
+        "kornfaleeks",
+        "cornflakes"
+      ],
+      "aliases_en": [
+        "kornfaleeks",
+        "cornflakes"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "box",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "halwa_kg",
+      "category": "macmacaan",
+      "display_name_en": "Halwa 1kg",
+      "display_name_so": "Halwa 1kg",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 4.5,
+      "reorder_threshold": 5.0,
+      "sort_order": 42,
+      "aliases_so": [
+        "halwa"
+      ],
+      "aliases_en": [
+        "halwa"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "malab_500g",
+      "category": "macmacaan",
+      "display_name_en": "Honey 500g",
+      "display_name_so": "Malab 500g",
+      "base_unit_code": "jar",
+      "default_sale_unit_code": "jar",
+      "default_receive_unit_code": "jar",
+      "suggested_sale_price_usd": 5.0,
+      "reorder_threshold": 5.0,
+      "sort_order": 43,
+      "aliases_so": [
+        "malab",
+        "honey"
+      ],
+      "aliases_en": [
+        "malab",
+        "honey"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "jar",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "subag_kg",
+      "category": "macmacaan",
+      "display_name_en": "Ghee 1kg",
+      "display_name_so": "Subag 1kg",
+      "base_unit_code": "tin",
+      "default_sale_unit_code": "tin",
+      "default_receive_unit_code": "tin",
+      "suggested_sale_price_usd": 7.0,
+      "reorder_threshold": 5.0,
+      "sort_order": 44,
+      "aliases_so": [
+        "subag",
+        "ghee"
+      ],
+      "aliases_en": [
+        "subag",
+        "ghee"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "tin",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "jam_400g",
+      "category": "macmacaan",
+      "display_name_en": "Jam 400g",
+      "display_name_so": "Jam 400g",
+      "base_unit_code": "jar",
+      "default_sale_unit_code": "jar",
+      "default_receive_unit_code": "jar",
+      "suggested_sale_price_usd": 2.2,
+      "reorder_threshold": 6.0,
+      "sort_order": 45,
+      "aliases_so": [
+        "jam"
+      ],
+      "aliases_en": [
+        "jam"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "jar",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "xawaash_100g",
+      "category": "xawaash",
+      "display_name_en": "Mixed Spice 100g",
+      "display_name_so": "Xawaash 100g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 12.0,
+      "sort_order": 46,
+      "aliases_so": [
+        "xawaash",
+        "spice"
+      ],
+      "aliases_en": [
+        "xawaash",
+        "spice"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "basbaas_budo_100g",
+      "category": "xawaash",
+      "display_name_en": "Chilli Powder 100g",
+      "display_name_so": "Basbaas Budo 100g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 10.0,
+      "sort_order": 47,
+      "aliases_so": [
+        "basbaas",
+        "chilli",
+        "chili"
+      ],
+      "aliases_en": [
+        "basbaas",
+        "chilli",
+        "chili"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "filfil_100g",
+      "category": "xawaash",
+      "display_name_en": "Black Pepper 100g",
+      "display_name_so": "Filfil Madow 100g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 8.0,
+      "sort_order": 48,
+      "aliases_so": [
+        "filfil",
+        "pepper"
+      ],
+      "aliases_en": [
+        "filfil",
+        "pepper"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "kamuun_100g",
+      "category": "xawaash",
+      "display_name_en": "Cumin 100g",
+      "display_name_so": "Kamuun 100g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 8.0,
+      "sort_order": 49,
+      "aliases_so": [
+        "kamuun",
+        "cumin"
+      ],
+      "aliases_en": [
+        "kamuun",
+        "cumin"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "hayl_50g",
+      "category": "xawaash",
+      "display_name_en": "Cardamom 50g",
+      "display_name_so": "Hayl 50g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.8,
+      "reorder_threshold": 6.0,
+      "sort_order": 50,
+      "aliases_so": [
+        "hayl",
+        "cardamom"
+      ],
+      "aliases_en": [
+        "hayl",
+        "cardamom"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "qorfe_50g",
+      "category": "xawaash",
+      "display_name_en": "Cinnamon 50g",
+      "display_name_so": "Qorfe 50g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 6.0,
+      "sort_order": 51,
+      "aliases_so": [
+        "qorfe",
+        "cinnamon"
+      ],
+      "aliases_en": [
+        "qorfe",
+        "cinnamon"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "huruud_100g",
+      "category": "xawaash",
+      "display_name_en": "Turmeric 100g",
+      "display_name_so": "Huruud 100g",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.9,
+      "reorder_threshold": 8.0,
+      "sort_order": 52,
+      "aliases_so": [
+        "huruud",
+        "turmeric"
+      ],
+      "aliases_en": [
+        "huruud",
+        "turmeric"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "maraq_cube",
+      "category": "xawaash",
+      "display_name_en": "Stock Cubes",
+      "display_name_so": "Maraq Cube",
+      "base_unit_code": "box",
+      "default_sale_unit_code": "box",
+      "default_receive_unit_code": "box",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 12.0,
+      "sort_order": 53,
+      "aliases_so": [
+        "maraq",
+        "cube",
+        "maggi"
+      ],
+      "aliases_en": [
+        "maraq",
+        "cube",
+        "maggi"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "box",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "khal_500ml",
+      "category": "xawaash",
+      "display_name_en": "Vinegar 500ml",
+      "display_name_so": "Khal 500ml",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 8.0,
+      "sort_order": 54,
+      "aliases_so": [
+        "khal",
+        "vinegar"
+      ],
+      "aliases_en": [
+        "khal",
+        "vinegar"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "tamaate_paste_400g",
+      "category": "qasacado",
+      "display_name_en": "Tomato Paste 400g",
+      "display_name_so": "Tamaate Paste 400g",
+      "base_unit_code": "can",
+      "default_sale_unit_code": "can",
+      "default_receive_unit_code": "can",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 12.0,
+      "sort_order": 55,
+      "aliases_so": [
+        "tamaate",
+        "tomato paste"
+      ],
+      "aliases_en": [
+        "tamaate",
+        "tomato paste"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "can",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "tamaate_paste_70g",
+      "category": "qasacado",
+      "display_name_en": "Tomato Paste 70g",
+      "display_name_so": "Tamaate Paste 70g",
+      "base_unit_code": "can",
+      "default_sale_unit_code": "can",
+      "default_receive_unit_code": "can",
+      "suggested_sale_price_usd": 0.4,
+      "reorder_threshold": 20.0,
+      "sort_order": 56,
+      "aliases_so": [
+        "tamaate",
+        "tomato"
+      ],
+      "aliases_en": [
+        "tamaate",
+        "tomato"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "can",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "tuun_qasacad",
+      "category": "qasacado",
+      "display_name_en": "Canned Tuna",
+      "display_name_so": "Tuun Qasacad",
+      "base_unit_code": "can",
+      "default_sale_unit_code": "can",
+      "default_receive_unit_code": "can",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 12.0,
+      "sort_order": 57,
+      "aliases_so": [
+        "tuun",
+        "tuna"
+      ],
+      "aliases_en": [
+        "tuun",
+        "tuna"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "can",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "sardiin_qasacad",
+      "category": "qasacado",
+      "display_name_en": "Canned Sardines",
+      "display_name_so": "Sardiin Qasacad",
+      "base_unit_code": "can",
+      "default_sale_unit_code": "can",
+      "default_receive_unit_code": "can",
+      "suggested_sale_price_usd": 1.2,
+      "reorder_threshold": 12.0,
+      "sort_order": 58,
+      "aliases_so": [
+        "sardiin",
+        "sardine"
+      ],
+      "aliases_en": [
+        "sardiin",
+        "sardine"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "can",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "digir_qasacad",
+      "category": "qasacado",
+      "display_name_en": "Canned Beans",
+      "display_name_so": "Digir Qasacad",
+      "base_unit_code": "can",
+      "default_sale_unit_code": "can",
+      "default_receive_unit_code": "can",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 12.0,
+      "sort_order": 59,
+      "aliases_so": [
+        "digir",
+        "beans"
+      ],
+      "aliases_en": [
+        "digir",
+        "beans"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "can",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "tamaate_qasacad",
+      "category": "qasacado",
+      "display_name_en": "Canned Tomatoes",
+      "display_name_so": "Tamaate Qasacad",
+      "base_unit_code": "can",
+      "default_sale_unit_code": "can",
+      "default_receive_unit_code": "can",
+      "suggested_sale_price_usd": 1.1,
+      "reorder_threshold": 10.0,
+      "sort_order": 60,
+      "aliases_so": [
+        "tamaate",
+        "tomatoes"
+      ],
+      "aliases_en": [
+        "tamaate",
+        "tomatoes"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "can",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "caano_qasacad",
+      "category": "qasacado",
+      "display_name_en": "Evaporated Milk",
+      "display_name_so": "Caano Qasacad",
+      "base_unit_code": "can",
+      "default_sale_unit_code": "can",
+      "default_receive_unit_code": "can",
+      "suggested_sale_price_usd": 1.3,
+      "reorder_threshold": 12.0,
+      "sort_order": 61,
+      "aliases_so": [
+        "caano",
+        "evaporated milk"
+      ],
+      "aliases_en": [
+        "caano",
+        "evaporated milk"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "can",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "saabuun_dharka",
+      "category": "guriga",
+      "display_name_en": "Laundry Soap Bar",
+      "display_name_so": "Saabuun Dharka",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.6,
+      "reorder_threshold": 20.0,
+      "sort_order": 62,
+      "aliases_so": [
+        "saabuun",
+        "soap"
+      ],
+      "aliases_en": [
+        "saabuun",
+        "soap"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "daacuun_1kg",
+      "category": "guriga",
+      "display_name_en": "Detergent Powder 1kg",
+      "display_name_so": "Daacuun 1kg",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 10.0,
+      "sort_order": 63,
+      "aliases_so": [
+        "daacuun",
+        "omo",
+        "detergent"
+      ],
+      "aliases_en": [
+        "daacuun",
+        "omo",
+        "detergent"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "saabuun_gacmeed",
+      "category": "guriga",
+      "display_name_en": "Hand Soap",
+      "display_name_so": "Saabuun Gacmeed",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 20.0,
+      "sort_order": 64,
+      "aliases_so": [
+        "saabuun",
+        "soap"
+      ],
+      "aliases_en": [
+        "saabuun",
+        "soap"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "shaambo_400ml",
+      "category": "guriga",
+      "display_name_en": "Shampoo 400ml",
+      "display_name_so": "Shaambo 400ml",
+      "base_unit_code": "bottle",
+      "default_sale_unit_code": "bottle",
+      "default_receive_unit_code": "bottle",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 8.0,
+      "sort_order": 65,
+      "aliases_so": [
+        "shaambo",
+        "shampoo"
+      ],
+      "aliases_en": [
+        "shaambo",
+        "shampoo"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "bottle",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "cadayga",
+      "category": "guriga",
+      "display_name_en": "Toothpaste",
+      "display_name_so": "Cadayga",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 1.0,
+      "reorder_threshold": 12.0,
+      "sort_order": 66,
+      "aliases_so": [
+        "cadayga",
+        "toothpaste",
+        "colgate"
+      ],
+      "aliases_en": [
+        "cadayga",
+        "toothpaste",
+        "colgate"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "caleen_suuf",
+      "category": "guriga",
+      "display_name_en": "Tissue Roll",
+      "display_name_so": "Caleen Suuf",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 15.0,
+      "sort_order": 67,
+      "aliases_so": [
+        "suuf",
+        "tissue"
+      ],
+      "aliases_en": [
+        "suuf",
+        "tissue"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "kabriid",
+      "category": "guriga",
+      "display_name_en": "Matches",
+      "display_name_so": "Kabriid",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.2,
+      "reorder_threshold": 30.0,
+      "sort_order": 68,
+      "aliases_so": [
+        "kabriid",
+        "matches"
+      ],
+      "aliases_en": [
+        "kabriid",
+        "matches"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "shamac",
+      "category": "guriga",
+      "display_name_en": "Candle",
+      "display_name_so": "Shamac",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.3,
+      "reorder_threshold": 20.0,
+      "sort_order": 69,
+      "aliases_so": [
+        "shamac",
+        "candle"
+      ],
+      "aliases_en": [
+        "shamac",
+        "candle"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "bataari_aa",
+      "category": "guriga",
+      "display_name_en": "Batteries AA",
+      "display_name_so": "Bataari AA",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 15.0,
+      "sort_order": 70,
+      "aliases_so": [
+        "bataari",
+        "battery"
+      ],
+      "aliases_en": [
+        "bataari",
+        "battery"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "baaldi",
+      "category": "guriga",
+      "display_name_en": "Bucket",
+      "display_name_so": "Baaldi",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 2.5,
+      "reorder_threshold": 6.0,
+      "sort_order": 71,
+      "aliases_so": [
+        "baaldi",
+        "bucket"
+      ],
+      "aliases_en": [
+        "baaldi",
+        "bucket"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "xaaqin",
+      "category": "guriga",
+      "display_name_en": "Broom",
+      "display_name_so": "Xaaqin",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 2.0,
+      "reorder_threshold": 6.0,
+      "sort_order": 72,
+      "aliases_so": [
+        "xaaqin",
+        "broom"
+      ],
+      "aliases_en": [
+        "xaaqin",
+        "broom"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "foyl",
+      "category": "guriga",
+      "display_name_en": "Aluminium Foil",
+      "display_name_so": "Foyl",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 1.5,
+      "reorder_threshold": 8.0,
+      "sort_order": 73,
+      "aliases_so": [
+        "foyl",
+        "foil"
+      ],
+      "aliases_en": [
+        "foyl",
+        "foil"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "dabqaad",
+      "category": "guriga",
+      "display_name_en": "Lighter",
+      "display_name_so": "Dab-qaad",
+      "base_unit_code": "piece",
+      "default_sale_unit_code": "piece",
+      "default_receive_unit_code": "piece",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 20.0,
+      "sort_order": 74,
+      "aliases_so": [
+        "dabqaad",
+        "lighter"
+      ],
+      "aliases_en": [
+        "dabqaad",
+        "lighter"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "piece",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "caafimaad_panadol",
+      "category": "caafimaad",
+      "display_name_en": "Paracetamol",
+      "display_name_so": "Panadol",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.5,
+      "reorder_threshold": 15.0,
+      "sort_order": 75,
+      "aliases_so": [
+        "panadol",
+        "paracetamol"
+      ],
+      "aliases_en": [
+        "panadol",
+        "paracetamol"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "caafimaad_plaster",
+      "category": "caafimaad",
+      "display_name_en": "Plasters",
+      "display_name_so": "Plaaster",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.8,
+      "reorder_threshold": 12.0,
+      "sort_order": 76,
+      "aliases_so": [
+        "plaaster",
+        "plaster"
+      ],
+      "aliases_en": [
+        "plaaster",
+        "plaster"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "code": "caafimaad_cotton",
+      "category": "caafimaad",
+      "display_name_en": "Cotton Wool",
+      "display_name_so": "Suuf Caafimaad",
+      "base_unit_code": "packet",
+      "default_sale_unit_code": "packet",
+      "default_receive_unit_code": "packet",
+      "suggested_sale_price_usd": 0.7,
+      "reorder_threshold": 10.0,
+      "sort_order": 77,
+      "aliases_so": [
+        "suuf",
+        "cotton"
+      ],
+      "aliases_en": [
+        "suuf",
+        "cotton"
+      ],
+      "unit_conversions": [
+        {
+          "unit_code": "packet",
+          "conversion_to_base": 1,
+          "allow_sale": true,
+          "allow_receive": true,
+          "sort_order": 1
+        }
+      ]
+    }
+  ]
+}

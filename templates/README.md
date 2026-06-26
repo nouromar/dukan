@@ -21,7 +21,34 @@ templates/
     expense-categories.json
     dashboard.json
     _legacy-grocery-v1.json    # copy of the old single-file template
+  test_dukaan_cunto/           # Somali dukaan cunto — full catalog (~77 items)
+    manifest.json
+    catalog.json
+    settings.json
+    expense-categories.json
+    quick-actions.json
+  empty_dukaan_cunto/          # Somali dukaan cunto — config only, no inventory
+    manifest.json
+    settings.json
+    expense-categories.json
+  dukaan-cunto-catalog-review.csv  # authoring source for the dukaan cunto catalog
+  tools/
+    gen_dukaan_cunto.py        # regenerates 0017 + dukaan cunto specs from the CSV
 ```
+
+## Dukaan Cunto templates (Somali grocery)
+
+Two sibling starter templates seeded by `supabase/migrations/0017_seed_dukaan_cunto.sql`:
+
+- **`test_dukaan_cunto`** — full catalog (~77 items + quick actions), for seeding test shops.
+- **`empty_dukaan_cunto`** — settings + expense categories only, **no inventory / no quick
+  actions**, for onboarding a real shop from scratch.
+
+Both appear in the in-app "Choose your shop type" setup step (they're `is_active`), so testers
+pick one during signup — no pre-created shops needed. The catalog is authored in
+`dukaan-cunto-catalog-review.csv`; after editing it (e.g. prices), re-run
+`python3 templates/tools/gen_dukaan_cunto.py` to regenerate the migration + JSON specs (output
+is deterministic). The `0017` apply path is covered by `§DC` in `scripts/test-backend-migrations.sh`.
 
 ## Pack responsibilities
 

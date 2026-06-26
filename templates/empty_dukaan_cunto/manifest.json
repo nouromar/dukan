@@ -1,0 +1,22 @@
+{
+  "kind": "shop_starter",
+  "code": "empty_dukaan_cunto",
+  "name_en": "Empty Dukaan Cunto",
+  "name_so": "Dukaan Cunto (Madhan)",
+  "version": 1,
+  "locale_default": "so",
+  "currency_default": "USD",
+  "description": "Somali dukaan cunto starter — config only, no inventory.",
+  "packs": [
+    {
+      "code": "settings",
+      "file": "settings.json",
+      "required": true
+    },
+    {
+      "code": "expense_categories",
+      "file": "expense-categories.json",
+      "required": true
+    }
+  ]
+}
