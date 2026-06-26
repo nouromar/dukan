@@ -229,6 +229,8 @@ class SyncEngine extends ChangeNotifier {
       _hasInitialSync = true;
       _lastError = null;
       _lastSyncedAt = _clock();
+      // Successful full sync ⇒ online; clear the offline/realtime-down marker.
+      _realtimeDisconnectedAt = null;
       _setState(SyncEngineState.live);
     } catch (error, stack) {
       _lastError = error;
@@ -311,8 +313,18 @@ class SyncEngine extends ChangeNotifier {
       );
       _lastError = null;
       _lastSyncedAt = _clock();
+      // A successful sync proves we're back online — clear the realtime-down
+      // marker so the "Working offline" banner actually dismisses on a manual
+      // retry (or the next poll) instead of lingering until an app restart.
+      // The realtime listener re-flags if its socket is genuinely still down.
+      // When already `live` (a poll, not a deltaSync→live transition) we must
+      // notify explicitly, otherwise the banner never rebuilds.
+      final wasOffline = _realtimeDisconnectedAt != null;
+      _realtimeDisconnectedAt = null;
       if (_state == SyncEngineState.deltaSync) {
         _setState(SyncEngineState.live);
+      } else if (wasOffline) {
+        notifyListeners();
       }
     } catch (error, stack) {
       _lastError = error;

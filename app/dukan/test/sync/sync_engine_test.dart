@@ -490,4 +490,57 @@ void main() {
     expect(engine.realtimeDisconnectedAt, isNull);
     engine.dispose();
   });
+
+  test('successful retry sync clears the offline marker even when already live',
+      () async {
+    // Repro: went offline (realtime dropped) while the engine was already
+    // `live`; tapping retry ran a delta that synced but left the
+    // "Working offline" banner up until an app restart.
+    for (final res in SyncResource.all) {
+      await repo.writeSyncState(
+        shopId: shopId,
+        resource: res,
+        lastSyncedAtMs: 1000,
+        fullSyncDone: true,
+      );
+    }
+    api.onGetShopItemsDelta = ({required shopId, required since}) async => {
+          'items': [],
+          'units': [],
+          'aliases': [],
+          'barcodes': [],
+          'server_now_ms': 2000,
+        };
+    api.onGetPartiesDelta = ({required shopId, required since}) async =>
+        {'parties': [], 'server_now_ms': 2000};
+    api.onGetCategoriesDelta = ({required shopId, required since}) async => {
+          'expense_categories': [],
+          'categories': [],
+          'units': [],
+          'server_now_ms': 2000,
+        };
+    api.onGetTransactionsDelta =
+        ({required shopId, required since, int limit = 200}) async =>
+            {'transactions': [], 'server_now_ms': 2000};
+    final engine = SyncEngine(
+      shopApi: api,
+      localRepository: repo,
+      pendingPostDao: postDao,
+    );
+    // Drive the engine to `live`, then simulate the socket dropping.
+    await engine.forceDelta(shopId);
+    engine.markRealtimeDisconnected();
+    expect(engine.realtimeDisconnectedAt, isNotNull);
+
+    var notified = 0;
+    engine.addListener(() => notified++);
+    // The manual "Tap to retry sync" path.
+    await engine.forceDelta(shopId);
+
+    expect(engine.realtimeDisconnectedAt, isNull,
+        reason: 'a successful retry must clear the offline marker');
+    expect(notified, greaterThan(0),
+        reason: 'must notify so the offline banner rebuilds and dismisses');
+    engine.dispose();
+  });
 }
