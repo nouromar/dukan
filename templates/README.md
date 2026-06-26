@@ -38,17 +38,25 @@ templates/
 
 ## Dukaan Cunto templates (Somali grocery)
 
-Two sibling starter templates seeded by `supabase/migrations/0017_seed_dukaan_cunto.sql`:
+Two sibling starter templates whose content is a **deletable/editable seed**, not a migration:
+`supabase/seeds/templates/dukaan_cunto.sql`.
 
 - **`test_dukaan_cunto`** — full catalog (~77 items + quick actions), for seeding test shops.
 - **`empty_dukaan_cunto`** — settings + expense categories only, **no inventory / no quick
   actions**, for onboarding a real shop from scratch.
 
 Both appear in the in-app "Choose your shop type" setup step (they're `is_active`), so testers
-pick one during signup — no pre-created shops needed. The catalog is authored in
-`dukaan-cunto-catalog-review.csv`; after editing it (e.g. prices), re-run
-`python3 templates/tools/gen_dukaan_cunto.py` to regenerate the migration + JSON specs (output
-is deterministic). The `0017` apply path is covered by `§DC` in `scripts/test-backend-migrations.sh`.
+pick one during signup — no pre-created shops needed.
+
+**Why a seed, not a migration:** template content is something you add, edit, and *delete*,
+unlike the append-only migration stream. Seeds load after migrations on local `supabase db
+reset` (via `config.toml [db.seed]`), but **`db push` to hosted does NOT run seeds** — so load
+these test templates explicitly per environment (staging/beta only, never production). To drop
+them: delete the seed file and `delete from public.template where code like '%dukaan_cunto'`.
+
+The catalog is authored in `dukaan-cunto-catalog-review.csv`; after editing it (e.g. prices),
+re-run `python3 templates/tools/gen_dukaan_cunto.py` to regenerate the seed + JSON specs (output
+is deterministic). The apply path is covered by `§DC` in `scripts/test-backend-migrations.sh`.
 
 ## Pack responsibilities
 

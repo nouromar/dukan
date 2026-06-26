@@ -6,8 +6,12 @@
 --   * empty_dukaan_cunto — config only (settings + expense categories),
 --     no inventory / no quick actions, for onboarding a real shop from scratch.
 --
--- Mirrors 0016 (grocery). Idempotent: on conflict do nothing. Authoritative
--- apply path is `supabase db reset`; apply_template(shop, template) materializes.
+-- Template CONTENT seed (NOT a migration) — loaded after migrations via
+-- config.toml [db.seed] on `supabase db reset`, and explicitly per-env for
+-- hosted (load these test templates on staging/beta, never on production).
+-- Idempotent: on conflict do nothing. apply_template(shop, template) then
+-- materializes a chosen template onto a shop. To remove a template, delete
+-- this file and `delete from public.template where code like '%dukaan_cunto'`.
 
 --------------------------------------------------------------------
 -- 1. Units not yet in the global unit table (0002).
@@ -32,7 +36,7 @@ values
   ('qasacado', 'Canned', jsonb_build_object('en', 'Canned', 'so', 'Qasacado'), 5),
   ('guriga', 'Household', jsonb_build_object('en', 'Household', 'so', 'Guriga'), 6),
   ('caafimaad', 'Health', jsonb_build_object('en', 'Health', 'so', 'Caafimaad'), 7)
-on conflict (code) do nothing;
+on conflict (code) where shop_id is null do nothing;
 
 --------------------------------------------------------------------
 -- 3. Items (global SKUs, slim — display name lives in item_alias).

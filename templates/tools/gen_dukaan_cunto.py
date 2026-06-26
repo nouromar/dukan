@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Generate the Dukaan Cunto seed migration (0017) + JSON template specs
-from the reviewed catalog CSV. Single source -> SQL + JSON, no hand-dup."""
+"""Generate the Dukaan Cunto template content SEED + JSON specs from the
+reviewed catalog CSV. Single source -> SQL + JSON, no hand-dup.
+
+The SQL output is a deletable/editable SEED (supabase/seeds/templates/),
+NOT a migration: template content must live somewhere you can add, edit,
+and delete freely, unlike the append-only migration stream."""
 import csv, json, os, re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CSV = f"{ROOT}/templates/dukaan-cunto-catalog-review.csv"
-MIG = f"{ROOT}/supabase/migrations/0017_seed_dukaan_cunto.sql"
+SEED = f"{ROOT}/supabase/seeds/templates/dukaan_cunto.sql"
 
 # CSV category label -> (code, en, so, sort)
 CATS = {
@@ -91,8 +95,12 @@ W("--   * test_dukaan_cunto  — full: ~%d items + quick actions, for seeded tes
 W("--   * empty_dukaan_cunto — config only (settings + expense categories),")
 W("--     no inventory / no quick actions, for onboarding a real shop from scratch.")
 W("--")
-W("-- Mirrors 0016 (grocery). Idempotent: on conflict do nothing. Authoritative")
-W("-- apply path is `supabase db reset`; apply_template(shop, template) materializes.")
+W("-- Template CONTENT seed (NOT a migration) — loaded after migrations via")
+W("-- config.toml [db.seed] on `supabase db reset`, and explicitly per-env for")
+W("-- hosted (load these test templates on staging/beta, never on production).")
+W("-- Idempotent: on conflict do nothing. apply_template(shop, template) then")
+W("-- materializes a chosen template onto a shop. To remove a template, delete")
+W("-- this file and `delete from public.template where code like '%dukaan_cunto'`.")
 W("")
 W("--------------------------------------------------------------------")
 W("-- 1. Units not yet in the global unit table (0002).")
@@ -113,7 +121,10 @@ rows = []
 for label, (code, en, so, sort) in CATS.items():
     rows.append(f"  ({q(code)}, {q(en)}, jsonb_build_object('en', {q(en)}, 'so', {q(so)}), {sort})")
 W(",\n".join(rows))
-W("on conflict (code) do nothing;")
+# shop_id defaults NULL (global category). 0076 replaced the global `code`
+# unique with a partial index `(code) where shop_id is null`, so name that
+# predicate for ON CONFLICT inference (this seed runs after all migrations).
+W("on conflict (code) where shop_id is null do nothing;")
 W("")
 W("--------------------------------------------------------------------")
 W("-- 3. Items (global SKUs, slim — display name lives in item_alias).")
@@ -284,9 +295,10 @@ W(f"where t.code = {q(TEST)} and t.version = 1")
 W("on conflict (template_id, screen, position) do nothing;")
 W("")
 
-with open(MIG, "w") as f:
+os.makedirs(os.path.dirname(SEED), exist_ok=True)
+with open(SEED, "w") as f:
     f.write("\n".join(out))
-print(f"Wrote {MIG} ({len(out)} lines, {len(items)} items)")
+print(f"Wrote {SEED} ({len(out)} lines, {len(items)} items)")
 
 # ---- emit JSON specs ----
 def write_json(path, obj):

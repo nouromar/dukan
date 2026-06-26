@@ -80,6 +80,15 @@ for migration in "$ROOT_DIR"/supabase/migrations/*.sql; do
   docker exec -i "$CONTAINER_NAME" psql -U postgres -v ON_ERROR_STOP=1 -d postgres < "$migration" >/dev/null
 done
 
+# Template content seeds live OUTSIDE the migration stream (deletable/editable
+# content, not schema). `supabase db reset` loads these via config.toml; the
+# harness loads them explicitly here, after migrations, to mirror that.
+for seed in "$ROOT_DIR"/supabase/seeds/templates/*.sql; do
+  [ -e "$seed" ] || continue
+  echo "Seeding $(basename "$seed")"
+  docker exec -i "$CONTAINER_NAME" psql -U postgres -v ON_ERROR_STOP=1 -d postgres < "$seed" >/dev/null
+done
+
 docker exec -i "$CONTAINER_NAME" psql -U postgres -v ON_ERROR_STOP=1 -d postgres <<'SQL'
 -- =====================================================================
 -- Backend migration harness — v2 schema (data-model-v2 §12 test plan)
