@@ -1469,6 +1469,25 @@ class LocalRepository {
     );
   }
 
+  /// Optimistic: increase a party's outstanding balance when a credit
+  /// transaction is saved — supplier payable on a receive, customer receivable
+  /// on a debt sale — so the customers/suppliers LIST reflects it instantly.
+  /// Direction 'I' = customer receivable, 'O' = supplier payable. The next
+  /// parties-sync replaces it with the server value. Inverse of
+  /// [applyOptimisticPartyPayment] (use that to revert on a rejected post).
+  Future<void> applyOptimisticPartyCharge({
+    required String partyId,
+    required String direction,
+    required num amount,
+  }) async {
+    final db = await _db;
+    final col = direction == 'I' ? 'receivable' : 'payable';
+    await db.rawUpdate(
+      'UPDATE local_party SET $col = $col + ? WHERE party_id = ?',
+      [amount, partyId],
+    );
+  }
+
   // ---- Optimistic category mirror writes (0076) ------------------------
   // The `code` column is NOT NULL in the mirror but never displayed
   // (the UI shows `name`); we store a local placeholder slug that the
@@ -1871,6 +1890,40 @@ class LocalRepository {
             'delta': baseDelta,
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+  }
+
+  /// Optimistic: bump current_stock directly for a just-saved receive (or sale)
+  /// so the product list reflects it instantly (the list reads current_stock).
+  /// Looks up shop_item_id + conversion per packaging like [applyProjectionLines]
+  /// but writes the cached stock directly — the next items-sync replaces it with
+  /// the server value, so there's no projection to clean up (unlike the queue
+  /// path). [ProjectionLine.direction] is +1 for receive, -1 for sale; pass the
+  /// inverse to revert a rejected post.
+  Future<void> applyOptimisticStockForLines({
+    required List<ProjectionLine> lines,
+  }) async {
+    if (lines.isEmpty) return;
+    final db = await _db;
+    await db.transaction((txn) async {
+      for (final l in lines) {
+        final rows = await txn.query(
+          'local_shop_item_unit',
+          columns: ['shop_item_id', 'conversion_to_base'],
+          where: 'shop_item_unit_id = ?',
+          whereArgs: [l.shopItemUnitId],
+          limit: 1,
+        );
+        if (rows.isEmpty) continue; // unit not in local mirror — skip
+        final shopItemId = rows.first['shop_item_id'] as String;
+        final conv = (rows.first['conversion_to_base'] as num).toDouble();
+        final baseDelta = l.quantity.toDouble() * conv * l.direction;
+        await txn.rawUpdate(
+          'UPDATE local_shop_item SET current_stock = current_stock + ? '
+          'WHERE shop_item_id = ?',
+          [baseDelta, shopItemId],
         );
       }
     });

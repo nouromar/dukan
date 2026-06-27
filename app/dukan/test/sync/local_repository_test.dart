@@ -122,6 +122,47 @@ void main() {
     expect(basket2.first.shopItemId, 'si-3');
   });
 
+  test('applyOptimisticStockForLines bumps current_stock by base-unit delta',
+      () async {
+    await repo.applyItemsPayload({
+      'items': [_item('si-1', 'Rice', stock: 10)],
+      'units': [_unit('u-1', 'si-1', 'sack', 'Rice — sack', 25)], // ×25
+      'aliases': [],
+      'barcodes': [],
+    });
+
+    // Receive 2 sacks → +50 base units → 60.
+    await repo.applyOptimisticStockForLines(
+      lines: [ProjectionLine(shopItemUnitId: 'u-1', quantity: 2, direction: 1)],
+    );
+    expect((await repo.getShopItem('si-1'))!.currentStock, 60);
+
+    // Reverting (direction -1) restores it — the rejected-bono path.
+    await repo.applyOptimisticStockForLines(
+      lines: [ProjectionLine(shopItemUnitId: 'u-1', quantity: 2, direction: -1)],
+    );
+    expect((await repo.getShopItem('si-1'))!.currentStock, 10);
+  });
+
+  test('applyOptimisticPartyCharge raises (and revert lowers) supplier payable',
+      () async {
+    await repo.applyPartiesPayload({
+      'parties': [_party('p-1', 'Acme', type: 'supplier', payable: 30)],
+    });
+
+    await repo.applyOptimisticPartyCharge(
+        partyId: 'p-1', direction: 'O', amount: 50);
+    var rows =
+        await repo.searchParties('', shopId: shopId, typeCode: 'supplier');
+    expect(rows.single.payable, 80);
+
+    // applyOptimisticPartyPayment reverts it (the reject path).
+    await repo.applyOptimisticPartyPayment(
+        partyId: 'p-1', direction: 'O', amount: 50);
+    rows = await repo.searchParties('', shopId: shopId, typeCode: 'supplier');
+    expect(rows.single.payable, 30);
+  });
+
   test('lookupBarcode returns the matching shop_item_unit', () async {
     await repo.applyItemsPayload({
       'items': [_item('si-1', 'Rice 5kg')],

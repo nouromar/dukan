@@ -626,6 +626,16 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           lineTotal: line.lineTotal,
         ),
     ];
+    final total = lines.fold<num>(0, (sum, l) => sum + l.lineTotal);
+    // Projection lines for the optimistic stock bump (+1 = stock in).
+    final stockLines = [
+      for (final line in lines)
+        ProjectionLine(
+          shopItemUnitId: line.shopItemUnitId,
+          quantity: line.quantity,
+          direction: 1,
+        ),
+    ];
 
     // #383: useLocalDb=false → direct-await path. No optimistic
     // clear, no queue, no projection. Lines stay on screen until
@@ -652,8 +662,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     // the post goes through the direct path or the queue.
     final localRepoForOptimistic = context.read<LocalRepository>();
     try {
-      final total = snapshot.lines.values
-          .fold<num>(0, (sum, l) => sum + l.lineTotal);
       var lineNo = 1;
       final linesSummary = snapshot.lines.values
           .map((l) => <String, dynamic>{
@@ -710,6 +718,28 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         context: ErrorDescription('optimistic supplier basket bump'),
       ));
     }
+    // Optimistic stock + supplier balance so Products and the suppliers LIST
+    // reflect the receive instantly — they read current_stock / local_party
+    // .payable directly (only the dashboard saw the optimistic txn before).
+    // The next items/parties sync replaces these with the server truth;
+    // reverted below if the server rejects the bono.
+    try {
+      await localRepoForOptimistic.applyOptimisticStockForLines(
+        lines: stockLines,
+      );
+      await localRepoForOptimistic.applyOptimisticPartyCharge(
+        partyId: supplier.id,
+        direction: 'O',
+        amount: total,
+      );
+    } catch (e, st) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: e,
+        stack: st,
+        library: 'dukan receive',
+        context: ErrorDescription('optimistic receive stock/balance'),
+      ));
+    }
 
     if (!mounted) return;
     // Optimistic clear (useLocalDb=true) so the screen returns to
@@ -742,9 +772,27 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         Navigator.of(context).maybePop();
       }
     } on PostgrestException catch (error, stackTrace) {
-      // 4xx-style server reject — won't succeed on retry. Restore the
-      // snapshot so the cashier sees their lines and can correct the
-      // underlying issue.
+      // 4xx-style server reject — won't succeed on retry. Revert the optimistic
+      // stock + balance bumps (the bono didn't post; lines are restored for a
+      // retry, so a lingering bump would double-count), then restore the
+      // snapshot so the cashier can correct the issue.
+      try {
+        await localRepoForOptimistic.applyOptimisticStockForLines(
+          lines: [
+            for (final line in lines)
+              ProjectionLine(
+                shopItemUnitId: line.shopItemUnitId,
+                quantity: line.quantity,
+                direction: -1,
+              ),
+          ],
+        );
+        await localRepoForOptimistic.applyOptimisticPartyPayment(
+          partyId: supplier.id,
+          direction: 'O',
+          amount: total,
+        );
+      } catch (_) {/* best-effort revert; sync reconciles regardless */}
       _handleSaveFailure(snapshot, error, stackTrace, l.receivePostFailedMessage);
     } catch (error, stackTrace) {
       // Network / transient — enqueue for the offline write queue to
@@ -775,34 +823,12 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         ),
         queuedAt: DateTime.now(),
       );
-      // #374: stock-add projection so the in-flight receive
-      // shows up in Products + Sale grid until the post drains.
-      // The optimistic local_transaction row was already
-      // written up-front in _save (#385).
-      final useLocal = useLocalDb(context);
-      final localRepo = useLocal ? context.read<LocalRepository>() : null;
+      // Stock + supplier balance were already bumped optimistically up-front in
+      // _save (current_stock / local_party.payable), so the in-flight receive
+      // shows in Products + the suppliers list until the queued post drains and
+      // the items/parties sync replaces them with the server values. No stock
+      // projection needed here (the bump lives directly in current_stock).
       final queue = context.read<OfflineQueueController>();
-      if (localRepo != null) {
-        try {
-          await localRepo.applyProjectionLines(
-            pendingPostId: post.id,
-            lines: lines
-                .map((l) => ProjectionLine(
-                      shopItemUnitId: l.shopItemUnitId,
-                      quantity: l.quantity,
-                      direction: 1,
-                    ))
-                .toList(),
-          );
-        } catch (e, st) {
-          FlutterError.reportError(FlutterErrorDetails(
-            exception: e,
-            stack: st,
-            library: 'dukan receive',
-            context: ErrorDescription('apply receive stock projection'),
-          ));
-        }
-      }
       await queue.enqueue(post);
       if (mounted) {
         controller.clearAll();
