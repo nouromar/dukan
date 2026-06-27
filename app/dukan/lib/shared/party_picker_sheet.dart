@@ -63,12 +63,13 @@ class _PartyPickerBodyState extends State<_PartyPickerBody> {
     // #374: local mirror when offline_mode = full.
     if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
+      // Default rankBy:'balance' — for parties, who owes (or is owed) matters
+      // more than recency. The recency capability stays available for a
+      // future "Recent" toggle.
       final rows = await repo.searchParties(
         query,
         shopId: widget.shop.id,
         typeCode: widget.typeCode,
-        // Picker shows the people you've dealt with most recently first.
-        rankBy: 'recency',
       );
       return rows.map(repo.toPartySearchResult).toList(growable: false);
     }
@@ -76,7 +77,6 @@ class _PartyPickerBodyState extends State<_PartyPickerBody> {
       shopId: widget.shop.id,
       query: query,
       type: widget.typeCode,
-      rankBy: 'recency',
     );
   }
 

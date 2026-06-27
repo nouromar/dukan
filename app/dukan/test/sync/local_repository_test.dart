@@ -109,8 +109,9 @@ void main() {
       () async {
     await repo.applyPartiesPayload({
       'parties': [
-        _party('p-old', 'Aaa Old', type: 'customer'), // alphabetically first
-        _party('p-new', 'Zzz New', type: 'customer'), // alphabetically last
+        // p-old owes more (leads under default balance); p-new is more recent.
+        _party('p-old', 'Aaa Old', type: 'customer', receivable: 50),
+        _party('p-new', 'Zzz New', type: 'customer', receivable: 5),
       ],
     });
     // p-new transacted more recently than p-old (occurred_at 2000 > 1000).
@@ -130,15 +131,15 @@ void main() {
       });
     }
 
-    // Recency: most-recent first (p-new), despite being alphabetically last.
+    // Recency: most-recent first (p-new), even though it owes less.
     final recency = await repo.searchParties('',
         shopId: shopId, typeCode: 'customer', rankBy: 'recency');
     expect(recency.map((p) => p.partyId), ['p-new', 'p-old']);
 
-    // Default stays alphabetical in the mirror (no recency).
-    final byName =
+    // Default (balance): higher-debt party (p-old) leads, recency ignored.
+    final byBalance =
         await repo.searchParties('', shopId: shopId, typeCode: 'customer');
-    expect(byName.map((p) => p.partyId), ['p-old', 'p-new']);
+    expect(byBalance.map((p) => p.partyId), ['p-old', 'p-new']);
   });
 
   test('expenseCategories returns active rows for the shop', () async {

@@ -638,7 +638,11 @@ class LocalRepository {
       return rows.map(LocalParty._fromRow).toList(growable: false);
     }
 
-    // Default ('balance' caller): alphabetical in the mirror.
+    // Default ('balance'): people with the most outstanding balance first
+    // (customers by receivable, suppliers by payable), then name — matching
+    // the server and the People-list default. (people_screen re-sorts in
+    // memory, so changing this shared order is safe for it.)
+    final balanceCol = typeCode == 'customer' ? 'receivable' : 'payable';
     final where = hasQuery
         ? 'shop_id = ? AND type_code = ? AND is_active = 1 AND name LIKE ? COLLATE NOCASE'
         : 'shop_id = ? AND type_code = ? AND is_active = 1';
@@ -649,7 +653,7 @@ class LocalRepository {
       'local_party',
       where: where,
       whereArgs: whereArgs,
-      orderBy: 'name COLLATE NOCASE ASC',
+      orderBy: '$balanceCol DESC, name COLLATE NOCASE ASC',
       limit: limit,
     );
     return rows.map(LocalParty._fromRow).toList(growable: false);
