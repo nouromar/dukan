@@ -92,6 +92,7 @@ class FakeLocalRepository extends LocalRepository {
     String query, {
     required String shopId,
     int limit = 50,
+    String rankBy = 'name',
   }) async {
     final results = await shopApi.searchItems(
       shopId: shopId,

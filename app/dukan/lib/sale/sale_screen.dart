@@ -155,7 +155,12 @@ class _SaleScreenState extends State<SaleScreen> {
     // with server-side ranking).
     if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
-      final items = await repo.searchItems(query, shopId: widget.shop.id);
+      // Sale ranks the items you sell most/most-recently first.
+      final items = await repo.searchItems(
+        query,
+        shopId: widget.shop.id,
+        rankBy: 'recency',
+      );
       final results = <ItemSearchResult>[];
       for (final item in items) {
         results.add(await repo.toItemSearchResult(item, screen: 'sale'));
@@ -670,6 +675,23 @@ class _SaleScreenState extends State<SaleScreen> {
           stack: st,
           library: 'dukan sale',
           context: ErrorDescription('write optimistic sale transaction'),
+        ));
+      }
+      // Float the just-sold items to the top of the Sale list immediately;
+      // the next items-sync reconciles to the server's combined count.
+      try {
+        await localRepoForOptimistic.applyOptimisticSaleRecency(
+          shopItemIds: snapshot.lines.values
+              .map((line) => line.shopItemId)
+              .toList(growable: false),
+          nowMs: DateTime.now().millisecondsSinceEpoch,
+        );
+      } catch (e, st) {
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan sale',
+          context: ErrorDescription('optimistic sale recency bump'),
         ));
       }
     }

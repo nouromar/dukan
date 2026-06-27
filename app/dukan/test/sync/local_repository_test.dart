@@ -48,6 +48,47 @@ void main() {
     expect(all.length, 3);
   });
 
+  test('searchItems rankBy=recency ranks by sale_count then last_sold',
+      () async {
+    await repo.applyItemsPayload({
+      'items': [
+        _item('si-a', 'Aaa', saleCount: 1, lastSoldAtMs: 100),
+        _item('si-b', 'Bbb', saleCount: 5, lastSoldAtMs: 200),
+        _item('si-c', 'Ccc', saleCount: 5, lastSoldAtMs: 300), // tie count, newer
+      ],
+      'units': [],
+      'aliases': [],
+      'barcodes': [],
+    });
+
+    // Recency: count DESC, then last_sold DESC → c (5,300), b (5,200), a (1).
+    final recency = await repo.searchItems('', shopId: shopId, rankBy: 'recency');
+    expect(recency.map((i) => i.shopItemId), ['si-c', 'si-b', 'si-a']);
+
+    // Default stays alphabetical.
+    final byName = await repo.searchItems('', shopId: shopId);
+    expect(byName.map((i) => i.shopItemId), ['si-a', 'si-b', 'si-c']);
+  });
+
+  test('applyOptimisticSaleRecency floats the just-sold item to the top',
+      () async {
+    await repo.applyItemsPayload({
+      'items': [_item('si-x', 'Xxx'), _item('si-y', 'Yyy')], // both unsold
+      'units': [],
+      'aliases': [],
+      'barcodes': [],
+    });
+
+    // Both unsold (count 0, last_sold NULL) → recency falls back to name.
+    var recency = await repo.searchItems('', shopId: shopId, rankBy: 'recency');
+    expect(recency.map((i) => i.shopItemId), ['si-x', 'si-y']);
+
+    // Sell y → it jumps to the top immediately, before any sync.
+    await repo.applyOptimisticSaleRecency(shopItemIds: ['si-y'], nowMs: 999);
+    recency = await repo.searchItems('', shopId: shopId, rankBy: 'recency');
+    expect(recency.map((i) => i.shopItemId), ['si-y', 'si-x']);
+  });
+
   test('lookupBarcode returns the matching shop_item_unit', () async {
     await repo.applyItemsPayload({
       'items': [_item('si-1', 'Rice 5kg')],
@@ -292,6 +333,8 @@ Map<String, dynamic> _item(
   num avgCost = 0,
   bool active = true,
   int updatedAtMs = 1700000000000,
+  int saleCount = 0,
+  int? lastSoldAtMs,
 }) =>
     {
       'shop_item_id': id,
@@ -303,6 +346,8 @@ Map<String, dynamic> _item(
       'current_stock': stock,
       'avg_cost': avgCost,
       'reorder_threshold': null,
+      'sale_count': saleCount,
+      'last_sold_at_ms': lastSoldAtMs,
       'is_active': active,
       'server_updated_at_ms': updatedAtMs,
     };

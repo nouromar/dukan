@@ -22,10 +22,11 @@ import 'migrations/0002_local_mirror.dart';
 import 'migrations/0003_local_transaction_optimistic.dart';
 import 'migrations/0004_local_unpaid_invoices.dart';
 import 'migrations/0005_local_category_shop_id.dart';
+import 'migrations/0006_local_shop_item_sale_recency.dart';
 
 /// Current schema version. Increment when adding a migration; append
 /// the migration to `_migrations` below in the matching slot.
-const int kSchemaVersion = 5;
+const int kSchemaVersion = 6;
 
 /// Ordered list of forward-only migrations. `_migrations[n - 1]` is
 /// the migration that brings the DB from version n-1 to n.
@@ -35,6 +36,7 @@ final List<Future<void> Function(Database db)> _migrations = [
   applyLocalTransactionOptimisticMigration,
   applyLocalUnpaidInvoicesMigration,
   applyLocalCategoryShopIdMigration,
+  applyLocalShopItemSaleRecencyMigration,
 ];
 
 class AppDatabase {

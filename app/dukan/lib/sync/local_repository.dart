@@ -284,9 +284,14 @@ class LocalRepository {
     String query, {
     required String shopId,
     int limit = 50,
+    String rankBy = 'name',
   }) async {
     final db = await _db;
     final trimmed = query.trim();
+    // Sale ranks "most / most-recently sold first"; everywhere else stays
+    // alphabetical. Never-sold items (sale_count 0, last_sold_at NULL) fall to
+    // the bottom under recency, which is what we want.
+    final recency = rankBy == 'recency';
     if (trimmed.isEmpty) {
       // Simple ordered listing — caller (Sale grid) will overlay
       // favorites elsewhere.
@@ -294,7 +299,9 @@ class LocalRepository {
         'local_shop_item',
         where: 'shop_id = ? AND is_active = 1',
         whereArgs: [shopId],
-        orderBy: 'display_name COLLATE NOCASE ASC',
+        orderBy: recency
+            ? 'sale_count DESC, last_sold_at DESC, display_name COLLATE NOCASE ASC'
+            : 'display_name COLLATE NOCASE ASC',
         limit: limit,
       );
       return rows.map(LocalShopItem._fromRow).toList(growable: false);
@@ -302,6 +309,9 @@ class LocalRepository {
     // Match either display_name OR any alias. Aliases live in a
     // separate table; UNION-SELECT keeps it to one SQL roundtrip.
     final pattern = '%${trimmed.replaceAll('%', r'\%').replaceAll('_', r'\_')}%';
+    final orderBy = recency
+        ? 'si.sale_count DESC, si.last_sold_at DESC, si.display_name COLLATE NOCASE ASC'
+        : 'si.display_name COLLATE NOCASE ASC';
     final rows = await db.rawQuery('''
       SELECT DISTINCT si.*
         FROM local_shop_item si
@@ -311,7 +321,7 @@ class LocalRepository {
          AND si.is_active = 1
          AND (si.display_name LIKE ? COLLATE NOCASE
               OR a.alias LIKE ? COLLATE NOCASE)
-       ORDER BY si.display_name COLLATE NOCASE ASC
+       ORDER BY $orderBy
        LIMIT ?
     ''', [shopId, pattern, pattern, limit]);
     return rows.map(LocalShopItem._fromRow).toList(growable: false);
@@ -959,6 +969,11 @@ class LocalRepository {
             'current_stock': raw['current_stock'],
             'avg_cost': raw['avg_cost'],
             'reorder_threshold': raw['reorder_threshold'],
+            // Sale recency (0079): server's combined cross-device values.
+            // Replace semantics mean a sync overwrites any optimistic local
+            // bump with the authoritative count — by design, no double-count.
+            'last_sold_at': raw['last_sold_at_ms'],
+            'sale_count': raw['sale_count'] ?? 0,
             'is_active': (raw['is_active'] == true) ? 1 : 0,
             'updated_at': raw['server_updated_at_ms'],
             'server_updated_at': raw['server_updated_at_ms'],
@@ -1319,6 +1334,27 @@ class LocalRepository {
       'UPDATE local_shop_item SET current_stock = current_stock + ? '
       'WHERE shop_item_id = ?',
       [baseUnitDelta, shopItemId],
+    );
+  }
+
+  /// Optimistic: mark [shopItemIds] as just-sold so they float to the top of
+  /// the Sale item list immediately (bump sale_count, set last_sold_at = now).
+  /// The next items-sync overwrites these with the server's combined
+  /// cross-device values, so this is a momentary overlay — never a
+  /// double-count. Bumps once per distinct item regardless of line count; the
+  /// authoritative per-line tally comes from the server.
+  Future<void> applyOptimisticSaleRecency({
+    required List<String> shopItemIds,
+    required int nowMs,
+  }) async {
+    final ids = shopItemIds.toSet().toList(growable: false);
+    if (ids.isEmpty) return;
+    final db = await _db;
+    final placeholders = List.filled(ids.length, '?').join(', ');
+    await db.rawUpdate(
+      'UPDATE local_shop_item SET sale_count = sale_count + 1, last_sold_at = ? '
+      'WHERE shop_item_id IN ($placeholders)',
+      [nowMs, ...ids],
     );
   }
 
