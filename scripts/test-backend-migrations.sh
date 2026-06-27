@@ -1577,38 +1577,44 @@ begin
 end;
 $$;
 
--- §12b search_parties recency ranking (0077). shop_party_usage is trigger-
--- written (no direct grant), so seed it as superuser, then verify
--- p_rank_by='recency' ranks by recent activity while the default stays
--- balance-first. search_parties is SECURITY DEFINER and authorizes via the
--- (still-owner) jwt claim, so it runs fine under set role postgres.
+-- §12b search_parties recency ranking (0077). Recency is computed on-read as
+-- max(txn.occurred_at) per party — no aggregate table. Seed two posted txns
+-- (the LOW-debt customer more recent) as superuser, verify p_rank_by='recency'
+-- ranks by txn date while the default stays balance-first, then delete the
+-- test txns so §13/§14 history counts aren't polluted. search_parties is
+-- SECURITY DEFINER and authorizes via the (still-owner) jwt claim, so it runs
+-- fine under set role postgres.
 set role postgres;
 do $$
 declare
   v_shop_id uuid;
   v_high_id uuid;
   v_low_id  uuid;
+  v_sale    uuid;
+  v_posted  uuid;
   v_first   uuid;
 begin
   select shop_id into v_shop_id from test_ids;
   select id into v_high_id from public.party where shop_id = v_shop_id and name = 'Ahmed High';
   select id into v_low_id  from public.party where shop_id = v_shop_id and name = 'Ayaan Low';
-  -- Make the LOW-debt customer the most recently active.
-  insert into public.shop_party_usage (shop_id, party_id, sale_count, last_sale_at)
-  values (v_shop_id, v_low_id,  1, now()),
-         (v_shop_id, v_high_id, 1, now() - interval '10 days')
-  on conflict (shop_id, party_id) do update set last_sale_at = excluded.last_sale_at;
+  select id into v_sale   from public.transaction_type where code = 'sale';
+  select id into v_posted from public.transaction_status where code = 'posted';
+  insert into public.txn (shop_id, type_id, status_id, party_id, occurred_at, total_amount, notes)
+  values (v_shop_id, v_sale, v_posted, v_low_id,  now(),                      0, 'recency-test'),
+         (v_shop_id, v_sale, v_posted, v_high_id, now() - interval '10 days', 0, 'recency-test');
 
   select id into v_first
   from public.search_parties(v_shop_id, '', 'customer', 50, 'recency') limit 1;
   if v_first <> v_low_id then
-    raise exception 'search_parties recency did not rank by shop_party_usage';
+    raise exception 'search_parties recency did not rank by txn date';
   end if;
   select id into v_first
   from public.search_parties(v_shop_id, '', 'customer', 50) limit 1;
   if v_first <> v_high_id then
     raise exception 'search_parties balance ranking regressed';
   end if;
+
+  delete from public.txn where shop_id = v_shop_id and notes = 'recency-test';
   raise notice 'search_parties recency ranking passed';
 end;
 $$;

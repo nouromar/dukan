@@ -1,11 +1,11 @@
 -- search_parties: add a recency ranking option (p_rank_by).
 --
--- Previously ranked by outstanding balance only. The Receive supplier picker
--- and the Debt customer picker want the *recent* people first. This reads
--- shop_party_usage — which the 0014 triggers have been writing on every
--- transaction/payment but which nothing ever read — to order by each party's
--- most recent activity. p_rank_by defaults to 'balance' so existing callers
--- are unchanged (the 4-arg signature resolves to this via the default).
+-- Previously ranked by outstanding balance only. p_rank_by='recency' instead
+-- orders by each party's most recent transaction. Recency is computed
+-- on-read as max(txn.occurred_at) for the party — no aggregate table needed
+-- (a date is all recency requires, and this matches what the offline mirror
+-- already does over local_transaction). p_rank_by defaults to 'balance' so
+-- existing 4-arg callers are unchanged via the default.
 
 drop function if exists public.search_parties(uuid, text, text, int);
 
@@ -55,8 +55,6 @@ begin
     p.payable
   from public.party p
   join public.party_type pt on pt.id = p.type_id
-  left join public.shop_party_usage spu
-    on spu.shop_id = p.shop_id and spu.party_id = p.id
   where p.shop_id = p_shop_id
     and p.is_active
     and (
@@ -80,7 +78,8 @@ begin
     -- with no activity last. When p_rank_by='balance' this expression is NULL
     -- for every row, so it's a no-op and balance ordering takes over.
     case when v_rank_by = 'recency'
-      then greatest(spu.last_sale_at, spu.last_receive_at, spu.last_payment_at)
+      then (select max(t.occurred_at) from public.txn t
+            where t.shop_id = p.shop_id and t.party_id = p.id)
     end desc nulls last,
     case v_normalized_type
       when 'customer' then p.receivable
