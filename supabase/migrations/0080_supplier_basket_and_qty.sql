@@ -196,6 +196,7 @@ begin
   from (
     select
       siuc.party_id,
+      siuc.shop_id,
       siuc.shop_item_unit_id,
       siuc.last_unit_cost,
       extract(epoch from siuc.last_received_at) * 1000 as last_received_at_ms,
