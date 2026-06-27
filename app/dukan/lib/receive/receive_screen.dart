@@ -57,6 +57,8 @@ import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/quantity_chips.dart';
+import 'package:dukan/shared/quantity_format.dart';
 import 'package:dukan/shared/stock_format.dart';
 import 'package:dukan/shared/typography.dart';
 
@@ -340,6 +342,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           baseUnitCode: item.baseUnitCode,
           baseUnitLabel: item.baseUnitLabel,
           perUnitCost: item.defaultUnitLastCost,
+          learnedQty: item.learnedQty,
         );
       });
       return;
@@ -1102,6 +1105,7 @@ class _SelectedItem {
     required this.baseUnitCode,
     required this.baseUnitLabel,
     required this.perUnitCost,
+    this.learnedQty,
   });
 
   final String shopItemUnitId;
@@ -1109,6 +1113,9 @@ class _SelectedItem {
   final String? itemId;
   final String displayName;
   final String packagingLabel;
+
+  /// Slice 4: learned usual receive quantity for this packaging; seeds a chip.
+  final num? learnedQty;
   /// Drives the AddPackagingSheet's suggestion query + custom-unit
   /// filtering (the cashier can't pick the item's own base unit again).
   final String baseUnitCode;
@@ -1513,6 +1520,16 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                   ),
                 ),
               ],
+            ),
+            // Slice 4: quick-tap quantity chips (learned usual + defaults).
+            QuantityChips(
+              learnedQty: widget.selected.learnedQty,
+              onSelected: (v) {
+                _qtyController.text = formatQty(v);
+                _qtyController.selection = TextSelection.collapsed(
+                  offset: _qtyController.text.length,
+                );
+              },
             ),
             const SizedBox(height: 8),
             // One money field only: the line total straight off the

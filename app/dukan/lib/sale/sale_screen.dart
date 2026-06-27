@@ -410,6 +410,7 @@ class _SaleScreenState extends State<SaleScreen> {
         baseUnitLabel: item.baseUnitLabel,
       ),
       priceHint: priceHint,
+      learnedQty: item.learnedQty,
     );
     if (result == null || !mounted) return;
     final cart = context.read<CartController>();

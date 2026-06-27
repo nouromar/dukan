@@ -159,17 +159,18 @@ void main() {
       initialUnitPrice: 1.5,
     );
 
-    // Start at 1, decrement should stay at 1.
+    // Start at 1, decrement should stay at 1. (Scope to the qty field — the
+    // quantity chips also render a '1'.)
     await tester.tap(find.byIcon(Icons.remove));
     await tester.pump();
-    expect(find.text('1'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '1'), findsOneWidget);
 
     // Increment three times → 4.
     await tester.tap(find.byIcon(Icons.add));
     await tester.tap(find.byIcon(Icons.add));
     await tester.tap(find.byIcon(Icons.add));
     await tester.pump();
-    expect(find.text('4'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '4'), findsOneWidget);
 
     await tester.tap(
       find.widgetWithText(FilledButton, en.lineEditorDoneButton),

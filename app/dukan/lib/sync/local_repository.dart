@@ -518,6 +518,10 @@ class LocalRepository {
       packagingLabel: defaultUnit.packagingLabel,
       isActivated: true, // local rows are by definition activated
       rankReason: null,
+      // Slice 4: learned usual quantity for this screen's context.
+      learnedQty: screen == 'sale'
+          ? defaultUnit.lastSaleQty
+          : defaultUnit.lastReceiveQty,
     );
   }
 

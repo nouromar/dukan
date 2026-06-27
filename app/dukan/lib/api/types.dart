@@ -119,6 +119,7 @@ class ItemSearchResult {
     required this.packagingLabel,
     required this.isActivated,
     required this.rankReason,
+    this.learnedQty,
   });
 
   factory ItemSearchResult.fromJson(Map<String, dynamic> json) {
@@ -141,6 +142,7 @@ class ItemSearchResult {
       packagingLabel: json['packaging_label'] as String?,
       isActivated: json['is_activated'] as bool,
       rankReason: json['rank_reason'] as String?,
+      learnedQty: (json['learned_qty'] as num?),
     );
   }
 
@@ -190,6 +192,11 @@ class ItemSearchResult {
   /// alias_prefix_any, name_prefix, recency_boost, barcode_match.
   /// Surfaced so the UI can debug ranking surprises (critique #7).
   final String? rankReason;
+
+  /// Slice 4: the shop's learned usual quantity for the default packaging in
+  /// the current screen's context (sale vs receive), if known. Seeds the
+  /// quantity chips; null falls back to static defaults only.
+  final num? learnedQty;
 }
 
 /// Bundle returned by `get_party_detail` — header + last-N rows of

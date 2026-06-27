@@ -35,6 +35,7 @@ import 'package:flutter/services.dart';
 
 import 'package:dukan/api/types.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/quantity_chips.dart';
 import 'package:dukan/shared/quantity_format.dart';
 
 /// Opener for the packaging picker. The Sale screen plugs in the v2
@@ -82,6 +83,7 @@ Future<LineEditorResult?> showLineEditor(
   String? shopItemId,
   PackagingPickerOpener? onPickPackaging,
   String? priceHint,
+  num? learnedQty,
 }) {
   return showModalBottomSheet<LineEditorResult>(
     context: context,
@@ -98,6 +100,7 @@ Future<LineEditorResult?> showLineEditor(
       shopItemId: shopItemId,
       onPickPackaging: onPickPackaging,
       priceHint: priceHint,
+      learnedQty: learnedQty,
     ),
   );
 }
@@ -115,6 +118,7 @@ class _LineEditorBody extends StatefulWidget {
     required this.shopItemId,
     required this.onPickPackaging,
     required this.priceHint,
+    this.learnedQty,
   });
 
   final String shopItemUnitId;
@@ -132,6 +136,9 @@ class _LineEditorBody extends StatefulWidget {
   /// mode — e.g., "Your last cost: $10. Add your usual markup." Never
   /// auto-fills the input; the cashier always types the actual price.
   final String? priceHint;
+
+  /// Slice 4: learned usual sale quantity for this packaging; seeds a chip.
+  final num? learnedQty;
 
   @override
   State<_LineEditorBody> createState() => _LineEditorBodyState();
@@ -364,6 +371,16 @@ class _LineEditorBodyState extends State<_LineEditorBody> {
                   onTap: _onIncrement,
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            QuantityChips(
+              learnedQty: widget.learnedQty,
+              onSelected: (v) {
+                _qtyController.text = formatQty(v);
+                _qtyController.selection = TextSelection.collapsed(
+                  offset: _qtyController.text.length,
+                );
+              },
             ),
             const SizedBox(height: 20),
             Text(l.price, style: theme.textTheme.labelLarge),
