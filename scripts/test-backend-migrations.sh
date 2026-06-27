@@ -1454,55 +1454,9 @@ begin
 end;
 $$;
 
--- =====================================================================
--- §11 Learning suggestions surface after activity
--- =====================================================================
-
-do $$
-declare
-  v_shop_id uuid;
-  v_supplier_id uuid;
-begin
-  select shop_id into v_shop_id from test_ids;
-  select id into v_supplier_id from public.party
-   where shop_id = v_shop_id and name = 'Hodan Beverages';
-
-  -- Item learned suggestion (rice was sold + received earlier).
-  if not exists (
-    select 1 from public.v_shop_suggestions
-    where shop_id = v_shop_id
-      and screen = 'sale'
-      and suggestion_type = 'item'
-      and source in ('learned', 'template')
-  ) then
-    raise exception 'no item suggestion surfaced for sale screen';
-  end if;
-
-  -- Supplier-item learned after receive.
-  if not exists (
-    select 1 from public.v_shop_suggestions
-    where shop_id = v_shop_id
-      and screen = 'receive'
-      and suggestion_type = 'supplier_item'
-      and party_id = v_supplier_id
-      and source = 'learned'
-  ) then
-    raise exception 'no learned supplier_item suggestion surfaced';
-  end if;
-
-  -- Payment method learned suggestion (cash was used).
-  if not exists (
-    select 1 from public.v_shop_suggestions
-    where shop_id = v_shop_id
-      and screen = 'payment'
-      and suggestion_type = 'payment_method'
-      and payment_method_code = 'cash'
-      and source = 'learned'
-  ) then
-    raise exception 'no learned payment_method suggestion surfaced';
-  end if;
-end;
-$$;
+-- §11 (learning suggestions) removed: the per-transaction learning triggers
+-- that produced 'learned' shop_suggestion rows were dropped in 0078 — the
+-- learning aggregates had no readers, and recents/etc. are computed on-read.
 
 -- =====================================================================
 -- §12 search_parties + create_party
