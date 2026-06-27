@@ -953,6 +953,38 @@ begin
     raise exception 'items delta missing sale recency fields';
   end if;
 
+  -- Slice 4 quantity learning (0080): last sale/receive qty stamped on the
+  -- packaging (sale override was qty 1; the receive was qty 4), and the units
+  -- payload carries last_sale_qty.
+  if (select last_sale_qty from public.shop_item_unit where id = v_rice_kg_unit_id) <> 1 then
+    raise exception 'last_sale_qty not stamped on sold packaging';
+  end if;
+  if (select last_receive_qty from public.shop_item_unit where id = v_rice_bag25_unit_id) <> 4 then
+    raise exception 'last_receive_qty not stamped on received packaging';
+  end if;
+  if not exists (
+    select 1 from jsonb_array_elements(
+      public.get_shop_items_delta(v_shop_id, 'epoch'::timestamptz) -> 'units'
+    ) e
+    where (e ->> 'shop_item_unit_id')::uuid = v_rice_kg_unit_id
+      and (e ->> 'last_sale_qty')::numeric = 1
+  ) then
+    raise exception 'units payload missing last_sale_qty';
+  end if;
+
+  -- Slice 3 supplier basket (0080): the receive populated supplier_item_unit_cost
+  -- and it surfaces in the items payload under supplier_items.
+  if not exists (
+    select 1 from jsonb_array_elements(
+      public.get_shop_items_delta(v_shop_id, 'epoch'::timestamptz) -> 'supplier_items'
+    ) e
+    where (e ->> 'party_id')::uuid = v_supplier_id
+      and (e ->> 'shop_item_unit_id')::uuid = v_rice_bag25_unit_id
+      and e ? 'last_received_at_ms'
+  ) then
+    raise exception 'supplier_items missing the received packaging';
+  end if;
+
   -- Payment from Asha (1 dollar inbound).
   perform public.post_payment(
     v_shop_id, v_customer_id, 'I', 1.00, 'cash',
