@@ -933,6 +933,26 @@ begin
     raise exception 'post_sale did not persist sale_price override';
   end if;
 
+  -- Sale recency (0079): both sales bumped the rice item's cached recency, and
+  -- the items delta carries the fields so a shop's phones converge cross-device.
+  if (select sale_count from public.shop_item where id = v_rice_shop_item_id) <> 2 then
+    raise exception 'sale_count not bumped to 2 by post_sale';
+  end if;
+  if (select last_sold_at from public.shop_item where id = v_rice_shop_item_id) is null then
+    raise exception 'last_sold_at not set by post_sale';
+  end if;
+  if not exists (
+    select 1
+    from jsonb_array_elements(
+      public.get_shop_items_delta(v_shop_id, 'epoch'::timestamptz) -> 'items'
+    ) e
+    where (e ->> 'shop_item_id')::uuid = v_rice_shop_item_id
+      and (e ->> 'sale_count')::int = 2
+      and e ? 'last_sold_at_ms'
+  ) then
+    raise exception 'items delta missing sale recency fields';
+  end if;
+
   -- Payment from Asha (1 dollar inbound).
   perform public.post_payment(
     v_shop_id, v_customer_id, 'I', 1.00, 'cash',
