@@ -695,6 +695,36 @@ class _SaleScreenState extends State<SaleScreen> {
           context: ErrorDescription('optimistic sale recency bump'),
         ));
       }
+      // Optimistic stock decrement + (debt sale) customer receivable so
+      // Products and the customers LIST reflect the sale instantly — they read
+      // current_stock / local_party.receivable directly. The next items/parties
+      // sync replaces these; the reject path reverts them.
+      try {
+        await localRepoForOptimistic.applyOptimisticStockForLines(
+          lines: [
+            for (final line in lines)
+              ProjectionLine(
+                shopItemUnitId: line.shopItemUnitId,
+                quantity: line.quantity,
+                direction: -1,
+              ),
+          ],
+        );
+        if (partyId != null) {
+          await localRepoForOptimistic.applyOptimisticPartyCharge(
+            partyId: partyId,
+            direction: 'I',
+            amount: total,
+          );
+        }
+      } catch (e, st) {
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan sale',
+          context: ErrorDescription('optimistic sale stock/receivable'),
+        ));
+      }
     }
 
     // Optimistic SAVE (useLocalDb=true) — per CLAUDE.md's speed
@@ -833,6 +863,10 @@ class _SaleScreenState extends State<SaleScreen> {
     required List<({String shopItemUnitId, num salePrice})> priceWriteBacks,
     required String clientOpId,
   }) async {
+    // Captured before the post so the reject/queue paths can touch the mirror
+    // even if the context unmounts.
+    final localRepo =
+        useLocalDb(context) ? context.read<LocalRepository>() : null;
     String txnId;
     try {
       txnId = await api.postSale(
@@ -844,9 +878,27 @@ class _SaleScreenState extends State<SaleScreen> {
         clientOpId: clientOpId,
       );
     } on PostgrestException catch (error, stackTrace) {
-      // 4xx-style server reject — won't succeed on retry. Restore the
-      // snapshot so the cashier sees their cart and can correct the
-      // underlying issue.
+      // 4xx-style server reject — won't succeed on retry. Revert the optimistic
+      // stock + receivable bumps (the cart is restored for a retry, so a
+      // lingering bump would double-count), then restore the snapshot.
+      if (localRepo != null) {
+        try {
+          await localRepo.applyOptimisticStockForLines(
+            lines: [
+              for (final line in lines)
+                ProjectionLine(
+                  shopItemUnitId: line.shopItemUnitId,
+                  quantity: line.quantity,
+                  direction: 1, // undo the sale decrement
+                ),
+            ],
+          );
+          if (partyId != null) {
+            await localRepo.applyOptimisticPartyPayment(
+              partyId: partyId, direction: 'I', amount: total);
+          }
+        } catch (_) {/* best-effort revert; sync reconciles regardless */}
+      }
       _handleOptimisticSaveFailure(
         snapshot, error, stackTrace, l.salePostFailedMessage);
       return;
@@ -891,36 +943,12 @@ class _SaleScreenState extends State<SaleScreen> {
         ),
         queuedAt: DateTime.now(),
       );
-      // #374: stock projection so subsequent reads (Products
-      // list, Sale grid) reflect the in-flight queued sale.
-      // Cleared by the queue's onProjectionCleanup when the
-      // post drains or fails permanently. The optimistic
-      // local_transaction row was already written up-front in
-      // _save (#385), so history reflects this sale either way.
-      final useLocal = useLocalDb(context);
-      final localRepo = useLocal ? context.read<LocalRepository>() : null;
+      // Stock + receivable were already bumped optimistically up-front in _save
+      // (current_stock / local_party.receivable), so the in-flight queued sale
+      // shows in Products + the customers list until the post drains and the
+      // items/parties sync replaces them. No stock projection needed (the bump
+      // lives directly in current_stock).
       final queue = context.read<OfflineQueueController>();
-      if (localRepo != null) {
-        try {
-          await localRepo.applyProjectionLines(
-            pendingPostId: post.id,
-            lines: lines
-                .map((l) => ProjectionLine(
-                      shopItemUnitId: l.shopItemUnitId,
-                      quantity: l.quantity,
-                      direction: -1,
-                    ))
-                .toList(),
-          );
-        } catch (e, st) {
-          FlutterError.reportError(FlutterErrorDetails(
-            exception: e,
-            stack: st,
-            library: 'dukan sale',
-            context: ErrorDescription('apply sale stock projection'),
-          ));
-        }
-      }
       await queue.enqueue(post);
       return;
     }

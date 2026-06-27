@@ -1488,6 +1488,37 @@ class LocalRepository {
     );
   }
 
+  /// Optimistic: mirror a just-created party (customer/supplier) into
+  /// local_party so it shows in the people list + pickers immediately, instead
+  /// of waiting for the next parties sync. server_updated_at = 0 marks it
+  /// optimistic; the next parties-sync replaces it with the server row.
+  Future<void> applyOptimisticPartyCreate({
+    required String partyId,
+    required String shopId,
+    required String name,
+    String? phone,
+    required String typeCode,
+    num receivable = 0,
+    num payable = 0,
+  }) async {
+    final db = await _db;
+    await db.insert(
+      'local_party',
+      {
+        'party_id': partyId,
+        'shop_id': shopId,
+        'name': name,
+        'phone': phone,
+        'type_code': typeCode,
+        'receivable': receivable,
+        'payable': payable,
+        'is_active': 1,
+        'server_updated_at': 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   // ---- Optimistic category mirror writes (0076) ------------------------
   // The `code` column is NOT NULL in the mirror but never displayed
   // (the UI shows `name`); we store a local placeholder slug that the

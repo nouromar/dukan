@@ -14,6 +14,8 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -88,8 +90,12 @@ class _AddPartyBodyState extends State<_AddPartyBody> {
     final phone = _phoneController.text.trim();
     final opening = _parsedOpening;
     setState(() => _saving = true);
+    // Capture before the awaits so an unmounted context can't break the
+    // optimistic mirror write.
+    final api = context.read<ShopApi>();
+    final localRepo =
+        useLocalDb(context) ? context.read<LocalRepository>() : null;
     try {
-      final api = context.read<ShopApi>();
       final partyId = await api.createParty(
         shopId: widget.shopId,
         name: name,
@@ -105,6 +111,28 @@ class _AddPartyBodyState extends State<_AddPartyBody> {
           amount: opening,
           direction: direction,
         );
+      }
+      // Mirror the new party locally so it shows in the people list + pickers
+      // immediately; the next parties-sync replaces it with the server row.
+      if (localRepo != null) {
+        try {
+          await localRepo.applyOptimisticPartyCreate(
+            partyId: partyId,
+            shopId: widget.shopId,
+            name: name,
+            phone: phone.isEmpty ? null : phone,
+            typeCode: widget.typeCode,
+            receivable: widget.typeCode == 'customer' ? (opening ?? 0) : 0,
+            payable: widget.typeCode == 'supplier' ? (opening ?? 0) : 0,
+          );
+        } catch (e, st) {
+          FlutterError.reportError(FlutterErrorDetails(
+            exception: e,
+            stack: st,
+            library: 'dukan party',
+            context: ErrorDescription('optimistic party create mirror'),
+          ));
+        }
       }
       if (!mounted) return;
       Navigator.of(context).pop(

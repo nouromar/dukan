@@ -163,6 +163,28 @@ void main() {
     expect(rows.single.payable, 30);
   });
 
+  test('applyOptimisticPartyCreate mirrors a new party into the list',
+      () async {
+    expect(
+      await repo.searchParties('', shopId: shopId, typeCode: 'customer'),
+      isEmpty,
+    );
+
+    await repo.applyOptimisticPartyCreate(
+      partyId: 'p-new',
+      shopId: shopId,
+      name: 'Khadija',
+      typeCode: 'customer',
+      receivable: 25,
+    );
+
+    final rows =
+        await repo.searchParties('', shopId: shopId, typeCode: 'customer');
+    expect(rows.single.partyId, 'p-new');
+    expect(rows.single.name, 'Khadija');
+    expect(rows.single.receivable, 25);
+  });
+
   test('lookupBarcode returns the matching shop_item_unit', () async {
     await repo.applyItemsPayload({
       'items': [_item('si-1', 'Rice 5kg')],
