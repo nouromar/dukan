@@ -281,12 +281,19 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
 
   Future<List<ItemSearchResult>> _fetch(String query) async {
     final supplier = context.read<ReceiveController>().supplier;
-    // #374: local mirror when offline_mode = full. Supplier-scoped
-    // pricing (last_cost) isn't yet mirrored locally, so the
-    // supplier filter is dropped offline; shop-wide last_cost from
-    // the cached unit row is good enough for v1.
+    // #374: local mirror when offline_mode = full. Shop-wide last_cost from the
+    // cached unit row is good enough for v1.
     if (useLocalDb(context)) {
       final repo = context.read<LocalRepository>();
+      // Slice 3: empty query + a chosen supplier → their usual items first
+      // (the supplier basket), ranked by how recently received. A supplier with
+      // no history (empty basket), or any typed query, falls back to the normal
+      // alphabetical item search — never a blank grid.
+      if (query.trim().isEmpty && supplier != null) {
+        final basket =
+            await repo.supplierBasket(supplier.id, shopId: widget.shop.id);
+        if (basket.isNotEmpty) return basket;
+      }
       final items = await repo.searchItems(query, shopId: widget.shop.id);
       final results = <ItemSearchResult>[];
       for (final item in items) {
@@ -679,6 +686,25 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         stack: st,
         library: 'dukan receive',
         context: ErrorDescription('write optimistic receive transaction'),
+      ));
+    }
+    // Slice 3: float the just-received items to the top of this supplier's
+    // basket immediately; next items-sync reconciles to supplier_item_unit_cost.
+    try {
+      await localRepoForOptimistic.applyOptimisticSupplierBasket(
+        supplierId: supplier.id,
+        shopId: widget.shop.id,
+        shopItemUnitIds: snapshot.lines.values
+            .map((l) => l.shopItemUnitId)
+            .toList(growable: false),
+        nowMs: DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (e, st) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: e,
+        stack: st,
+        library: 'dukan receive',
+        context: ErrorDescription('optimistic supplier basket bump'),
       ));
     }
 

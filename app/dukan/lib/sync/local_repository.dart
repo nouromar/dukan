@@ -80,6 +80,8 @@ class LocalShopItemUnit {
     required this.isDefaultReceive,
     required this.isActive,
     required this.serverUpdatedAtMs,
+    this.lastSaleQty,
+    this.lastReceiveQty,
   });
 
   final String shopItemUnitId;
@@ -94,6 +96,10 @@ class LocalShopItemUnit {
   final bool isActive;
   final int serverUpdatedAtMs;
 
+  /// Slice 4: learned usual quantity per packaging (null until first used).
+  final num? lastSaleQty;
+  final num? lastReceiveQty;
+
   factory LocalShopItemUnit._fromRow(Map<String, Object?> r) =>
       LocalShopItemUnit(
         shopItemUnitId: r['shop_item_unit_id'] as String,
@@ -103,6 +109,8 @@ class LocalShopItemUnit {
         conversionToBase: r['conversion_to_base'] as num,
         salePrice: r['sale_price'] as num?,
         lastCost: r['last_cost'] as num?,
+        lastSaleQty: r['last_sale_qty'] as num?,
+        lastReceiveQty: r['last_receive_qty'] as num?,
         isDefaultSale: (r['is_default_sale'] as num).toInt() == 1,
         isDefaultReceive: (r['is_default_receive'] as num).toInt() == 1,
         isActive: (r['is_active'] as num).toInt() == 1,
@@ -336,6 +344,42 @@ class LocalRepository {
     );
     if (rows.isEmpty) return null;
     return LocalShopItem._fromRow(rows.first);
+  }
+
+  /// Slice 3: the supplier's usual items, most-recently-received first, for the
+  /// Receive screen (`local_supplier_item`, mirrored from
+  /// supplier_item_unit_cost). One row per item — a supplier may use several
+  /// packagings; we surface the item ranked by its latest receive. v1 uses the
+  /// item's default receive unit + shop-wide cost (supplier-scoped
+  /// packaging/cost is a future refinement).
+  Future<List<ItemSearchResult>> supplierBasket(
+    String supplierId, {
+    required String shopId,
+    int limit = 50,
+  }) async {
+    final db = await _db;
+    final rows = await db.rawQuery('''
+      SELECT si.*
+        FROM local_shop_item si
+        JOIN (
+          SELECT u.shop_item_id, MAX(lsi.last_received_at) AS last_at
+            FROM local_supplier_item lsi
+            JOIN local_shop_item_unit u
+              ON u.shop_item_unit_id = lsi.shop_item_unit_id
+           WHERE lsi.party_id = ?
+           GROUP BY u.shop_item_id
+        ) b ON b.shop_item_id = si.shop_item_id
+       WHERE si.shop_id = ? AND si.is_active = 1
+       ORDER BY b.last_at DESC
+       LIMIT ?
+    ''', [supplierId, shopId, limit]);
+    final out = <ItemSearchResult>[];
+    for (final r in rows) {
+      out.add(
+        await toItemSearchResult(LocalShopItem._fromRow(r), screen: 'receive'),
+      );
+    }
+    return out;
   }
 
   /// O(1) barcode → packaging lookup. Returns the unit row, not the
@@ -993,6 +1037,9 @@ class LocalRepository {
             'conversion_to_base': raw['conversion_to_base'],
             'sale_price': raw['sale_price'],
             'last_cost': raw['last_cost'],
+            // Slice 4: learned usual quantity per packaging (0080).
+            'last_sale_qty': raw['last_sale_qty'],
+            'last_receive_qty': raw['last_receive_qty'],
             'is_default_sale': (raw['is_default_sale'] == true) ? 1 : 0,
             'is_default_receive': (raw['is_default_receive'] == true) ? 1 : 0,
             'is_active': (raw['is_active'] == true) ? 1 : 0,
@@ -1024,6 +1071,23 @@ class LocalRepository {
             'barcode': raw['barcode'],
             'shop_item_unit_id': raw['shop_item_unit_id'],
             'is_primary': (raw['is_primary'] == true) ? 1 : 0,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+      // Slice 3: supplier baskets (0080). Replace semantics overwrite any
+      // optimistic bump with the authoritative server value.
+      for (final raw in (payload['supplier_items'] as List? ?? const [])) {
+        if (raw is! Map) continue;
+        await txn.insert(
+          'local_supplier_item',
+          {
+            'party_id': raw['party_id'],
+            'shop_item_unit_id': raw['shop_item_unit_id'],
+            'shop_id': raw['shop_id'],
+            'last_unit_cost': raw['last_unit_cost'],
+            'last_received_at': raw['last_received_at_ms'],
+            'server_updated_at': raw['server_updated_at_ms'],
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
@@ -1356,6 +1420,31 @@ class LocalRepository {
       'WHERE shop_item_id IN ($placeholders)',
       [nowMs, ...ids],
     );
+  }
+
+  /// Optimistic: mark [shopItemUnitIds] as just-received from [supplierId] so
+  /// they lead that supplier's basket immediately. Only `last_received_at` is
+  /// touched (cost is preserved on conflict); the next items-sync reconciles to
+  /// the server's supplier_item_unit_cost.
+  Future<void> applyOptimisticSupplierBasket({
+    required String supplierId,
+    required String shopId,
+    required List<String> shopItemUnitIds,
+    required int nowMs,
+  }) async {
+    final ids = shopItemUnitIds.toSet().toList(growable: false);
+    if (ids.isEmpty) return;
+    final db = await _db;
+    for (final unitId in ids) {
+      await db.rawInsert(
+        'INSERT INTO local_supplier_item '
+        '(party_id, shop_item_unit_id, shop_id, last_received_at, server_updated_at) '
+        'VALUES (?, ?, ?, ?, ?) '
+        'ON CONFLICT(party_id, shop_item_unit_id) '
+        'DO UPDATE SET last_received_at = excluded.last_received_at',
+        [supplierId, unitId, shopId, nowMs, nowMs],
+      );
+    }
   }
 
   /// Optimistic: decrement the mirrored party balance after a payment so the

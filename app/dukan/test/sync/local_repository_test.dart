@@ -89,6 +89,39 @@ void main() {
     expect(recency.map((i) => i.shopItemId), ['si-y', 'si-x']);
   });
 
+  test('supplierBasket returns the supplier\'s items, most recent first',
+      () async {
+    await repo.applyItemsPayload({
+      'items': [_item('si-1', 'Rice'), _item('si-2', 'Sugar'), _item('si-3', 'Tea')],
+      'units': [
+        _unit('u-1', 'si-1', 'sack', 'Rice — sack', 25),
+        _unit('u-2', 'si-2', 'sack', 'Sugar — sack', 50),
+        _unit('u-3', 'si-3', 'box', 'Tea — box', 1),
+      ],
+      'aliases': [],
+      'barcodes': [],
+      'supplier_items': [
+        // sup-A brings rice (older) + sugar (newer), not tea.
+        {'party_id': 'sup-A', 'shop_id': 'shop-1', 'shop_item_unit_id': 'u-1',
+          'last_unit_cost': 20, 'last_received_at_ms': 100,
+          'server_updated_at_ms': 100},
+        {'party_id': 'sup-A', 'shop_id': 'shop-1', 'shop_item_unit_id': 'u-2',
+          'last_unit_cost': 40, 'last_received_at_ms': 200,
+          'server_updated_at_ms': 200},
+      ],
+    });
+
+    // Sugar (200) leads rice (100); tea isn't in this supplier's basket.
+    final basket = await repo.supplierBasket('sup-A', shopId: shopId);
+    expect(basket.map((r) => r.shopItemId), ['si-2', 'si-1']);
+
+    // Receiving tea now floats it to the top immediately.
+    await repo.applyOptimisticSupplierBasket(
+      supplierId: 'sup-A', shopId: shopId, shopItemUnitIds: ['u-3'], nowMs: 999);
+    final basket2 = await repo.supplierBasket('sup-A', shopId: shopId);
+    expect(basket2.first.shopItemId, 'si-3');
+  });
+
   test('lookupBarcode returns the matching shop_item_unit', () async {
     await repo.applyItemsPayload({
       'items': [_item('si-1', 'Rice 5kg')],
