@@ -105,6 +105,42 @@ void main() {
     expect(supplier.first.partyId, 'p-supp');
   });
 
+  test('searchParties rankBy=recency orders by most recent transaction',
+      () async {
+    await repo.applyPartiesPayload({
+      'parties': [
+        _party('p-old', 'Aaa Old', type: 'customer'), // alphabetically first
+        _party('p-new', 'Zzz New', type: 'customer'), // alphabetically last
+      ],
+    });
+    // p-new transacted more recently than p-old (occurred_at 2000 > 1000).
+    for (final t in [
+      {'txn_id': 't1', 'occurred_at': 1000, 'party_id': 'p-old'},
+      {'txn_id': 't2', 'occurred_at': 2000, 'party_id': 'p-new'},
+    ]) {
+      await database.db.insert('local_transaction', {
+        'txn_id': t['txn_id'],
+        'shop_id': shopId,
+        'type_code': 'sale',
+        'occurred_at': t['occurred_at'],
+        'total': 0,
+        'party_id': t['party_id'],
+        'server_updated_at': 0,
+        'payload_json': '{}',
+      });
+    }
+
+    // Recency: most-recent first (p-new), despite being alphabetically last.
+    final recency = await repo.searchParties('',
+        shopId: shopId, typeCode: 'customer', rankBy: 'recency');
+    expect(recency.map((p) => p.partyId), ['p-new', 'p-old']);
+
+    // Default stays alphabetical in the mirror (no recency).
+    final byName =
+        await repo.searchParties('', shopId: shopId, typeCode: 'customer');
+    expect(byName.map((p) => p.partyId), ['p-old', 'p-new']);
+  });
+
   test('expenseCategories returns active rows for the shop', () async {
     await repo.applyCategoriesPayload({
       'expense_categories': [

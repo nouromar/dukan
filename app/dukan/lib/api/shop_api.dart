@@ -827,6 +827,7 @@ class ShopApi {
     String query = '',
     String type = 'customer',
     int limit = 50,
+    String rankBy = 'balance',
   }) async {
     final rows = await _client.rpc(
       'search_parties',
@@ -835,6 +836,7 @@ class ShopApi {
         'p_query': query,
         'p_type': type,
         'p_limit': limit,
+        'p_rank_by': rankBy,
       },
     );
     if (rows is! List) return const [];

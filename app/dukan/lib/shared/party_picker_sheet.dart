@@ -67,6 +67,8 @@ class _PartyPickerBodyState extends State<_PartyPickerBody> {
         query,
         shopId: widget.shop.id,
         typeCode: widget.typeCode,
+        // Picker shows the people you've dealt with most recently first.
+        rankBy: 'recency',
       );
       return rows.map(repo.toPartySearchResult).toList(growable: false);
     }
@@ -74,6 +76,7 @@ class _PartyPickerBodyState extends State<_PartyPickerBody> {
       shopId: widget.shop.id,
       query: query,
       type: widget.typeCode,
+      rankBy: 'recency',
     );
   }
 

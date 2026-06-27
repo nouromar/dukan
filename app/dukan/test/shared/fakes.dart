@@ -154,12 +154,14 @@ class FakeLocalRepository extends LocalRepository {
     required String shopId,
     required String typeCode,
     int limit = 50,
+    String rankBy = 'balance',
   }) async {
     final results = await shopApi.searchParties(
       shopId: shopId,
       query: query,
       type: typeCode,
       limit: limit,
+      rankBy: rankBy,
     );
     return results
         .map((p) => LocalParty(
@@ -951,6 +953,7 @@ class FakeShopApi implements ShopApi {
     String query = '',
     String type = 'customer',
     int limit = 50,
+    String rankBy = 'balance',
   }) async {
     if (onSearchParties != null) {
       return onSearchParties!(shopId, query, type, limit);

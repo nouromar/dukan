@@ -608,25 +608,47 @@ class LocalRepository {
     required String shopId,
     required String typeCode,
     int limit = 50,
+    String rankBy = 'balance',
   }) async {
     final trimmed = query.trim();
     final db = await _db;
-    if (trimmed.isEmpty) {
-      final rows = await db.query(
-        'local_party',
-        where: 'shop_id = ? AND type_code = ? AND is_active = 1',
-        whereArgs: [shopId, typeCode],
-        orderBy: 'name COLLATE NOCASE ASC',
-        limit: limit,
+    final hasQuery = trimmed.isNotEmpty;
+    final pattern = hasQuery
+        ? '%${trimmed.replaceAll('%', r'\%').replaceAll('_', r'\_')}%'
+        : null;
+
+    if (rankBy == 'recency') {
+      // Recents first, then name. The mirror has no usage table, but
+      // local_transaction carries party_id + occurred_at — enough to rank
+      // recents offline (SQLite sorts NULL last under DESC, so parties with
+      // no transactions fall to the bottom).
+      final nameClause = hasQuery ? ' AND p.name LIKE ? COLLATE NOCASE' : '';
+      final args = <Object?>[shopId, shopId, typeCode];
+      if (hasQuery) args.add(pattern);
+      args.add(limit);
+      final rows = await db.rawQuery(
+        'SELECT p.* FROM local_party p '
+        'LEFT JOIN (SELECT party_id, MAX(occurred_at) AS last_at '
+        'FROM local_transaction WHERE shop_id = ? AND party_id IS NOT NULL '
+        'GROUP BY party_id) t ON t.party_id = p.party_id '
+        'WHERE p.shop_id = ? AND p.type_code = ? AND p.is_active = 1$nameClause '
+        'ORDER BY t.last_at DESC, p.name COLLATE NOCASE ASC LIMIT ?',
+        args,
       );
       return rows.map(LocalParty._fromRow).toList(growable: false);
     }
-    final pattern = '%${trimmed.replaceAll('%', r'\%').replaceAll('_', r'\_')}%';
+
+    // Default ('balance' caller): alphabetical in the mirror.
+    final where = hasQuery
+        ? 'shop_id = ? AND type_code = ? AND is_active = 1 AND name LIKE ? COLLATE NOCASE'
+        : 'shop_id = ? AND type_code = ? AND is_active = 1';
+    final whereArgs = hasQuery
+        ? <Object?>[shopId, typeCode, pattern]
+        : <Object?>[shopId, typeCode];
     final rows = await db.query(
       'local_party',
-      where:
-          'shop_id = ? AND type_code = ? AND is_active = 1 AND name LIKE ? COLLATE NOCASE',
-      whereArgs: [shopId, typeCode, pattern],
+      where: where,
+      whereArgs: whereArgs,
       orderBy: 'name COLLATE NOCASE ASC',
       limit: limit,
     );

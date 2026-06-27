@@ -1577,6 +1577,43 @@ begin
 end;
 $$;
 
+-- §12b search_parties recency ranking (0077). shop_party_usage is trigger-
+-- written (no direct grant), so seed it as superuser, then verify
+-- p_rank_by='recency' ranks by recent activity while the default stays
+-- balance-first. search_parties is SECURITY DEFINER and authorizes via the
+-- (still-owner) jwt claim, so it runs fine under set role postgres.
+set role postgres;
+do $$
+declare
+  v_shop_id uuid;
+  v_high_id uuid;
+  v_low_id  uuid;
+  v_first   uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_high_id from public.party where shop_id = v_shop_id and name = 'Ahmed High';
+  select id into v_low_id  from public.party where shop_id = v_shop_id and name = 'Ayaan Low';
+  -- Make the LOW-debt customer the most recently active.
+  insert into public.shop_party_usage (shop_id, party_id, sale_count, last_sale_at)
+  values (v_shop_id, v_low_id,  1, now()),
+         (v_shop_id, v_high_id, 1, now() - interval '10 days')
+  on conflict (shop_id, party_id) do update set last_sale_at = excluded.last_sale_at;
+
+  select id into v_first
+  from public.search_parties(v_shop_id, '', 'customer', 50, 'recency') limit 1;
+  if v_first <> v_low_id then
+    raise exception 'search_parties recency did not rank by shop_party_usage';
+  end if;
+  select id into v_first
+  from public.search_parties(v_shop_id, '', 'customer', 50) limit 1;
+  if v_first <> v_high_id then
+    raise exception 'search_parties balance ranking regressed';
+  end if;
+  raise notice 'search_parties recency ranking passed';
+end;
+$$;
+set role authenticated;
+
 -- Cashier can create_party (operational, not setup).
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
 do $$
