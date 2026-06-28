@@ -30,6 +30,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payment => 'Payment';
 
   @override
+  String get paymentInLabel => 'Money In';
+
+  @override
+  String get paymentOutLabel => 'Money Out';
+
+  @override
   String get expense => 'Expense';
 
   @override

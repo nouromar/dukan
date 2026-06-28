@@ -8,6 +8,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/expense/expense_screen.dart';
 import 'package:dukan/home/dukan_drawer.dart';
+import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/payment/payment_screen.dart';
 import 'package:dukan/products/products_screen.dart';
 import 'package:dukan/receive/receive_controller.dart';
@@ -133,10 +134,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         : SupplierPickerScreen(shop: shop!);
                   },
                 ),
-                onPayment: () => _pushAndRefresh(
+                onPaymentIn: () => _pushAndRefresh(
                   (_) {
                     Timing.startFlow('payment');
-                    return PaymentScreen(shop: shop!);
+                    return PaymentScreen(
+                      shop: shop!,
+                      initialType: PaymentType.customer,
+                    );
+                  },
+                ),
+                onPaymentOut: () => _pushAndRefresh(
+                  (_) {
+                    Timing.startFlow('payment');
+                    return PaymentScreen(
+                      shop: shop!,
+                      initialType: PaymentType.supplier,
+                    );
                   },
                 ),
                 onExpense: () => _pushAndRefresh(
@@ -162,7 +175,8 @@ class _ActionGrid extends StatelessWidget {
     required this.shop,
     required this.onSale,
     required this.onReceive,
-    required this.onPayment,
+    required this.onPaymentIn,
+    required this.onPaymentOut,
     required this.onExpense,
     required this.onProducts,
   });
@@ -170,7 +184,8 @@ class _ActionGrid extends StatelessWidget {
   final ShopSummary? shop;
   final VoidCallback onSale;
   final VoidCallback onReceive;
-  final VoidCallback onPayment;
+  final VoidCallback onPaymentIn;
+  final VoidCallback onPaymentOut;
   final VoidCallback onExpense;
   final VoidCallback onProducts;
 
@@ -178,11 +193,10 @@ class _ActionGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     // 2-column grid at a fixed cell height matching the original design's
-    // tap-target size. Five tiles now (Sale, Receive, Payment, Expense,
-    // Products) — the 5th lands alone on row 3. Products joined the
-    // home grid because the editor is the entry point for the
-    // comprehensive item-onboarding form; previously only reachable
-    // from the drawer.
+    // tap-target size. Six tiles in a clean 3×2: Sale, Receive / Money In,
+    // Money Out / Expense, Products. Payment was split into Money In
+    // (customer pays) and Money Out (pay supplier) so the direction is chosen
+    // by which tile you tap, not a question inside the screen (#2 feedback).
     return GridView(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
@@ -204,9 +218,14 @@ class _ActionGrid extends StatelessWidget {
           onTap: shop == null ? () {} : onReceive,
         ),
         HomeAction(
-          icon: Icons.payments,
-          label: l.payment,
-          onTap: shop == null ? () {} : onPayment,
+          icon: Icons.call_received,
+          label: l.paymentInLabel,
+          onTap: shop == null ? () {} : onPaymentIn,
+        ),
+        HomeAction(
+          icon: Icons.call_made,
+          label: l.paymentOutLabel,
+          onTap: shop == null ? () {} : onPaymentOut,
         ),
         HomeAction(
           icon: Icons.receipt_long,

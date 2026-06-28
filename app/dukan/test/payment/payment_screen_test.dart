@@ -53,6 +53,22 @@ void main() {
     );
   }
 
+  testWidgets('opens pre-selected to the supplier direction (Money Out)',
+      (tester) async {
+    await tester.pumpWidget(
+      wrapWithApp(
+        PaymentScreen(shop: shop, initialType: PaymentType.supplier),
+        authController: auth,
+        shopApi: api,
+        paymentController: payment,
+      ),
+    );
+    await tester.pumpAndSettle();
+    // The supplier direction hint is shown; the customer one is not.
+    expect(find.text(en.paymentTypeSupplierHint), findsOneWidget);
+    expect(find.text(en.paymentTypeCustomerHint), findsNothing);
+  });
+
   testWidgets(
     'customer → SAVE posts inbound payment with direction I',
     (tester) async {

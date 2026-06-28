@@ -7,6 +7,8 @@
   "sale": "Iibi",
   "receive": "Alaab Dajin",
   "payment": "Lacag bixin",
+  "paymentInLabel": "Lacag Soo Gal",
+  "paymentOutLabel": "Lacag Bax",
   "expense": "Qarashaad",
   "cash": "KAASH",
   "debt": "DEYN",

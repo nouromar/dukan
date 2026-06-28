@@ -38,9 +38,11 @@ void main() {
     expect(find.text('Hodan Shop'), findsOneWidget);
     expect(find.text(en.sale), findsOneWidget);
     expect(find.text(en.receive), findsOneWidget);
-    expect(find.text(en.payment), findsOneWidget);
+    // Payment was split into two tiles (#2 feedback).
+    expect(find.text(en.paymentInLabel), findsOneWidget);
+    expect(find.text(en.paymentOutLabel), findsOneWidget);
     expect(find.text(en.expense), findsOneWidget);
-    // Products is the 5th tile on the home grid (also reachable from
+    // Products is the 6th tile on the home grid (also reachable from
     // the drawer with the same label).
     expect(find.text(en.drawerProducts), findsAtLeastNWidgets(1));
   });

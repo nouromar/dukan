@@ -28,9 +28,17 @@ import 'package:dukan/shared/optimistic_save.dart';
 import 'package:dukan/shared/party_picker_sheet.dart';
 
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({required this.shop, super.key});
+  const PaymentScreen({
+    required this.shop,
+    this.initialType = PaymentType.customer,
+    super.key,
+  });
 
   final ShopSummary shop;
+
+  /// Which direction to open on — set by the Home "Money In" / "Money Out"
+  /// tiles. The on-screen toggle can still switch it.
+  final PaymentType initialType;
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -43,7 +51,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
-    final amount = context.read<PaymentController>().amount;
+    final controller = context.read<PaymentController>();
+    // Pre-select the direction the Home tile requested (Money In = customer,
+    // Money Out = supplier). initType is the non-notifying variant — safe in
+    // initState; it clears stale party/amount only when the direction changes,
+    // so read the amount AFTER.
+    controller.initType(widget.initialType);
+    final amount = controller.amount;
     if (amount > 0) {
       _amountController.text = _formatField(amount);
     }

@@ -59,6 +59,19 @@ class PaymentController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Set the direction at screen-open (Home "Money In"/"Money Out" tile)
+  /// WITHOUT notifying — safe to call from `initState`, since the screen reads
+  /// `type` in its first build. Clears stale party/amount only when the
+  /// direction actually changes. (The notifying [setType] is for the on-screen
+  /// toggle and must not run during build.)
+  void initType(PaymentType type) {
+    if (_type == type) return;
+    _type = type;
+    _party = null;
+    _amount = 0;
+    _allocations = null;
+  }
+
   void setParty(PartySearchResult party) {
     if (_party?.id == party.id) return;
     _party = party;

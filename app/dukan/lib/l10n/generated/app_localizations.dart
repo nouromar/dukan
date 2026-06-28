@@ -140,6 +140,18 @@ abstract class AppLocalizations {
   /// **'Payment'**
   String get payment;
 
+  /// No description provided for @paymentInLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Money In'**
+  String get paymentInLabel;
+
+  /// No description provided for @paymentOutLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Money Out'**
+  String get paymentOutLabel;
+
   /// No description provided for @expense.
   ///
   /// In en, this message translates to:
