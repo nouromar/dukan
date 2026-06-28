@@ -2251,6 +2251,24 @@ abstract class AppLocalizations {
   /// **'Debt'**
   String get saleDetailDebtLabel;
 
+  /// No description provided for @receiptNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt'**
+  String get receiptNumberLabel;
+
+  /// No description provided for @receiptDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get receiptDateLabel;
+
+  /// No description provided for @receiptThankYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you!'**
+  String get receiptThankYou;
+
   /// No description provided for @saleDetailLoadFailedMessage.
   ///
   /// In en, this message translates to:

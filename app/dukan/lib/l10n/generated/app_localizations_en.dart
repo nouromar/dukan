@@ -1269,6 +1269,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleDetailDebtLabel => 'Debt';
 
   @override
+  String get receiptNumberLabel => 'Receipt';
+
+  @override
+  String get receiptDateLabel => 'Date';
+
+  @override
+  String get receiptThankYou => 'Thank you!';
+
+  @override
   String get saleDetailLoadFailedMessage => 'Could not load this sale.';
 
   @override

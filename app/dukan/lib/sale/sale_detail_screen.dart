@@ -9,10 +9,12 @@
 // print + WhatsApp). The history path additionally surfaces VOID when
 // the sale is within the 7-day window (decisions.md Q12).
 
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -22,6 +24,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/sale/cart_controller.dart';
+import 'package:dukan/sale/receipt_pdf.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/config/business_rules.dart';
@@ -430,15 +433,14 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
     return 'void-$ts-$r';
   }
 
-  /// Native share — opens the platform action sheet so the cashier can
-  /// pick WhatsApp / SMS / Notes / Print / whatever they've installed.
-  /// We hand SharePlus a plain-text receipt; it preserves line breaks
-  /// across every target the user typically lands on (WhatsApp, SMS,
-  /// Notes, Mail). Per-target richer formats (PDF for print, vCard for
-  /// contacts) would need separate adapters; out of scope for v1.
+  /// Native share — opens the platform action sheet so the cashier can pick
+  /// WhatsApp / SMS / Notes / Print / whatever they've installed. We share a
+  /// formatted PDF receipt (#6) with a plain-text caption; the recipient can
+  /// open/print the PDF from their viewer. Falls back to the plain-text receipt
+  /// if PDF generation fails, so sharing never breaks.
   Future<void> _onShare(_SaleBundle bundle) async {
     final l = tr(context);
-    final text = _buildShareText(context, widget.shop, bundle, l);
+    final caption = _buildShareText(context, widget.shop, bundle, l);
     // Anchor the iPad popover at the screen centre — the share button's
     // RenderBox isn't easy to reach from here, and a centre origin is
     // the conventional fallback when the trigger isn't a fixed widget.
@@ -446,12 +448,37 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
     final origin = box == null
         ? Rect.zero
         : box.localToGlobal(Offset.zero) & box.size;
-    await SharePlus.instance.share(
-      ShareParams(
-        text: text,
-        sharePositionOrigin: origin,
-      ),
-    );
+    try {
+      final bytes = await buildSaleReceiptPdf(
+        shop: widget.shop,
+        header: bundle.header,
+        lines: bundle.lines,
+        l: l,
+        dateText: _formatDateTime(bundle.header.occurredAt),
+      );
+      final dir = await getTemporaryDirectory();
+      final file =
+          File('${dir.path}/${receiptNumberFor(bundle.header)}.pdf');
+      await file.writeAsBytes(bytes);
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path, mimeType: 'application/pdf')],
+          text: caption,
+          sharePositionOrigin: origin,
+        ),
+      );
+    } catch (error, stackTrace) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan sale',
+        context: ErrorDescription('share sale receipt PDF'),
+      ));
+      // Fallback: plain-text receipt still works everywhere.
+      await SharePlus.instance.share(
+        ShareParams(text: caption, sharePositionOrigin: origin),
+      );
+    }
   }
 
   @override

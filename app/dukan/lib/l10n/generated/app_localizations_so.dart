@@ -1272,6 +1272,15 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleDetailDebtLabel => 'Deyn';
 
   @override
+  String get receiptNumberLabel => 'Rasiidka';
+
+  @override
+  String get receiptDateLabel => 'Taariikhda';
+
+  @override
+  String get receiptThankYou => 'Mahadsanid!';
+
+  @override
   String get saleDetailLoadFailedMessage => 'Iibkaan lama soo dejin karin.';
 
   @override
