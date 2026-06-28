@@ -51,6 +51,7 @@ class SaleScreen extends StatefulWidget {
 
 class _SaleScreenState extends State<SaleScreen> {
   final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
   late Future<List<ItemSearchResult>> _resultsFuture;
   String _activeQuery = '';
   Timer? _debounce;
@@ -72,6 +73,7 @@ class _SaleScreenState extends State<SaleScreen> {
     // Backdating (#5) is sticky within a screen session but resets to today on
     // each fresh entry — non-notifying since we're in initState (build phase).
     cart.initWorkingDate();
+    _searchFocus.addListener(_onSearchFocusChanged);
     // Detect Bluetooth-HID scanners typing burst-style. isActive gates
     // dispatch to the route currently visible — handles the case where
     // Sale is pushed under another screen.
@@ -113,6 +115,7 @@ class _SaleScreenState extends State<SaleScreen> {
   void dispose() {
     _hidListener.detach();
     _searchController.dispose();
+    _searchFocus.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -225,8 +228,18 @@ class _SaleScreenState extends State<SaleScreen> {
   /// always sees the running total + last line — eliminates the
   /// "did the tap register?" anxiety with the drawer collapsed.
   void _expandCart() {
-    if (!mounted || _cartExpanded) return;
+    // Don't fight the cashier while they're searching — an auto-expand would
+    // re-cover the item results behind the cart + keyboard.
+    if (!mounted || _cartExpanded || _searchFocus.hasFocus) return;
     setState(() => _cartExpanded = true);
+  }
+
+  /// Focusing the search field collapses the cart so the item results aren't
+  /// hidden behind the expanded cart strip and the keyboard.
+  void _onSearchFocusChanged() {
+    if (_searchFocus.hasFocus && _cartExpanded && mounted) {
+      setState(() => _cartExpanded = false);
+    }
   }
 
   /// Camera-icon entry point. Opens the single-scan viewfinder; on a
@@ -1099,6 +1112,7 @@ class _SaleScreenState extends State<SaleScreen> {
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
                   child: TextField(
                     controller: _searchController,
+                    focusNode: _searchFocus,
                     onChanged: _onSearchChanged,
                     textInputAction: TextInputAction.search,
                     // Somali item names (caano, hilib, bariis, …) get

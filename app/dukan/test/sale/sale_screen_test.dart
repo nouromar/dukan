@@ -330,6 +330,38 @@ void main() {
     );
   });
 
+  testWidgets('focusing search collapses the cart so item results show',
+      (tester) async {
+    api.onSearchItems = (_, _, _, _, _, _) async => [
+      fakeActivatedItem(
+        shopItemId: 'si-rice',
+        itemId: 'item-rice',
+        defaultShopItemUnitId: 'siu-rice',
+        displayName: 'Bariis',
+        defaultUnitSalePrice: 1.5,
+      ),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    // Add an item → cart auto-expands → its line is visible.
+    await tester.tap(find.text('Bariis').first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
+      findsOneWidget,
+    );
+
+    // Focusing the search field collapses the cart so the item grid/results
+    // aren't hidden behind the expanded cart + keyboard.
+    await tester.tap(find.byType(TextField).first);
+    await tester.pumpAndSettle();
+    expect(
+      find.text(en.cartLineSubtotal('1', '\$1.50', '\$1.50')),
+      findsNothing,
+    );
+  });
+
   testWidgets('tapping ✕ on a cart line removes it and updates the summary', (
     tester,
   ) async {

@@ -86,6 +86,7 @@ class ReceiveScreen extends StatefulWidget {
 
 class _ReceiveScreenState extends State<ReceiveScreen> {
   final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
   late Future<List<ItemSearchResult>> _resultsFuture;
   String _activeQuery = '';
   Timer? _debounce;
@@ -114,6 +115,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     _linesExpanded = receiveCtrl.isNotEmpty;
     // Backdating (#5): reset to today on fresh entry (sticky within a session).
     receiveCtrl.initWorkingDate();
+    _searchFocus.addListener(_onSearchFocusChanged);
     final scanner = ScannerSettings.current;
     _hidListener = HidScanListener(
       onScan: _onHidScan,
@@ -242,6 +244,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   void dispose() {
     _hidListener.detach();
     _searchController.dispose();
+    _searchFocus.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -559,8 +562,17 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     }
     setState(() {
       _selectedItem = null;
-      _linesExpanded = true;
+      // Don't auto-expand over the item results while the cashier is searching.
+      _linesExpanded = !_searchFocus.hasFocus;
     });
+  }
+
+  /// Focusing the search field collapses the lines drawer so the item results
+  /// aren't hidden behind the expanded drawer and the keyboard.
+  void _onSearchFocusChanged() {
+    if (_searchFocus.hasFocus && _linesExpanded && mounted) {
+      setState(() => _linesExpanded = false);
+    }
   }
 
   void _onRemoveLine(String key) {
@@ -980,6 +992,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
               child: TextField(
                 controller: _searchController,
+                focusNode: _searchFocus,
                 onChanged: _onSearchChanged,
                 textInputAction: TextInputAction.search,
                 // Mirror the Sale search field — Somali item names
