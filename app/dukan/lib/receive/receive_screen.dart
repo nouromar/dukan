@@ -1513,49 +1513,53 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                // Packaging chip — the v2 key UX win. Renders the full
-                // packaging label (e.g., "25 kg bag") prominently so
-                // the cashier can verify they're entering against the
-                // right packaging before typing numbers.
+                // Slice 4: quick-tap quantity chips beside the box (learned
+                // usual + up to 3 defaults, capped to stay on one line).
                 Expanded(
-                  child: InkWell(
-                    onTap: widget.saving ? null : _onTapUnit,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 6,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              _packagingLabel,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          const Icon(Icons.arrow_drop_down, size: 22),
-                        ],
-                      ),
-                    ),
+                  child: QuantityChips(
+                    learnedQty: widget.selected.learnedQty,
+                    maxChips: 3,
+                    alignment: WrapAlignment.start,
+                    onSelected: (v) {
+                      _qtyController.text = formatQty(v);
+                      _qtyController.selection = TextSelection.collapsed(
+                        offset: _qtyController.text.length,
+                      );
+                    },
                   ),
                 ),
               ],
             ),
-            // Slice 4: quick-tap quantity chips (learned usual + defaults).
-            QuantityChips(
-              learnedQty: widget.selected.learnedQty,
-              onSelected: (v) {
-                _qtyController.text = formatQty(v);
-                _qtyController.selection = TextSelection.collapsed(
-                  offset: _qtyController.text.length,
-                );
-              },
+            const SizedBox(height: 6),
+            // Packaging selector — full width below the quantity. The "are you
+            // entering against the right packaging?" anchor (the v2 key UX win),
+            // now with room for the full label.
+            InkWell(
+              onTap: widget.saving ? null : _onTapUnit,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _packagingLabel,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(Icons.arrow_drop_down, size: 22),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             // One money field only: the line total straight off the

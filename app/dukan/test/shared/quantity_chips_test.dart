@@ -33,4 +33,21 @@ void main() {
     expect(find.byType(ActionChip), findsNWidgets(3)); // 1, 2, 5
     expect(find.byIcon(Icons.history), findsNothing);
   });
+
+  testWidgets('maxChips caps the row but always keeps the learned chip',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: QuantityChips(learnedQty: 3, maxChips: 3, onSelected: (_) {}),
+      ),
+    ));
+
+    // learned 3 + defaults 1,2,5 capped to 3 keeping learned → 1, 2, 3.
+    expect(find.byType(ActionChip), findsNWidgets(3));
+    for (final n in ['1', '2', '3']) {
+      expect(find.widgetWithText(ActionChip, n), findsOneWidget);
+    }
+    expect(find.widgetWithText(ActionChip, '5'), findsNothing);
+    expect(find.byIcon(Icons.history), findsOneWidget); // learned still marked
+  });
 }

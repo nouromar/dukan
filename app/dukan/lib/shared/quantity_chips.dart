@@ -14,6 +14,8 @@ class QuantityChips extends StatelessWidget {
     this.learnedQty,
     this.unitLabel,
     this.defaults = const [1, 2, 5],
+    this.maxChips,
+    this.alignment = WrapAlignment.center,
   });
 
   /// Called with the chosen quantity (in the line's packaging units).
@@ -28,12 +30,28 @@ class QuantityChips extends StatelessWidget {
 
   final List<num> defaults;
 
+  /// Cap on the number of chips shown. null = no cap. When capping, the learned
+  /// quantity is always kept (it's the most useful), then defaults fill the
+  /// rest. Used by the Receive form, where the chips sit beside the qty box.
+  final int? maxChips;
+
+  /// How the chip row aligns within its width. Receive sits them beside the
+  /// box (start); Sale centers them below the stepper.
+  final WrapAlignment alignment;
+
   @override
   Widget build(BuildContext context) {
-    final learned = learnedQty;
-    final set = <num>{...defaults};
-    if (learned != null && learned > 0) set.add(learned);
-    final values = set.toList()..sort();
+    final learned =
+        (learnedQty != null && learnedQty! > 0) ? learnedQty : null;
+    // Keep the learned chip first so it survives the cap, then fill with
+    // defaults up to maxChips, then sort for display.
+    final values = <num>[];
+    if (learned != null) values.add(learned);
+    for (final d in defaults) {
+      if (maxChips != null && values.length >= maxChips!) break;
+      if (!values.contains(d)) values.add(d);
+    }
+    values.sort();
 
     String labelFor(num v) {
       final n = formatQty(v);
@@ -43,7 +61,7 @@ class QuantityChips extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      alignment: WrapAlignment.center,
+      alignment: alignment,
       children: [
         for (final v in values)
           ActionChip(
