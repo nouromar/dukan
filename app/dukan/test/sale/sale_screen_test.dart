@@ -362,6 +362,39 @@ void main() {
     );
   });
 
+  testWidgets('peek cart hides the Lacag/Deyn toggle while searching; SAVE stays',
+      (tester) async {
+    api.onSearchItems = (_, _, _, _, _, _) async => [
+      fakeActivatedItem(
+        shopItemId: 'si-rice',
+        itemId: 'item-rice',
+        defaultShopItemUnitId: 'siu-rice',
+        displayName: 'Bariis',
+        defaultUnitSalePrice: 1.5,
+      ),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    // Add an item → cart auto-expands → the Lacag/Deyn toggle + SAVE show.
+    await tester.tap(find.text('Bariis').first);
+    await tester.pumpAndSettle();
+    expect(find.text(en.saleCash), findsOneWidget);
+    expect(
+      find.widgetWithText(FilledButton, en.saleSaveButton),
+      findsOneWidget,
+    );
+
+    // Focus search → collapse to peek → toggle hidden, SAVE still reachable.
+    await tester.tap(find.byType(TextField).first);
+    await tester.pumpAndSettle();
+    expect(find.text(en.saleCash), findsNothing);
+    expect(
+      find.widgetWithText(FilledButton, en.saleSaveButton),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('tapping ✕ on a cart line removes it and updates the summary', (
     tester,
   ) async {

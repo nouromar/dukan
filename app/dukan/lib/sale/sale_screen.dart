@@ -81,8 +81,7 @@ class _SaleScreenState extends State<SaleScreen> {
     final scanner = ScannerSettings.current;
     _hidListener = HidScanListener(
       onScan: _onHidScan,
-      isActive: () =>
-          mounted && (ModalRoute.of(context)?.isCurrent ?? false),
+      isActive: () => mounted && (ModalRoute.of(context)?.isCurrent ?? false),
       maxInterKeyGap: scanner.hidMaxInterKeyGap,
       maxBurstWindow: scanner.hidMaxBurstWindow,
       minBurstLength: scanner.hidMinBurstLength,
@@ -433,8 +432,7 @@ class _SaleScreenState extends State<SaleScreen> {
     );
     if (result == null || !mounted) return;
     final cart = context.read<CartController>();
-    if (result.shopItemUnitId != shopItemUnitId &&
-        existing != null) {
+    if (result.shopItemUnitId != shopItemUnitId && existing != null) {
       // Cashier switched the packaging on a row that was already in the
       // cart — move the line under the new key.
       cart.switchLinePackaging(
@@ -507,7 +505,6 @@ class _SaleScreenState extends State<SaleScreen> {
       );
     }
   }
-
 
   /// Opens the "+ Add new item" bottom sheet pre-filled with the search
   /// query. On save the new packaging is dropped straight into the cart
@@ -625,8 +622,10 @@ class _SaleScreenState extends State<SaleScreen> {
     final snapshot = cart.snapshot();
     final cashSale = !snapshot.debt;
     final partyId = snapshot.debt ? snapshot.customer!.id : null;
-    final total = snapshot.lines.values
-        .fold<double>(0, (sum, line) => sum + line.subtotal.toDouble());
+    final total = snapshot.lines.values.fold<double>(
+      0,
+      (sum, line) => sum + line.subtotal.toDouble(),
+    );
     final priceWriteBacks = <({String shopItemUnitId, num salePrice})>[];
     final lines = <SaleLine>[];
     for (final line in snapshot.lines.values) {
@@ -638,9 +637,10 @@ class _SaleScreenState extends State<SaleScreen> {
         ),
       );
       if (line.priceWasEntered) {
-        priceWriteBacks.add(
-          (shopItemUnitId: line.shopItemUnitId, salePrice: line.unitPrice),
-        );
+        priceWriteBacks.add((
+          shopItemUnitId: line.shopItemUnitId,
+          salePrice: line.unitPrice,
+        ));
       }
     }
     final clientOpId = generateClientOpId('sale');
@@ -671,16 +671,17 @@ class _SaleScreenState extends State<SaleScreen> {
     // server-authoritative row replaces this one (dedup by
     // client_op_id) when delta sync brings it back, whether
     // the post goes through the direct path or the queue.
-    final localRepoForOptimistic =
-        useLocalDb(context) ? context.read<LocalRepository>() : null;
+    final localRepoForOptimistic = useLocalDb(context)
+        ? context.read<LocalRepository>()
+        : null;
     if (localRepoForOptimistic != null) {
       try {
         await localRepoForOptimistic.writeOptimisticTransaction(
           clientOpId: clientOpId,
           shopId: widget.shop.id,
           typeCode: 'sale',
-          occurredAtMs: (snapshot.occurredAt ?? DateTime.now())
-              .millisecondsSinceEpoch,
+          occurredAtMs:
+              (snapshot.occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
           total: total,
           partyId: partyId,
           payload: <String, dynamic>{
@@ -691,12 +692,14 @@ class _SaleScreenState extends State<SaleScreen> {
           },
         );
       } catch (e, st) {
-        FlutterError.reportError(FlutterErrorDetails(
-          exception: e,
-          stack: st,
-          library: 'dukan sale',
-          context: ErrorDescription('write optimistic sale transaction'),
-        ));
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: st,
+            library: 'dukan sale',
+            context: ErrorDescription('write optimistic sale transaction'),
+          ),
+        );
       }
       // Float the just-sold items to the top of the Sale list immediately;
       // the next items-sync reconciles to the server's combined count.
@@ -708,12 +711,14 @@ class _SaleScreenState extends State<SaleScreen> {
           nowMs: DateTime.now().millisecondsSinceEpoch,
         );
       } catch (e, st) {
-        FlutterError.reportError(FlutterErrorDetails(
-          exception: e,
-          stack: st,
-          library: 'dukan sale',
-          context: ErrorDescription('optimistic sale recency bump'),
-        ));
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: st,
+            library: 'dukan sale',
+            context: ErrorDescription('optimistic sale recency bump'),
+          ),
+        );
       }
       // Optimistic stock decrement + (debt sale) customer receivable so
       // Products and the customers LIST reflect the sale instantly — they read
@@ -738,12 +743,14 @@ class _SaleScreenState extends State<SaleScreen> {
           );
         }
       } catch (e, st) {
-        FlutterError.reportError(FlutterErrorDetails(
-          exception: e,
-          stack: st,
-          library: 'dukan sale',
-          context: ErrorDescription('optimistic sale stock/receivable'),
-        ));
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: st,
+            library: 'dukan sale',
+            context: ErrorDescription('optimistic sale stock/receivable'),
+          ),
+        );
       }
     }
 
@@ -802,12 +809,14 @@ class _SaleScreenState extends State<SaleScreen> {
         occurredAt: snapshot.occurredAt,
       );
     } catch (error, stackTrace) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan sale',
-        context: ErrorDescription('post_sale (useLocalDb=false)'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan sale',
+          context: ErrorDescription('post_sale (useLocalDb=false)'),
+        ),
+      );
       if (!mounted) return;
       setState(() => _saving = false);
       showError(context, '${l.salePostFailedMessage}\n$error');
@@ -832,13 +841,15 @@ class _SaleScreenState extends State<SaleScreen> {
               salePrice: write.salePrice,
             )
             .catchError((Object error, StackTrace stackTrace) {
-          FlutterError.reportError(FlutterErrorDetails(
-            exception: error,
-            stack: stackTrace,
-            library: 'dukan sale',
-            context: ErrorDescription('set_shop_item_unit_sale_price'),
-          ));
-        }),
+              FlutterError.reportError(
+                FlutterErrorDetails(
+                  exception: error,
+                  stack: stackTrace,
+                  library: 'dukan sale',
+                  context: ErrorDescription('set_shop_item_unit_sale_price'),
+                ),
+              );
+            }),
       );
     }
 
@@ -851,12 +862,14 @@ class _SaleScreenState extends State<SaleScreen> {
         fallback: SaleReceiptFallback.fromCart(snapshot),
       );
     } catch (error, stackTrace) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan sale',
-        context: ErrorDescription('show sale receipt sheet'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan sale',
+          context: ErrorDescription('show sale receipt sheet'),
+        ),
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -886,8 +899,9 @@ class _SaleScreenState extends State<SaleScreen> {
   }) async {
     // Captured before the post so the reject/queue paths can touch the mirror
     // even if the context unmounts.
-    final localRepo =
-        useLocalDb(context) ? context.read<LocalRepository>() : null;
+    final localRepo = useLocalDb(context)
+        ? context.read<LocalRepository>()
+        : null;
     String txnId;
     try {
       txnId = await api.postSale(
@@ -917,12 +931,21 @@ class _SaleScreenState extends State<SaleScreen> {
           );
           if (partyId != null) {
             await localRepo.applyOptimisticPartyPayment(
-              partyId: partyId, direction: 'I', amount: total);
+              partyId: partyId,
+              direction: 'I',
+              amount: total,
+            );
           }
-        } catch (_) {/* best-effort revert; sync reconciles regardless */}
+        } catch (_) {
+          /* best-effort revert; sync reconciles regardless */
+        }
       }
       _handleOptimisticSaveFailure(
-        snapshot, error, stackTrace, l.salePostFailedMessage);
+        snapshot,
+        error,
+        stackTrace,
+        l.salePostFailedMessage,
+      );
       return;
     } catch (error, stackTrace) {
       // Network/transient — enqueue for the offline write queue to
@@ -989,15 +1012,15 @@ class _SaleScreenState extends State<SaleScreen> {
               salePrice: write.salePrice,
             )
             .catchError((Object error, StackTrace stackTrace) {
-          FlutterError.reportError(
-            FlutterErrorDetails(
-              exception: error,
-              stack: stackTrace,
-              library: 'dukan sale',
-              context: ErrorDescription('set_shop_item_unit_sale_price'),
-            ),
-          );
-        }),
+              FlutterError.reportError(
+                FlutterErrorDetails(
+                  exception: error,
+                  stack: stackTrace,
+                  library: 'dukan sale',
+                  context: ErrorDescription('set_shop_item_unit_sale_price'),
+                ),
+              );
+            }),
       );
     }
 
@@ -1067,7 +1090,6 @@ class _SaleScreenState extends State<SaleScreen> {
     showError(context, message);
   }
 
-
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
@@ -1134,18 +1156,18 @@ class _SaleScreenState extends State<SaleScreen> {
                     ),
                   ),
                 ),
-                if (_unknownScan != null) _UnknownScanPill(
-                  code: _unknownScan!,
-                  onCreate: _onCreateFromUnknown,
-                  onDismiss: () => setState(() => _unknownScan = null),
-                ),
+                if (_unknownScan != null)
+                  _UnknownScanPill(
+                    code: _unknownScan!,
+                    onCreate: _onCreateFromUnknown,
+                    onDismiss: () => setState(() => _unknownScan = null),
+                  ),
                 Expanded(
                   child: FutureBuilder<List<ItemSearchResult>>(
                     future: _resultsFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState != ConnectionState.done) {
-                        return const Center(
-                            child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
                       if (snapshot.hasError) {
                         return Center(
@@ -1351,8 +1373,7 @@ class _SaleItemTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 13 * kFontScale,
-                  color:
-                      theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
                 ),
               ),
               if (stockText != null) ...[
@@ -1363,8 +1384,7 @@ class _SaleItemTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 13 * kFontScale,
-                    fontWeight:
-                        low ? FontWeight.w700 : FontWeight.w400,
+                    fontWeight: low ? FontWeight.w700 : FontWeight.w400,
                     color: low
                         ? theme.colorScheme.error
                         : theme.colorScheme.onSurface.withValues(alpha: 0.85),
@@ -1468,6 +1488,11 @@ class _SaleCartStrip extends StatelessWidget {
     final canSave = itemCount > 0 && (!debt || customer != null) && !saving;
     final canExpand = lines.isNotEmpty;
     final maxListHeight = MediaQuery.of(context).size.height * 0.25;
+    // Peek (collapsed) = summary + SAVE only, so the item grid keeps the screen
+    // while searching. The line list + Lacag/Deyn + customer live in the
+    // expanded section. Force-expand when a debt sale still needs a customer,
+    // since the picker is only reachable there.
+    final showExpanded = (expanded && canExpand) || (debt && customer == null);
 
     return Material(
       elevation: 8,
@@ -1494,7 +1519,7 @@ class _SaleCartStrip extends StatelessWidget {
                         children: [
                           Icon(
                             canExpand
-                                ? (expanded
+                                ? (showExpanded
                                       ? Icons.keyboard_arrow_down
                                       : Icons.keyboard_arrow_up)
                                 : Icons.shopping_cart_outlined,
@@ -1515,77 +1540,88 @@ class _SaleCartStrip extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (expanded && canExpand)
+                if (showExpanded && canExpand)
                   TextButton(
                     onPressed: saving ? null : onClearAll,
                     child: Text(l.cartClearAllButton),
                   ),
               ],
             ),
+            // Expanded-only: line list + Lacag/Deyn + customer. The collapsed
+            // peek hides these so the item grid keeps the screen while
+            // searching; SAVE stays below in both states.
             AnimatedSize(
               duration: const Duration(milliseconds: 150),
               curve: Curves.easeOut,
               alignment: Alignment.topCenter,
-              child: expanded && canExpand
-                  ? ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: maxListHeight),
-                      child: _CartLineList(
-                        shop: shop,
-                        lines: lines,
-                        saving: saving,
-                        onRemoveLine: onRemoveLine,
-                        onLongPressLine: onLongPressLine,
-                      ),
+              child: showExpanded
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (canExpand)
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight: maxListHeight,
+                            ),
+                            child: _CartLineList(
+                              shop: shop,
+                              lines: lines,
+                              saving: saving,
+                              onRemoveLine: onRemoveLine,
+                              onLongPressLine: onLongPressLine,
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: SegmentedButton<bool>(
+                            showSelectedIcon: false,
+                            segments: [
+                              ButtonSegment(
+                                value: false,
+                                label: Text(l.saleCash),
+                                icon: const Icon(Icons.payments),
+                              ),
+                              ButtonSegment(
+                                value: true,
+                                label: Text(l.saleDebt),
+                                icon: const Icon(Icons.person),
+                              ),
+                            ],
+                            selected: {debt},
+                            onSelectionChanged: saving
+                                ? null
+                                : (set) => onModeChanged(set.first),
+                          ),
+                        ),
+                        if (debt) ...[
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: customer == null
+                                ? OutlinedButton.icon(
+                                    onPressed: saving ? null : onPickCustomer,
+                                    icon: const Icon(Icons.person_search),
+                                    label: Text(l.salePickCustomerButton),
+                                  )
+                                : InputChip(
+                                    avatar: const Icon(Icons.person),
+                                    label: Text(
+                                      l.saleCustomerChip(
+                                        customer!.name,
+                                        formatMoney(customer!.receivable, shop),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    onPressed: saving ? null : onPickCustomer,
+                                  ),
+                          ),
+                        ],
+                      ],
                     )
                   : const SizedBox.shrink(),
             ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<bool>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: false,
-                    label: Text(l.saleCash),
-                    icon: const Icon(Icons.payments),
-                  ),
-                  ButtonSegment(
-                    value: true,
-                    label: Text(l.saleDebt),
-                    icon: const Icon(Icons.person),
-                  ),
-                ],
-                selected: {debt},
-                onSelectionChanged: saving
-                    ? null
-                    : (set) => onModeChanged(set.first),
-              ),
-            ),
-            if (debt) ...[
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: customer == null
-                    ? OutlinedButton.icon(
-                        onPressed: saving ? null : onPickCustomer,
-                        icon: const Icon(Icons.person_search),
-                        label: Text(l.salePickCustomerButton),
-                      )
-                    : InputChip(
-                        avatar: const Icon(Icons.person),
-                        label: Text(
-                          l.saleCustomerChip(
-                            customer!.name,
-                            formatMoney(customer!.receivable, shop),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onPressed: saving ? null : onPickCustomer,
-                      ),
-              ),
-            ],
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
@@ -1716,10 +1752,9 @@ class _CartLineTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 11 * kFontScale,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.7),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
