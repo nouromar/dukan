@@ -1650,10 +1650,13 @@ class _CartLineTile extends StatelessWidget {
     // packaging == base unit was ambiguous for multi-pack items (bariis
     // sold as Kg looked identical to bariis sold as 25 Kg Bag). The
     // extra row is cheap; the unambiguity is the point.
+    // Arg order follows the generated (alphabetical) signature
+    // cartLineSubtotal(quantity, subtotal, unitPrice) — NOT the template's
+    // visual order — so pass subtotal before unitPrice.
     final subtitle = l.cartLineSubtotal(
       formatQty(line.quantity),
-      formatMoney(line.unitPrice, shop),
       formatMoney(line.subtotal, shop),
+      formatMoney(line.unitPrice, shop),
     );
     final name = displayName(line.displayName);
     return ListTile(

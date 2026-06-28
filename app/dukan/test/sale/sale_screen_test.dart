@@ -296,6 +296,40 @@ void main() {
     );
   });
 
+  testWidgets('cart line breakdown is qty × unit price = subtotal (right order)',
+      (tester) async {
+    api.onSearchItems = (_, _, _, _, _, _) async => [
+      fakeActivatedItem(
+        shopItemId: 'si-rice',
+        itemId: 'item-rice',
+        defaultShopItemUnitId: 'siu-rice',
+        displayName: 'Bariis',
+        defaultUnitSalePrice: 1.5,
+      ),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    // Tap the grid tile twice (same packaging increments) → qty 2, so unit
+    // price ($1.50) and subtotal ($3.00) differ and the order is testable.
+    // `.first` targets the grid tile (the cart line also shows "Bariis").
+    await tester.tap(find.text('Bariis').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bariis').first);
+    await tester.pumpAndSettle();
+
+    // Correct: "2 × $1.50 = $3.00" — unit price after ×, subtotal after =.
+    expect(
+      find.text(en.cartLineSubtotal('2', '\$3.00', '\$1.50')),
+      findsOneWidget,
+    );
+    // The previously-swapped rendering ("2 × $3.00 = $1.50") must not appear.
+    expect(
+      find.text(en.cartLineSubtotal('2', '\$1.50', '\$3.00')),
+      findsNothing,
+    );
+  });
+
   testWidgets('tapping ✕ on a cart line removes it and updates the summary', (
     tester,
   ) async {
