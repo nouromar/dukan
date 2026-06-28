@@ -3282,6 +3282,30 @@ abstract class AppLocalizations {
   /// **'Remove packaging'**
   String get removePackagingTooltip;
 
+  /// No description provided for @deactivateItemTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide product'**
+  String get deactivateItemTooltip;
+
+  /// No description provided for @deactivateItemConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this product?'**
+  String get deactivateItemConfirmTitle;
+
+  /// No description provided for @deactivateItemConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It will be removed from Sale, Receive, and Products. Past sales keep it. You can ask support to bring it back.'**
+  String get deactivateItemConfirmBody;
+
+  /// No description provided for @deactivateItemConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'HIDE'**
+  String get deactivateItemConfirmAction;
+
   /// No description provided for @removePackagingConfirmBody.
   ///
   /// In en, this message translates to:

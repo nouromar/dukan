@@ -1929,6 +1929,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removePackagingTooltip => 'Remove packaging';
 
   @override
+  String get deactivateItemTooltip => 'Hide product';
+
+  @override
+  String get deactivateItemConfirmTitle => 'Hide this product?';
+
+  @override
+  String get deactivateItemConfirmBody =>
+      'It will be removed from Sale, Receive, and Products. Past sales keep it. You can ask support to bring it back.';
+
+  @override
+  String get deactivateItemConfirmAction => 'HIDE';
+
+  @override
   String get removePackagingConfirmBody =>
       'Remove this packaging? You can add it back later.';
 

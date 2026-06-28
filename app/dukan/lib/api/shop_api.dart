@@ -1829,6 +1829,20 @@ class ShopApi {
     });
   }
 
+  /// Deactivate/restore a whole product (soft-delete). 0061. Naturally
+  /// idempotent (setting the same flag twice is a no-op) so no op-id.
+  Future<void> setShopItemActive({
+    required String shopId,
+    required String shopItemId,
+    required bool isActive,
+  }) async {
+    await _client.rpc('set_shop_item_active', params: {
+      'p_shop_id': shopId,
+      'p_shop_item_id': shopItemId,
+      'p_is_active': isActive,
+    });
+  }
+
   Future<String> createExpenseCategory({
     required String shopId,
     required String categoryId,

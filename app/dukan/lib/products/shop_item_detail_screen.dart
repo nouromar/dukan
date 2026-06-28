@@ -577,6 +577,46 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     );
   }
 
+  /// Deactivate the whole product (soft-delete). Confirm → optimistic local
+  /// hide → queued set_shop_item_active(false) → back to the list. The item
+  /// search filters is_active, so it disappears from Sale/Receive/Products.
+  Future<void> _onDeactivateItem() async {
+    final l = tr(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.deactivateItemConfirmTitle),
+        content: Text(l.deactivateItemConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l.deactivateItemConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final repo = context.read<LocalRepository>();
+    await _enqueueMutation(
+      rpc: 'set_shop_item_active',
+      prefix: 'deactivate_item',
+      params: buildSetShopItemActiveParams(
+        shopItemId: widget.shopItemId,
+        isActive: false,
+      ),
+      optimistic: () => repo.setLocalShopItemActive(
+        shopItemId: widget.shopItemId,
+        isActive: false,
+      ),
+      errorContext: 'deactivating item',
+    );
+    if (mounted) Navigator.of(context).pop();
+  }
+
   void _showSaved() {
     final l = tr(context);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -639,10 +679,22 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Deactivate is an owner/manager affordance (server-gated too) — hidden for
+    // cashiers, like every other edit on this screen. visibility_off (not
+    // delete) signals soft-hide and avoids colliding with packaging delete.
+    final canEdit = context.watch<AuthController>().capabilities.canEditProducts;
     return Scaffold(
       appBar: dukanAppBar(
         context,
         _liveDisplayName ?? widget.displayName ?? '',
+        actions: [
+          if (canEdit)
+            IconButton(
+              icon: const Icon(Icons.visibility_off_outlined),
+              tooltip: tr(context).deactivateItemTooltip,
+              onPressed: _onDeactivateItem,
+            ),
+        ],
       ),
       body: SafeArea(
         child: FutureBuilder<_ProductBootstrap>(

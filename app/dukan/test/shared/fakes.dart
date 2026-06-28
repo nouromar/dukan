@@ -1214,6 +1214,17 @@ class FakeShopApi implements ShopApi {
     await onSetPartyActive?.call(partyId, isActive);
   }
 
+  Future<void> Function(String shopItemId, bool isActive)? onSetShopItemActive;
+
+  @override
+  Future<void> setShopItemActive({
+    required String shopId,
+    required String shopItemId,
+    required bool isActive,
+  }) async {
+    await onSetShopItemActive?.call(shopItemId, isActive);
+  }
+
   @override
   Future<String> createExpenseCategory({
     required String shopId,

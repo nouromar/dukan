@@ -169,6 +169,7 @@ class PostExecutor {
       case 'set_primary_shop_item_barcode':
       case 'update_party':
       case 'set_party_active':
+      case 'set_shop_item_active':
       case 'create_shop_category':
       case 'rename_shop_category':
       case 'set_shop_category_active':
@@ -265,6 +266,12 @@ class PostExecutor {
           partyId: p['party_id'] as String,
           isActive: p['is_active'] as bool,
           clientOpId: clientOpId,
+        );
+      case 'set_shop_item_active':
+        await _api.setShopItemActive(
+          shopId: shopId,
+          shopItemId: p['shop_item_id'] as String,
+          isActive: p['is_active'] as bool,
         );
       case 'create_shop_category':
         await _api.createShopCategory(
@@ -528,6 +535,15 @@ Map<String, dynamic> buildSetPartyActiveParams({
 }) =>
     <String, dynamic>{
       'party_id': partyId,
+      'is_active': isActive,
+    };
+
+Map<String, dynamic> buildSetShopItemActiveParams({
+  required String shopItemId,
+  required bool isActive,
+}) =>
+    <String, dynamic>{
+      'shop_item_id': shopItemId,
       'is_active': isActive,
     };
 // ignore_for_file: use_null_aware_elements

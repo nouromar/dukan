@@ -1786,6 +1786,21 @@ class LocalRepository {
     );
   }
 
+  /// Optimistic: hide/restore a whole product in the mirror. searchItems
+  /// filters is_active, so this removes/restores it from the grid at once.
+  Future<void> setLocalShopItemActive({
+    required String shopItemId,
+    required bool isActive,
+  }) async {
+    final db = await _db;
+    await db.update(
+      'local_shop_item',
+      {'is_active': isActive ? 1 : 0},
+      where: 'shop_item_id = ?',
+      whereArgs: [shopItemId],
+    );
+  }
+
   // ---- #385: optimistic transaction write -----------------------------
 
   Future<void> writeOptimisticTransaction({

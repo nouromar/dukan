@@ -1944,6 +1944,19 @@ class AppLocalizationsSo extends AppLocalizations {
   String get removePackagingTooltip => 'Tirtir baakadda';
 
   @override
+  String get deactivateItemTooltip => 'Qari alaabta';
+
+  @override
+  String get deactivateItemConfirmTitle => 'Ma qarinaysaa alaabtan?';
+
+  @override
+  String get deactivateItemConfirmBody =>
+      'Waxaa laga saari doonaa Iibinta, Dajinta, iyo Alaabta. Iibkii hore way sii jiri doonaan. Waxaad weydiisan kartaa taageerada inay soo celiyaan.';
+
+  @override
+  String get deactivateItemConfirmAction => 'QARI';
+
+  @override
   String get removePackagingConfirmBody =>
       'Ma tirtirayaa baakaddan? Mar dambe wad ku celin kartaa.';
 

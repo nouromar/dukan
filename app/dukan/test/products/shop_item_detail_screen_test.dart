@@ -102,6 +102,31 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('Hide product deactivates it (queued set_shop_item_active)',
+      (tester) async {
+    api.onGetShopItem = (_, _, _) async => _detail();
+    String? hiddenId;
+    bool? hiddenActive;
+    api.onSetShopItemActive = (id, active) async {
+      hiddenId = id;
+      hiddenActive = active;
+    };
+
+    await pumpDetail(tester);
+
+    // The app-bar Hide action (owner caps by default in setUp).
+    await tester.tap(find.byIcon(Icons.visibility_off_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text(en.deactivateItemConfirmTitle), findsOneWidget);
+
+    await tester.tap(find.text(en.deactivateItemConfirmAction));
+    await tester.pumpAndSettle();
+
+    // The queued post drained to set_shop_item_active(si-1, isActive=false).
+    expect(hiddenId, 'si-1');
+    expect(hiddenActive, false);
+  });
+
   testWidgets(
     'renders header (current stock + base unit) and packaging rows with default badges',
     (tester) async {
