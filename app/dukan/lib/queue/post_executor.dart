@@ -78,6 +78,7 @@ class PostExecutor {
       partyId: p['party_id'] as String?,
       paymentMethodCode: p['payment_method_code'] as String?,
       clientOpId: post.clientOpId,
+      occurredAt: _occurredAt(p),
     );
   }
 
@@ -101,6 +102,7 @@ class PostExecutor {
       documentId: p['document_id'] as String?,
       clientOpId: post.clientOpId,
       notes: p['notes'] as String?,
+      occurredAt: _occurredAt(p),
     );
   }
 
@@ -126,6 +128,7 @@ class PostExecutor {
       clientOpId: post.clientOpId,
       notes: p['notes'] as String?,
       allocations: allocations,
+      occurredAt: _occurredAt(p),
     );
   }
 
@@ -138,7 +141,14 @@ class PostExecutor {
       paymentMethodCode: p['payment_method_code'] as String,
       clientOpId: post.clientOpId,
       notes: p['notes'] as String?,
+      occurredAt: _occurredAt(p),
     );
+  }
+
+  /// Parse the optional backdated timestamp (#5) from queued params.
+  static DateTime? _occurredAt(Map<String, dynamic> p) {
+    final raw = p['occurred_at'] as String?;
+    return raw == null ? null : DateTime.parse(raw);
   }
 
   Future<String> _executeInventoryAdjustment(PendingPost post) async {
@@ -331,6 +341,7 @@ Map<String, dynamic> buildPostSaleParams({
   required num paidAmount,
   String? partyId,
   String? paymentMethodCode,
+  DateTime? occurredAt,
 }) =>
     <String, dynamic>{
       'lines': lines
@@ -343,6 +354,7 @@ Map<String, dynamic> buildPostSaleParams({
       'paid_amount': paidAmount,
       if (partyId != null) 'party_id': partyId,
       if (paymentMethodCode != null) 'payment_method_code': paymentMethodCode,
+      if (occurredAt != null) 'occurred_at': occurredAt.toUtc().toIso8601String(),
     };
 
 Map<String, dynamic> buildPostReceiveParams({
@@ -352,6 +364,7 @@ Map<String, dynamic> buildPostReceiveParams({
   String? paymentMethodCode,
   String? documentId,
   String? notes,
+  DateTime? occurredAt,
 }) =>
     <String, dynamic>{
       'party_id': partyId,
@@ -366,6 +379,7 @@ Map<String, dynamic> buildPostReceiveParams({
       if (paymentMethodCode != null) 'payment_method_code': paymentMethodCode,
       if (documentId != null) 'document_id': documentId,
       if (notes != null) 'notes': notes,
+      if (occurredAt != null) 'occurred_at': occurredAt.toUtc().toIso8601String(),
     };
 
 Map<String, dynamic> buildPostPaymentParams({
@@ -375,6 +389,7 @@ Map<String, dynamic> buildPostPaymentParams({
   required String paymentMethodCode,
   String? notes,
   List<PaymentAllocationInput>? allocations,
+  DateTime? occurredAt,
 }) =>
     <String, dynamic>{
       'party_id': partyId,
@@ -382,6 +397,7 @@ Map<String, dynamic> buildPostPaymentParams({
       'amount': amount,
       'payment_method_code': paymentMethodCode,
       if (notes != null) 'notes': notes,
+      if (occurredAt != null) 'occurred_at': occurredAt.toUtc().toIso8601String(),
       if (allocations != null && allocations.isNotEmpty)
         'allocations': allocations
             .map((a) => {
@@ -396,12 +412,14 @@ Map<String, dynamic> buildPostExpenseParams({
   required num amount,
   required String paymentMethodCode,
   String? notes,
+  DateTime? occurredAt,
 }) =>
     <String, dynamic>{
       'expense_category_id': expenseCategoryId,
       'amount': amount,
       'payment_method_code': paymentMethodCode,
       if (notes != null) 'notes': notes,
+      if (occurredAt != null) 'occurred_at': occurredAt.toUtc().toIso8601String(),
     };
 
 Map<String, dynamic> buildPostInventoryAdjustmentParams({

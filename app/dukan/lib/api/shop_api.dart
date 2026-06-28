@@ -860,6 +860,7 @@ class ShopApi {
     String? paymentMethodCode,
     required String clientOpId,
     String? notes,
+    DateTime? occurredAt,
   }) async {
     if (lines.isEmpty) {
       throw ArgumentError('post_sale requires at least one line');
@@ -874,6 +875,9 @@ class ShopApi {
         'p_payment_method_code': paymentMethodCode,
         'p_client_op_id': clientOpId,
         'p_notes': notes,
+        // Backdating (#5): omit → backend stamps now().
+        if (occurredAt != null)
+          'p_occurred_at': occurredAt.toUtc().toIso8601String(),
       },
     );
     return result as String;
@@ -1035,6 +1039,7 @@ class ShopApi {
     required String paymentMethodCode,
     required String clientOpId,
     String? notes,
+    DateTime? occurredAt,
   }) async {
     final result = await _client.rpc(
       'post_expense',
@@ -1045,6 +1050,8 @@ class ShopApi {
         'p_payment_method_code': paymentMethodCode,
         'p_client_op_id': clientOpId,
         'p_notes': notes,
+        if (occurredAt != null)
+          'p_occurred_at': occurredAt.toUtc().toIso8601String(),
       },
     );
     return result as String;
@@ -1329,6 +1336,7 @@ class ShopApi {
     required String clientOpId,
     String? notes,
     List<PaymentAllocationInput>? allocations,
+    DateTime? occurredAt,
   }) async {
     final result = await _client.rpc(
       'post_payment',
@@ -1340,6 +1348,8 @@ class ShopApi {
         'p_payment_method_code': paymentMethodCode,
         'p_client_op_id': clientOpId,
         'p_notes': notes,
+        if (occurredAt != null)
+          'p_occurred_at': occurredAt.toUtc().toIso8601String(),
         if (allocations != null && allocations.isNotEmpty)
           'p_allocations': allocations
               .map((a) => {
@@ -1411,6 +1421,7 @@ class ShopApi {
     String? documentId,
     required String clientOpId,
     String? notes,
+    DateTime? occurredAt,
   }) async {
     if (lines.isEmpty) {
       throw ArgumentError('post_receive requires at least one line');
@@ -1426,6 +1437,8 @@ class ShopApi {
         'p_document_id': documentId,
         'p_client_op_id': clientOpId,
         'p_notes': notes,
+        if (occurredAt != null)
+          'p_occurred_at': occurredAt.toUtc().toIso8601String(),
       },
     );
     return result as String;

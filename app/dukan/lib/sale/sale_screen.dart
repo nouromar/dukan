@@ -36,6 +36,7 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/quantity_format.dart';
+import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/typography.dart';
 import 'package:dukan/shared/stock_format.dart';
 
@@ -66,7 +67,11 @@ class _SaleScreenState extends State<SaleScreen> {
     // Auto-expand the drawer when reopening the Sale screen with a
     // non-empty cart: the cashier needs to see at a glance whether the
     // existing items are theirs to continue or a stale cart to clear.
-    _cartExpanded = context.read<CartController>().isNotEmpty;
+    final cart = context.read<CartController>();
+    _cartExpanded = cart.isNotEmpty;
+    // Backdating (#5) is sticky within a screen session but resets to today on
+    // each fresh entry — non-notifying since we're in initState (build phase).
+    cart.initWorkingDate();
     // Detect Bluetooth-HID scanners typing burst-style. isActive gates
     // dispatch to the route currently visible — handles the case where
     // Sale is pushed under another screen.
@@ -660,7 +665,8 @@ class _SaleScreenState extends State<SaleScreen> {
           clientOpId: clientOpId,
           shopId: widget.shop.id,
           typeCode: 'sale',
-          occurredAtMs: DateTime.now().millisecondsSinceEpoch,
+          occurredAtMs: (snapshot.occurredAt ?? DateTime.now())
+              .millisecondsSinceEpoch,
           total: total,
           partyId: partyId,
           payload: <String, dynamic>{
@@ -779,6 +785,7 @@ class _SaleScreenState extends State<SaleScreen> {
         partyId: partyId,
         paymentMethodCode: cashSale ? 'cash' : null,
         clientOpId: clientOpId,
+        occurredAt: snapshot.occurredAt,
       );
     } catch (error, stackTrace) {
       FlutterError.reportError(FlutterErrorDetails(
@@ -876,6 +883,7 @@ class _SaleScreenState extends State<SaleScreen> {
         partyId: partyId,
         paymentMethodCode: cashSale ? 'cash' : null,
         clientOpId: clientOpId,
+        occurredAt: snapshot.occurredAt,
       );
     } on PostgrestException catch (error, stackTrace) {
       // 4xx-style server reject — won't succeed on retry. Revert the optimistic
@@ -940,6 +948,7 @@ class _SaleScreenState extends State<SaleScreen> {
           paidAmount: cashSale ? total : 0,
           partyId: partyId,
           paymentMethodCode: cashSale ? 'cash' : null,
+          occurredAt: snapshot.occurredAt,
         ),
         queuedAt: DateTime.now(),
       );
@@ -1058,6 +1067,10 @@ class _SaleScreenState extends State<SaleScreen> {
         context,
         l.saleTitle,
         actions: [
+          WorkingDateChip(
+            workingDate: cart.workingDate,
+            onChanged: cart.setWorkingDate,
+          ),
           const QueueStatusPill(),
           IconButton(
             tooltip: l.saleHistoryTooltip,
@@ -1077,6 +1090,11 @@ class _SaleScreenState extends State<SaleScreen> {
           children: [
             Column(
               children: [
+                if (cart.isBackdated)
+                  BackdateBanner(
+                    date: cart.workingDate!,
+                    onClear: () => cart.setWorkingDate(null),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
                   child: TextField(

@@ -302,6 +302,30 @@ abstract class AppLocalizations {
   /// **'Contact hidden'**
   String get partyHiddenToast;
 
+  /// No description provided for @backdateChipToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get backdateChipToday;
+
+  /// No description provided for @backdateChipTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Change date'**
+  String get backdateChipTooltip;
+
+  /// No description provided for @backdateBannerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording for {date}'**
+  String backdateBannerLabel(String date);
+
+  /// No description provided for @backdateBackToToday.
+  ///
+  /// In en, this message translates to:
+  /// **'TODAY'**
+  String get backdateBackToToday;
+
   /// No description provided for @partyDetailLoadFailedMessage.
   ///
   /// In en, this message translates to:

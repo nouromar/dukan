@@ -112,6 +112,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partyHiddenToast => 'Contact hidden';
 
   @override
+  String get backdateChipToday => 'Today';
+
+  @override
+  String get backdateChipTooltip => 'Change date';
+
+  @override
+  String backdateBannerLabel(String date) {
+    return 'Recording for $date';
+  }
+
+  @override
+  String get backdateBackToToday => 'TODAY';
+
+  @override
   String get partyDetailLoadFailedMessage => 'Could not load this party.';
 
   @override

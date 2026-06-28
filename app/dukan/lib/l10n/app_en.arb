@@ -34,6 +34,13 @@
   "partyHideConfirmBody": "They'll be removed from your lists. Any balance and history stay. You can ask support to bring them back.",
   "partyHideConfirmYes": "HIDE",
   "partyHiddenToast": "Contact hidden",
+  "backdateChipToday": "Today",
+  "backdateChipTooltip": "Change date",
+  "backdateBannerLabel": "Recording for {date}",
+  "@backdateBannerLabel": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "backdateBackToToday": "TODAY",
   "partyDetailLoadFailedMessage": "Could not load this party.",
   "partyDetailReceivableLabel": "They owe you",
   "partyDetailPayableLabel": "You owe them",

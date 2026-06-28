@@ -49,6 +49,7 @@ import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
+import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
@@ -109,7 +110,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   @override
   void initState() {
     super.initState();
-    _linesExpanded = context.read<ReceiveController>().isNotEmpty;
+    final receiveCtrl = context.read<ReceiveController>();
+    _linesExpanded = receiveCtrl.isNotEmpty;
+    // Backdating (#5): reset to today on fresh entry (sticky within a session).
+    receiveCtrl.initWorkingDate();
     final scanner = ScannerSettings.current;
     _hidListener = HidScanListener(
       onScan: _onHidScan,
@@ -618,6 +622,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final api = context.read<ShopApi>();
     final snapshot = controller.snapshot();
     final clientOpId = generateClientOpId('receive');
+    // Backdating (#5): captured once so the background post + optimistic write
+    // agree. null = today.
+    final occurredAt = controller.workingDate;
     final lines = <ReceiveLinePayload>[
       for (final line in snapshot.lines.values)
         ReceiveLinePayload(
@@ -650,6 +657,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         snapshot: snapshot,
         lines: lines,
         clientOpId: clientOpId,
+        occurredAt: occurredAt,
       );
       return;
     }
@@ -681,7 +689,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         clientOpId: clientOpId,
         shopId: widget.shop.id,
         typeCode: 'receive',
-        occurredAtMs: DateTime.now().millisecondsSinceEpoch,
+        occurredAtMs: (occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
         total: total,
         partyId: supplier.id,
         payload: <String, dynamic>{
@@ -764,6 +772,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         paymentMethodCode: null,
         documentId: _bonoDocumentId,
         clientOpId: clientOpId,
+        occurredAt: occurredAt,
       );
 
       if (mounted) {
@@ -820,6 +829,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           lines: lines,
           paidAmount: 0,
           documentId: _bonoDocumentId,
+          occurredAt: occurredAt,
         ),
         queuedAt: DateTime.now(),
       );
@@ -863,6 +873,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     required ReceiveSnapshot snapshot,
     required List<ReceiveLinePayload> lines,
     required String clientOpId,
+    required DateTime? occurredAt,
   }) async {
     try {
       await api.postReceive(
@@ -873,6 +884,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         paymentMethodCode: null,
         documentId: _bonoDocumentId,
         clientOpId: clientOpId,
+        occurredAt: occurredAt,
       );
       if (!mounted) return;
       controller.clearAll();
@@ -914,6 +926,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         context,
         supplier == null ? l.receiveTitle : l.receiveFrom(supplier.name),
         actions: [
+          WorkingDateChip(
+            workingDate: controller.workingDate,
+            onChanged: controller.setWorkingDate,
+          ),
           IconButton(
             tooltip: _bonoDocumentId == null
                 ? l.bonoAttachTooltip
@@ -955,6 +971,11 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            if (controller.isBackdated)
+              BackdateBanner(
+                date: controller.workingDate!,
+                onClear: () => controller.setWorkingDate(null),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
               child: TextField(

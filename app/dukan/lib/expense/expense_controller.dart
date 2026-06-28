@@ -5,8 +5,9 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/shared/working_date.dart';
 
-class ExpenseController extends ChangeNotifier {
+class ExpenseController extends ChangeNotifier with WorkingDateMixin {
   ExpenseCategoryOption? _category;
   num _amount = 0;
 

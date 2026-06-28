@@ -399,6 +399,10 @@ class FakeAuthController extends ChangeNotifier implements AuthController {
 class FakeShopApi implements ShopApi {
   FakeShopApi();
 
+  /// Backdating (#5): the occurredAt of the most recent post* call (null =
+  /// today). Lets widget tests assert a backdated date flowed to the post.
+  DateTime? lastOccurredAt;
+
   Future<List<TemplateOption>> Function()? onListAvailableTemplates;
   Future<void> Function(String shopId, String templateId)? onApplyTemplate;
   Future<void> Function(String shopId)? onCompleteSetup;
@@ -1051,7 +1055,9 @@ class FakeShopApi implements ShopApi {
     String? paymentMethodCode,
     required String clientOpId,
     String? notes,
+    DateTime? occurredAt,
   }) async {
+    lastOccurredAt = occurredAt;
     if (onPostSale != null) {
       return onPostSale!(
         shopId,
@@ -1289,7 +1295,9 @@ class FakeShopApi implements ShopApi {
     required String paymentMethodCode,
     required String clientOpId,
     String? notes,
+    DateTime? occurredAt,
   }) async {
+    lastOccurredAt = occurredAt;
     if (onPostExpense != null) {
       return onPostExpense!(
         shopId,
@@ -1452,7 +1460,9 @@ class FakeShopApi implements ShopApi {
     required String clientOpId,
     String? notes,
     List<PaymentAllocationInput>? allocations,
+    DateTime? occurredAt,
   }) async {
+    lastOccurredAt = occurredAt;
     if (onPostPayment != null) {
       return onPostPayment!(
         shopId,
@@ -1501,7 +1511,9 @@ class FakeShopApi implements ShopApi {
     String? documentId,
     required String clientOpId,
     String? notes,
+    DateTime? occurredAt,
   }) async {
+    lastOccurredAt = occurredAt;
     if (onPostReceive != null) {
       return onPostReceive!(
         shopId,

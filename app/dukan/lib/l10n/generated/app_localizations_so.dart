@@ -114,6 +114,20 @@ class AppLocalizationsSo extends AppLocalizations {
   String get partyHiddenToast => 'Qofka waa la qariyay';
 
   @override
+  String get backdateChipToday => 'Maanta';
+
+  @override
+  String get backdateChipTooltip => 'Beddel taariikhda';
+
+  @override
+  String backdateBannerLabel(String date) {
+    return 'Waxaad u diiwaangelinaysaa $date';
+  }
+
+  @override
+  String get backdateBackToToday => 'MAANTA';
+
+  @override
   String get partyDetailLoadFailedMessage => 'Qofkan lama soo dejin karin.';
 
   @override

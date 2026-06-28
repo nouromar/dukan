@@ -15,6 +15,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/shared/working_date.dart';
 
 class ReceiveLine {
   ReceiveLine({
@@ -64,7 +65,7 @@ class ReceiveSnapshot {
   final PartySearchResult? supplier;
 }
 
-class ReceiveController extends ChangeNotifier {
+class ReceiveController extends ChangeNotifier with WorkingDateMixin {
   final Map<String, ReceiveLine> _lines = {};
   PartySearchResult? _supplier;
 

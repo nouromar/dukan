@@ -21,6 +21,7 @@ import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/shared/client_op_id.dart';
+import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -46,7 +47,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   @override
   void initState() {
     super.initState();
-    final amount = context.read<ExpenseController>().amount;
+    final controller = context.read<ExpenseController>();
+    // Backdating (#5): reset to today on fresh entry (sticky within a session).
+    controller.initWorkingDate();
+    final amount = controller.amount;
     if (amount > 0) {
       _amountController.text = _formatField(amount);
     }
@@ -119,6 +123,9 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     final clientOpId = generateClientOpId('expense');
     final rawNotes = _notesController.text.trim();
     final notes = rawNotes.isEmpty ? null : rawNotes;
+    // Backdating (#5): captured once so the background post + optimistic write
+    // agree even if the date changes for the next entry. null = today.
+    final occurredAt = controller.workingDate;
 
     // #383: when useLocalDb=false, post directly to the server and
     // surface success/failure inline — no queue, no optimistic
@@ -131,6 +138,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         amount: amount,
         clientOpId: clientOpId,
         notes: notes,
+        occurredAt: occurredAt,
         failureMessage: l.expensePostFailedMessage,
         savedToast: l.expenseSavedToast,
       );
@@ -153,7 +161,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
             clientOpId: clientOpId,
             shopId: widget.shop.id,
             typeCode: 'expense',
-            occurredAtMs: DateTime.now().millisecondsSinceEpoch,
+            occurredAtMs: (occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
             total: amount,
             payload: <String, dynamic>{
               'payment_method_code': 'cash',
@@ -193,6 +201,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         amount: amount,
         clientOpId: clientOpId,
         notes: notes,
+        occurredAt: occurredAt,
         messenger: messenger,
         failureMessage: l.expensePostFailedMessage,
       ),
@@ -210,6 +219,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     required num amount,
     required String clientOpId,
     required String? notes,
+    required DateTime? occurredAt,
     required String failureMessage,
     required String savedToast,
   }) async {
@@ -221,6 +231,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         paymentMethodCode: 'cash',
         clientOpId: clientOpId,
         notes: notes,
+        occurredAt: occurredAt,
       );
       if (!mounted) return;
       controller.clearAll();
@@ -251,6 +262,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     required num amount,
     required String clientOpId,
     required String? notes,
+    required DateTime? occurredAt,
     required ScaffoldMessengerState messenger,
     required String failureMessage,
   }) async {
@@ -262,6 +274,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         paymentMethodCode: 'cash',
         clientOpId: clientOpId,
         notes: notes,
+        occurredAt: occurredAt,
       );
     } on PostgrestException catch (error, stackTrace) {
       // Server-side reject — retry won't help. Toast.
@@ -293,6 +306,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           amount: amount,
           paymentMethodCode: 'cash',
           notes: notes,
+          occurredAt: occurredAt,
         ),
         queuedAt: DateTime.now(),
       );
@@ -307,7 +321,16 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     final theme = Theme.of(context);
     final canSave = controller.category != null && controller.amount > 0;
     return Scaffold(
-      appBar: dukanAppBar(context, l.expenseTitle),
+      appBar: dukanAppBar(
+        context,
+        l.expenseTitle,
+        actions: [
+          WorkingDateChip(
+            workingDate: controller.workingDate,
+            onChanged: controller.setWorkingDate,
+          ),
+        ],
+      ),
       // #379: SAVE moved to `bottomNavigationBar` so it floats
       // above the soft keyboard. Body is unchanged otherwise —
       // Expanded categories area shrinks naturally when the
@@ -319,6 +342,11 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (controller.isBackdated)
+                BackdateBanner(
+                  date: controller.workingDate!,
+                  onClear: () => controller.setWorkingDate(null),
+                ),
               Text(l.expenseCategoryLabel, style: theme.textTheme.titleMedium),
               const SizedBox(height: 12),
               Expanded(

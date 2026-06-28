@@ -20,6 +20,7 @@ import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/shared/client_op_id.dart';
+import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -57,6 +58,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // initState; it clears stale party/amount only when the direction changes,
     // so read the amount AFTER.
     controller.initType(widget.initialType);
+    // Backdating (#5): reset to today on fresh entry (sticky within a session).
+    controller.initWorkingDate();
     final amount = controller.amount;
     if (amount > 0) {
       _amountController.text = _formatField(amount);
@@ -151,6 +154,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final failureMessage = l.paymentPostFailedMessage;
     final rawNotes = _notesController.text.trim();
     final notes = rawNotes.isEmpty ? null : rawNotes;
+    // Backdating (#5): captured once so the background post + optimistic write
+    // agree. null = today.
+    final occurredAt = controller.workingDate;
 
     // #383: useLocalDb=false → direct-post path; no queue, no
     // optimistic clear. Failure surfaces an inline toast so the
@@ -165,6 +171,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         clientOpId: clientOpId,
         allocations: allocations,
         notes: notes,
+        occurredAt: occurredAt,
         failureMessage: failureMessage,
         savedToast: l.paymentSavedToast,
       );
@@ -190,7 +197,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             clientOpId: clientOpId,
             shopId: widget.shop.id,
             typeCode: 'payment',
-            occurredAtMs: DateTime.now().millisecondsSinceEpoch,
+            occurredAtMs: (occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
             total: amount,
             partyId: partyId,
             payload: <String, dynamic>{
@@ -253,6 +260,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         clientOpId: clientOpId,
         allocations: allocations,
         notes: notes,
+        occurredAt: occurredAt,
         messenger: messenger,
         failureMessage: failureMessage,
       ),
@@ -271,6 +279,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     required String clientOpId,
     required List<PaymentAllocationInput>? allocations,
     required String? notes,
+    required DateTime? occurredAt,
     required String failureMessage,
     required String savedToast,
   }) async {
@@ -284,6 +293,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         clientOpId: clientOpId,
         allocations: allocations,
         notes: notes,
+        occurredAt: occurredAt,
       );
       if (!mounted) return;
       controller.clearAll();
@@ -316,6 +326,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     required String clientOpId,
     required List<PaymentAllocationInput>? allocations,
     required String? notes,
+    required DateTime? occurredAt,
     required ScaffoldMessengerState messenger,
     required String failureMessage,
   }) async {
@@ -329,6 +340,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         clientOpId: clientOpId,
         allocations: allocations,
         notes: notes,
+        occurredAt: occurredAt,
       );
     } on PostgrestException catch (error, stackTrace) {
       // Server-side reject — retry won't help. Surface a toast; the
@@ -364,6 +376,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           amount: amount,
           paymentMethodCode: 'cash',
           notes: notes,
+          occurredAt: occurredAt,
           allocations: allocations,
         ),
         queuedAt: DateTime.now(),
@@ -397,7 +410,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
         controller.amount <= controller.outstandingBalance;
 
     return Scaffold(
-      appBar: dukanAppBar(context, l.paymentTitle),
+      appBar: dukanAppBar(
+        context,
+        l.paymentTitle,
+        actions: [
+          WorkingDateChip(
+            workingDate: controller.workingDate,
+            onChanged: controller.setWorkingDate,
+          ),
+        ],
+      ),
       // #379: SAVE lives in `bottomNavigationBar` so it floats
       // above the soft keyboard. Form content is scrollable so
       // the cashier can reach the invoice-allocation chip and
@@ -410,6 +432,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (controller.isBackdated)
+                BackdateBanner(
+                  date: controller.workingDate!,
+                  onClear: () => controller.setWorkingDate(null),
+                ),
               SegmentedButton<PaymentType>(
                 showSelectedIcon: false,
                 segments: [

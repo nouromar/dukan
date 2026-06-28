@@ -15,6 +15,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:dukan/api/types.dart';
+import 'package:dukan/shared/working_date.dart';
 
 class CartLine {
   CartLine({
@@ -70,15 +71,19 @@ class CartSnapshot {
     required this.lines,
     required this.debt,
     required this.customer,
+    this.occurredAt,
   });
 
   /// Keyed by `shopItemUnitId`.
   final Map<String, CartLine> lines;
   final bool debt;
   final PartySearchResult? customer;
+
+  /// Backdated transaction date (#5); null = today (post stamps now()).
+  final DateTime? occurredAt;
 }
 
-class CartController extends ChangeNotifier {
+class CartController extends ChangeNotifier with WorkingDateMixin {
   final Map<String, CartLine> _lines = {};
   bool _debt = false;
   PartySearchResult? _customer;
@@ -259,6 +264,7 @@ class CartController extends ChangeNotifier {
       },
       debt: _debt,
       customer: _customer,
+      occurredAt: workingDate,
     );
   }
 

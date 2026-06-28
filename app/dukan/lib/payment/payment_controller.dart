@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/shared/working_date.dart';
 
 enum PaymentType { customer, supplier }
 
@@ -20,7 +21,7 @@ extension PaymentTypeX on PaymentType {
   String get direction => this == PaymentType.customer ? 'I' : 'O';
 }
 
-class PaymentController extends ChangeNotifier {
+class PaymentController extends ChangeNotifier with WorkingDateMixin {
   PaymentType _type = PaymentType.customer;
   PartySearchResult? _party;
   num _amount = 0;
