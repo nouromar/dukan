@@ -36,6 +36,7 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/quantity_format.dart';
+import 'package:dukan/shared/dismiss_keyboard.dart';
 import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/typography.dart';
 import 'package:dukan/shared/stock_format.dart';
@@ -1113,6 +1114,7 @@ class _SaleScreenState extends State<SaleScreen> {
                   child: TextField(
                     controller: _searchController,
                     focusNode: _searchFocus,
+                    onTapOutside: dismissKeyboardOnTapOutside,
                     onChanged: _onSearchChanged,
                     textInputAction: TextInputAction.search,
                     // Somali item names (caano, hilib, bariis, …) get

@@ -164,6 +164,22 @@ void main() {
     },
   );
 
+  testWidgets('SAVE is in the body, not a bottomNavigationBar (keyboard-safe)',
+      (tester) async {
+    await pumpPayment(tester);
+    await tester.pumpAndSettle();
+    // iOS hides a bottomNavigationBar under the keyboard; SAVE now lives in the
+    // resizable body so it floats above the keyboard.
+    expect(
+      tester.widget<Scaffold>(find.byType(Scaffold)).bottomNavigationBar,
+      isNull,
+    );
+    expect(
+      find.widgetWithText(FilledButton, en.paymentSaveButton),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('SAVE disabled until party + positive amount are set', (
     tester,
   ) async {

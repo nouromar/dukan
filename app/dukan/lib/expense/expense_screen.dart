@@ -21,6 +21,7 @@ import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/shared/client_op_id.dart';
+import 'package:dukan/shared/dismiss_keyboard.dart';
 import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -158,26 +159,28 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     // History reflects this expense instantly.
     try {
       await context.read<LocalRepository>().writeOptimisticTransaction(
-            clientOpId: clientOpId,
-            shopId: widget.shop.id,
-            typeCode: 'expense',
-            occurredAtMs: (occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
-            total: amount,
-            payload: <String, dynamic>{
-              'payment_method_code': 'cash',
-              'category_id': categoryId,
-              'category_name': category.name,
-              'notes': notes,
-              'lines_summary': const <Map<String, dynamic>>[],
-            },
-          );
+        clientOpId: clientOpId,
+        shopId: widget.shop.id,
+        typeCode: 'expense',
+        occurredAtMs: (occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
+        total: amount,
+        payload: <String, dynamic>{
+          'payment_method_code': 'cash',
+          'category_id': categoryId,
+          'category_name': category.name,
+          'notes': notes,
+          'lines_summary': const <Map<String, dynamic>>[],
+        },
+      );
     } catch (e, st) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: e,
-        stack: st,
-        library: 'dukan expense',
-        context: ErrorDescription('write optimistic expense transaction'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan expense',
+          context: ErrorDescription('write optimistic expense transaction'),
+        ),
+      );
     }
 
     if (!mounted) return;
@@ -237,17 +240,19 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       controller.clearAll();
       _amountController.clear();
       _notesController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(savedToast)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(savedToast)));
       Navigator.of(context).maybePop();
     } catch (error, stackTrace) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan expense',
-        context: ErrorDescription('post_expense (useLocalDb=false)'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan expense',
+          context: ErrorDescription('post_expense (useLocalDb=false)'),
+        ),
+      );
       if (!mounted) return;
       showError(context, '$failureMessage\n$error');
     }
@@ -289,12 +294,14 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     } catch (error, stackTrace) {
       // Transient — enqueue. Queue badge signals pending work; no
       // toast since the screen popped already.
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan expense',
-        context: ErrorDescription('post_expense (queuing for retry)'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan expense',
+          context: ErrorDescription('post_expense (queuing for retry)'),
+        ),
+      );
       final post = PendingPost(
         id: generateClientOpId('expense'),
         clientOpId: clientOpId,
@@ -336,7 +343,6 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       // Expanded categories area shrinks naturally when the
       // keyboard takes screen space.
       body: SafeArea(
-        bottom: false,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -366,7 +372,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                           padding: const EdgeInsets.all(16),
                           child: Text(
                             '${l.expenseLoadFailedMessage}\n'
-                                '${snapshot.error}',
+                            '${snapshot.error}',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodyLarge,
                           ),
@@ -408,6 +414,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: _amountController,
+                onTapOutside: dismissKeyboardOnTapOutside,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
@@ -424,27 +431,25 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: _notesController,
+                onTapOutside: dismissKeyboardOnTapOutside,
                 textInputAction: TextInputAction.done,
                 maxLines: 2,
                 minLines: 1,
-                decoration: InputDecoration(
-                  labelText: l.expenseNotesLabel,
+                decoration: InputDecoration(labelText: l.expenseNotesLabel),
+              ),
+              // SAVE lives in the body (not bottomNavigationBar): the body
+              // resizes above the keyboard, so SAVE stays reachable — the
+              // bottom nav bar does not lift above the keyboard on iOS.
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton(
+                  onPressed: canSave ? _save : null,
+                  child: Text(l.expenseSaveButton),
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: FilledButton(
-              onPressed: canSave ? _save : null,
-              child: Text(l.expenseSaveButton),
-            ),
           ),
         ),
       ),

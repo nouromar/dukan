@@ -49,6 +49,7 @@ import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
+import 'package:dukan/shared/dismiss_keyboard.dart';
 import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/display_name.dart';
@@ -993,6 +994,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
               child: TextField(
                 controller: _searchController,
                 focusNode: _searchFocus,
+                onTapOutside: dismissKeyboardOnTapOutside,
                 onChanged: _onSearchChanged,
                 textInputAction: TextInputAction.search,
                 // Mirror the Sale search field — Somali item names
@@ -1532,6 +1534,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                   width: 110,
                   child: TextField(
                     controller: _qtyController,
+                    onTapOutside: dismissKeyboardOnTapOutside,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -1602,6 +1605,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
             // having to fill an extra field.
             TextField(
               controller: _totalController,
+              onTapOutside: dismissKeyboardOnTapOutside,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),

@@ -54,6 +54,47 @@ void main() {
     expect(find.text('Salary'), findsOneWidget);
   });
 
+  testWidgets('SAVE is in the body, not a bottomNavigationBar (keyboard-safe)',
+      (tester) async {
+    api.onListExpenseCategories = (_, _) async => const [
+      ExpenseCategoryOption(id: 'c1', code: 'rent', name: 'Rent'),
+    ];
+    await pumpExpense(tester);
+    await tester.pumpAndSettle();
+
+    // The bottom nav bar (which iOS hides under the keyboard) is gone; SAVE
+    // lives in the resizable body so it floats above the keyboard.
+    expect(
+      tester.widget<Scaffold>(find.byType(Scaffold)).bottomNavigationBar,
+      isNull,
+    );
+    expect(
+      find.widgetWithText(FilledButton, en.expenseSaveButton),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('tapping outside the amount field closes the keyboard',
+      (tester) async {
+    api.onListExpenseCategories = (_, _) async => const [
+      ExpenseCategoryOption(id: 'c1', code: 'rent', name: 'Rent'),
+    ];
+    await pumpExpense(tester);
+    await tester.pumpAndSettle();
+
+    // Focus the amount field.
+    await tester.tap(find.byType(TextField).first);
+    await tester.pump();
+    final node =
+        tester.widget<EditableText>(find.byType(EditableText).first).focusNode;
+    expect(node.hasFocus, isTrue);
+
+    // Tap a category (anywhere outside the field) → onTapOutside → unfocus.
+    await tester.tap(find.text('Rent'));
+    await tester.pumpAndSettle();
+    expect(node.hasFocus, isFalse);
+  });
+
   testWidgets('SAVE disabled until category + positive amount are set', (
     tester,
   ) async {

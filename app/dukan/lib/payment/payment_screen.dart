@@ -20,6 +20,7 @@ import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/shared/client_op_id.dart';
+import 'package:dukan/shared/dismiss_keyboard.dart';
 import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -194,28 +195,30 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // History reflects this payment instantly.
     try {
       await repo.writeOptimisticTransaction(
-            clientOpId: clientOpId,
-            shopId: widget.shop.id,
-            typeCode: 'payment',
-            occurredAtMs: (occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
-            total: amount,
-            partyId: partyId,
-            payload: <String, dynamic>{
-              'party_name': party.name,
-              'payment_method_code': 'cash',
-              'direction': direction,
-              'notes': notes,
-              'is_refund': false,
-              'lines_summary': const <Map<String, dynamic>>[],
-            },
-          );
+        clientOpId: clientOpId,
+        shopId: widget.shop.id,
+        typeCode: 'payment',
+        occurredAtMs: (occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
+        total: amount,
+        partyId: partyId,
+        payload: <String, dynamic>{
+          'party_name': party.name,
+          'payment_method_code': 'cash',
+          'direction': direction,
+          'notes': notes,
+          'is_refund': false,
+          'lines_summary': const <Map<String, dynamic>>[],
+        },
+      );
     } catch (e, st) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: e,
-        stack: st,
-        library: 'dukan payment',
-        context: ErrorDescription('write optimistic payment transaction'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan payment',
+          context: ErrorDescription('write optimistic payment transaction'),
+        ),
+      );
     }
 
     // Optimistically decrement the mirrored party balance so the
@@ -224,17 +227,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // re-fetches from the server). Sync reconciles to truth.
     try {
       await repo.applyOptimisticPartyPayment(
-            partyId: partyId,
-            direction: direction,
-            amount: amount,
-          );
+        partyId: partyId,
+        direction: direction,
+        amount: amount,
+      );
     } catch (e, st) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: e,
-        stack: st,
-        library: 'dukan payment',
-        context: ErrorDescription('optimistic party balance update'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan payment',
+          context: ErrorDescription('optimistic party balance update'),
+        ),
+      );
     }
 
     if (!mounted) return;
@@ -299,17 +304,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
       controller.clearAll();
       _amountController.clear();
       _notesController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(savedToast)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(savedToast)));
       Navigator.of(context).maybePop();
     } catch (error, stackTrace) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan payment',
-        context: ErrorDescription('post_payment (useLocalDb=false)'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan payment',
+          context: ErrorDescription('post_payment (useLocalDb=false)'),
+        ),
+      );
       if (!mounted) return;
       showError(context, '$failureMessage\n$error');
     }
@@ -358,12 +365,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
       // Transient — enqueue for the offline queue to retry on
       // backoff. Mirrors Sale's pattern. No toast; the queue badge
       // in the home AppBar signals that work is pending.
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan payment',
-        context: ErrorDescription('post_payment (queuing for retry)'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan payment',
+          context: ErrorDescription('post_payment (queuing for retry)'),
+        ),
+      );
       final post = PendingPost(
         id: generateClientOpId('payment'),
         clientOpId: clientOpId,
@@ -405,7 +414,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
               : l.paymentSupplierOwedLabel(
                   formatMoney(controller.outstandingBalance, widget.shop),
                 ));
-    final canSave = party != null &&
+    final canSave =
+        party != null &&
         controller.amount > 0 &&
         controller.amount <= controller.outstandingBalance;
 
@@ -425,133 +435,141 @@ class _PaymentScreenState extends State<PaymentScreen> {
       // the cashier can reach the invoice-allocation chip and
       // notes field when the keyboard is up.
       body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (controller.isBackdated)
-                BackdateBanner(
-                  date: controller.workingDate!,
-                  onClear: () => controller.setWorkingDate(null),
-                ),
-              SegmentedButton<PaymentType>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: PaymentType.customer,
-                    label: Text(l.paymentTypeCustomer),
-                    icon: const Icon(Icons.person),
-                  ),
-                  ButtonSegment(
-                    value: PaymentType.supplier,
-                    label: Text(l.paymentTypeSupplier),
-                    icon: const Icon(Icons.local_shipping),
-                  ),
-                ],
-                selected: {type},
-                onSelectionChanged: (set) => _onTypeChanged(set.first),
-              ),
-              const SizedBox(height: 8),
-              // Short direction hint — non-tech shopkeepers don't always
-              // map "Customer / Supplier" to who's giving whom money.
-              Text(
-                isCustomer
-                    ? l.paymentTypeCustomerHint
-                    : l.paymentTypeSupplierHint,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: party == null
-                    ? OutlinedButton.icon(
-                        onPressed: _onPickParty,
-                        icon: const Icon(Icons.person_search),
-                        label: Text(pickButtonLabel),
-                      )
-                    : InputChip(
-                        avatar: const Icon(Icons.person),
-                        label: Text(
-                          party.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onPressed: _onPickParty,
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (controller.isBackdated)
+                      BackdateBanner(
+                        date: controller.workingDate!,
+                        onClear: () => controller.setWorkingDate(null),
                       ),
-              ),
-              if (balanceLabel != null) ...[
-                const SizedBox(height: 10),
-                Text(balanceLabel, style: theme.textTheme.bodyLarge),
-              ],
-              const SizedBox(height: 20),
-              TextField(
-                controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                ],
-                onChanged: _onAmountChanged,
-                style: theme.textTheme.headlineSmall,
-                decoration: InputDecoration(
-                  labelText:
-                      '${widget.shop.currencySymbol} ${l.paymentAmountLabel}',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _notesController,
-                textInputAction: TextInputAction.done,
-                maxLines: 2,
-                minLines: 1,
-                decoration: InputDecoration(
-                  labelText: l.paymentNotesLabel,
-                ),
-              ),
-              if (canSave && controller.outstandingBalance > 0) ...[
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.center,
-                  child: ActionChip(
-                    avatar: Icon(
-                      controller.hasExplicitAllocations
-                          ? Icons.check_circle
-                          : Icons.tune,
-                      size: 18,
+                    SegmentedButton<PaymentType>(
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment(
+                          value: PaymentType.customer,
+                          label: Text(l.paymentTypeCustomer),
+                          icon: const Icon(Icons.person),
+                        ),
+                        ButtonSegment(
+                          value: PaymentType.supplier,
+                          label: Text(l.paymentTypeSupplier),
+                          icon: const Icon(Icons.local_shipping),
+                        ),
+                      ],
+                      selected: {type},
+                      onSelectionChanged: (set) => _onTypeChanged(set.first),
                     ),
-                    label: Text(
-                      controller.hasExplicitAllocations
-                          ? l.paymentChooseInvoicesChipDone(
-                              controller.allocations!.length,
+                    const SizedBox(height: 8),
+                    // Short direction hint — non-tech shopkeepers don't always
+                    // map "Customer / Supplier" to who's giving whom money.
+                    Text(
+                      isCustomer
+                          ? l.paymentTypeCustomerHint
+                          : l.paymentTypeSupplierHint,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: party == null
+                          ? OutlinedButton.icon(
+                              onPressed: _onPickParty,
+                              icon: const Icon(Icons.person_search),
+                              label: Text(pickButtonLabel),
                             )
-                          : l.paymentChooseInvoicesChip,
+                          : InputChip(
+                              avatar: const Icon(Icons.person),
+                              label: Text(
+                                party.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onPressed: _onPickParty,
+                            ),
                     ),
-                    onPressed: _onChooseInvoices,
-                  ),
+                    if (balanceLabel != null) ...[
+                      const SizedBox(height: 10),
+                      Text(balanceLabel, style: theme.textTheme.bodyLarge),
+                    ],
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: _amountController,
+                      onTapOutside: dismissKeyboardOnTapOutside,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      ],
+                      onChanged: _onAmountChanged,
+                      style: theme.textTheme.headlineSmall,
+                      decoration: InputDecoration(
+                        labelText:
+                            '${widget.shop.currencySymbol} ${l.paymentAmountLabel}',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _notesController,
+                      onTapOutside: dismissKeyboardOnTapOutside,
+                      textInputAction: TextInputAction.done,
+                      maxLines: 2,
+                      minLines: 1,
+                      decoration: InputDecoration(
+                        labelText: l.paymentNotesLabel,
+                      ),
+                    ),
+                    if (canSave && controller.outstandingBalance > 0) ...[
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.center,
+                        child: ActionChip(
+                          avatar: Icon(
+                            controller.hasExplicitAllocations
+                                ? Icons.check_circle
+                                : Icons.tune,
+                            size: 18,
+                          ),
+                          label: Text(
+                            controller.hasExplicitAllocations
+                                ? l.paymentChooseInvoicesChipDone(
+                                    controller.allocations!.length,
+                                  )
+                                : l.paymentChooseInvoicesChip,
+                          ),
+                          onPressed: _onChooseInvoices,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: FilledButton(
-              onPressed: canSave ? _save : null,
-              child: Text(l.paymentSaveButton),
+              ),
             ),
-          ),
+            // SAVE in the body (not bottomNavigationBar) so it stays above the
+            // keyboard — the bottom nav bar does not lift on iOS.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton(
+                  onPressed: canSave ? _save : null,
+                  child: Text(l.paymentSaveButton),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
