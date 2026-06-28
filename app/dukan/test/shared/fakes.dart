@@ -1117,6 +1117,34 @@ class FakeShopApi implements ShopApi {
     );
   }
 
+  ProfitReport Function(DateTime? from, DateTime? to)? onGetProfitReport;
+
+  @override
+  Future<ProfitReport> getProfitReport({
+    required String shopId,
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    if (onGetProfitReport != null) return onGetProfitReport!(from, to);
+    return const ProfitReport(
+      revenue: 0,
+      cogs: 0,
+      grossProfit: 0,
+      expenseTotal: 0,
+      netProfit: 0,
+      saleCount: 0,
+      expenseCount: 0,
+    );
+  }
+
+  StockReport Function()? onGetStockReport;
+
+  @override
+  Future<StockReport> getStockReport({required String shopId}) async {
+    if (onGetStockReport != null) return onGetStockReport!();
+    return const StockReport(itemCount: 0, stockValue: 0, lowStockCount: 0);
+  }
+
   Future<List<PartyBalanceRow>> Function(String shopId, String? locale)?
   onListReceivables;
 

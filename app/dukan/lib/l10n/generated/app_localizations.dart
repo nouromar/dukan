@@ -326,6 +326,108 @@ abstract class AppLocalizations {
   /// **'TODAY'**
   String get backdateBackToToday;
 
+  /// No description provided for @reportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get reportsTitle;
+
+  /// No description provided for @drawerReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get drawerReports;
+
+  /// No description provided for @reportsSalesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales'**
+  String get reportsSalesTitle;
+
+  /// No description provided for @reportsProfitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profit'**
+  String get reportsProfitTitle;
+
+  /// No description provided for @reportsStockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock'**
+  String get reportsStockTitle;
+
+  /// No description provided for @reportsRevenueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales total'**
+  String get reportsRevenueLabel;
+
+  /// No description provided for @reportsSalesCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of sales'**
+  String get reportsSalesCountLabel;
+
+  /// No description provided for @reportsAvgSaleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Average sale'**
+  String get reportsAvgSaleLabel;
+
+  /// No description provided for @reportsCostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost of goods'**
+  String get reportsCostLabel;
+
+  /// No description provided for @reportsGrossProfitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross profit'**
+  String get reportsGrossProfitLabel;
+
+  /// No description provided for @reportsExpensesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get reportsExpensesLabel;
+
+  /// No description provided for @reportsNetProfitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Net profit'**
+  String get reportsNetProfitLabel;
+
+  /// No description provided for @reportsMarginLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Margin'**
+  String get reportsMarginLabel;
+
+  /// No description provided for @reportsItemsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Products in stock'**
+  String get reportsItemsLabel;
+
+  /// No description provided for @reportsStockValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock value'**
+  String get reportsStockValueLabel;
+
+  /// No description provided for @reportsLowStockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get reportsLowStockLabel;
+
+  /// No description provided for @reportsLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load reports. Check your internet and try again.'**
+  String get reportsLoadFailedMessage;
+
   /// No description provided for @partyDetailLoadFailedMessage.
   ///
   /// In en, this message translates to:

@@ -340,6 +340,83 @@ class TodaySummary {
   final int lowStockCount;
 }
 
+/// Sales + profit over a period, summed from `v_daily_profit` daily rows
+/// (one row per local day — a handful for any realistic range). #7 reports.
+class ProfitReport {
+  const ProfitReport({
+    required this.revenue,
+    required this.cogs,
+    required this.grossProfit,
+    required this.expenseTotal,
+    required this.netProfit,
+    required this.saleCount,
+    required this.expenseCount,
+  });
+
+  factory ProfitReport.fromDailyRows(List<Map<String, dynamic>> rows) {
+    num revenue = 0, cogs = 0, gross = 0, expense = 0, net = 0;
+    int sales = 0, expenses = 0;
+    for (final r in rows) {
+      revenue += (r['revenue'] as num?) ?? 0;
+      cogs += (r['cogs_total'] as num?) ?? 0;
+      gross += (r['gross_profit'] as num?) ?? 0;
+      expense += (r['expense_total'] as num?) ?? 0;
+      net += (r['net_profit'] as num?) ?? 0;
+      sales += ((r['sale_count'] as num?) ?? 0).toInt();
+      expenses += ((r['expense_count'] as num?) ?? 0).toInt();
+    }
+    return ProfitReport(
+      revenue: revenue,
+      cogs: cogs,
+      grossProfit: gross,
+      expenseTotal: expense,
+      netProfit: net,
+      saleCount: sales,
+      expenseCount: expenses,
+    );
+  }
+
+  final num revenue;
+  final num cogs;
+  final num grossProfit;
+  final num expenseTotal;
+  final num netProfit;
+  final int saleCount;
+  final int expenseCount;
+
+  /// Gross margin as a percentage of revenue (0 when no sales).
+  double get marginPct =>
+      revenue > 0 ? (grossProfit / revenue * 100).toDouble() : 0;
+}
+
+/// Current-stock summary: on-hand items, total stock value (Σ stock × avg cost),
+/// and the low-stock count (mirrors get_today_summary's rule). #7 reports.
+class StockReport {
+  const StockReport({
+    required this.itemCount,
+    required this.stockValue,
+    required this.lowStockCount,
+  });
+
+  factory StockReport.fromItemRows(List<Map<String, dynamic>> rows) {
+    int count = 0, low = 0;
+    num value = 0;
+    for (final r in rows) {
+      count++;
+      final stock = (r['current_stock'] as num?) ?? 0;
+      final cost = (r['avg_cost'] as num?) ?? 0;
+      value += stock * cost;
+      final reorder = r['reorder_threshold'] as num?;
+      if (stock < 1 || (reorder != null && stock <= reorder)) low++;
+    }
+    return StockReport(itemCount: count, stockValue: value, lowStockCount: low);
+  }
+
+  final int itemCount;
+  final num stockValue;
+  final int lowStockCount;
+}
+
 class PartyBalanceRow {
   const PartyBalanceRow({
     required this.partyId,

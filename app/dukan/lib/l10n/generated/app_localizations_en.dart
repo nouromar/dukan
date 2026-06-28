@@ -126,6 +126,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backdateBackToToday => 'TODAY';
 
   @override
+  String get reportsTitle => 'Reports';
+
+  @override
+  String get drawerReports => 'Reports';
+
+  @override
+  String get reportsSalesTitle => 'Sales';
+
+  @override
+  String get reportsProfitTitle => 'Profit';
+
+  @override
+  String get reportsStockTitle => 'Stock';
+
+  @override
+  String get reportsRevenueLabel => 'Sales total';
+
+  @override
+  String get reportsSalesCountLabel => 'Number of sales';
+
+  @override
+  String get reportsAvgSaleLabel => 'Average sale';
+
+  @override
+  String get reportsCostLabel => 'Cost of goods';
+
+  @override
+  String get reportsGrossProfitLabel => 'Gross profit';
+
+  @override
+  String get reportsExpensesLabel => 'Expenses';
+
+  @override
+  String get reportsNetProfitLabel => 'Net profit';
+
+  @override
+  String get reportsMarginLabel => 'Margin';
+
+  @override
+  String get reportsItemsLabel => 'Products in stock';
+
+  @override
+  String get reportsStockValueLabel => 'Stock value';
+
+  @override
+  String get reportsLowStockLabel => 'Low stock';
+
+  @override
+  String get reportsLoadFailedMessage =>
+      'Could not load reports. Check your internet and try again.';
+
+  @override
   String get partyDetailLoadFailedMessage => 'Could not load this party.';
 
   @override

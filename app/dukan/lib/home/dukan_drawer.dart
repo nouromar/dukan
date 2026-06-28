@@ -20,6 +20,7 @@ import 'package:dukan/products/products_screen.dart';
 import 'package:dukan/products/top_movers_screen.dart';
 import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/reports/low_stock_screen.dart';
+import 'package:dukan/reports/reports_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/settings/manage_categories_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
@@ -76,6 +77,12 @@ class DukanDrawer extends StatelessWidget {
                 ],
               ),
             ),
+            _DrawerItem(
+              icon: Icons.bar_chart,
+              label: l.drawerReports,
+              builder: (_) => ReportsScreen(shop: shop),
+            ),
+            const SizedBox(height: 4),
             _SectionHeader(label: l.drawerHistoryHeader),
             _DrawerItem(
               icon: Icons.point_of_sale,

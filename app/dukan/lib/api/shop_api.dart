@@ -902,6 +902,48 @@ class ShopApi {
     return TodaySummary.fromJson(Map<String, dynamic>.from(result as Map));
   }
 
+  /// Profit + sales over a period (#7). Sums the per-day `v_daily_profit`
+  /// rows (RLS via security_invoker). `from` inclusive / `to` exclusive;
+  /// both null = all time.
+  Future<ProfitReport> getProfitReport({
+    required String shopId,
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    var query = _client
+        .from('v_daily_profit')
+        .select(
+          'revenue, cogs_total, gross_profit, expense_total, '
+          'net_profit, sale_count, expense_count',
+        )
+        .eq('shop_id', shopId);
+    if (from != null) query = query.gte('local_date', _dateOnly(from));
+    if (to != null) query = query.lt('local_date', _dateOnly(to));
+    final rows = await query;
+    return ProfitReport.fromDailyRows(
+      rows.map((r) => Map<String, dynamic>.from(r)).toList(growable: false),
+    );
+  }
+
+  /// Current stock summary (#7): on-hand items, stock value, low-stock count.
+  /// Aggregated on-device from the active `shop_item` rows.
+  Future<StockReport> getStockReport({required String shopId}) async {
+    final rows = await _client
+        .from('shop_item')
+        .select('current_stock, avg_cost, reorder_threshold')
+        .eq('shop_id', shopId)
+        .eq('is_active', true);
+    return StockReport.fromItemRows(
+      rows.map((r) => Map<String, dynamic>.from(r)).toList(growable: false),
+    );
+  }
+
+  /// `YYYY-MM-DD` for filtering the timezone-aware `local_date` view column.
+  static String _dateOnly(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
   /// Receivables list — parties who owe the shop (`receivable > 0`).
   /// Caller maps each row's `amount` into the right meaning (receivable
   /// vs payable) before rendering.

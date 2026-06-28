@@ -128,6 +128,58 @@ class AppLocalizationsSo extends AppLocalizations {
   String get backdateBackToToday => 'MAANTA';
 
   @override
+  String get reportsTitle => 'Warbixino';
+
+  @override
+  String get drawerReports => 'Warbixino';
+
+  @override
+  String get reportsSalesTitle => 'Iibka';
+
+  @override
+  String get reportsProfitTitle => 'Faa\'iido';
+
+  @override
+  String get reportsStockTitle => 'Bakhaarka';
+
+  @override
+  String get reportsRevenueLabel => 'Wadarta iibka';
+
+  @override
+  String get reportsSalesCountLabel => 'Tirada iibka';
+
+  @override
+  String get reportsAvgSaleLabel => 'Celceliska iibka';
+
+  @override
+  String get reportsCostLabel => 'Qiimaha alaabta';
+
+  @override
+  String get reportsGrossProfitLabel => 'Faa\'iidada guud';
+
+  @override
+  String get reportsExpensesLabel => 'Qarashaadka';
+
+  @override
+  String get reportsNetProfitLabel => 'Faa\'iidada saafiga ah';
+
+  @override
+  String get reportsMarginLabel => 'Faa\'iido boqolkiiba';
+
+  @override
+  String get reportsItemsLabel => 'Alaabta bakhaarka ku jirta';
+
+  @override
+  String get reportsStockValueLabel => 'Qiimaha bakhaarka';
+
+  @override
+  String get reportsLowStockLabel => 'Alaab yar';
+
+  @override
+  String get reportsLoadFailedMessage =>
+      'Warbixinada lama soo bandhigi karin. Hubi internetkaaga oo isku day mar kale.';
+
+  @override
   String get partyDetailLoadFailedMessage => 'Qofkan lama soo dejin karin.';
 
   @override
