@@ -1814,6 +1814,21 @@ class ShopApi {
     });
   }
 
+  /// Hide/restore a customer or supplier (soft-delete, owner-only). 0082.
+  Future<void> setPartyActive({
+    required String shopId,
+    required String partyId,
+    required bool isActive,
+    String? clientOpId,
+  }) async {
+    await _client.rpc('set_party_active', params: {
+      'p_shop_id': shopId,
+      'p_party_id': partyId,
+      'p_is_active': isActive,
+      'p_client_op_id': clientOpId,
+    });
+  }
+
   Future<String> createExpenseCategory({
     required String shopId,
     required String categoryId,

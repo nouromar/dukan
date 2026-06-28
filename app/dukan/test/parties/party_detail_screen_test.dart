@@ -67,6 +67,43 @@ void main() {
     expect(payBtn.onPressed, isNotNull);
   });
 
+  testWidgets('hide action soft-deletes the party (queued set_party_active)',
+      (tester) async {
+    api.onGetPartyDetail = (_, _, _) async => PartyDetail(
+      header: const PartyDetailHeader(
+        id: 'p-1',
+        name: 'Cumar',
+        phone: null,
+        typeCode: 'customer',
+        receivable: 0,
+        payable: 0,
+        isActive: true,
+      ),
+      sales: const [],
+      receives: const [],
+      payments: const [],
+    );
+    String? hiddenId;
+    bool? hiddenActive;
+    api.onSetPartyActive = (id, active) async {
+      hiddenId = id;
+      hiddenActive = active;
+    };
+
+    await pump(tester);
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+    expect(find.text(en.partyHideConfirmTitle), findsOneWidget);
+
+    await tester.tap(find.text(en.partyHideConfirmYes));
+    await tester.pumpAndSettle();
+
+    // The queued post drained to set_party_active(p-1, isActive=false).
+    expect(hiddenId, 'p-1');
+    expect(hiddenActive, false);
+  });
+
   testWidgets('customer with zero balance: PAY disabled', (tester) async {
     api.onGetPartyDetail = (_, _, _) async => PartyDetail(
       header: const PartyDetailHeader(

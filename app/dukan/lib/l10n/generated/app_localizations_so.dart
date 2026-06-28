@@ -98,6 +98,22 @@ class AppLocalizationsSo extends AppLocalizations {
   String get partyDetailTitle => 'Qof';
 
   @override
+  String get partyHideTooltip => 'Qari';
+
+  @override
+  String get partyHideConfirmTitle => 'Ma qarinaysaa qofkan?';
+
+  @override
+  String get partyHideConfirmBody =>
+      'Waxaa laga saari doonaa liisaskaaga. Lacagta iyo taariikhda way sii jiri doonaan. Waxaad weydiisan kartaa taageerada inay soo celiyaan.';
+
+  @override
+  String get partyHideConfirmYes => 'QARI';
+
+  @override
+  String get partyHiddenToast => 'Qofka waa la qariyay';
+
+  @override
   String get partyDetailLoadFailedMessage => 'Qofkan lama soo dejin karin.';
 
   @override

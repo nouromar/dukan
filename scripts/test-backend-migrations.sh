@@ -1680,6 +1680,52 @@ begin
 end;
 $$;
 
+-- §12c set_party_active (0082): cashier denied; owner deactivates → hidden from
+-- search_parties. (Still cashier ...0002 from the block above.)
+do $$
+declare
+  v_shop_id  uuid;
+  v_party_id uuid;
+  v_failed   boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_party_id from public.party
+   where shop_id = v_shop_id and name = 'Ayaan Low';
+  v_failed := false;
+  begin
+    perform public.set_party_active(v_shop_id, v_party_id, false, null);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception '§12c: cashier was allowed to deactivate a party';
+  end if;
+end;
+$$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id  uuid;
+  v_party_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_party_id from public.party
+   where shop_id = v_shop_id and name = 'Ayaan Low';
+  perform public.set_party_active(v_shop_id, v_party_id, false, null);
+  if (select is_active from public.party where id = v_party_id) then
+    raise exception '§12c: owner deactivate did not set is_active=false';
+  end if;
+  if exists (
+    select 1 from public.search_parties(v_shop_id, '', 'customer', 50)
+     where id = v_party_id
+  ) then
+    raise exception '§12c: deactivated party still returned by search_parties';
+  end if;
+  -- Restore so downstream tests still see Ayaan Low.
+  perform public.set_party_active(v_shop_id, v_party_id, true, null);
+end;
+$$;
+
 -- =====================================================================
 -- §13 Sale history + void_sale + refund (#16)
 -- =====================================================================

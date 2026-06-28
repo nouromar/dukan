@@ -1771,6 +1771,21 @@ class LocalRepository {
     );
   }
 
+  /// Optimistic: hide/restore a party in the mirror. searchParties +
+  /// supplierBasket filter is_active, so this removes/restores it immediately.
+  Future<void> setLocalPartyActive({
+    required String partyId,
+    required bool isActive,
+  }) async {
+    final db = await _db;
+    await db.update(
+      'local_party',
+      {'is_active': isActive ? 1 : 0},
+      where: 'party_id = ?',
+      whereArgs: [partyId],
+    );
+  }
+
   // ---- #385: optimistic transaction write -----------------------------
 
   Future<void> writeOptimisticTransaction({

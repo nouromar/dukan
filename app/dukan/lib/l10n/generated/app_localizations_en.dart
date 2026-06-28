@@ -96,6 +96,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partyDetailTitle => 'Party';
 
   @override
+  String get partyHideTooltip => 'Hide';
+
+  @override
+  String get partyHideConfirmTitle => 'Hide this contact?';
+
+  @override
+  String get partyHideConfirmBody =>
+      'They\'ll be removed from your lists. Any balance and history stay. You can ask support to bring them back.';
+
+  @override
+  String get partyHideConfirmYes => 'HIDE';
+
+  @override
+  String get partyHiddenToast => 'Contact hidden';
+
+  @override
   String get partyDetailLoadFailedMessage => 'Could not load this party.';
 
   @override

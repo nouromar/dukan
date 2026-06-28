@@ -272,6 +272,36 @@ abstract class AppLocalizations {
   /// **'Party'**
   String get partyDetailTitle;
 
+  /// No description provided for @partyHideTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get partyHideTooltip;
+
+  /// No description provided for @partyHideConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this contact?'**
+  String get partyHideConfirmTitle;
+
+  /// No description provided for @partyHideConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'ll be removed from your lists. Any balance and history stay. You can ask support to bring them back.'**
+  String get partyHideConfirmBody;
+
+  /// No description provided for @partyHideConfirmYes.
+  ///
+  /// In en, this message translates to:
+  /// **'HIDE'**
+  String get partyHideConfirmYes;
+
+  /// No description provided for @partyHiddenToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact hidden'**
+  String get partyHiddenToast;
+
   /// No description provided for @partyDetailLoadFailedMessage.
   ///
   /// In en, this message translates to:

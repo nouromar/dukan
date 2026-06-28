@@ -185,6 +185,73 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
     }
   }
 
+  /// Hide this customer/supplier (soft-delete). Confirm → optimistic local
+  /// hide → queued idempotent `set_party_active` → back to the list. Owner-only
+  /// server-side (0082); search filters is_active so it disappears at once.
+  Future<void> _onDeactivate() async {
+    final l = tr(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.partyHideConfirmTitle),
+        content: Text(l.partyHideConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cartClearConfirmNo),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.partyHideConfirmYes),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final clientOpId = generateClientOpId('set_party_active');
+    String actorId = '';
+    try {
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {}
+    final queue = context.read<OfflineQueueController>();
+    final repo = context.read<LocalRepository>();
+    try {
+      try {
+        await repo.setLocalPartyActive(
+          partyId: widget.partyId,
+          isActive: false,
+        );
+      } catch (_) {
+        // Mirror write failure non-fatal — queue + delta reconcile.
+      }
+      await queue.enqueue(PendingPost(
+        id: generateClientOpId('post'),
+        clientOpId: clientOpId,
+        shopId: widget.shop.id,
+        originalActorUserId: actorId,
+        rpc: 'set_party_active',
+        params: buildSetPartyActiveParams(
+          partyId: widget.partyId,
+          isActive: false,
+        ),
+        queuedAt: DateTime.now(),
+      ));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.partyHiddenToast)),
+      );
+      Navigator.of(context).pop();
+    } catch (error, stackTrace) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dukan parties',
+        context: ErrorDescription('deactivating party'),
+      ));
+      if (mounted) showError(context, l.partyNewSaveFailedMessage);
+    }
+  }
+
   void _onPay(PartyDetail detail) {
     // Pre-fill the Payment controller — direction defaults to whatever
     // matches the party type (customer → inbound; supplier → outbound).
@@ -223,7 +290,17 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
   Widget build(BuildContext context) {
     final l = tr(context);
     return Scaffold(
-      appBar: dukanAppBar(context, l.partyDetailTitle),
+      appBar: dukanAppBar(
+        context,
+        l.partyDetailTitle,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: l.partyHideTooltip,
+            onPressed: _onDeactivate,
+          ),
+        ],
+      ),
       body: SafeArea(
         child: FutureBuilder<_PartyBootstrap>(
           future: _future,
