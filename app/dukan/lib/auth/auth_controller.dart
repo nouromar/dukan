@@ -229,6 +229,7 @@ class AuthController extends ChangeNotifier {
 
     try {
       final symbols = await _shopApi.currencySymbols();
+      final decimals = await _shopApi.currencyDecimals();
       final rows = await _client
           .from('shop')
           .select(
@@ -241,6 +242,7 @@ class AuthController extends ChangeNotifier {
             (row) => ShopSummary.fromJson(
               Map<String, dynamic>.from(row),
               currencySymbols: symbols,
+              currencyDecimals: decimals,
             ),
           )
           .toList(growable: false);

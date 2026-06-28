@@ -835,6 +835,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSaveFailedMessage => 'Could not save settings. Try again.';
 
   @override
+  String get settingsCurrencyLockedMessage =>
+      'Currency can\'t be changed once the shop has recorded a transaction. Contact support to change it.';
+
+  @override
   String get productsTitle => 'Products';
 
   @override

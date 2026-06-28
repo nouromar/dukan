@@ -839,6 +839,10 @@ class AppLocalizationsSo extends AppLocalizations {
       'Diyaarinta lama keydin karin. Isku day mar kale.';
 
   @override
+  String get settingsCurrencyLockedMessage =>
+      'Lacagta lama beddeli karo marka dukaanku diiwaangeliyo wax ganacsi. La xiriir taageerada si aad u beddesho.';
+
+  @override
   String get productsTitle => 'Alaab';
 
   @override

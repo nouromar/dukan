@@ -5135,6 +5135,48 @@ begin
 end;
 $$;
 
+-- 3b. Currency lock (0081): changeable with no posted txns; locked after one.
+do $$
+declare
+  v_org_id  uuid;
+  v_shop_id uuid;
+  v_fresh   uuid;
+  v_failed  boolean;
+begin
+  select organization_id, shop_id into v_org_id, v_shop_id from test_ids;
+
+  -- A fresh shop has no posted transactions → currency change is allowed.
+  v_fresh := public.create_shop(v_org_id, 'Currency Lock Shop');
+  perform public.update_shop_settings(
+    v_fresh, jsonb_build_object('currency_code', 'SOS'));
+  if (select currency_code from public.shop where id = v_fresh) <> 'SOS' then
+    raise exception 'NN (3b): currency change rejected on a transaction-free shop';
+  end if;
+
+  -- The Main Shop has posted transactions (§5) → currency change is rejected.
+  v_failed := false;
+  begin
+    perform public.update_shop_settings(
+      v_shop_id, jsonb_build_object('currency_code', 'SOS'));
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'NN (3b): currency change allowed on a shop with posted txns';
+  end if;
+
+  -- Non-currency edits still work on the locked shop.
+  perform public.update_shop_settings(
+    v_shop_id, jsonb_build_object('timezone', 'Africa/Nairobi'));
+  -- SOS is a seeded, active currency (0081).
+  if not exists (
+    select 1 from public.currency
+    where code = 'SOS' and symbol = 'Sh.So' and is_active
+  ) then
+    raise exception 'NN (3b): SOS/Sh.So not seeded active';
+  end if;
+end;
+$$;
+
 -- 4. create_shop_invite: cashier denied.
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
 do $$

@@ -1538,6 +1538,12 @@ abstract class AppLocalizations {
   /// **'Could not save settings. Try again.'**
   String get settingsSaveFailedMessage;
 
+  /// No description provided for @settingsCurrencyLockedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency can\'t be changed once the shop has recorded a transaction. Contact support to change it.'**
+  String get settingsCurrencyLockedMessage;
+
   /// No description provided for @productsTitle.
   ///
   /// In en, this message translates to:

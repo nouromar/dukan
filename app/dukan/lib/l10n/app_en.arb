@@ -370,6 +370,7 @@
   "settingsSaveButton": "SAVE",
   "settingsSavedToast": "Settings saved",
   "settingsSaveFailedMessage": "Could not save settings. Try again.",
+  "settingsCurrencyLockedMessage": "Currency can't be changed once the shop has recorded a transaction. Contact support to change it.",
   "productsTitle": "Products",
   "productsSearchHint": "Search Somali or English",
   "productsNewItemButton": "NEW ITEM",

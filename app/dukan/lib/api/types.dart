@@ -14,16 +14,17 @@ class ShopSummary {
     required this.defaultLanguageCode,
     required this.timezone,
     required this.onboardingDismissedAt,
+    this.currencyDecimals = 2,
     this.scannerSettings = ScannerSettings.defaults,
   });
 
-  /// Pass the currency symbols map (code → symbol) you loaded once from
-  /// ShopApi.currencySymbols(). Falls back to the code itself if the
-  /// shop's currency isn't in the map — keeps the constructor total
-  /// without forcing the caller to handle missing-symbol exceptions.
+  /// Pass the currency symbols map (code → symbol) and decimals map
+  /// (code → decimal places) you loaded once from ShopApi. Both fall back
+  /// (symbol → the code; decimals → 2) so the constructor stays total.
   factory ShopSummary.fromJson(
     Map<String, dynamic> json, {
     Map<String, String> currencySymbols = const {},
+    Map<String, int> currencyDecimals = const {},
   }) {
     final code = json['currency_code'] as String;
     final dismissedRaw = json['onboarding_dismissed_at'] as String?;
@@ -37,6 +38,7 @@ class ShopSummary {
       setupStatus: json['setup_status'] as String,
       currencyCode: code,
       currencySymbol: currencySymbols[code] ?? code,
+      currencyDecimals: currencyDecimals[code] ?? 2,
       defaultLanguageCode: json['default_language_code'] as String,
       timezone: json['timezone'] as String,
       onboardingDismissedAt:
@@ -53,6 +55,10 @@ class ShopSummary {
   /// table (e.g., USD → $, SLSH → SLSH). Used everywhere the UI prints
   /// a monetary value so we never hardcode "$" outside this projection.
   final String currencySymbol;
+
+  /// Decimal places for `currencyCode` (USD→2, SLSH/SOS→0). formatMoney uses
+  /// it so 0-decimal shillings render "Sh.So 5000", not "Sh.So 5000.00".
+  final int currencyDecimals;
   final String defaultLanguageCode;
   final String timezone;
   /// Null = the optional item-onboarding step still appears once on

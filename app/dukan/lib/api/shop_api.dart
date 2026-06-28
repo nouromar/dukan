@@ -1557,6 +1557,7 @@ class ShopApi {
   }
 
   Map<String, String>? _currencySymbolsCache;
+  Map<String, int>? _currencyDecimalsCache;
   Future<Map<String, String>>? _currencySymbolsFuture;
 
   /// Caches the (currency_code → symbol) map per session. Loaded once
@@ -1569,12 +1570,31 @@ class ShopApi {
     return _currencySymbolsFuture ??= _fetchCurrencySymbols();
   }
 
+  /// Decimal places per currency code (USD→2, SLSH/SOS→0). Populated by the
+  /// same fetch as [currencySymbols] so money formatting renders 0-decimal
+  /// shillings without a trailing ".00". Falls back to 2.
+  Future<Map<String, int>> currencyDecimals() async {
+    if (_currencyDecimalsCache != null) return _currencyDecimalsCache!;
+    await currencySymbols(); // populates both caches in one round-trip
+    return _currencyDecimalsCache ?? const {};
+  }
+
   Future<Map<String, String>> _fetchCurrencySymbols() async {
-    final currencies = await listCurrencies();
-    final map = {for (final c in currencies) c.code: c.label};
-    _currencySymbolsCache = map;
+    final rows = await _client
+        .from('currency')
+        .select('code, symbol, decimals')
+        .eq('is_active', true);
+    final symbols = <String, String>{};
+    final decimals = <String, int>{};
+    for (final row in rows) {
+      final code = row['code'] as String;
+      symbols[code] = (row['symbol'] as String?) ?? code;
+      decimals[code] = (row['decimals'] as num?)?.toInt() ?? 2;
+    }
+    _currencySymbolsCache = symbols;
+    _currencyDecimalsCache = decimals;
     _currencySymbolsFuture = null;
-    return map;
+    return symbols;
   }
 
   Future<List<UnitOption>> _fetchUnits() async {
@@ -1609,7 +1629,9 @@ class ShopApi {
   Future<List<ReferenceOption>> listCurrencies() async {
     final rows = await _client
         .from('currency')
-        .select('code, symbol')
+        // name → ReferenceOption.label so the setup picker reads
+        // "Somali Shilling" vs "Somaliland Shilling", not just the codes.
+        .select('code, name, symbol, decimals')
         .eq('is_active', true)
         .order('code');
     return rows

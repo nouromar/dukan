@@ -359,6 +359,7 @@
   "settingsSaveButton": "KEYDI",
   "settingsSavedToast": "Diyaarinta waa la keydiyay",
   "settingsSaveFailedMessage": "Diyaarinta lama keydin karin. Isku day mar kale.",
+  "settingsCurrencyLockedMessage": "Lacagta lama beddeli karo marka dukaanku diiwaangeliyo wax ganacsi. La xiriir taageerada si aad u beddesho.",
   "productsTitle": "Alaab",
   "productsSearchHint": "Ku Raadi Soomaali ama Ingiriis",
   "productsNewItemButton": "Alaab CUSUB",

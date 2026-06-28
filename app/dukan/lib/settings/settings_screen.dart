@@ -71,7 +71,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       Navigator.of(context).pop();
     } on PostgrestException {
       if (mounted) {
-        showError(context, l.settingsSaveFailedMessage);
+        // A shop with recorded transactions can't change currency (locked
+        // server-side in 0081). Surface the reason, not a generic failure.
+        final changedCurrency = _currencyCode != widget.shop.currencyCode;
+        showError(
+          context,
+          changedCurrency
+              ? l.settingsCurrencyLockedMessage
+              : l.settingsSaveFailedMessage,
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

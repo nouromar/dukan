@@ -1519,6 +1519,12 @@ class FakeShopApi implements ShopApi {
   }
 
   @override
+  Future<Map<String, int>> currencyDecimals() async {
+    final currencies = await listCurrencies();
+    return {for (final c in currencies) c.code: 2};
+  }
+
+  @override
   Future<void> updateShopDefaults({
     required String shopId,
     String? name,
