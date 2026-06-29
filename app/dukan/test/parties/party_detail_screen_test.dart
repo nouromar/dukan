@@ -157,6 +157,34 @@ void main() {
     expect(find.text('\$80.00'), findsOneWidget);
   });
 
+  testWidgets('Pay on a supplier opens the Money Out page, supplier pre-filled',
+      (tester) async {
+    api.onGetPartyDetail = (_, _, _) async => PartyDetail(
+      header: const PartyDetailHeader(
+        id: 'p-1',
+        name: 'Alaab Keene',
+        phone: null,
+        typeCode: 'supplier',
+        receivable: 0,
+        payable: 80,
+        isActive: true,
+      ),
+      sales: const [],
+      receives: const [],
+      payments: const [],
+    );
+
+    await pump(tester);
+    await tester.tap(find.text(en.partyDetailPayButton));
+    await tester.pumpAndSettle();
+
+    // Dedicated Money Out page with the supplier already selected — no
+    // "pick supplier" prompt, no direction toggle.
+    expect(find.text(en.paymentOutLabel), findsWidgets);
+    expect(find.text(en.paymentPickSupplierButton), findsNothing);
+    expect(find.text('Alaab Keene'), findsWidgets);
+  });
+
   testWidgets('pencil → edit dialog → updateParty fires with new name',
       (tester) async {
     api.onGetPartyDetail = (_, _, _) async => PartyDetail(

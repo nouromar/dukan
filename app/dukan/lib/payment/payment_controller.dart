@@ -49,26 +49,14 @@ class PaymentController extends ChangeNotifier with WorkingDateMixin {
     return _type == PaymentType.customer ? p.receivable : p.payable;
   }
 
-  void setType(PaymentType type) {
-    if (_type == type) return;
+  /// Open the payment in a fixed direction (Home "Money In"/"Money Out" tile, or
+  /// the party-detail Pay button) with an optional pre-selected party. Each tile
+  /// is a dedicated page now — there's no on-screen direction toggle — so this
+  /// always starts a clean entry. Non-notifying: safe in `initState` (the screen
+  /// reads `type` in its first build).
+  void initType(PaymentType type, {PartySearchResult? party}) {
     _type = type;
-    // A customer-typed party makes no sense when the screen flips to
-    // supplier — clear so the cashier picks fresh.
-    _party = null;
-    _amount = 0;
-    _allocations = null;
-    notifyListeners();
-  }
-
-  /// Set the direction at screen-open (Home "Money In"/"Money Out" tile)
-  /// WITHOUT notifying — safe to call from `initState`, since the screen reads
-  /// `type` in its first build. Clears stale party/amount only when the
-  /// direction actually changes. (The notifying [setType] is for the on-screen
-  /// toggle and must not run during build.)
-  void initType(PaymentType type) {
-    if (_type == type) return;
-    _type = type;
-    _party = null;
+    _party = party;
     _amount = 0;
     _allocations = null;
   }

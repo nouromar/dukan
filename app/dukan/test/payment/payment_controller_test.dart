@@ -28,8 +28,8 @@ void main() {
       c.setAmount(10);
       expect(c.party, isNotNull);
 
-      c.setType(PaymentType.supplier);
-      // Switching type clears the prior selection — a customer-typed
+      c.initType(PaymentType.supplier);
+      // Opening a direction (initType) starts a clean entry — a customer-typed
       // party doesn't make sense under the supplier direction.
       expect(c.party, isNull);
       expect(c.amount, 0);
@@ -50,7 +50,7 @@ void main() {
 
       // Setting type clears the party. Re-pick under the new mode to
       // exercise the supplier-balance path.
-      c.setType(PaymentType.supplier);
+      c.initType(PaymentType.supplier);
       c.setParty(both);
       expect(c.outstandingBalance, 100); // supplier mode → payable
     });
@@ -65,7 +65,7 @@ void main() {
 
     test('clearAll resets party + amount, keeps type', () {
       final c = PaymentController();
-      c.setType(PaymentType.supplier);
+      c.initType(PaymentType.supplier);
       c.setParty(
         const PartySearchResult(
           id: 'p1',

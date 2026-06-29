@@ -253,28 +253,29 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
   }
 
   void _onPay(PartyDetail detail) {
-    // Pre-fill the Payment controller — direction defaults to whatever
-    // matches the party type (customer → inbound; supplier → outbound).
-    final controller = context.read<PaymentController>();
+    // Open the matching dedicated page (customer → Money In; supplier → Money
+    // Out) with this party pre-selected. The screen locks the direction and
+    // pre-fills the party in its initState.
     final type = detail.header.typeCode == 'supplier'
         ? PaymentType.supplier
         : PaymentType.customer;
-    controller.setType(type);
     // PartyDetail.header isn't a PartySearchResult; build a minimal one.
-    controller.setParty(
-      PartySearchResult(
-        id: detail.header.id,
-        name: detail.header.name,
-        phone: detail.header.phone,
-        typeCode: detail.header.typeCode,
-        receivable: detail.header.receivable,
-        payable: detail.header.payable,
-      ),
+    final party = PartySearchResult(
+      id: detail.header.id,
+      name: detail.header.name,
+      phone: detail.header.phone,
+      typeCode: detail.header.typeCode,
+      receivable: detail.header.receivable,
+      payable: detail.header.payable,
     );
     Navigator.of(context)
         .push(
           MaterialPageRoute(
-            builder: (_) => PaymentScreen(shop: widget.shop),
+            builder: (_) => PaymentScreen(
+              shop: widget.shop,
+              initialType: type,
+              initialParty: party,
+            ),
           ),
         )
         .then((_) {

@@ -33,14 +33,19 @@ class PaymentScreen extends StatefulWidget {
   const PaymentScreen({
     required this.shop,
     this.initialType = PaymentType.customer,
+    this.initialParty,
     super.key,
   });
 
   final ShopSummary shop;
 
-  /// Which direction to open on — set by the Home "Money In" / "Money Out"
-  /// tiles. The on-screen toggle can still switch it.
+  /// Which direction this page is locked to — Money In (customer pays the shop)
+  /// or Money Out (shop pays a supplier). Set by the Home tile or the
+  /// party-detail Pay button; there is no on-screen direction toggle.
   final PaymentType initialType;
+
+  /// Party to pre-select on open (the party-detail Pay button). Null otherwise.
+  final PartySearchResult? initialParty;
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -54,11 +59,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
     final controller = context.read<PaymentController>();
-    // Pre-select the direction the Home tile requested (Money In = customer,
-    // Money Out = supplier). initType is the non-notifying variant — safe in
-    // initState; it clears stale party/amount only when the direction changes,
-    // so read the amount AFTER.
-    controller.initType(widget.initialType);
+    // Lock the direction this page opened on (Money In = customer, Money Out =
+    // supplier) and pre-select a party if one was passed. Non-notifying — safe
+    // in initState; read the amount AFTER.
+    controller.initType(widget.initialType, party: widget.initialParty);
     // Backdating (#5): reset to today on fresh entry (sticky within a session).
     controller.initWorkingDate();
     final amount = controller.amount;
@@ -81,10 +85,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return value.toString();
   }
 
-  void _onTypeChanged(PaymentType type) {
-    context.read<PaymentController>().setType(type);
-    _amountController.clear();
-  }
 
   Future<void> _onPickParty() async {
     final controller = context.read<PaymentController>();
@@ -402,6 +402,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final party = controller.party;
     final theme = Theme.of(context);
     final isCustomer = type == PaymentType.customer;
+    // Direction accent: green for Money In, amber for Money Out.
+    final accent = isCustomer ? Colors.green.shade700 : Colors.orange.shade800;
+    final directionIcon = isCustomer ? Icons.call_received : Icons.call_made;
+    final directionHint = isCustomer
+        ? l.paymentTypeCustomerHint
+        : l.paymentTypeSupplierHint;
     final pickButtonLabel = isCustomer
         ? l.paymentPickCustomerButton
         : l.paymentPickSupplierButton;
@@ -422,7 +428,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return Scaffold(
       appBar: dukanAppBar(
         context,
-        l.paymentTitle,
+        isCustomer ? l.paymentInLabel : l.paymentOutLabel,
         actions: [
           WorkingDateChip(
             workingDate: controller.workingDate,
@@ -450,34 +456,32 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         date: controller.workingDate!,
                         onClear: () => controller.setWorkingDate(null),
                       ),
-                    SegmentedButton<PaymentType>(
-                      showSelectedIcon: false,
-                      segments: [
-                        ButtonSegment(
-                          value: PaymentType.customer,
-                          label: Text(l.paymentTypeCustomer),
-                          icon: const Icon(Icons.person),
-                        ),
-                        ButtonSegment(
-                          value: PaymentType.supplier,
-                          label: Text(l.paymentTypeSupplier),
-                          icon: const Icon(Icons.local_shipping),
-                        ),
-                      ],
-                      selected: {type},
-                      onSelectionChanged: (set) => _onTypeChanged(set.first),
-                    ),
-                    const SizedBox(height: 8),
-                    // Short direction hint — non-tech shopkeepers don't always
-                    // map "Customer / Supplier" to who's giving whom money.
-                    Text(
-                      isCustomer
-                          ? l.paymentTypeCustomerHint
-                          : l.paymentTypeSupplierHint,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    // Direction header — replaces the old customer/supplier
+                    // toggle. The page is locked to Money In (customer) or Money
+                    // Out (supplier); the colour + icon + hint make which one
+                    // unmistakable.
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      textAlign: TextAlign.center,
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundColor: accent.withValues(alpha: 0.18),
+                            child: Icon(directionIcon, color: accent),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              directionHint,
+                              style: theme.textTheme.bodyLarge,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(

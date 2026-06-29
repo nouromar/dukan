@@ -42,10 +42,13 @@ void main() {
     en = lookupAppLocalizations(const Locale('en'));
   });
 
-  Future<void> pumpPayment(WidgetTester tester) async {
+  Future<void> pumpPayment(
+    WidgetTester tester, {
+    PaymentType type = PaymentType.customer,
+  }) async {
     await tester.pumpWidget(
       wrapWithApp(
-        PaymentScreen(shop: shop),
+        PaymentScreen(shop: shop, initialType: type),
         authController: auth,
         shopApi: api,
         paymentController: payment,
@@ -53,20 +56,24 @@ void main() {
     );
   }
 
-  testWidgets('opens pre-selected to the supplier direction (Money Out)',
+  testWidgets('Money Out page: Out title, supplier hint, no direction toggle',
       (tester) async {
-    await tester.pumpWidget(
-      wrapWithApp(
-        PaymentScreen(shop: shop, initialType: PaymentType.supplier),
-        authController: auth,
-        shopApi: api,
-        paymentController: payment,
-      ),
-    );
+    await pumpPayment(tester, type: PaymentType.supplier);
     await tester.pumpAndSettle();
-    // The supplier direction hint is shown; the customer one is not.
+    expect(find.text(en.paymentOutLabel), findsOneWidget);
     expect(find.text(en.paymentTypeSupplierHint), findsOneWidget);
     expect(find.text(en.paymentTypeCustomerHint), findsNothing);
+    expect(find.byType(SegmentedButton<PaymentType>), findsNothing);
+  });
+
+  testWidgets('Money In page: In title, customer hint, no direction toggle',
+      (tester) async {
+    await pumpPayment(tester);
+    await tester.pumpAndSettle();
+    expect(find.text(en.paymentInLabel), findsOneWidget);
+    expect(find.text(en.paymentTypeCustomerHint), findsOneWidget);
+    expect(find.text(en.paymentTypeSupplierHint), findsNothing);
+    expect(find.byType(SegmentedButton<PaymentType>), findsNothing);
   });
 
   testWidgets(
@@ -140,11 +147,7 @@ void main() {
         return 'fake-payment';
       };
 
-      await pumpPayment(tester);
-      await tester.pumpAndSettle();
-
-      // Flip to supplier mode.
-      await tester.tap(find.text(en.paymentTypeSupplier));
+      await pumpPayment(tester, type: PaymentType.supplier);
       await tester.pumpAndSettle();
 
       await tester.tap(find.text(en.paymentPickSupplierButton));
@@ -388,30 +391,6 @@ void main() {
       await tester.enterText(find.byType(TextField).first, '25');
       await tester.pump();
       expect(payment.hasExplicitAllocations, isFalse);
-    },
-  );
-
-  testWidgets(
-    'switching type clears the selected party (defensive)',
-    (tester) async {
-      api.onSearchParties = (_, _, _, _) async => [_ahmed()];
-
-      await pumpPayment(tester);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(en.paymentPickCustomerButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Ahmed'));
-      await tester.pumpAndSettle();
-
-      // Ahmed should now be selected as the customer.
-      expect(payment.party?.id, 'cust-1');
-
-      // Flip to supplier — the customer-typed party can't carry over.
-      await tester.tap(find.text(en.paymentTypeSupplier));
-      await tester.pumpAndSettle();
-      expect(payment.party, isNull);
-      // Supplier-pick button is now visible (no party selected yet).
-      expect(find.text(en.paymentPickSupplierButton), findsOneWidget);
     },
   );
 
