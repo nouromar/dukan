@@ -152,6 +152,24 @@ abstract class AppLocalizations {
   /// **'Money Out'**
   String get paymentOutLabel;
 
+  /// No description provided for @paymentDetailSettledHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid for'**
+  String get paymentDetailSettledHeader;
+
+  /// No description provided for @paymentDetailNoAllocations.
+  ///
+  /// In en, this message translates to:
+  /// **'This payment isn\'t linked to a sale or receive yet.'**
+  String get paymentDetailNoAllocations;
+
+  /// No description provided for @paymentDetailLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this payment.'**
+  String get paymentDetailLoadFailedMessage;
+
   /// No description provided for @expense.
   ///
   /// In en, this message translates to:

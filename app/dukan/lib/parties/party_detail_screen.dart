@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/payment/payment_controller.dart';
+import 'package:dukan/payment/payment_detail_screen.dart';
 import 'package:dukan/payment/payment_screen.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
@@ -48,9 +49,11 @@ class _PartyBootstrap {
     this.editedAt,
   });
   final PartyDetail detail;
+
   /// Open sales (for customers) or open receives (for suppliers).
   /// Empty when nothing is unpaid. Drives the "Open invoices" section.
   final List<UnpaidInvoice> openInvoices;
+
   /// Latest `people.party.edit` audit timestamp; null when nothing
   /// has been logged for this party yet.
   final DateTime? editedAt;
@@ -107,8 +110,7 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
     final detail = await detailF;
     // Direction is derived from the party type: customer → inbound,
     // supplier → outbound. A `both` party defaults to customer view.
-    final direction =
-        detail.header.typeCode == 'supplier' ? 'O' : 'I';
+    final direction = detail.header.typeCode == 'supplier' ? 'O' : 'I';
     final openInvoicesF = api
         .listUnpaidInvoices(
           shopId: widget.shop.id,
@@ -172,17 +174,21 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
       );
       await queue.enqueue(post);
       if (!mounted) return;
-      setState(() { _future = _load(); });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.settingsSavedToast)),
-      );
+      setState(() {
+        _future = _load();
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.settingsSavedToast)));
     } catch (error, stackTrace) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan parties',
-        context: ErrorDescription('updating party'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan parties',
+          context: ErrorDescription('updating party'),
+        ),
+      );
       if (mounted) showError(context, l.partyNewSaveFailedMessage);
     }
   }
@@ -226,30 +232,34 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
       } catch (_) {
         // Mirror write failure non-fatal — queue + delta reconcile.
       }
-      await queue.enqueue(PendingPost(
-        id: generateClientOpId('post'),
-        clientOpId: clientOpId,
-        shopId: widget.shop.id,
-        originalActorUserId: actorId,
-        rpc: 'set_party_active',
-        params: buildSetPartyActiveParams(
-          partyId: widget.partyId,
-          isActive: false,
+      await queue.enqueue(
+        PendingPost(
+          id: generateClientOpId('post'),
+          clientOpId: clientOpId,
+          shopId: widget.shop.id,
+          originalActorUserId: actorId,
+          rpc: 'set_party_active',
+          params: buildSetPartyActiveParams(
+            partyId: widget.partyId,
+            isActive: false,
+          ),
+          queuedAt: DateTime.now(),
         ),
-        queuedAt: DateTime.now(),
-      ));
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.partyHiddenToast)),
       );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.partyHiddenToast)));
       Navigator.of(context).pop();
     } catch (error, stackTrace) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan parties',
-        context: ErrorDescription('deactivating party'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan parties',
+          context: ErrorDescription('deactivating party'),
+        ),
+      );
       if (mounted) showError(context, l.partyNewSaveFailedMessage);
     }
   }
@@ -281,12 +291,14 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
           ),
         )
         .then((_) {
-      // Refresh balances when returning from Payment — the payment may
-      // have settled some receivable/payable.
-      if (mounted) {
-        setState(() { _future = _load(); });
-      }
-    });
+          // Refresh balances when returning from Payment — the payment may
+          // have settled some receivable/payable.
+          if (mounted) {
+            setState(() {
+              _future = _load();
+            });
+          }
+        });
   }
 
   @override
@@ -377,6 +389,15 @@ class _Body extends StatelessWidget {
       ),
     );
     if (changed == true) onChanged();
+  }
+
+  /// Open the payment detail (read-only — payments are immutable in v1).
+  Future<void> _openPayment(BuildContext context, String paymentId) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => PaymentDetailScreen(shop: shop, paymentId: paymentId),
+      ),
+    );
   }
 
   @override
@@ -511,6 +532,7 @@ class _Body extends StatelessWidget {
               dateTime: p.occurredAt,
               amount: p.amount,
               direction: p.direction,
+              onTap: () => _openPayment(context, p.paymentId),
             ),
         ],
       ],
@@ -526,10 +548,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.titleMedium,
-      ),
+      child: Text(label, style: Theme.of(context).textTheme.titleMedium),
     );
   }
 }
@@ -606,12 +625,14 @@ class _PaymentTile extends StatelessWidget {
     required this.dateTime,
     required this.amount,
     required this.direction,
+    this.onTap,
   });
 
   final ShopSummary shop;
   final DateTime dateTime;
   final num amount;
   final String direction;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -622,6 +643,7 @@ class _PaymentTile extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       dense: true,
+      onTap: onTap,
       leading: Icon(
         isInbound ? Icons.arrow_downward : Icons.arrow_upward,
         size: 20,
@@ -651,8 +673,7 @@ class _EditPartyDialogState extends State<_EditPartyDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initial.name);
-    _phoneController =
-        TextEditingController(text: widget.initial.phone ?? '');
+    _phoneController = TextEditingController(text: widget.initial.phone ?? '');
   }
 
   @override
@@ -694,9 +715,9 @@ class _EditPartyDialogState extends State<_EditPartyDialog> {
             final name = _nameController.text.trim();
             if (name.isEmpty) return;
             final phone = _phoneController.text.trim();
-            Navigator.of(context).pop(
-              (name: name, phone: phone.isEmpty ? null : phone),
-            );
+            Navigator.of(
+              context,
+            ).pop((name: name, phone: phone.isEmpty ? null : phone));
           },
           child: Text(l.shopItemEditorSaveButton),
         ),

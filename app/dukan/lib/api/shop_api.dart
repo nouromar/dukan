@@ -151,10 +151,7 @@ class PackagedUnitSuggestion {
 /// Aggregate returned by `suggest_new_item_options` — populates the
 /// "How is it sold?" grouped picker on the Add new item sheet.
 class NewItemOptions {
-  const NewItemOptions({
-    required this.baseUnits,
-    required this.packagedUnits,
-  });
+  const NewItemOptions({required this.baseUnits, required this.packagedUnits});
 
   factory NewItemOptions.fromJson(Map<String, dynamic> json) => NewItemOptions(
     baseUnits: (json['base_units'] as List? ?? const [])
@@ -162,7 +159,8 @@ class NewItemOptions {
         .toList(growable: false),
     packagedUnits: (json['packaged_units'] as List? ?? const [])
         .map(
-          (row) => PackagedUnitSuggestion.fromJson(Map<String, dynamic>.from(row)),
+          (row) =>
+              PackagedUnitSuggestion.fromJson(Map<String, dynamic>.from(row)),
         )
         .toList(growable: false),
   );
@@ -191,13 +189,13 @@ class UnpaidInvoice {
   });
 
   factory UnpaidInvoice.fromJson(Map<String, dynamic> json) => UnpaidInvoice(
-        transactionId: json['transaction_id'] as String,
-        occurredAt: DateTime.parse(json['occurred_at'] as String),
-        originalAmount: (json['original_amount'] as num).toDouble(),
-        alreadyPaid: (json['already_paid'] as num).toDouble(),
-        remaining: (json['remaining'] as num).toDouble(),
-        documentId: json['document_id'] as String?,
-      );
+    transactionId: json['transaction_id'] as String,
+    occurredAt: DateTime.parse(json['occurred_at'] as String),
+    originalAmount: (json['original_amount'] as num).toDouble(),
+    alreadyPaid: (json['already_paid'] as num).toDouble(),
+    remaining: (json['remaining'] as num).toDouble(),
+    documentId: json['document_id'] as String?,
+  );
 
   final String transactionId;
   final DateTime occurredAt;
@@ -229,6 +227,7 @@ class PostedAllocation {
   final String transactionId;
   final double amount;
   final DateTime occurredAt;
+
   /// 'sale' or 'receive' — used by the history drilldown to label the row.
   final String txnType;
 }
@@ -354,8 +353,7 @@ class ShopApi {
   /// post-setup "set up your products" screen). Idempotent on the
   /// server — calling twice leaves the original timestamp.
   Future<void> dismissOnboarding({required String shopId}) async {
-    await _client
-        .rpc('dismiss_shop_onboarding', params: {'p_shop_id': shopId});
+    await _client.rpc('dismiss_shop_onboarding', params: {'p_shop_id': shopId});
   }
 
   /// Returns the caller's effective capability codes for [shopId].
@@ -582,16 +580,15 @@ class ShopApi {
         'p_shop_item_id': shopItemId,
         'p_base_unit_code': baseUnitCode,
         'p_category_id': categoryId,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
         'p_limit': limit,
       },
     );
     if (rows is! List) return const [];
     return rows
         .map<PackagingSuggestion>(
-          (row) => PackagingSuggestion.fromJson(
-            Map<String, dynamic>.from(row),
-          ),
+          (row) => PackagingSuggestion.fromJson(Map<String, dynamic>.from(row)),
         )
         .toList(growable: false);
   }
@@ -608,16 +605,16 @@ class ShopApi {
       'suggest_category_units',
       params: {
         'p_category_id': categoryId,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
         'p_limit': limit,
       },
     );
     if (rows is! List) return const [];
     return rows
         .map<CategoryUnitSuggestion>(
-          (row) => CategoryUnitSuggestion.fromJson(
-            Map<String, dynamic>.from(row),
-          ),
+          (row) =>
+              CategoryUnitSuggestion.fromJson(Map<String, dynamic>.from(row)),
         )
         .toList(growable: false);
   }
@@ -635,7 +632,8 @@ class ShopApi {
       'suggest_new_item_options',
       params: {
         'p_category_id': categoryId,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
       },
     );
     if (result == null) {
@@ -660,7 +658,8 @@ class ShopApi {
         'p_shop_id': shopId,
         'p_category_id': categoryId,
         'p_query': query,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];
@@ -685,7 +684,8 @@ class ShopApi {
       params: {
         'p_shop_id': shopId,
         'p_shop_item_id': shopItemId,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
       },
     );
     final json = Map<String, dynamic>.from(result as Map);
@@ -738,9 +738,12 @@ class ShopApi {
         'p_shop_id': shopId,
         'p_query': query,
         'p_limit': limit,
-        if (screen != null) 'p_screen': screen, // ignore: use_null_aware_elements
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
-        if (partyId != null) 'p_party_id': partyId, // ignore: use_null_aware_elements
+        if (screen != null)
+          'p_screen': screen, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
+        if (partyId != null)
+          'p_party_id': partyId, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];
@@ -896,7 +899,8 @@ class ShopApi {
       'get_today_summary',
       params: {
         'p_shop_id': shopId,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
       },
     );
     return TodaySummary.fromJson(Map<String, dynamic>.from(result as Map));
@@ -955,7 +959,8 @@ class ShopApi {
       'list_receivables',
       params: {
         'p_shop_id': shopId,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];
@@ -978,17 +983,15 @@ class ShopApi {
       'list_payables',
       params: {
         'p_shop_id': shopId,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];
     return rows
         .map<PartyBalanceRow>((row) {
           final map = Map<String, dynamic>.from(row as Map);
-          return PartyBalanceRow.fromJson({
-            ...map,
-            'amount': map['payable'],
-          });
+          return PartyBalanceRow.fromJson({...map, 'amount': map['payable']});
         })
         .toList(growable: false);
   }
@@ -1001,7 +1004,8 @@ class ShopApi {
       'list_low_stock',
       params: {
         'p_shop_id': shopId,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];
@@ -1021,11 +1025,7 @@ class ShopApi {
   }) async {
     final result = await _client.rpc(
       'get_party_detail',
-      params: {
-        'p_shop_id': shopId,
-        'p_party_id': partyId,
-        'p_limit': limit,
-      },
+      params: {'p_shop_id': shopId, 'p_party_id': partyId, 'p_limit': limit},
     );
     return PartyDetail.fromJson(Map<String, dynamic>.from(result as Map));
   }
@@ -1040,8 +1040,10 @@ class ShopApi {
     final rows = await _client.rpc(
       'list_categories',
       params: {
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
-        if (shopId != null) 'p_shop_id': shopId, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
+        if (shopId != null)
+          'p_shop_id': shopId, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];
@@ -1298,7 +1300,8 @@ class ShopApi {
         'p_date_from': dateFrom?.toIso8601String(),
         'p_date_to': dateTo?.toIso8601String(),
         'p_category_id': categoryId,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
       },
     );
     if (rows is! List) return const [];
@@ -1337,6 +1340,20 @@ class ShopApi {
           (row) => ReceiveLineDetail.fromJson(Map<String, dynamic>.from(row)),
         )
         .toList(growable: false);
+  }
+
+  /// get_payment — header for the Payment detail screen (party, direction,
+  /// amount, date, method, notes). Null when the id isn't found / accessible.
+  Future<PaymentDetail?> getPayment({
+    required String shopId,
+    required String paymentId,
+  }) async {
+    final rows = await _client.rpc(
+      'get_payment',
+      params: {'p_shop_id': shopId, 'p_payment_id': paymentId},
+    );
+    if (rows is! List || rows.isEmpty) return null;
+    return PaymentDetail.fromJson(Map<String, dynamic>.from(rows.first));
   }
 
   /// Reverse a posted receive (same-shift, owner-only, refuses when
@@ -1394,10 +1411,9 @@ class ShopApi {
           'p_occurred_at': occurredAt.toUtc().toIso8601String(),
         if (allocations != null && allocations.isNotEmpty)
           'p_allocations': allocations
-              .map((a) => {
-                    'transaction_id': a.transactionId,
-                    'amount': a.amount,
-                  })
+              .map(
+                (a) => {'transaction_id': a.transactionId, 'amount': a.amount},
+              )
               .toList(growable: false),
       },
     );
@@ -1436,10 +1452,7 @@ class ShopApi {
   }) async {
     final rows = await _client.rpc(
       'list_payment_allocations',
-      params: {
-        'p_shop_id': shopId,
-        'p_payment_id': paymentId,
-      },
+      params: {'p_shop_id': shopId, 'p_payment_id': paymentId},
     );
     if (rows is! List) return const [];
     return rows
@@ -1569,7 +1582,9 @@ class ShopApi {
     required String fileExtension,
   }) async {
     final path = '$shopId/items/$shopItemId/image.$fileExtension';
-    await _client.storage.from('shop-item-images').uploadBinary(
+    await _client.storage
+        .from('shop-item-images')
+        .uploadBinary(
           path,
           bytes,
           fileOptions: FileOptions(contentType: mimeType, upsert: true),
@@ -1588,16 +1603,15 @@ class ShopApi {
     num? unitCost,
     String? clientOpId,
     String? notes,
-  }) =>
-      postInventoryAdjustment(
-        shopId: shopId,
-        reasonCode: 'opening',
-        shopItemId: shopItemId,
-        quantityDelta: baseQuantity,
-        unitCost: unitCost,
-        clientOpId: clientOpId,
-        notes: notes,
-      );
+  }) => postInventoryAdjustment(
+    shopId: shopId,
+    reasonCode: 'opening',
+    shopItemId: shopItemId,
+    quantityDelta: baseQuantity,
+    unitCost: unitCost,
+    clientOpId: clientOpId,
+    notes: notes,
+  );
 
   // ----- Reference / settings -----------------------------------------------
 
@@ -1757,7 +1771,9 @@ class ShopApi {
     // upload, then pass that same id into the RPC.
     final documentId = uuidV4();
     final path = '$shopId/documents/$documentId/image.$fileExtension';
-    await _client.storage.from('shop-documents').uploadBinary(
+    await _client.storage
+        .from('shop-documents')
+        .uploadBinary(
           path,
           bytes,
           fileOptions: FileOptions(contentType: mimeType, upsert: false),
@@ -1847,12 +1863,15 @@ class ShopApi {
     required String name,
     String? clientOpId,
   }) async {
-    await _client.rpc('rename_shop_category', params: {
-      'p_shop_id': shopId,
-      'p_category_id': categoryId,
-      'p_name': name,
-      'p_client_op_id': clientOpId,
-    });
+    await _client.rpc(
+      'rename_shop_category',
+      params: {
+        'p_shop_id': shopId,
+        'p_category_id': categoryId,
+        'p_name': name,
+        'p_client_op_id': clientOpId,
+      },
+    );
   }
 
   Future<void> setShopCategoryActive({
@@ -1861,12 +1880,15 @@ class ShopApi {
     required bool isActive,
     String? clientOpId,
   }) async {
-    await _client.rpc('set_shop_category_active', params: {
-      'p_shop_id': shopId,
-      'p_category_id': categoryId,
-      'p_is_active': isActive,
-      'p_client_op_id': clientOpId,
-    });
+    await _client.rpc(
+      'set_shop_category_active',
+      params: {
+        'p_shop_id': shopId,
+        'p_category_id': categoryId,
+        'p_is_active': isActive,
+        'p_client_op_id': clientOpId,
+      },
+    );
   }
 
   /// Hide/restore a customer or supplier (soft-delete, owner-only). 0082.
@@ -1876,12 +1898,15 @@ class ShopApi {
     required bool isActive,
     String? clientOpId,
   }) async {
-    await _client.rpc('set_party_active', params: {
-      'p_shop_id': shopId,
-      'p_party_id': partyId,
-      'p_is_active': isActive,
-      'p_client_op_id': clientOpId,
-    });
+    await _client.rpc(
+      'set_party_active',
+      params: {
+        'p_shop_id': shopId,
+        'p_party_id': partyId,
+        'p_is_active': isActive,
+        'p_client_op_id': clientOpId,
+      },
+    );
   }
 
   /// Deactivate/restore a whole product (soft-delete). 0061. Naturally
@@ -1891,11 +1916,14 @@ class ShopApi {
     required String shopItemId,
     required bool isActive,
   }) async {
-    await _client.rpc('set_shop_item_active', params: {
-      'p_shop_id': shopId,
-      'p_shop_item_id': shopItemId,
-      'p_is_active': isActive,
-    });
+    await _client.rpc(
+      'set_shop_item_active',
+      params: {
+        'p_shop_id': shopId,
+        'p_shop_item_id': shopItemId,
+        'p_is_active': isActive,
+      },
+    );
   }
 
   Future<String> createExpenseCategory({
@@ -1922,12 +1950,15 @@ class ShopApi {
     required String name,
     String? clientOpId,
   }) async {
-    await _client.rpc('rename_expense_category', params: {
-      'p_shop_id': shopId,
-      'p_category_id': categoryId,
-      'p_name': name,
-      'p_client_op_id': clientOpId,
-    });
+    await _client.rpc(
+      'rename_expense_category',
+      params: {
+        'p_shop_id': shopId,
+        'p_category_id': categoryId,
+        'p_name': name,
+        'p_client_op_id': clientOpId,
+      },
+    );
   }
 
   Future<void> setExpenseCategoryActive({
@@ -1936,12 +1967,15 @@ class ShopApi {
     required bool isActive,
     String? clientOpId,
   }) async {
-    await _client.rpc('set_expense_category_active', params: {
-      'p_shop_id': shopId,
-      'p_category_id': categoryId,
-      'p_is_active': isActive,
-      'p_client_op_id': clientOpId,
-    });
+    await _client.rpc(
+      'set_expense_category_active',
+      params: {
+        'p_shop_id': shopId,
+        'p_category_id': categoryId,
+        'p_is_active': isActive,
+        'p_client_op_id': clientOpId,
+      },
+    );
   }
 
   /// Owner-only. Soft-removes a non-base packaging — flips is_active
@@ -1953,10 +1987,7 @@ class ShopApi {
   }) async {
     await _client.rpc(
       'deactivate_shop_item_unit',
-      params: {
-        'p_shop_id': shopId,
-        'p_shop_item_unit_id': shopItemUnitId,
-      },
+      params: {'p_shop_id': shopId, 'p_shop_item_unit_id': shopItemUnitId},
     );
   }
 
@@ -2071,7 +2102,8 @@ class ShopApi {
         'p_shop_id': shopId,
         'p_period_days': periodDays,
         'p_limit': limit,
-        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
       },
     );
     final map = Map<String, dynamic>.from(result as Map);
@@ -2115,8 +2147,9 @@ class ShopApi {
           {
             'shop_item_id': shopItemId,
             'quantity_delta': quantityDelta,
-            if (unitCost != null) 'unit_cost': unitCost, // ignore: use_null_aware_elements
-          }
+            if (unitCost != null)
+              'unit_cost': unitCost, // ignore: use_null_aware_elements
+          },
         ],
         'p_client_op_id': clientOpId,
         'p_notes': notes,
@@ -2163,10 +2196,7 @@ class ShopApi {
     return [
       for (final r in rows)
         if (r is Map)
-          PlatformConfigEntry(
-            key: r['key'] as String,
-            value: r['value'],
-          ),
+          PlatformConfigEntry(key: r['key'] as String, value: r['value']),
     ];
   }
 
@@ -2180,11 +2210,7 @@ class ShopApi {
   }) async {
     await _client.rpc(
       'set_platform_config',
-      params: {
-        'p_org_id': orgId,
-        'p_key': key,
-        'p_value': value,
-      },
+      params: {'p_org_id': orgId, 'p_key': key, 'p_value': value},
     );
   }
 
@@ -2227,10 +2253,7 @@ class ShopApi {
   }) async {
     final raw = await _client.rpc(
       'get_shop_full_sync',
-      params: {
-        'p_shop_id': shopId,
-        'p_force': force,
-      },
+      params: {'p_shop_id': shopId, 'p_force': force},
     );
     if (raw is Map) return Map<String, dynamic>.from(raw);
     return const <String, dynamic>{};
@@ -2244,10 +2267,7 @@ class ShopApi {
   }) async {
     final raw = await _client.rpc(
       'get_shop_items_delta',
-      params: {
-        'p_shop_id': shopId,
-        'p_since': since.toUtc().toIso8601String(),
-      },
+      params: {'p_shop_id': shopId, 'p_since': since.toUtc().toIso8601String()},
     );
     if (raw is Map) return Map<String, dynamic>.from(raw);
     return const <String, dynamic>{};
@@ -2259,10 +2279,7 @@ class ShopApi {
   }) async {
     final raw = await _client.rpc(
       'get_parties_delta',
-      params: {
-        'p_shop_id': shopId,
-        'p_since': since.toUtc().toIso8601String(),
-      },
+      params: {'p_shop_id': shopId, 'p_since': since.toUtc().toIso8601String()},
     );
     if (raw is Map) return Map<String, dynamic>.from(raw);
     return const <String, dynamic>{};
@@ -2274,10 +2291,7 @@ class ShopApi {
   }) async {
     final raw = await _client.rpc(
       'get_categories_delta',
-      params: {
-        'p_shop_id': shopId,
-        'p_since': since.toUtc().toIso8601String(),
-      },
+      params: {'p_shop_id': shopId, 'p_since': since.toUtc().toIso8601String()},
     );
     if (raw is Map) return Map<String, dynamic>.from(raw);
     return const <String, dynamic>{};
@@ -2310,10 +2324,7 @@ class ShopApi {
   }) async {
     final raw = await _client.rpc(
       'get_unpaid_invoices_delta',
-      params: {
-        'p_shop_id': shopId,
-        'p_since': since.toUtc().toIso8601String(),
-      },
+      params: {'p_shop_id': shopId, 'p_since': since.toUtc().toIso8601String()},
     );
     if (raw is Map) return Map<String, dynamic>.from(raw);
     return const <String, dynamic>{};

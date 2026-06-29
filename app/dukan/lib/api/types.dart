@@ -41,8 +41,9 @@ class ShopSummary {
       currencyDecimals: currencyDecimals[code] ?? 2,
       defaultLanguageCode: json['default_language_code'] as String,
       timezone: json['timezone'] as String,
-      onboardingDismissedAt:
-          dismissedRaw == null ? null : DateTime.parse(dismissedRaw),
+      onboardingDismissedAt: dismissedRaw == null
+          ? null
+          : DateTime.parse(dismissedRaw),
       scannerSettings: scanner,
     );
   }
@@ -51,6 +52,7 @@ class ShopSummary {
   final String name;
   final String setupStatus;
   final String currencyCode;
+
   /// Resolved display symbol for `currencyCode` from the currency ref
   /// table (e.g., USD → $, SLSH → SLSH). Used everywhere the UI prints
   /// a monetary value so we never hardcode "$" outside this projection.
@@ -61,6 +63,7 @@ class ShopSummary {
   final int currencyDecimals;
   final String defaultLanguageCode;
   final String timezone;
+
   /// Null = the optional item-onboarding step still appears once on
   /// first sign-in after setup. Non-null = shopkeeper dismissed it and
   /// we go straight to Home from now on.
@@ -140,8 +143,8 @@ class ItemSearchResult {
       defaultUnitLabel: json['default_unit_label'] as String?,
       defaultUnitConversionToBase:
           (json['default_unit_conversion_to_base'] as num?)?.toDouble(),
-      defaultUnitSalePrice:
-          (json['default_unit_sale_price'] as num?)?.toDouble(),
+      defaultUnitSalePrice: (json['default_unit_sale_price'] as num?)
+          ?.toDouble(),
       defaultUnitLastCost: (json['default_unit_last_cost'] as num?)?.toDouble(),
       currentStock: (json['current_stock'] as num?)?.toDouble(),
       reorderThreshold: (json['reorder_threshold'] as num?)?.toDouble(),
@@ -217,20 +220,19 @@ class PartyDetail {
   });
 
   factory PartyDetail.fromJson(Map<String, dynamic> json) => PartyDetail(
-        header: PartyDetailHeader.fromJson(
-          Map<String, dynamic>.from(json['header'] as Map),
-        ),
-        sales: (json['sales'] as List? ?? const [])
-            .map((row) => PartyTxnRow.fromJson(Map<String, dynamic>.from(row)))
-            .toList(growable: false),
-        receives: (json['receives'] as List? ?? const [])
-            .map((row) => PartyTxnRow.fromJson(Map<String, dynamic>.from(row)))
-            .toList(growable: false),
-        payments: (json['payments'] as List? ?? const [])
-            .map((row) =>
-                PartyPaymentRow.fromJson(Map<String, dynamic>.from(row)))
-            .toList(growable: false),
-      );
+    header: PartyDetailHeader.fromJson(
+      Map<String, dynamic>.from(json['header'] as Map),
+    ),
+    sales: (json['sales'] as List? ?? const [])
+        .map((row) => PartyTxnRow.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false),
+    receives: (json['receives'] as List? ?? const [])
+        .map((row) => PartyTxnRow.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false),
+    payments: (json['payments'] as List? ?? const [])
+        .map((row) => PartyPaymentRow.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false),
+  );
 
   final PartyDetailHeader header;
   final List<PartyTxnRow> sales;
@@ -279,12 +281,12 @@ class PartyTxnRow {
   });
 
   factory PartyTxnRow.fromJson(Map<String, dynamic> json) => PartyTxnRow(
-        txnId: json['txn_id'] as String,
-        occurredAt: DateTime.parse(json['occurred_at'] as String),
-        totalAmount: (json['total_amount'] as num).toDouble(),
-        paidAmount: (json['paid_amount'] as num).toDouble(),
-        isVoided: json['is_voided'] as bool? ?? false,
-      );
+    txnId: json['txn_id'] as String,
+    occurredAt: DateTime.parse(json['occurred_at'] as String),
+    totalAmount: (json['total_amount'] as num).toDouble(),
+    paidAmount: (json['paid_amount'] as num).toDouble(),
+    isVoided: json['is_voided'] as bool? ?? false,
+  );
 
   final String txnId;
   final DateTime occurredAt;
@@ -312,9 +314,46 @@ class PartyPaymentRow {
   final String paymentId;
   final DateTime occurredAt;
   final double amount;
+
   /// 'I' — inbound (customer pays the shop); 'O' — outbound (shop pays
   /// the supplier).
   final String direction;
+}
+
+/// Header row from `get_payment` — the Payment detail screen.
+class PaymentDetail {
+  const PaymentDetail({
+    required this.paymentId,
+    required this.occurredAt,
+    required this.partyId,
+    required this.partyName,
+    required this.direction,
+    required this.amount,
+    required this.paymentMethodCode,
+    required this.notes,
+  });
+
+  factory PaymentDetail.fromJson(Map<String, dynamic> json) => PaymentDetail(
+    paymentId: json['payment_id'] as String,
+    occurredAt: DateTime.parse(json['occurred_at'] as String),
+    partyId: json['party_id'] as String?,
+    partyName: json['party_name'] as String?,
+    direction: json['direction'] as String,
+    amount: (json['amount'] as num).toDouble(),
+    paymentMethodCode: json['payment_method_code'] as String?,
+    notes: json['notes'] as String?,
+  );
+
+  final String paymentId;
+  final DateTime occurredAt;
+  final String? partyId;
+  final String? partyName;
+
+  /// 'I' — inbound (Money In); 'O' — outbound (Money Out).
+  final String direction;
+  final double amount;
+  final String? paymentMethodCode;
+  final String? notes;
 }
 
 /// Aggregate returned by `get_today_summary` — drives the Home/dashboard
@@ -328,11 +367,11 @@ class TodaySummary {
   });
 
   factory TodaySummary.fromJson(Map<String, dynamic> json) => TodaySummary(
-        salesToday: (json['sales_today'] as num).toDouble(),
-        receivablesTotal: (json['receivables_total'] as num).toDouble(),
-        payablesTotal: (json['payables_total'] as num).toDouble(),
-        lowStockCount: (json['low_stock_count'] as num).toInt(),
-      );
+    salesToday: (json['sales_today'] as num).toDouble(),
+    receivablesTotal: (json['receivables_total'] as num).toDouble(),
+    payablesTotal: (json['payables_total'] as num).toDouble(),
+    lowStockCount: (json['low_stock_count'] as num).toInt(),
+  );
 
   final double salesToday;
   final double receivablesTotal;
@@ -436,6 +475,7 @@ class PartyBalanceRow {
   final String partyId;
   final String name;
   final String? phone;
+
   /// Either receivable or payable depending on which list this row came
   /// from — the caller knows which.
   final double amount;
@@ -452,13 +492,13 @@ class LowStockRow {
   });
 
   factory LowStockRow.fromJson(Map<String, dynamic> json) => LowStockRow(
-        shopItemId: json['shop_item_id'] as String,
-        displayName: json['display_name'] as String,
-        currentStock: (json['current_stock'] as num).toDouble(),
-        reorderThreshold: (json['reorder_threshold'] as num?)?.toDouble(),
-        baseUnitCode: json['base_unit_code'] as String,
-        baseUnitLabel: json['base_unit_label'] as String,
-      );
+    shopItemId: json['shop_item_id'] as String,
+    displayName: json['display_name'] as String,
+    currentStock: (json['current_stock'] as num).toDouble(),
+    reorderThreshold: (json['reorder_threshold'] as num?)?.toDouble(),
+    baseUnitCode: json['base_unit_code'] as String,
+    baseUnitLabel: json['base_unit_label'] as String,
+  );
 
   final String shopItemId;
   final String displayName;
@@ -556,10 +596,10 @@ class CategoryOption {
   });
 
   factory CategoryOption.fromJson(Map<String, dynamic> json) => CategoryOption(
-        id: json['id'] as String,
-        code: json['code'] as String,
-        name: json['name'] as String,
-      );
+    id: json['id'] as String,
+    code: json['code'] as String,
+    name: json['name'] as String,
+  );
 
   final String id;
   final String code;
@@ -581,14 +621,14 @@ class TopMoverRow {
   });
 
   factory TopMoverRow.fromJson(Map<String, dynamic> json) => TopMoverRow(
-        shopItemId: json['shop_item_id'] as String,
-        displayName: json['display_name'] as String,
-        baseUnitCode: json['base_unit_code'] as String,
-        baseUnitLabel: json['base_unit_label'] as String,
-        unitsSoldBase: (json['units_sold_base'] as num).toDouble(),
-        revenue: (json['revenue'] as num).toDouble(),
-        salesCount: json['sales_count'] as int,
-      );
+    shopItemId: json['shop_item_id'] as String,
+    displayName: json['display_name'] as String,
+    baseUnitCode: json['base_unit_code'] as String,
+    baseUnitLabel: json['base_unit_label'] as String,
+    unitsSoldBase: (json['units_sold_base'] as num).toDouble(),
+    revenue: (json['revenue'] as num).toDouble(),
+    salesCount: json['sales_count'] as int,
+  );
 
   final String shopItemId;
   final String displayName;
@@ -611,12 +651,12 @@ class DeadStockRow {
   });
 
   factory DeadStockRow.fromJson(Map<String, dynamic> json) => DeadStockRow(
-        shopItemId: json['shop_item_id'] as String,
-        displayName: json['display_name'] as String,
-        baseUnitCode: json['base_unit_code'] as String,
-        baseUnitLabel: json['base_unit_label'] as String,
-        currentStock: (json['current_stock'] as num).toDouble(),
-      );
+    shopItemId: json['shop_item_id'] as String,
+    displayName: json['display_name'] as String,
+    baseUnitCode: json['base_unit_code'] as String,
+    baseUnitLabel: json['base_unit_label'] as String,
+    currentStock: (json['current_stock'] as num).toDouble(),
+  );
 
   final String shopItemId;
   final String displayName;
@@ -649,17 +689,17 @@ class PaymentSummary {
   });
 
   factory PaymentSummary.fromJson(Map<String, dynamic> json) => PaymentSummary(
-        paymentId: json['payment_id'] as String,
-        occurredAt: DateTime.parse(json['occurred_at'] as String),
-        createdAt: DateTime.parse(json['created_at'] as String),
-        amount: (json['amount'] as num).toDouble(),
-        direction: json['direction'] as String,
-        partyId: json['party_id'] as String?,
-        partyName: json['party_name'] as String?,
-        paymentMethodCode: json['payment_method_code'] as String?,
-        notes: json['notes'] as String?,
-        isRefund: json['is_refund'] as bool? ?? false,
-      );
+    paymentId: json['payment_id'] as String,
+    occurredAt: DateTime.parse(json['occurred_at'] as String),
+    createdAt: DateTime.parse(json['created_at'] as String),
+    amount: (json['amount'] as num).toDouble(),
+    direction: json['direction'] as String,
+    partyId: json['party_id'] as String?,
+    partyName: json['party_name'] as String?,
+    paymentMethodCode: json['payment_method_code'] as String?,
+    notes: json['notes'] as String?,
+    isRefund: json['is_refund'] as bool? ?? false,
+  );
 
   final String paymentId;
   final DateTime occurredAt;
@@ -690,15 +730,15 @@ class ExpenseSummary {
   });
 
   factory ExpenseSummary.fromJson(Map<String, dynamic> json) => ExpenseSummary(
-        txnId: json['txn_id'] as String,
-        occurredAt: DateTime.parse(json['occurred_at'] as String),
-        postedAt: DateTime.parse(json['posted_at'] as String),
-        amount: (json['amount'] as num).toDouble(),
-        paymentMethodCode: json['payment_method_code'] as String?,
-        categoryId: json['category_id'] as String?,
-        categoryName: json['category_name'] as String?,
-        notes: json['notes'] as String?,
-      );
+    txnId: json['txn_id'] as String,
+    occurredAt: DateTime.parse(json['occurred_at'] as String),
+    postedAt: DateTime.parse(json['posted_at'] as String),
+    amount: (json['amount'] as num).toDouble(),
+    paymentMethodCode: json['payment_method_code'] as String?,
+    categoryId: json['category_id'] as String?,
+    categoryName: json['category_name'] as String?,
+    notes: json['notes'] as String?,
+  );
 
   final String txnId;
   final DateTime occurredAt;
@@ -806,8 +846,7 @@ class SaleSummary {
   final String? reversalTxnId;
   final DateTime? voidedAt;
 
-  bool get isDebt =>
-      (partyId != null) && (paidAmount < totalAmount);
+  bool get isDebt => (partyId != null) && (paidAmount < totalAmount);
 }
 
 /// One line on a sale's (or receive's) receipt. Names + unit labels +
@@ -865,11 +904,7 @@ typedef ReceiveSummary = SaleSummary;
 typedef ReceiveLineDetail = SaleLineDetail;
 
 class UnitOption {
-  const UnitOption({
-    required this.id,
-    required this.code,
-    required this.label,
-  });
+  const UnitOption({required this.id, required this.code, required this.label});
 
   factory UnitOption.fromJson(Map<String, dynamic> json) => UnitOption(
     id: json['id'] as String,
@@ -909,8 +944,9 @@ class ReceiveUnitOption {
     Map<String, dynamic> json, {
     required String screen,
   }) {
-    final defaultFlagKey =
-        screen == 'sale' ? 'is_default_sale' : 'is_default_receive';
+    final defaultFlagKey = screen == 'sale'
+        ? 'is_default_sale'
+        : 'is_default_receive';
     return ReceiveUnitOption(
       shopItemUnitId: json['shop_item_unit_id'] as String,
       unitCode: json['unit_code'] as String,
@@ -972,8 +1008,7 @@ class ShopItemSummary {
         unitCount: json['unit_count'] as int,
         isActive: json['is_active'] as bool,
         // 0045 additions — null in older callers / fixtures.
-        defaultSalePrice:
-            (json['default_sale_price'] as num?)?.toDouble(),
+        defaultSalePrice: (json['default_sale_price'] as num?)?.toDouble(),
         anyPriceSet: json['any_price_set'] as bool? ?? false,
       );
 
@@ -1085,13 +1120,13 @@ class AuditEntry {
   });
 
   factory AuditEntry.fromJson(Map<String, dynamic> json) => AuditEntry(
-        id: json['id'] as String,
-        actorUserId: json['actor_user_id'] as String?,
-        actionCode: json['action_code'] as String,
-        occurredAt: DateTime.parse(json['occurred_at'] as String),
-        reason: json['reason'] as String?,
-        source: json['source'] as String,
-      );
+    id: json['id'] as String,
+    actorUserId: json['actor_user_id'] as String?,
+    actionCode: json['action_code'] as String,
+    occurredAt: DateTime.parse(json['occurred_at'] as String),
+    reason: json['reason'] as String?,
+    source: json['source'] as String,
+  );
 
   final String id;
   final String? actorUserId;

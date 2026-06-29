@@ -4480,6 +4480,36 @@ begin
     raise exception 'II (6): list_payment_allocations want 2 rows, got %', v_alloc_n;
   end if;
 
+  -- (7) get_payment returns the header for this payment (0083).
+  declare
+    v_get_dir   char(1);
+    v_get_amt   numeric;
+    v_get_party uuid;
+    v_orig_sub  text;
+  begin
+    select direction, amount, party_id
+    into v_get_dir, v_get_amt, v_get_party
+    from public.get_payment(v_shop_id, v_pay_id);
+    if v_get_dir <> 'I' or v_get_amt <> 20 or v_get_party <> v_cust_id then
+      raise exception 'II (7): get_payment header want I/20/cust, got %/%/%',
+        v_get_dir, v_get_amt, v_get_party;
+    end if;
+
+    -- (8) get_payment denies a non-member (auth_can_access_shop guard).
+    v_orig_sub := current_setting('request.jwt.claim.sub', true);
+    perform set_config('request.jwt.claim.sub',
+      '000000ff-0000-0000-0000-0000000000ff', true);
+    v_failed := false;
+    begin
+      perform public.get_payment(v_shop_id, v_pay_id);
+    exception when others then v_failed := true;
+    end;
+    perform set_config('request.jwt.claim.sub', v_orig_sub, true);
+    if not v_failed then
+      raise exception 'II (8): get_payment must deny a non-member';
+    end if;
+  end;
+
   -- (3a) Validation: sum mismatch.
   v_failed := false;
   begin

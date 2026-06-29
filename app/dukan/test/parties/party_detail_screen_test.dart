@@ -5,6 +5,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/parties/party_detail_screen.dart';
 import 'package:dukan/payment/payment_controller.dart';
+import 'package:dukan/payment/payment_detail_screen.dart';
 import 'package:dukan/sale/sale_detail_screen.dart';
 
 import '../shared/fakes.dart';
@@ -115,8 +116,50 @@ void main() {
     expect(find.text(en.saleDetailTitle), findsOneWidget);
   });
 
-  testWidgets('hide action soft-deletes the party (queued set_party_active)',
-      (tester) async {
+  testWidgets('tapping a payment row opens the payment detail', (tester) async {
+    api.onGetPartyDetail = (_, _, _) async => PartyDetail(
+      header: const PartyDetailHeader(
+        id: 'p-1',
+        name: 'Cumar',
+        phone: null,
+        typeCode: 'customer',
+        receivable: 0,
+        payable: 0,
+        isActive: true,
+      ),
+      sales: const [],
+      receives: const [],
+      payments: [
+        PartyPaymentRow(
+          paymentId: 'pay-1',
+          occurredAt: DateTime(2026, 6, 12),
+          amount: 30,
+          direction: 'I',
+        ),
+      ],
+    );
+    api.onGetPayment = (_, id) async => PaymentDetail(
+      paymentId: id,
+      occurredAt: DateTime(2026, 6, 12),
+      partyId: 'p-1',
+      partyName: 'Cumar',
+      direction: 'I',
+      amount: 30,
+      paymentMethodCode: 'cash',
+      notes: null,
+    );
+    api.onListPaymentAllocations = (_, _) async => const [];
+
+    await pump(tester);
+    await tester.tap(find.text('\$30.00'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PaymentDetailScreen), findsOneWidget);
+  });
+
+  testWidgets('hide action soft-deletes the party (queued set_party_active)', (
+    tester,
+  ) async {
     api.onGetPartyDetail = (_, _, _) async => PartyDetail(
       header: const PartyDetailHeader(
         id: 'p-1',
@@ -205,36 +248,39 @@ void main() {
     expect(find.text('\$80.00'), findsOneWidget);
   });
 
-  testWidgets('Pay on a supplier opens the Money Out page, supplier pre-filled',
-      (tester) async {
-    api.onGetPartyDetail = (_, _, _) async => PartyDetail(
-      header: const PartyDetailHeader(
-        id: 'p-1',
-        name: 'Alaab Keene',
-        phone: null,
-        typeCode: 'supplier',
-        receivable: 0,
-        payable: 80,
-        isActive: true,
-      ),
-      sales: const [],
-      receives: const [],
-      payments: const [],
-    );
+  testWidgets(
+    'Pay on a supplier opens the Money Out page, supplier pre-filled',
+    (tester) async {
+      api.onGetPartyDetail = (_, _, _) async => PartyDetail(
+        header: const PartyDetailHeader(
+          id: 'p-1',
+          name: 'Alaab Keene',
+          phone: null,
+          typeCode: 'supplier',
+          receivable: 0,
+          payable: 80,
+          isActive: true,
+        ),
+        sales: const [],
+        receives: const [],
+        payments: const [],
+      );
 
-    await pump(tester);
-    await tester.tap(find.text(en.partyDetailPayButton));
-    await tester.pumpAndSettle();
+      await pump(tester);
+      await tester.tap(find.text(en.partyDetailPayButton));
+      await tester.pumpAndSettle();
 
-    // Dedicated Money Out page with the supplier already selected — no
-    // "pick supplier" prompt, no direction toggle.
-    expect(find.text(en.paymentOutLabel), findsWidgets);
-    expect(find.text(en.paymentPickSupplierButton), findsNothing);
-    expect(find.text('Alaab Keene'), findsWidgets);
-  });
+      // Dedicated Money Out page with the supplier already selected — no
+      // "pick supplier" prompt, no direction toggle.
+      expect(find.text(en.paymentOutLabel), findsWidgets);
+      expect(find.text(en.paymentPickSupplierButton), findsNothing);
+      expect(find.text('Alaab Keene'), findsWidgets);
+    },
+  );
 
-  testWidgets('pencil → edit dialog → updateParty fires with new name',
-      (tester) async {
+  testWidgets('pencil → edit dialog → updateParty fires with new name', (
+    tester,
+  ) async {
     api.onGetPartyDetail = (_, _, _) async => PartyDetail(
       header: const PartyDetailHeader(
         id: 'p-1',
@@ -258,7 +304,9 @@ void main() {
 
     // Dialog has two text fields — name + phone. Edit the name.
     await tester.enterText(find.byType(TextField).first, 'New Name');
-    await tester.tap(find.widgetWithText(FilledButton, en.shopItemEditorSaveButton));
+    await tester.tap(
+      find.widgetWithText(FilledButton, en.shopItemEditorSaveButton),
+    );
     await tester.pumpAndSettle();
 
     expect(api.updatePartyCalls, hasLength(1));
@@ -295,10 +343,7 @@ void main() {
 
       await pump(tester);
 
-      expect(
-        find.textContaining(en.relativeTimeMinutesAgo(5)),
-        findsOneWidget,
-      );
+      expect(find.textContaining(en.relativeTimeMinutesAgo(5)), findsOneWidget);
     },
   );
 }

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/payment/payment_detail_screen.dart';
 import 'package:dukan/payment/payment_history_filter_sheet.dart';
 import 'package:dukan/shared/date_range.dart';
 import 'package:dukan/shared/history_date.dart';
@@ -62,13 +63,13 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       return rows.map(repo.toPaymentSummary).toList(growable: false);
     }
     return context.read<ShopApi>().listPayments(
-          shopId: widget.shop.id,
-          limit: historyPageLimit,
-          dateFrom: _filters.dateRange.from,
-          dateTo: _filters.dateRange.to,
-          partyId: _filters.partyId,
-          direction: _filters.direction.toCode(),
-        );
+      shopId: widget.shop.id,
+      limit: historyPageLimit,
+      dateFrom: _filters.dateRange.from,
+      dateTo: _filters.dateRange.to,
+      partyId: _filters.partyId,
+      direction: _filters.direction.toCode(),
+    );
   }
 
   void _reload() => setState(() => _future = _fetch());
@@ -125,15 +126,16 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             Text(
               dateRangeLabel(context, _filters.dateRange),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
         actions: [
           FilterFunnelAction(
             onPressed: _openFilterSheet,
-            activeCount: _filters.activeBeyondDate +
+            activeCount:
+                _filters.activeBeyondDate +
                 (_filters.dateRange.isDefault ? 0 : 1),
           ),
         ],
@@ -148,10 +150,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 onRefresh: () async => _reload(),
                 emptyMessage: l.paymentHistoryEmptyMessage,
                 errorMessage: l.paymentHistoryLoadFailedMessage,
-                itemBuilder: (_, row, _) => _PaymentRow(
-                  shop: widget.shop,
-                  row: row,
-                ),
+                itemBuilder: (_, row, _) =>
+                    _PaymentRow(shop: widget.shop, row: row),
               ),
             ),
           ],
@@ -174,14 +174,18 @@ class _PaymentRow extends StatelessWidget {
     final color = inbound
         ? theme.colorScheme.tertiary
         : theme.colorScheme.error;
-    final icon = inbound
-        ? Icons.arrow_downward
-        : Icons.arrow_upward;
+    final icon = inbound ? Icons.arrow_downward : Icons.arrow_upward;
     final partyLabel = row.partyName ?? l.paymentHistoryNoParty;
     final note = row.notes?.trim();
     final hasNote = note != null && note.isNotEmpty;
     return ListTile(
       contentPadding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      onTap: () => Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) =>
+              PaymentDetailScreen(shop: shop, paymentId: row.paymentId),
+        ),
+      ),
       leading: Icon(icon, color: color),
       title: Row(
         children: [

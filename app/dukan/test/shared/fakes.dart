@@ -34,11 +34,11 @@ class FakeConfigResolver extends ConfigResolver {
   /// only exercise [resolve] / [rawOverride], which we override
   /// directly off the in-memory [values] map.
   FakeConfigResolver({Map<String, dynamic>? values})
-      : _values = values ?? const {},
-        super(
-          shopApi: FakeShopApi(),
-          deviceConfigDao: DeviceConfigDao(Completer().future.then((v) => v)),
-        );
+    : _values = values ?? const {},
+      super(
+        shopApi: FakeShopApi(),
+        deviceConfigDao: DeviceConfigDao(Completer().future.then((v) => v)),
+      );
 
   final Map<String, dynamic> _values;
 
@@ -80,8 +80,7 @@ class FakeLocalRepository extends LocalRepository {
   // so non-overridden writes (e.g. the #390 optimistic mirror writes the
   // mutation path makes) complete as no-ops against empty tables instead of
   // hanging on a never-completing future. Reads stay overridden below.
-  FakeLocalRepository({required this.shopApi})
-      : super(AppDatabase.instance());
+  FakeLocalRepository({required this.shopApi}) : super(AppDatabase.instance());
 
   final FakeShopApi shopApi;
 
@@ -103,21 +102,23 @@ class FakeLocalRepository extends LocalRepository {
     final out = <LocalShopItem>[];
     for (final r in results) {
       final id = r.shopItemId;
-      if (id == null) continue;  // global-catalog hits aren't usable here
+      if (id == null) continue; // global-catalog hits aren't usable here
       _itemCache[id] = r;
-      out.add(LocalShopItem(
-        shopItemId: id,
-        shopId: shopId,
-        itemId: r.itemId,
-        displayName: r.displayName,
-        categoryId: null,
-        baseUnitCode: r.baseUnitCode,
-        currentStock: r.currentStock ?? 0,
-        avgCost: 0,
-        reorderThreshold: r.reorderThreshold,
-        isActive: true,
-        serverUpdatedAtMs: 0,
-      ));
+      out.add(
+        LocalShopItem(
+          shopItemId: id,
+          shopId: shopId,
+          itemId: r.itemId,
+          displayName: r.displayName,
+          categoryId: null,
+          baseUnitCode: r.baseUnitCode,
+          currentStock: r.currentStock ?? 0,
+          avgCost: 0,
+          reorderThreshold: r.reorderThreshold,
+          isActive: true,
+          serverUpdatedAtMs: 0,
+        ),
+      );
     }
     return out;
   }
@@ -165,17 +166,19 @@ class FakeLocalRepository extends LocalRepository {
       rankBy: rankBy,
     );
     return results
-        .map((p) => LocalParty(
-              partyId: p.id,
-              shopId: shopId,
-              name: p.name,
-              phone: p.phone,
-              typeCode: p.typeCode,
-              receivable: p.receivable,
-              payable: p.payable,
-              isActive: true,
-              serverUpdatedAtMs: 0,
-            ))
+        .map(
+          (p) => LocalParty(
+            partyId: p.id,
+            shopId: shopId,
+            name: p.name,
+            phone: p.phone,
+            typeCode: p.typeCode,
+            receivable: p.receivable,
+            payable: p.payable,
+            isActive: true,
+            serverUpdatedAtMs: 0,
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -188,13 +191,15 @@ class FakeLocalRepository extends LocalRepository {
       locale: 'en',
     );
     return cats
-        .map((c) => LocalExpenseCategory(
-              categoryId: c.id,
-              shopId: shopId,
-              code: c.code,
-              name: c.name,
-              isActive: true,
-            ))
+        .map(
+          (c) => LocalExpenseCategory(
+            categoryId: c.id,
+            shopId: shopId,
+            code: c.code,
+            name: c.name,
+            isActive: true,
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -408,8 +413,7 @@ class FakeShopApi implements ShopApi {
   Future<void> Function(String shopId)? onCompleteSetup;
   Future<void> Function(String shopId)? onDismissOnboarding;
   final List<String> dismissOnboardingCalls = [];
-  Future<String> Function(String shopId, String itemId)?
-  onEnsureShopItem;
+  Future<String> Function(String shopId, String itemId)? onEnsureShopItem;
   Future<void> Function(String shopId, String shopItemUnitId, num? salePrice)?
   onSetShopItemUnitSalePrice;
   final List<({String shopItemUnitId, num? salePrice})>
@@ -517,9 +521,8 @@ class FakeShopApi implements ShopApi {
     String typeCode,
   )?
   onCreateParty;
-  final List<
-    ({String name, String? phone, String typeCode})
-  > createPartyCalls = [];
+  final List<({String name, String? phone, String typeCode})> createPartyCalls =
+      [];
   Future<List<UnitOption>> Function()? onListUnits;
   Future<String> Function(
     String shopId,
@@ -601,6 +604,8 @@ class FakeShopApi implements ShopApi {
   Future<ReceiveSummary?> Function(String shopId, String txnId)? onGetReceive;
   Future<List<ReceiveLineDetail>> Function(String shopId, String txnId)?
   onGetReceiveLines;
+  Future<PaymentDetail?> Function(String shopId, String paymentId)?
+  onGetPayment;
   Future<String> Function(String shopId, String txnId, String clientOpId)?
   onVoidReceive;
   final List<String> voidReceiveCalls = [];
@@ -666,7 +671,8 @@ class FakeShopApi implements ShopApi {
     String entityType,
     String entityId,
     int limit,
-  )? onListAuditEntriesForEntity;
+  )?
+  onListAuditEntriesForEntity;
 
   @override
   Future<List<AuditEntry>> listAuditEntriesForEntity({
@@ -699,8 +705,10 @@ class FakeShopApi implements ShopApi {
     required num? salePrice,
     String? clientOpId,
   }) async {
-    setShopItemUnitSalePriceCalls
-        .add((shopItemUnitId: shopItemUnitId, salePrice: salePrice));
+    setShopItemUnitSalePriceCalls.add((
+      shopItemUnitId: shopItemUnitId,
+      salePrice: salePrice,
+    ));
     if (onSetShopItemUnitSalePrice != null) {
       return onSetShopItemUnitSalePrice!(shopId, shopItemUnitId, salePrice);
     }
@@ -814,12 +822,14 @@ class FakeShopApi implements ShopApi {
   }
 
   final List<
-      ({
-        String shopItemId,
-        String aliasText,
-        String? languageCode,
-        bool isDisplay,
-      })> addShopItemAliasCalls = [];
+    ({
+      String shopItemId,
+      String aliasText,
+      String? languageCode,
+      bool isDisplay,
+    })
+  >
+  addShopItemAliasCalls = [];
 
   @override
   Future<String> addShopItemAlias({
@@ -1012,7 +1022,7 @@ class FakeShopApi implements ShopApi {
   )?
   onPostOpeningPartyBalance;
   final List<({String partyId, num amount, String direction})>
-      postOpeningPartyBalanceCalls = [];
+  postOpeningPartyBalanceCalls = [];
 
   @override
   Future<String> postOpeningPartyBalance({
@@ -1023,8 +1033,11 @@ class FakeShopApi implements ShopApi {
     String? clientOpId,
     String? notes,
   }) async {
-    postOpeningPartyBalanceCalls
-        .add((partyId: partyId, amount: amount, direction: direction));
+    postOpeningPartyBalanceCalls.add((
+      partyId: partyId,
+      amount: amount,
+      direction: direction,
+    ));
     if (onPostOpeningPartyBalance != null) {
       return onPostOpeningPartyBalance!(shopId, partyId, amount, direction);
     }
@@ -1217,8 +1230,7 @@ class FakeShopApi implements ShopApi {
     required String categoryId,
     required String name,
     String? clientOpId,
-  }) async =>
-      categoryId;
+  }) async => categoryId;
 
   @override
   Future<void> renameShopCategory({
@@ -1265,8 +1277,7 @@ class FakeShopApi implements ShopApi {
     required String categoryId,
     required String name,
     String? clientOpId,
-  }) async =>
-      categoryId;
+  }) async => categoryId;
 
   @override
   Future<void> renameExpenseCategory({
@@ -1466,6 +1477,15 @@ class FakeShopApi implements ShopApi {
   }
 
   @override
+  Future<PaymentDetail?> getPayment({
+    required String shopId,
+    required String paymentId,
+  }) async {
+    if (onGetPayment != null) return onGetPayment!(shopId, paymentId);
+    return null;
+  }
+
+  @override
   Future<String> voidReceive({
     required String shopId,
     required String txnId,
@@ -1612,9 +1632,8 @@ class FakeShopApi implements ShopApi {
     num? reorderThreshold,
   )?
   onSetShopItemReorderThreshold;
-  final List<
-    ({String shopItemId, num? reorderThreshold})
-  > setShopItemReorderThresholdCalls = [];
+  final List<({String shopItemId, num? reorderThreshold})>
+  setShopItemReorderThresholdCalls = [];
 
   @override
   Future<void> setShopItemReorderThreshold({
@@ -1622,8 +1641,10 @@ class FakeShopApi implements ShopApi {
     required String shopItemId,
     required num? reorderThreshold,
   }) async {
-    setShopItemReorderThresholdCalls
-        .add((shopItemId: shopItemId, reorderThreshold: reorderThreshold));
+    setShopItemReorderThresholdCalls.add((
+      shopItemId: shopItemId,
+      reorderThreshold: reorderThreshold,
+    ));
     if (onSetShopItemReorderThreshold != null) {
       return onSetShopItemReorderThreshold!(
         shopId,
@@ -1641,11 +1662,7 @@ class FakeShopApi implements ShopApi {
   )?
   onSetShopItemUnitDefaultFlags;
   final List<
-    ({
-      String shopItemUnitId,
-      bool isDefaultSale,
-      bool isDefaultReceive,
-    })
+    ({String shopItemUnitId, bool isDefaultSale, bool isDefaultReceive})
   >
   setShopItemUnitDefaultFlagsCalls = [];
 
@@ -1679,9 +1696,9 @@ class FakeShopApi implements ShopApi {
   }
 
   Future<void> Function(String shopId, String shopItemId, String? categoryId)?
-      onSetShopItemCategory;
+  onSetShopItemCategory;
   final List<({String shopItemId, String? categoryId})>
-      setShopItemCategoryCalls = [];
+  setShopItemCategoryCalls = [];
 
   @override
   Future<void> setShopItemCategory({
@@ -1690,15 +1707,17 @@ class FakeShopApi implements ShopApi {
     required String? categoryId,
     String? clientOpId,
   }) async {
-    setShopItemCategoryCalls
-        .add((shopItemId: shopItemId, categoryId: categoryId));
+    setShopItemCategoryCalls.add((
+      shopItemId: shopItemId,
+      categoryId: categoryId,
+    ));
     if (onSetShopItemCategory != null) {
       return onSetShopItemCategory!(shopId, shopItemId, categoryId);
     }
   }
 
   Future<void> Function(String shopId, String shopItemUnitId)?
-      onDeactivateShopItemUnit;
+  onDeactivateShopItemUnit;
   final List<String> deactivateShopItemUnitCalls = [];
 
   @override
@@ -1741,18 +1760,15 @@ class FakeShopApi implements ShopApi {
     removeShopItemAliasCalls.add(aliasId);
   }
 
-  final List<
-      ({
-        String shopItemUnitId,
-        String barcode,
-        bool isPrimary,
-      })> addShopItemBarcodeCalls = [];
+  final List<({String shopItemUnitId, String barcode, bool isPrimary})>
+  addShopItemBarcodeCalls = [];
   Future<String> Function(
     String shopId,
     String shopItemUnitId,
     String barcode,
     bool isPrimary,
-  )? onAddShopItemBarcode;
+  )?
+  onAddShopItemBarcode;
 
   @override
   Future<String> addShopItemBarcode({
@@ -1769,8 +1785,7 @@ class FakeShopApi implements ShopApi {
       isPrimary: isPrimary,
     ));
     if (onAddShopItemBarcode != null) {
-      return onAddShopItemBarcode!(
-          shopId, shopItemUnitId, barcode, isPrimary);
+      return onAddShopItemBarcode!(shopId, shopItemUnitId, barcode, isPrimary);
     }
     return 'fake-barcode-${barcode.hashCode}';
   }
@@ -1802,7 +1817,8 @@ class FakeShopApi implements ShopApi {
     int periodDays,
     int limit,
     String? locale,
-  )? onListProductVelocity;
+  )?
+  onListProductVelocity;
 
   @override
   Future<ProductVelocity> listProductVelocity({
@@ -1818,13 +1834,15 @@ class FakeShopApi implements ShopApi {
   }
 
   final List<
-      ({
-        String reasonCode,
-        String shopItemId,
-        num quantityDelta,
-        num? unitCost,
-        String? notes,
-      })> postInventoryAdjustmentCalls = [];
+    ({
+      String reasonCode,
+      String shopItemId,
+      num quantityDelta,
+      num? unitCost,
+      String? notes,
+    })
+  >
+  postInventoryAdjustmentCalls = [];
   Future<String> Function(
     String shopId,
     String reasonCode,
@@ -1832,7 +1850,8 @@ class FakeShopApi implements ShopApi {
     num quantityDelta,
     num? unitCost,
     String? notes,
-  )? onPostInventoryAdjustment;
+  )?
+  onPostInventoryAdjustment;
 
   @override
   Future<String> postInventoryAdjustment({
@@ -1990,16 +2009,15 @@ class FakeShopApi implements ShopApi {
     num? unitCost,
     String? clientOpId,
     String? notes,
-  }) =>
-      postInventoryAdjustment(
-        shopId: shopId,
-        reasonCode: 'opening',
-        shopItemId: shopItemId,
-        quantityDelta: baseQuantity,
-        unitCost: unitCost,
-        clientOpId: clientOpId,
-        notes: notes,
-      );
+  }) => postInventoryAdjustment(
+    shopId: shopId,
+    reasonCode: 'opening',
+    shopItemId: shopItemId,
+    quantityDelta: baseQuantity,
+    unitCost: unitCost,
+    clientOpId: clientOpId,
+    notes: notes,
+  );
 
   // ----- Hierarchical config (Phase 3) ---------------------------------
   /// Pre-populate the rows the resolver will see. Empty list = no
@@ -2008,9 +2026,8 @@ class FakeShopApi implements ShopApi {
       const <PlatformConfigEntry>[];
 
   /// Records of every call to setPlatformConfig.
-  final List<
-      ({String? orgId, String key, Object value})> setPlatformConfigCalls =
-      [];
+  final List<({String? orgId, String key, Object value})>
+  setPlatformConfigCalls = [];
 
   @override
   Future<List<PlatformConfigEntry>> getPlatformConfigForShop({
@@ -2030,7 +2047,7 @@ class FakeShopApi implements ShopApi {
 
   /// Records of every call to setAuditOriginalActor (#368).
   final List<({String shopId, String entityId, String originalActorUserId})>
-      setAuditOriginalActorCalls = [];
+  setAuditOriginalActorCalls = [];
 
   @override
   Future<void> setAuditOriginalActor({
@@ -2047,44 +2064,47 @@ class FakeShopApi implements ShopApi {
 
   // --- Sync RPCs (#373) ---------------------------------------------------
 
-  Future<Map<String, dynamic>> Function({
-    required String shopId,
-    bool force,
-  })? onGetShopFullSync;
+  Future<Map<String, dynamic>> Function({required String shopId, bool force})?
+  onGetShopFullSync;
   final List<({String shopId, bool force})> getShopFullSyncCalls = [];
 
   Future<Map<String, dynamic>> Function({
     required String shopId,
     required DateTime since,
-  })? onGetShopItemsDelta;
+  })?
+  onGetShopItemsDelta;
   final List<({String shopId, DateTime since})> getShopItemsDeltaCalls = [];
 
   Future<Map<String, dynamic>> Function({
     required String shopId,
     required DateTime since,
-  })? onGetPartiesDelta;
+  })?
+  onGetPartiesDelta;
   final List<({String shopId, DateTime since})> getPartiesDeltaCalls = [];
 
   Future<Map<String, dynamic>> Function({
     required String shopId,
     required DateTime since,
-  })? onGetCategoriesDelta;
+  })?
+  onGetCategoriesDelta;
   final List<({String shopId, DateTime since})> getCategoriesDeltaCalls = [];
 
   Future<Map<String, dynamic>> Function({
     required String shopId,
     required DateTime since,
     int limit,
-  })? onGetTransactionsDelta;
+  })?
+  onGetTransactionsDelta;
   final List<({String shopId, DateTime since, int limit})>
-      getTransactionsDeltaCalls = [];
+  getTransactionsDeltaCalls = [];
 
   Future<Map<String, dynamic>> Function({
     required String shopId,
     required DateTime since,
-  })? onGetUnpaidInvoicesDelta;
-  final List<({String shopId, DateTime since})>
-      getUnpaidInvoicesDeltaCalls = [];
+  })?
+  onGetUnpaidInvoicesDelta;
+  final List<({String shopId, DateTime since})> getUnpaidInvoicesDeltaCalls =
+      [];
 
   @override
   Future<Map<String, dynamic>> getShopFullSync({
@@ -2136,8 +2156,7 @@ class FakeShopApi implements ShopApi {
     required DateTime since,
     int limit = 200,
   }) async {
-    getTransactionsDeltaCalls
-        .add((shopId: shopId, since: since, limit: limit));
+    getTransactionsDeltaCalls.add((shopId: shopId, since: since, limit: limit));
     final hook = onGetTransactionsDelta;
     if (hook == null) return const <String, dynamic>{};
     return hook(shopId: shopId, since: since, limit: limit);

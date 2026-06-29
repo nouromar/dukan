@@ -36,6 +36,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentOutLabel => 'Money Out';
 
   @override
+  String get paymentDetailSettledHeader => 'Paid for';
+
+  @override
+  String get paymentDetailNoAllocations =>
+      'This payment isn\'t linked to a sale or receive yet.';
+
+  @override
+  String get paymentDetailLoadFailedMessage => 'Couldn\'t load this payment.';
+
+  @override
   String get expense => 'Expense';
 
   @override

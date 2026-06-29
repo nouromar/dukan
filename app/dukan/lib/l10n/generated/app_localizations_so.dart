@@ -36,6 +36,17 @@ class AppLocalizationsSo extends AppLocalizations {
   String get paymentOutLabel => 'Lacag Bax';
 
   @override
+  String get paymentDetailSettledHeader => 'Waxa loo bixiyay';
+
+  @override
+  String get paymentDetailNoAllocations =>
+      'Lacagtan weli lama xirin iib ama qaadasho.';
+
+  @override
+  String get paymentDetailLoadFailedMessage =>
+      'Lama soo qaadan karin lacagtan.';
+
+  @override
   String get expense => 'Qarashaad';
 
   @override
