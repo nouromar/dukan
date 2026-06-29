@@ -67,11 +67,7 @@ import 'package:dukan/shared/typography.dart';
 enum _BonoSource { camera, gallery }
 
 class ReceiveScreen extends StatefulWidget {
-  const ReceiveScreen({
-    required this.shop,
-    this.bonoPicker,
-    super.key,
-  });
+  const ReceiveScreen({required this.shop, this.bonoPicker, super.key});
 
   final ShopSummary shop;
 
@@ -120,8 +116,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final scanner = ScannerSettings.current;
     _hidListener = HidScanListener(
       onScan: _onHidScan,
-      isActive: () =>
-          mounted && (ModalRoute.of(context)?.isCurrent ?? false),
+      isActive: () => mounted && (ModalRoute.of(context)?.isCurrent ?? false),
       maxInterKeyGap: scanner.hidMaxInterKeyGap,
       maxBurstWindow: scanner.hidMaxBurstWindow,
       minBurstLength: scanner.hidMinBurstLength,
@@ -300,8 +295,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       // no history (empty basket), or any typed query, falls back to the normal
       // alphabetical item search — never a blank grid.
       if (query.trim().isEmpty && supplier != null) {
-        final basket =
-            await repo.supplierBasket(supplier.id, shopId: widget.shop.id);
+        final basket = await repo.supplierBasket(
+          supplier.id,
+          shopId: widget.shop.id,
+        );
         if (basket.isNotEmpty) return basket;
       }
       final items = await repo.searchItems(query, shopId: widget.shop.id);
@@ -346,7 +343,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           itemId: item.itemId,
           displayName: item.displayName,
           packagingLabel:
-              item.packagingLabel ?? item.defaultUnitLabel ?? item.baseUnitLabel,
+              item.packagingLabel ??
+              item.defaultUnitLabel ??
+              item.baseUnitLabel,
           baseUnitCode: item.baseUnitCode,
           baseUnitLabel: item.baseUnitLabel,
           perUnitCost: item.defaultUnitLastCost,
@@ -488,8 +487,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     if (source == null || !mounted) return;
 
     setState(() => _attachingBono = true);
-    final picker = _picker ??=
-        widget.bonoPicker ?? DefaultBonoImagePicker();
+    final picker = _picker ??= widget.bonoPicker ?? DefaultBonoImagePicker();
     try {
       final picked = source == _BonoSource.camera
           ? await picker.pickFromCamera()
@@ -504,9 +502,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       );
       if (!mounted) return;
       setState(() => _bonoDocumentId = docId);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.bonoAttachedToast)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.bonoAttachedToast)));
     } catch (error, stackTrace) {
       _reportError(error, stackTrace, 'upload bono');
       if (mounted) showError(context, l.bonoAttachFailedMessage);
@@ -685,18 +683,20 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     try {
       var lineNo = 1;
       final linesSummary = snapshot.lines.values
-          .map((l) => <String, dynamic>{
-                'line_no': lineNo++,
-                'item_id': l.itemId,
-                'shop_item_unit_id': l.shopItemUnitId,
-                'item_name': l.displayName,
-                'unit_code': l.baseUnitLabel,
-                'unit_label': l.baseUnitLabel,
-                'packaging_label': l.packagingLabel,
-                'quantity': l.quantity.toDouble(),
-                'unit_amount': l.unitCost.toDouble(),
-                'line_total': l.lineTotal.toDouble(),
-              })
+          .map(
+            (l) => <String, dynamic>{
+              'line_no': lineNo++,
+              'item_id': l.itemId,
+              'shop_item_unit_id': l.shopItemUnitId,
+              'item_name': l.displayName,
+              'unit_code': l.baseUnitLabel,
+              'unit_label': l.baseUnitLabel,
+              'packaging_label': l.packagingLabel,
+              'quantity': l.quantity.toDouble(),
+              'unit_amount': l.unitCost.toDouble(),
+              'line_total': l.lineTotal.toDouble(),
+            },
+          )
           .toList();
       await localRepoForOptimistic.writeOptimisticTransaction(
         clientOpId: clientOpId,
@@ -713,12 +713,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         },
       );
     } catch (e, st) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: e,
-        stack: st,
-        library: 'dukan receive',
-        context: ErrorDescription('write optimistic receive transaction'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan receive',
+          context: ErrorDescription('write optimistic receive transaction'),
+        ),
+      );
     }
     // Slice 3: float the just-received items to the top of this supplier's
     // basket immediately; next items-sync reconciles to supplier_item_unit_cost.
@@ -732,12 +734,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         nowMs: DateTime.now().millisecondsSinceEpoch,
       );
     } catch (e, st) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: e,
-        stack: st,
-        library: 'dukan receive',
-        context: ErrorDescription('optimistic supplier basket bump'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan receive',
+          context: ErrorDescription('optimistic supplier basket bump'),
+        ),
+      );
     }
     // Optimistic stock + supplier balance so Products and the suppliers LIST
     // reflect the receive instantly — they read current_stock / local_party
@@ -754,12 +758,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         amount: total,
       );
     } catch (e, st) {
-      FlutterError.reportError(FlutterErrorDetails(
-        exception: e,
-        stack: st,
-        library: 'dukan receive',
-        context: ErrorDescription('optimistic receive stock/balance'),
-      ));
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan receive',
+          context: ErrorDescription('optimistic receive stock/balance'),
+        ),
+      );
     }
 
     if (!mounted) return;
@@ -771,9 +777,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     setState(() => _linesExpanded = false);
     Timing.mark('lines.cleared');
     Timing.endFlow(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l.receiveSavedToast)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l.receiveSavedToast)));
 
     try {
       await api.postReceive(
@@ -814,8 +820,15 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           direction: 'O',
           amount: total,
         );
-      } catch (_) {/* best-effort revert; sync reconciles regardless */}
-      _handleSaveFailure(snapshot, error, stackTrace, l.receivePostFailedMessage);
+      } catch (_) {
+        /* best-effort revert; sync reconciles regardless */
+      }
+      _handleSaveFailure(
+        snapshot,
+        error,
+        stackTrace,
+        l.receivePostFailedMessage,
+      );
     } catch (error, stackTrace) {
       // Network / transient — enqueue for the offline write queue to
       // retry on backoff. Lines stay cleared (already cleared above)
@@ -906,9 +919,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         _linesExpanded = false;
         _saving = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.receiveSavedToast)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.receiveSavedToast)));
       Navigator.of(context).maybePop();
     } catch (error, stackTrace) {
       _reportError(error, stackTrace, 'post_receive (useLocalDb=false)');
@@ -1073,8 +1086,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                     children: [
                       if (showAddNew)
                         Padding(
-                          padding:
-                              const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                          padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
                           child: _AddNewItemBanner(
                             query: _activeQuery,
                             onTap: _saving
@@ -1084,36 +1096,34 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                         ),
                       Expanded(
                         child: GridView.builder(
-                          padding:
-                              const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
                           // Two columns × ~110dp — denser tile so the
                           // name + cost don't float in whitespace.
                           // Matches Sale.
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
-                            mainAxisExtent: 110,
-                          ),
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                                mainAxisExtent: 110,
+                              ),
                           itemCount: results.length,
                           itemBuilder: (context, i) {
                             final item = results[i];
                             final selectedShopItemId =
                                 _selectedItem?.shopItemId;
-                            final isSelected = selectedShopItemId !=
-                                    null &&
+                            final isSelected =
+                                selectedShopItemId != null &&
                                 item.shopItemId == selectedShopItemId;
                             final isActivating =
                                 _activatingItemId != null &&
-                                    item.itemId == _activatingItemId;
+                                item.itemId == _activatingItemId;
                             return _ReceiveItemTile(
                               shop: widget.shop,
                               item: item,
                               selected: isSelected,
                               activating: isActivating,
-                              onTap: (_saving ||
-                                      _activatingItemId != null)
+                              onTap: (_saving || _activatingItemId != null)
                                   ? null
                                   : () => _onTapTile(item),
                             );
@@ -1178,6 +1188,7 @@ class _SelectedItem {
 
   /// Slice 4: learned usual receive quantity for this packaging; seeds a chip.
   final num? learnedQty;
+
   /// Drives the AddPackagingSheet's suggestion query + custom-unit
   /// filtering (the cashier can't pick the item's own base unit again).
   final String baseUnitCode;
@@ -1249,7 +1260,9 @@ class _ReceiveItemTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13 * kFontScale,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.85,
+                      ),
                     ),
                   ),
                   if (stockText != null) ...[
@@ -1263,8 +1276,9 @@ class _ReceiveItemTile extends StatelessWidget {
                         fontWeight: low ? FontWeight.w700 : FontWeight.w400,
                         color: low
                             ? theme.colorScheme.error
-                            : theme.colorScheme.onSurface
-                                .withValues(alpha: 0.85),
+                            : theme.colorScheme.onSurface.withValues(
+                                alpha: 0.85,
+                              ),
                       ),
                     ),
                   ],
@@ -1520,7 +1534,10 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                   icon: const Icon(Icons.close, size: 20),
                   onPressed: widget.saving ? null : widget.onCancel,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
                 ),
               ],
             ),
@@ -1576,8 +1593,10 @@ class _LineEntryFormState extends State<_LineEntryForm> {
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   border: Border.all(color: theme.colorScheme.outlineVariant),
                   borderRadius: BorderRadius.circular(8),
@@ -1613,8 +1632,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               ],
               decoration: InputDecoration(
-                labelText:
-                    l.receiveLineTotalLabel(widget.shop.currencySymbol),
+                labelText: l.receiveLineTotalLabel(widget.shop.currencySymbol),
                 isDense: true,
               ),
             ),
@@ -1677,6 +1695,18 @@ class _ReceiveLinesStrip extends StatelessWidget {
     final canExpand = lineCount > 0;
     final maxListHeight = MediaQuery.of(context).size.height * 0.25;
     final entries = lines.entries.toList(growable: false);
+    final showExpanded = expanded && canExpand;
+    // Compact SAVE in the collapsed peek row; full-width when expanded.
+    FilledButton saveButton() => FilledButton(
+      onPressed: canSave ? onSave : null,
+      child: saving
+          ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            )
+          : Text(l.receiveSaveButton),
+    );
     return Material(
       elevation: 8,
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -1684,7 +1714,7 @@ class _ReceiveLinesStrip extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+        padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1694,14 +1724,14 @@ class _ReceiveLinesStrip extends StatelessWidget {
                   child: InkWell(
                     onTap: canExpand ? onToggleExpand : null,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Row(
                         children: [
                           Icon(
                             canExpand
-                                ? (expanded
-                                    ? Icons.keyboard_arrow_down
-                                    : Icons.keyboard_arrow_up)
+                                ? (showExpanded
+                                      ? Icons.keyboard_arrow_down
+                                      : Icons.keyboard_arrow_up)
                                 : Icons.inventory_2_outlined,
                             size: 22,
                           ),
@@ -1720,42 +1750,37 @@ class _ReceiveLinesStrip extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (expanded && canExpand)
+                if (showExpanded)
                   TextButton(
                     onPressed: saving ? null : onClearAll,
                     child: Text(l.receiveLinesClearAllButton),
                   ),
+                // Peek: SAVE rides in the summary row to save a button row.
+                if (!showExpanded) ...[const SizedBox(width: 8), saveButton()],
               ],
             ),
             AnimatedSize(
               duration: const Duration(milliseconds: 150),
               curve: Curves.easeOut,
               alignment: Alignment.topCenter,
-              child: expanded && canExpand
-                  ? ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: maxListHeight),
-                      child: _ReceiveLineList(
-                        shop: shop,
-                        entries: entries,
-                        saving: saving,
-                        onRemoveLine: onRemoveLine,
-                      ),
+              child: showExpanded
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxHeight: maxListHeight),
+                          child: _ReceiveLineList(
+                            shop: shop,
+                            entries: entries,
+                            saving: saving,
+                            onRemoveLine: onRemoveLine,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(width: double.infinity, child: saveButton()),
+                      ],
                     )
                   : const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: canSave ? onSave : null,
-                child: saving
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      )
-                    : Text(l.receiveSaveButton),
-              ),
             ),
           ],
         ),
@@ -1869,10 +1894,7 @@ class _ReceiveLineTile extends StatelessWidget {
 /// the search bar ("+ Add new") then scans again. The "Bind to existing"
 /// flow ships with Product-detail scan in a later phase.
 class _ReceiveUnknownScanPill extends StatelessWidget {
-  const _ReceiveUnknownScanPill({
-    required this.code,
-    required this.onDismiss,
-  });
+  const _ReceiveUnknownScanPill({required this.code, required this.onDismiss});
 
   final String code;
   final VoidCallback onDismiss;

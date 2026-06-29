@@ -1493,6 +1493,18 @@ class _SaleCartStrip extends StatelessWidget {
     // expanded section. Force-expand when a debt sale still needs a customer,
     // since the picker is only reachable there.
     final showExpanded = (expanded && canExpand) || (debt && customer == null);
+    // One SAVE, two homes: a compact button in the collapsed peek row, and
+    // full-width at the bottom when expanded.
+    FilledButton saveButton() => FilledButton(
+      onPressed: canSave ? onSave : null,
+      child: saving
+          ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            )
+          : Text(l.saleSaveButton),
+    );
 
     return Material(
       elevation: 8,
@@ -1501,7 +1513,7 @@ class _SaleCartStrip extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+        padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1514,7 +1526,7 @@ class _SaleCartStrip extends StatelessWidget {
                   child: InkWell(
                     onTap: canExpand ? onToggleExpand : null,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Row(
                         children: [
                           Icon(
@@ -1545,6 +1557,9 @@ class _SaleCartStrip extends StatelessWidget {
                     onPressed: saving ? null : onClearAll,
                     child: Text(l.cartClearAllButton),
                   ),
+                // Peek: SAVE rides in the summary row so the collapsed cart is a
+                // single line, leaving the grid the most room while searching.
+                if (!showExpanded) ...[const SizedBox(width: 8), saveButton()],
               ],
             ),
             // Expanded-only: line list + Lacag/Deyn + customer. The collapsed
@@ -1618,23 +1633,11 @@ class _SaleCartStrip extends StatelessWidget {
                                   ),
                           ),
                         ],
+                        const SizedBox(height: 10),
+                        SizedBox(width: double.infinity, child: saveButton()),
                       ],
                     )
                   : const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: canSave ? onSave : null,
-                child: saving
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      )
-                    : Text(l.saleSaveButton),
-              ),
             ),
           ],
         ),
