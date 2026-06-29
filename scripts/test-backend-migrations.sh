@@ -2557,6 +2557,20 @@ begin
     raise exception
       'A2 cross-category fallback should not fire when primary is full';
   end if;
+
+  -- 0084: passing NULL must derive the shop_item's own category, so the
+  -- category-first ranking still applies (same as passing it explicitly).
+  -- This item's shop_item.category_id is grocery (set at create above).
+  select count(*) into v_primary_count
+  from public.suggest_item_packagings(
+    v_shop_id, v_item_id, 'packet', null, 'en', 20
+  )
+  where source = 'category';
+  if v_primary_count < 3 then
+    raise exception
+      'A2 (0084) derived category: NULL p_category_id should rank grocery first, got % category rows',
+      v_primary_count;
+  end if;
 end;
 $$;
 
