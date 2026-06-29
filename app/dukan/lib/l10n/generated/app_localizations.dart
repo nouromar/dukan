@@ -569,7 +569,7 @@ abstract class AppLocalizations {
   /// No description provided for @dateRangeAll.
   ///
   /// In en, this message translates to:
-  /// **'All time'**
+  /// **'All'**
   String get dateRangeAll;
 
   /// No description provided for @dateRangeCustom.

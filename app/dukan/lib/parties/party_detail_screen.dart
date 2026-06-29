@@ -14,6 +14,8 @@ import 'package:dukan/payment/payment_screen.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/receive/receive_detail_screen.dart';
+import 'package:dukan/sale/sale_detail_screen.dart';
 import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
@@ -328,6 +330,9 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
               editedAt: bootstrap.editedAt,
               onPay: () => _onPay(bootstrap.detail),
               onEdit: () => _onEdit(bootstrap.detail),
+              onChanged: () {
+                if (mounted) setState(() => _future = _load());
+              },
             );
           },
         ),
@@ -343,6 +348,7 @@ class _Body extends StatelessWidget {
     required this.openInvoices,
     required this.onPay,
     required this.onEdit,
+    required this.onChanged,
     this.editedAt,
   });
 
@@ -351,7 +357,27 @@ class _Body extends StatelessWidget {
   final List<UnpaidInvoice> openInvoices;
   final VoidCallback onPay;
   final VoidCallback onEdit;
+
+  /// Called after a linked sale/receive/payment screen pops with a change
+  /// (e.g. a void) so the party balances + lists refresh.
+  final VoidCallback onChanged;
   final DateTime? editedAt;
+
+  /// Open a sale or receive detail; refresh the party on return if it changed.
+  Future<void> _openTxn(
+    BuildContext context,
+    String txnId, {
+    required bool isSale,
+  }) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => isSale
+            ? SaleDetailScreen(shop: shop, txnId: txnId)
+            : ReceiveDetailScreen(shop: shop, txnId: txnId),
+      ),
+    );
+    if (changed == true) onChanged();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -460,6 +486,7 @@ class _Body extends StatelessWidget {
               amount: s.totalAmount,
               paidAmount: s.paidAmount,
               voided: s.isVoided,
+              onTap: () => _openTxn(context, s.txnId, isSale: true),
             ),
           const SizedBox(height: 16),
         ],
@@ -472,6 +499,7 @@ class _Body extends StatelessWidget {
               amount: r.totalAmount,
               paidAmount: r.paidAmount,
               voided: r.isVoided,
+              onTap: () => _openTxn(context, r.txnId, isSale: false),
             ),
           const SizedBox(height: 16),
         ],
@@ -513,6 +541,7 @@ class _TxnTile extends StatelessWidget {
     required this.amount,
     required this.paidAmount,
     required this.voided,
+    this.onTap,
   });
 
   final ShopSummary shop;
@@ -520,6 +549,7 @@ class _TxnTile extends StatelessWidget {
   final num amount;
   final num paidAmount;
   final bool voided;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -527,6 +557,7 @@ class _TxnTile extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       dense: true,
+      onTap: onTap,
       title: Text(formatHistoryStamp(context, dateTime)),
       trailing: Text(
         formatMoney(amount, shop),

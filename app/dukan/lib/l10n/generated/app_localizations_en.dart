@@ -257,7 +257,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dateRangeMonth => 'This month';
 
   @override
-  String get dateRangeAll => 'All time';
+  String get dateRangeAll => 'All';
 
   @override
   String get dateRangeCustom => 'Custom…';

@@ -88,7 +88,7 @@
   "dateRangeToday": "Today",
   "dateRangeWeek": "Last 7 days",
   "dateRangeMonth": "This month",
-  "dateRangeAll": "All time",
+  "dateRangeAll": "All",
   "dateRangeCustom": "Custom…",
   "filterPartyAny": "Anyone",
   "filterHideVoided": "Hide voided",

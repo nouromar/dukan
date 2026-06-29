@@ -259,7 +259,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get dateRangeMonth => 'Bishaan';
 
   @override
-  String get dateRangeAll => 'Waqti kasta';
+  String get dateRangeAll => 'Dhammaan';
 
   @override
   String get dateRangeCustom => 'Doorasho…';

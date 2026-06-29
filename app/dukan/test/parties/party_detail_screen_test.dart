@@ -5,6 +5,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/parties/party_detail_screen.dart';
 import 'package:dukan/payment/payment_controller.dart';
+import 'package:dukan/sale/sale_detail_screen.dart';
 
 import '../shared/fakes.dart';
 import '../shared/wrap.dart';
@@ -65,6 +66,53 @@ void main() {
         )
         .first;
     expect(payBtn.onPressed, isNotNull);
+  });
+
+  testWidgets('tapping a sale row opens the sale detail', (tester) async {
+    api.onGetPartyDetail = (_, _, _) async => PartyDetail(
+      header: const PartyDetailHeader(
+        id: 'p-1',
+        name: 'Cumar',
+        phone: null,
+        typeCode: 'customer',
+        receivable: 25,
+        payable: 0,
+        isActive: true,
+      ),
+      sales: [
+        PartyTxnRow(
+          txnId: 'txn-1',
+          occurredAt: DateTime(2026, 6, 12),
+          totalAmount: 50,
+          paidAmount: 0,
+          isVoided: false,
+        ),
+      ],
+      receives: const [],
+      payments: const [],
+    );
+    api.onGetSale = (_, txnId) async => SaleSummary(
+      txnId: txnId,
+      occurredAt: DateTime(2026, 6, 12),
+      postedAt: DateTime(2026, 6, 12),
+      partyId: 'p-1',
+      partyName: 'Cumar',
+      totalAmount: 50,
+      paidAmount: 0,
+      paymentMethodCode: null,
+      isVoided: false,
+      reversalTxnId: null,
+      voidedAt: null,
+    );
+    api.onGetSaleLines = (_, _) async => const [];
+
+    await pump(tester);
+    // The sale row ($50.00) is tappable and opens its sale detail.
+    await tester.tap(find.text('\$50.00'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SaleDetailScreen), findsOneWidget);
+    expect(find.text(en.saleDetailTitle), findsOneWidget);
   });
 
   testWidgets('hide action soft-deletes the party (queued set_party_active)',
