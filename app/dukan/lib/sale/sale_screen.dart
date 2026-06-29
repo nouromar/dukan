@@ -1719,10 +1719,9 @@ class _CartLineTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     final line = entry.line;
-    // Always render the packaging label below the name. Hiding it when
-    // packaging == base unit was ambiguous for multi-pack items (bariis
-    // sold as Kg looked identical to bariis sold as 25 Kg Bag). The
-    // extra row is cheap; the unambiguity is the point.
+    // Packaging sits BESIDE the name (not on its own row) so a cart line is
+    // two lines, not three. Always shown — hiding it when packaging == base
+    // unit was ambiguous for multi-pack items (bariis as Kg vs 25 Kg Bag).
     // Arg order follows the generated (alphabetical) signature
     // cartLineSubtotal(quantity, subtotal, unitPrice) — NOT the template's
     // visual order — so pass subtotal before unitPrice.
@@ -1740,24 +1739,28 @@ class _CartLineTile extends StatelessWidget {
       // fiddly one-handed on a mid-range phone. The ✕ on the right still
       // removes; the editor is the path for everything else.
       onTap: enabled ? onLongPress : null,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      title: Row(
         children: [
-          Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+          Flexible(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
-          Text(
-            line.packagingLabel,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11 * kFontScale,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.7),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              line.packagingLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11 * kFontScale,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
             ),
           ),
         ],
