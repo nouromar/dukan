@@ -1438,7 +1438,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get cartClearAllButton => 'Tirtir dhammaan';
+  String get cartClearAllButton => 'Tirtir';
 
   @override
   String cartClearConfirmTitle(num count) {
@@ -1552,7 +1552,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get receiveLinesClearAllButton => 'Tirtir dhammaan';
+  String get receiveLinesClearAllButton => 'Tirtir';
 
   @override
   String receiveLinesClearConfirmTitle(num count) {

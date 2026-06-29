@@ -1432,7 +1432,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get cartClearAllButton => 'Clear all';
+  String get cartClearAllButton => 'Clear';
 
   @override
   String cartClearConfirmTitle(num count) {
@@ -1546,7 +1546,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get receiveLinesClearAllButton => 'Clear all';
+  String get receiveLinesClearAllButton => 'Clear';
 
   @override
   String receiveLinesClearConfirmTitle(num count) {

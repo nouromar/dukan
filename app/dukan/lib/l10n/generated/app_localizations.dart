@@ -2529,7 +2529,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartClearAllButton.
   ///
   /// In en, this message translates to:
-  /// **'Clear all'**
+  /// **'Clear'**
   String get cartClearAllButton;
 
   /// No description provided for @cartClearConfirmTitle.
@@ -2691,7 +2691,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveLinesClearAllButton.
   ///
   /// In en, this message translates to:
-  /// **'Clear all'**
+  /// **'Clear'**
   String get receiveLinesClearAllButton;
 
   /// No description provided for @receiveLinesClearConfirmTitle.
