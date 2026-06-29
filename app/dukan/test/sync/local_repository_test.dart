@@ -22,6 +22,50 @@ void main() {
     await database.close();
   });
 
+  test('insertLocalShopItemUnit makes a new packaging show in the detail',
+      () async {
+    await repo.applyItemsPayload({
+      'items': [_item('si-1', 'Bariis')],
+      'units': [
+        {
+          'shop_item_unit_id': 'siu-base',
+          'shop_item_id': 'si-1',
+          'unit_code': 'kg',
+          'packaging_label': 'Kg',
+          'conversion_to_base': 1,
+          'sale_price': 1.5,
+          'is_default_sale': true,
+          'is_default_receive': true,
+          'is_active': true,
+          'server_updated_at_ms': 1,
+        },
+      ],
+      'aliases': [],
+      'barcodes': [],
+    });
+
+    // Optimistic add of a new packaging (no sync yet).
+    await repo.insertLocalShopItemUnit(
+      shopItemUnitId: 'siu-box',
+      shopItemId: 'si-1',
+      unitCode: 'box',
+      packagingLabel: '12 Kg Box',
+      conversionToBase: 12,
+      salePrice: 18.0,
+    );
+
+    final detail = await repo.getShopItemDetail('si-1');
+    expect(detail, isNotNull);
+    expect(
+      detail!.units.map((u) => u.packagingLabel).toSet(),
+      containsAll(<String>['Kg', '12 Kg Box']),
+    );
+    final box = detail.units.firstWhere((u) => u.shopItemUnitId == 'siu-box');
+    expect(box.conversionToBase, 12);
+    expect(box.salePrice, 18.0);
+    expect(box.isActive, isTrue);
+  });
+
   test('searchItems returns active items by display_name + aliases',
       () async {
     await repo.applyItemsPayload({

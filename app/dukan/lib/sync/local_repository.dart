@@ -1630,6 +1630,41 @@ class LocalRepository {
     );
   }
 
+  /// Optimistically mirror a just-created packaging so screens that read the
+  /// local DB (e.g. Product detail) reflect it immediately. Columns mirror the
+  /// items-sync unit upsert; a new extra packaging is active and non-default,
+  /// with no cost/learned-qty yet. `server_updated_at = 0` so the next delta
+  /// sync's authoritative row (replace semantics) overwrites this.
+  Future<void> insertLocalShopItemUnit({
+    required String shopItemUnitId,
+    required String shopItemId,
+    required String unitCode,
+    required String packagingLabel,
+    required num conversionToBase,
+    num? salePrice,
+  }) async {
+    final db = await _db;
+    await db.insert(
+      'local_shop_item_unit',
+      {
+        'shop_item_unit_id': shopItemUnitId,
+        'shop_item_id': shopItemId,
+        'unit_code': unitCode,
+        'packaging_label': packagingLabel,
+        'conversion_to_base': conversionToBase,
+        'sale_price': salePrice,
+        'last_cost': null,
+        'last_sale_qty': null,
+        'last_receive_qty': null,
+        'is_default_sale': 0,
+        'is_default_receive': 0,
+        'is_active': 1,
+        'server_updated_at': 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   /// Insert (or upsert on natural key) a search alias.
   ///
   /// The local mirror keys aliases on `(shop_item_id, alias)` — the

@@ -27,6 +27,8 @@ import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/packaging_label.dart';
 import 'package:dukan/shared/unit_compatibility.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 class AddPackagingSheet {
   /// Caller passes both the base unit's `code` (for the suggestion
@@ -237,6 +239,7 @@ class _AddPackagingBodyState extends State<_AddPackagingBody> {
 
     setState(() => _saving = true);
     final api = context.read<ShopApi>();
+    final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
     try {
       final shopItemUnitId = await api.createShopItemUnit(
         shopId: widget.shopId,
@@ -245,12 +248,26 @@ class _AddPackagingBodyState extends State<_AddPackagingBody> {
         conversionToBase: chosen.conversion,
         salePrice: price,
       );
-      if (!mounted) return;
       final label = packagingLabel(
         chosen.conversion,
         widget.baseUnitLabel,
         chosen.unitLabel,
       );
+      // Optimistically mirror the new packaging so screens that read the local
+      // DB (e.g. Product detail) reflect it immediately, not only after a sync.
+      try {
+        await repo?.insertLocalShopItemUnit(
+          shopItemUnitId: shopItemUnitId,
+          shopItemId: widget.shopItemId,
+          unitCode: chosen.unitCode,
+          packagingLabel: label,
+          conversionToBase: chosen.conversion,
+          salePrice: price,
+        );
+      } catch (_) {
+        // Non-fatal — the next delta sync brings the row in.
+      }
+      if (!mounted) return;
       Navigator.of(context).pop(
         ReceiveUnitOption(
           shopItemUnitId: shopItemUnitId,

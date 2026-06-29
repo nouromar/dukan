@@ -26,6 +26,7 @@ class CartLine {
     required this.packagingLabel,
     required this.baseUnitLabel,
     required this.unitPrice,
+    this.baseUnitCode,
     this.quantity = 1,
     this.priceWasEntered = false,
   });
@@ -49,6 +50,11 @@ class CartLine {
   /// Base unit's display label (e.g., "Kg") — useful when showing
   /// "= 25 kg" subtotals for multi-packaging items.
   final String baseUnitLabel;
+
+  /// Base unit's code (e.g., "kg"). Lets the line editor offer
+  /// "+ Add packaging" — the packaging picker needs the base unit code +
+  /// label. Null when the line was created without it.
+  final String? baseUnitCode;
 
   final num unitPrice;
   /// Numeric to allow fractional units (e.g., 0.5 kg of rice loose).
@@ -127,6 +133,7 @@ class CartController extends ChangeNotifier with WorkingDateMixin {
         displayName: item.displayName,
         packagingLabel: item.packagingLabel ?? item.baseUnitLabel,
         baseUnitLabel: item.baseUnitLabel,
+        baseUnitCode: item.baseUnitCode,
         unitPrice: item.defaultUnitSalePrice ?? 0,
       );
     }
@@ -147,6 +154,7 @@ class CartController extends ChangeNotifier with WorkingDateMixin {
     required String baseUnitLabel,
     required num quantity,
     required num unitPrice,
+    String? baseUnitCode,
   }) {
     _lines[shopItemUnitId] = CartLine(
       shopItemUnitId: shopItemUnitId,
@@ -155,6 +163,7 @@ class CartController extends ChangeNotifier with WorkingDateMixin {
       displayName: displayName,
       packagingLabel: packagingLabel,
       baseUnitLabel: baseUnitLabel,
+      baseUnitCode: baseUnitCode,
       unitPrice: unitPrice,
       quantity: quantity,
       priceWasEntered: true,
@@ -180,6 +189,7 @@ class CartController extends ChangeNotifier with WorkingDateMixin {
       displayName: existing.displayName,
       packagingLabel: existing.packagingLabel,
       baseUnitLabel: existing.baseUnitLabel,
+      baseUnitCode: existing.baseUnitCode,
       unitPrice: unitPrice,
       quantity: quantity,
       priceWasEntered: true,
@@ -201,6 +211,8 @@ class CartController extends ChangeNotifier with WorkingDateMixin {
     required num quantity,
     required num unitPrice,
   }) {
+    // Switching packaging keeps the same item, so carry its base unit code.
+    final old = _lines[oldShopItemUnitId];
     _lines.remove(oldShopItemUnitId);
     _lines[newShopItemUnitId] = CartLine(
       shopItemUnitId: newShopItemUnitId,
@@ -209,6 +221,7 @@ class CartController extends ChangeNotifier with WorkingDateMixin {
       displayName: displayName,
       packagingLabel: packagingLabel,
       baseUnitLabel: baseUnitLabel,
+      baseUnitCode: old?.baseUnitCode,
       unitPrice: unitPrice,
       quantity: quantity,
       priceWasEntered: true,
@@ -257,6 +270,7 @@ class CartController extends ChangeNotifier with WorkingDateMixin {
             displayName: entry.value.displayName,
             packagingLabel: entry.value.packagingLabel,
             baseUnitLabel: entry.value.baseUnitLabel,
+            baseUnitCode: entry.value.baseUnitCode,
             unitPrice: entry.value.unitPrice,
             quantity: entry.value.quantity,
             priceWasEntered: entry.value.priceWasEntered,

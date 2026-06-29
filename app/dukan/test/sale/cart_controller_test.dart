@@ -32,6 +32,19 @@ void main() {
       expect(cart.lines['siu-1']!.quantity, 1);
     });
 
+    test('addItem carries the item base unit code (for "+ Add packaging")', () {
+      final cart = CartController();
+      cart.addItem(
+        fakeActivatedItem(
+          shopItemId: 'si-1',
+          itemId: 'i1',
+          defaultShopItemUnitId: 'siu-1',
+        ),
+      );
+      // baseUnitCode lets the cart-line editor offer "+ Add packaging".
+      expect(cart.lines['siu-1']!.baseUnitCode, 'kg');
+    });
+
     test('addItem on the same packaging increments quantity', () {
       final cart = CartController();
       final item = fakeActivatedItem(

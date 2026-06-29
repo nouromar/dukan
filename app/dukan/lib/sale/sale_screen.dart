@@ -454,6 +454,7 @@ class _SaleScreenState extends State<SaleScreen> {
         displayName: item.displayName,
         packagingLabel: result.packagingLabel,
         baseUnitLabel: item.baseUnitLabel,
+        baseUnitCode: item.baseUnitCode,
         quantity: result.quantity,
         unitPrice: result.unitPrice,
       );
@@ -473,14 +474,15 @@ class _SaleScreenState extends State<SaleScreen> {
       initialQuantity: line.quantity,
       initialUnitPrice: line.unitPrice,
       shopItemId: line.shopItemId,
-      // CartLine doesn't carry baseUnitCode — pass null so the picker
-      // hides the "+ Add packaging" entry. Swapping among existing
-      // packagings still works (that's the common case from the cart).
+      // Pass the line's base unit so the picker offers "+ Add packaging" too —
+      // identical to the item-tile editor.
       onPickPackaging: (ctx, siId, currentSiuId) => showUnitPicker(
         ctx,
         shopId: widget.shop.id,
         shopItemId: siId,
         screen: 'sale',
+        baseUnitCode: line.baseUnitCode,
+        baseUnitLabel: line.baseUnitLabel,
       ),
     );
     if (result == null || !mounted) return;
@@ -524,6 +526,7 @@ class _SaleScreenState extends State<SaleScreen> {
       displayName: result.displayName,
       packagingLabel: result.packagingLabel,
       baseUnitLabel: result.baseUnitLabel,
+      baseUnitCode: result.baseUnitCode,
       quantity: 1,
       unitPrice: result.salePrice ?? 0,
     );
