@@ -219,9 +219,20 @@ class _PaymentBody extends StatelessWidget {
                 '${a.txnType == 'sale' ? l.saleDetailTitle : l.receiveDetailTitle}'
                 ' · ${formatHistoryStamp(context, a.occurredAt)}',
               ),
-              trailing: Text(
-                formatMoney(a.amount, shop),
-                style: theme.textTheme.titleMedium,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    formatMoney(a.amount, shop),
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
               ),
             ),
       ],

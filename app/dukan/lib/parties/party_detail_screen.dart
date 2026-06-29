@@ -495,7 +495,17 @@ class _Body extends StatelessWidget {
         if (openInvoices.isNotEmpty) ...[
           _SectionHeader(label: l.partyDetailOpenInvoicesHeader),
           for (final inv in openInvoices)
-            _OpenInvoiceTile(shop: shop, invoice: inv),
+            _OpenInvoiceTile(
+              shop: shop,
+              invoice: inv,
+              // An open invoice IS a sale (customer) or receive (supplier)
+              // transaction — open its detail, same as the lists below.
+              onTap: () => _openTxn(
+                context,
+                inv.transactionId,
+                isSale: detail.header.typeCode != 'supplier',
+              ),
+            ),
           const SizedBox(height: 16),
         ],
         if (detail.sales.isNotEmpty) ...[
@@ -578,21 +588,39 @@ class _TxnTile extends StatelessWidget {
       dense: true,
       onTap: onTap,
       title: Text(formatHistoryStamp(context, dateTime)),
-      trailing: Text(
-        formatMoney(amount, shop),
-        style: theme.textTheme.titleMedium?.copyWith(
-          decoration: voided ? TextDecoration.lineThrough : null,
-        ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            formatMoney(amount, shop),
+            style: theme.textTheme.titleMedium?.copyWith(
+              decoration: voided ? TextDecoration.lineThrough : null,
+            ),
+          ),
+          if (onTap != null) ...[
+            const SizedBox(width: 2),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ],
       ),
     );
   }
 }
 
 class _OpenInvoiceTile extends StatelessWidget {
-  const _OpenInvoiceTile({required this.shop, required this.invoice});
+  const _OpenInvoiceTile({
+    required this.shop,
+    required this.invoice,
+    this.onTap,
+  });
 
   final ShopSummary shop;
   final UnpaidInvoice invoice;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -601,6 +629,7 @@ class _OpenInvoiceTile extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       dense: true,
+      onTap: onTap,
       title: Text(formatHistoryStamp(context, invoice.occurredAt)),
       subtitle: Text(
         l.partyDetailOpenInvoiceRow(
@@ -608,12 +637,25 @@ class _OpenInvoiceTile extends StatelessWidget {
           formatMoney(invoice.originalAmount, shop),
         ),
       ),
-      trailing: Text(
-        formatMoney(invoice.remaining, shop),
-        style: theme.textTheme.titleMedium?.copyWith(
-          color: theme.colorScheme.error,
-          fontWeight: FontWeight.w700,
-        ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            formatMoney(invoice.remaining, shop),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.error,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (onTap != null) ...[
+            const SizedBox(width: 2),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -649,9 +691,19 @@ class _PaymentTile extends StatelessWidget {
         size: 20,
       ),
       title: Text(formatHistoryStamp(context, dateTime)),
-      trailing: Text(
-        formatMoney(amount, shop),
-        style: theme.textTheme.titleMedium,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(formatMoney(amount, shop), style: theme.textTheme.titleMedium),
+          if (onTap != null) ...[
+            const SizedBox(width: 2),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ],
       ),
     );
   }
