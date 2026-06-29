@@ -2468,7 +2468,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageCategoriesEmpty => 'No categories yet. Tap + to add one.';
 
   @override
-  String get manageCategoriesDefaultBadge => 'Default';
+  String get manageCategoriesDefaultBadge => 'Built-in';
 
   @override
   String get manageCategoriesNameLabel => 'Category name';

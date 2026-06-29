@@ -240,6 +240,11 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
               ],
             )
           : Chip(
+              avatar: Icon(
+                Icons.lock_outline,
+                size: 14,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               label: Text(l.manageCategoriesDefaultBadge),
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
               visualDensity: VisualDensity.compact,

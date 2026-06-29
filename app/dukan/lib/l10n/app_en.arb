@@ -1104,7 +1104,7 @@
   "manageCategoriesExpensesTab": "Expenses",
   "manageCategoriesAdd": "Add category",
   "manageCategoriesEmpty": "No categories yet. Tap + to add one.",
-  "manageCategoriesDefaultBadge": "Default",
+  "manageCategoriesDefaultBadge": "Built-in",
   "manageCategoriesNameLabel": "Category name",
   "manageCategoriesNewTitle": "New category",
   "manageCategoriesRenameTitle": "Rename category",

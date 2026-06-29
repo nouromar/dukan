@@ -4065,7 +4065,7 @@ abstract class AppLocalizations {
   /// No description provided for @manageCategoriesDefaultBadge.
   ///
   /// In en, this message translates to:
-  /// **'Default'**
+  /// **'Built-in'**
   String get manageCategoriesDefaultBadge;
 
   /// No description provided for @manageCategoriesNameLabel.

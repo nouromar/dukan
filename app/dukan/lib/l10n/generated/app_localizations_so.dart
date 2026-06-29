@@ -2492,7 +2492,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Wali qaybo ma jiraan. Taabo + si aad u darto.';
 
   @override
-  String get manageCategoriesDefaultBadge => 'Guud';
+  String get manageCategoriesDefaultBadge => 'Nidaam';
 
   @override
   String get manageCategoriesNameLabel => 'Magaca qaybta';
