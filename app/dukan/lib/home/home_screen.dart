@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/shared/typography.dart';
 import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/expense/expense_screen.dart';
 import 'package:dukan/home/dukan_drawer.dart';
@@ -208,9 +209,11 @@ class _ActionGrid extends StatelessWidget {
       shrinkWrap: true,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        mainAxisExtent: 128,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        // Shorter tiles — the old 128 made the grid scroll past 6 tiles.
+        // Still well above the 56dp tap-target floor.
+        mainAxisExtent: 104,
       ),
       children: [
         HomeAction(
@@ -275,9 +278,18 @@ class HomeAction extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 34),
-          const SizedBox(height: 8),
-          Text(label, textAlign: TextAlign.center),
+          Icon(icon, size: 28),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            // Override the theme's loud 20px/w900 button text — the tile
+            // labels were oversized and wrapped long Somali words to 2 lines.
+            style: const TextStyle(
+              fontSize: 15 * kFontScale,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
