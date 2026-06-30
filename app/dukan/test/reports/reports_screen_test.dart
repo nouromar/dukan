@@ -55,12 +55,28 @@ void main() {
     expect(find.text('\$100.00'), findsOneWidget);
     expect(find.text('5'), findsWidgets);
     expect(find.text('\$20.00'), findsOneWidget);
-    // Profit: gross $40.00, net $30.00, margin 40%.
+    // Profit: gross $40.00, net $30.00, NET margin 30% (net ÷ revenue).
     expect(find.text('\$40.00'), findsOneWidget);
     expect(find.text('\$30.00'), findsOneWidget);
-    expect(find.text('40%'), findsOneWidget);
+    expect(find.text('30%'), findsOneWidget);
     // Stock: 12 items, value $250.00, 3 low.
     expect(find.text('12'), findsOneWidget);
     expect(find.text('\$250.00'), findsOneWidget);
+  });
+
+  test('marginPct is net margin (matches the bottom line, incl. losses)', () {
+    // A gross-profitable but expense-heavy period: gross 207.47, expenses 300
+    // → net -92.53. Margin must be net ÷ revenue (negative), not gross.
+    const p = ProfitReport(
+      revenue: 247.80,
+      cogs: 40.33,
+      grossProfit: 207.47,
+      expenseTotal: 300,
+      netProfit: -92.53,
+      saleCount: 8,
+      expenseCount: 1,
+    );
+    // -92.53 / 247.80 * 100 ≈ -37.3%
+    expect(p.marginPct, closeTo(-37.3, 0.1));
   });
 }

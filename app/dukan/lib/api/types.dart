@@ -460,9 +460,11 @@ class ProfitReport {
   final int saleCount;
   final int expenseCount;
 
-  /// Gross margin as a percentage of revenue (0 when no sales).
+  /// Net margin as a percentage of revenue (net profit ÷ revenue) — the
+  /// bottom-line number, so it stays consistent with the net profit shown
+  /// above it (negative when expenses exceed gross profit). 0 when no sales.
   double get marginPct =>
-      revenue > 0 ? (grossProfit / revenue * 100).toDouble() : 0;
+      revenue > 0 ? (netProfit / revenue * 100).toDouble() : 0;
 }
 
 /// Current-stock summary: on-hand items, total stock value (Σ stock × avg cost),
