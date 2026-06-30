@@ -7222,6 +7222,119 @@ end;
 $$;
 reset role;
 
+-- §MM admin_delete_shop (0088): platform_admin nukes a throwaway shop + all its
+-- data (txn/payment/allocation/stock/item/party), leaving the main shop intact.
+-- Denied to a shop owner who isn't platform staff.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_main_shop uuid;
+  v_org       uuid;
+  v_del_shop  uuid;
+  v_item      uuid;
+  v_unit      uuid;
+  v_party     uuid;
+  v_name      text;
+  v_failed    boolean;
+  v_n         int;
+begin
+  select shop_id into v_main_shop from test_ids;
+
+  -- Throwaway org + shop, forced ready, with a real sale + payment.
+  select organization_id, shop_id into v_org, v_del_shop
+  from public.create_organization('MM Del Org', 'MM Del Shop');
+  reset role;
+  update public.shop set setup_status = 'ready' where id = v_del_shop;
+  set role authenticated;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+  select shop_item_id, default_shop_item_unit_id into v_item, v_unit
+  from public.create_shop_item(v_del_shop, 'MM Item', 'en', 'kg', null, null);
+  v_party := public.create_party(v_del_shop, 'MM Customer', null, 'customer');
+  perform public.post_sale(
+    v_del_shop, v_party,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit, 'quantity', 2, 'unit_price', 3
+    )),
+    0, null, null, 'MM-sale', null, 'credit'
+  );
+  perform public.post_payment(
+    v_del_shop, v_party, 'I', 6, 'cash', 'MM-pay', null, null, null, null
+  );
+
+  -- (1) Deny: the shop owner (not platform staff) cannot delete it.
+  v_failed := false;
+  begin
+    perform public.admin_delete_shop(v_del_shop);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'MM (1): a shop owner must NOT be able to delete a shop';
+  end if;
+
+  -- (2) Allow: grant platform_admin, then the delete succeeds + returns name.
+  reset role;
+  insert into public.platform_membership (user_id, role_code)
+  values ('00000000-0000-0000-0000-000000000001', 'platform_admin')
+  on conflict (user_id, role_code) do update set is_active = true;
+  set role authenticated;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+  v_name := public.admin_delete_shop(v_del_shop);
+  if v_name <> 'MM Del Shop' then
+    raise exception 'MM (2): admin_delete_shop should return the shop name, got %', v_name;
+  end if;
+
+  -- (3) The shop and every scrap of its data are gone.
+  if exists (select 1 from public.shop where id = v_del_shop) then
+    raise exception 'MM (3): shop row must be deleted';
+  end if;
+  select
+    (select count(*) from public.txn where shop_id = v_del_shop)
+    + (select count(*) from public.payment where shop_id = v_del_shop)
+    + (select count(*) from public.payment_allocation where shop_id = v_del_shop)
+    + (select count(*) from public.stock_movement where shop_id = v_del_shop)
+    + (select count(*) from public.transaction_line where shop_id = v_del_shop)
+    + (select count(*) from public.shop_item where shop_id = v_del_shop)
+    + (select count(*) from public.party where shop_id = v_del_shop)
+  into v_n;
+  if v_n <> 0 then
+    raise exception 'MM (3): shop data must be fully removed, found % rows', v_n;
+  end if;
+
+  -- (4) The main test shop is untouched.
+  if not exists (select 1 from public.shop where id = v_main_shop) then
+    raise exception 'MM (4): the main shop must survive';
+  end if;
+  if (select count(*) from public.shop_item where shop_id = v_main_shop) = 0 then
+    raise exception 'MM (4): the main shop''s items must survive';
+  end if;
+
+  -- (5) Missing shop raises.
+  v_failed := false;
+  begin
+    perform public.admin_delete_shop(
+      '00000000-0000-0000-0000-0000000000ff');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'MM (5): deleting a non-existent shop must raise';
+  end if;
+
+  -- Cleanup: drop the platform_admin grant so it can't leak into reruns.
+  reset role;
+  delete from public.platform_membership
+   where user_id = '00000000-0000-0000-0000-000000000001'
+     and role_code = 'platform_admin';
+  set role authenticated;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+  raise notice 'MM: admin_delete_shop tests passed';
+end;
+$$;
+reset role;
+
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 
