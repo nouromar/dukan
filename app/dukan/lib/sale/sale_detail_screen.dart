@@ -745,7 +745,11 @@ class _VoidConfirmDialogState extends State<_VoidConfirmDialog> {
   @override
   void initState() {
     super.initState();
-    _refundEnabled = _canOfferRefund;
+    // Default OFF: a plain VOID reverses the sale without returning cash. The
+    // owner ticks the box to refund only when they actually handed cash back
+    // at the till. Auto-refunding on every void was a trap — it sent a refund
+    // for sales the customer still owed, which the RPC then rejected.
+    _refundEnabled = false;
     _refundController = TextEditingController(
       text: _canOfferRefund ? _formatField(widget.header.paidAmount) : '',
     );
@@ -809,7 +813,14 @@ class _VoidConfirmDialogState extends State<_VoidConfirmDialog> {
 
   void _onConfirm() {
     if (!_canConfirm) return;
-    final refund = _refundEnabled ? _parsedRefund() : null;
+    num? refund = _refundEnabled ? _parsedRefund() : null;
+    if (refund != null) {
+      // Never send more than paid, and round to 2dp to match the server's
+      // numeric(14,2) — belt-and-suspenders against the refund-exceeds-paid
+      // rejection from a float edge.
+      final paid = widget.header.paidAmount;
+      refund = double.parse((refund > paid ? paid : refund).toStringAsFixed(2));
+    }
     Navigator.of(context).pop<VoidDialogOutcome>((refundAmount: refund));
   }
 

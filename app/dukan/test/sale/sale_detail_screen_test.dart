@@ -218,10 +218,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Refund checkbox is on by default because paid > 0, default
-      // refund = paid amount (\$6).
+      // Refund is OFF by default; the checkbox is offered because paid > 0.
+      // Tick it → prefilled with paid (\$6), then override to \$4.
       expect(find.byType(Checkbox), findsOneWidget);
-      // Cashier overrides to \$4.
+      await tester.tap(find.byType(Checkbox));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), '4');
       await tester.pump();
       await tester.tap(
@@ -230,6 +231,39 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(capturedRefund, 4);
+    },
+  );
+
+  testWidgets(
+    'plain void on a paid sale sends no refund (refund defaults OFF)',
+    (tester) async {
+      // A sale that shows paid > 0; the owner just voids without ticking
+      // refund. refundAmount must be null so the RPC never sees a refund.
+      api.onGetSale = (_, _) async => _header(
+        partyName: 'Ahmed',
+        total: 10,
+        paid: 6,
+      );
+      api.onGetSaleLines = (_, _) async => const [];
+      num? capturedRefund = -1; // sentinel: prove it's set to null
+      api.onVoidSale = (_, _, _, refundAmount) async {
+        capturedRefund = refundAmount;
+        return 'rev-id';
+      };
+
+      await pumpDetail(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(TextButton, en.saleDetailVoidButton),
+      );
+      await tester.pumpAndSettle();
+      // Do NOT tick refund — just confirm.
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.saleVoidConfirmYes),
+      );
+      await tester.pumpAndSettle();
+
+      expect(capturedRefund, isNull);
     },
   );
 
@@ -250,7 +284,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Type a refund > paid.
+      // Tick the refund box, then type a refund > paid.
+      await tester.tap(find.byType(Checkbox));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), '10');
       await tester.pump();
 
