@@ -55,10 +55,12 @@ void main() {
     expect(find.text('\$100.00'), findsOneWidget);
     expect(find.text('5'), findsWidgets);
     expect(find.text('\$20.00'), findsOneWidget);
-    // Profit: gross $40.00, net $30.00, NET margin 30% (net ÷ revenue).
+    // Profit: gross $40.00 with gross margin 40%, net $30.00 with net margin
+    // 30% — each % shown inline beside its profit line.
     expect(find.text('\$40.00'), findsOneWidget);
     expect(find.text('\$30.00'), findsOneWidget);
-    expect(find.text('30%'), findsOneWidget);
+    expect(find.text('40%'), findsOneWidget); // gross margin (40/100)
+    expect(find.text('30%'), findsOneWidget); // net margin (30/100)
     // Stock: 12 items, value $250.00, 3 low.
     expect(find.text('12'), findsOneWidget);
     expect(find.text('\$250.00'), findsOneWidget);
@@ -78,5 +80,7 @@ void main() {
     );
     // -92.53 / 247.80 * 100 ≈ -37.3%
     expect(p.marginPct, closeTo(-37.3, 0.1));
+    // Gross margin stays positive (markup health): 207.47 / 247.80 ≈ 83.7%.
+    expect(p.grossMarginPct, closeTo(83.7, 0.1));
   });
 }

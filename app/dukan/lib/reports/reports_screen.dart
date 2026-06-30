@@ -142,12 +142,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
       title: l.reportsProfitTitle,
       rows: [
         _Metric(l.reportsCostLabel, formatMoney(p.cogs, shop)),
+        // Each profit line carries its own margin % as a faint suffix — gross
+        // margin (markup health) on gross, net margin (bottom line) on net.
         _Metric(l.reportsGrossProfitLabel, formatMoney(p.grossProfit, shop),
-            emphasize: true),
+            emphasize: true,
+            suffix: '${p.grossMarginPct.toStringAsFixed(0)}%'),
         _Metric(l.reportsExpensesLabel, formatMoney(p.expenseTotal, shop)),
         _Metric(l.reportsNetProfitLabel, formatMoney(p.netProfit, shop),
-            emphasize: true),
-        _Metric(l.reportsMarginLabel, '${p.marginPct.toStringAsFixed(0)}%'),
+            emphasize: true,
+            suffix: '${p.marginPct.toStringAsFixed(0)}%'),
       ],
     );
   }
@@ -177,10 +180,13 @@ class _ReportBundle {
 }
 
 class _Metric {
-  _Metric(this.label, this.value, {this.emphasize = false});
+  _Metric(this.label, this.value, {this.emphasize = false, this.suffix});
   final String label;
   final String value;
   final bool emphasize;
+
+  /// Optional faint trailing text (e.g. a margin %) shown after the value.
+  final String? suffix;
 }
 
 class _ReportCard extends StatelessWidget {
@@ -232,12 +238,28 @@ class _ReportCard extends StatelessWidget {
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      Text(
-                        m.value,
-                        style: m.emphasize
-                            ? theme.textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700)
-                            : theme.textTheme.bodyLarge,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        textBaseline: TextBaseline.alphabetic,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        children: [
+                          Text(
+                            m.value,
+                            style: m.emphasize
+                                ? theme.textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700)
+                                : theme.textTheme.bodyLarge,
+                          ),
+                          if (m.suffix != null) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              m.suffix!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),

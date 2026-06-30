@@ -465,6 +465,11 @@ class ProfitReport {
   /// above it (negative when expenses exceed gross profit). 0 when no sales.
   double get marginPct =>
       revenue > 0 ? (netProfit / revenue * 100).toDouble() : 0;
+
+  /// Gross margin as a percentage of revenue (gross profit ÷ revenue) — the
+  /// markup health on the goods themselves, shown next to gross profit.
+  double get grossMarginPct =>
+      revenue > 0 ? (grossProfit / revenue * 100).toDouble() : 0;
 }
 
 /// Current-stock summary: on-hand items, total stock value (Σ stock × avg cost),
