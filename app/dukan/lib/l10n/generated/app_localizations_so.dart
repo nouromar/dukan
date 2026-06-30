@@ -1290,6 +1290,32 @@ class AppLocalizationsSo extends AppLocalizations {
   String get expenseVoidFailedMessage => 'Lama tirtiri karin kharashkan.';
 
   @override
+  String get paymentDetailVoidButton => 'TIRTIR LACAGTAN';
+
+  @override
+  String get paymentVoidConfirmTitle => 'Tirtir lacagtan?';
+
+  @override
+  String get paymentVoidConfirmBody =>
+      'Tani way ka noqonaysaa lacagta oo dib u furaysaa wixii la bixiyay. Lama soo celin karo.';
+
+  @override
+  String get paymentVoidConfirmYes => 'TIRTIR';
+
+  @override
+  String get paymentVoidedToast => 'Lacag waa la tirtiray';
+
+  @override
+  String get paymentVoidedHeader => 'La tirtiray';
+
+  @override
+  String get paymentVoidFailedMessage => 'Lama tirtiri karin lacagtan.';
+
+  @override
+  String get paymentVoidWindowPassedHint =>
+      'Wakhtigii tirtiridda wuu dhammaaday';
+
+  @override
   String saleDetailLineSubtotal(
     Object quantity,
     Object subtotal,

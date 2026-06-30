@@ -336,27 +336,39 @@ class PaymentDetail {
   const PaymentDetail({
     required this.paymentId,
     required this.occurredAt,
+    required this.createdAt,
     required this.partyId,
     required this.partyName,
     required this.direction,
     required this.amount,
     required this.paymentMethodCode,
     required this.notes,
+    this.isVoided = false,
+    this.isRefund = false,
+    this.isSettlementLeg = false,
   });
 
   factory PaymentDetail.fromJson(Map<String, dynamic> json) => PaymentDetail(
     paymentId: json['payment_id'] as String,
     occurredAt: DateTime.parse(json['occurred_at'] as String),
+    createdAt: DateTime.parse(json['created_at'] as String),
     partyId: json['party_id'] as String?,
     partyName: json['party_name'] as String?,
     direction: json['direction'] as String,
     amount: (json['amount'] as num).toDouble(),
     paymentMethodCode: json['payment_method_code'] as String?,
     notes: json['notes'] as String?,
+    isVoided: json['is_voided'] as bool? ?? false,
+    isRefund: json['is_refund'] as bool? ?? false,
+    isSettlementLeg: json['is_settlement_leg'] as bool? ?? false,
   );
 
   final String paymentId;
   final DateTime occurredAt;
+
+  /// When the shop recorded it (server clock). The void window is measured
+  /// from here, not the backdatable occurredAt.
+  final DateTime createdAt;
   final String? partyId;
   final String? partyName;
 
@@ -365,6 +377,15 @@ class PaymentDetail {
   final double amount;
   final String? paymentMethodCode;
   final String? notes;
+
+  /// A reversing marker already exists for this payment.
+  final bool isVoided;
+
+  /// Refund leg created by a sale void — not voidable on its own.
+  final bool isRefund;
+
+  /// Cash taken at the till during a sale/receive — void the txn instead.
+  final bool isSettlementLeg;
 }
 
 /// Aggregate returned by `get_today_summary` — drives the Home/dashboard

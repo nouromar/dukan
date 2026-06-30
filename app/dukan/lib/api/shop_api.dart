@@ -1356,6 +1356,25 @@ class ShopApi {
     return PaymentDetail.fromJson(Map<String, dynamic>.from(rows.first));
   }
 
+  /// void_payment — owner-only reversal of a posted payment. Direct RPC (not
+  /// queued). The server refuses refund legs, at-till legs, double-voids, and
+  /// out-of-window payments; the UI pre-gates the same way.
+  Future<String> voidPayment({
+    required String shopId,
+    required String paymentId,
+    required String clientOpId,
+  }) async {
+    final result = await _client.rpc(
+      'void_payment',
+      params: {
+        'p_shop_id': shopId,
+        'p_payment_id': paymentId,
+        'p_client_op_id': clientOpId,
+      },
+    );
+    return result as String;
+  }
+
   /// Reverse a posted receive (same-shift, owner-only, refuses when
   /// later stock activity exists for any item on the bono). Tighter
   /// scope than voidSale: no refund parameter (v1 receives are all

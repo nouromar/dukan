@@ -606,6 +606,9 @@ class FakeShopApi implements ShopApi {
   onGetReceiveLines;
   Future<PaymentDetail?> Function(String shopId, String paymentId)?
   onGetPayment;
+  Future<String> Function(String shopId, String paymentId, String clientOpId)?
+  onVoidPayment;
+  final List<String> voidPaymentCalls = [];
   Future<String> Function(String shopId, String txnId, String clientOpId)?
   onVoidReceive;
   final List<String> voidReceiveCalls = [];
@@ -1487,6 +1490,19 @@ class FakeShopApi implements ShopApi {
   }) async {
     if (onGetPayment != null) return onGetPayment!(shopId, paymentId);
     return null;
+  }
+
+  @override
+  Future<String> voidPayment({
+    required String shopId,
+    required String paymentId,
+    required String clientOpId,
+  }) async {
+    voidPaymentCalls.add(paymentId);
+    if (onVoidPayment != null) {
+      return onVoidPayment!(shopId, paymentId, clientOpId);
+    }
+    return 'fake-pay-marker-${clientOpId.hashCode}';
   }
 
   @override

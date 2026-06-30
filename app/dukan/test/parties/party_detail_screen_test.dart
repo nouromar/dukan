@@ -141,6 +141,7 @@ void main() {
     api.onGetPayment = (_, id) async => PaymentDetail(
       paymentId: id,
       occurredAt: DateTime(2026, 6, 12),
+      createdAt: DateTime(2026, 6, 12),
       partyId: 'p-1',
       partyName: 'Cumar',
       direction: 'I',

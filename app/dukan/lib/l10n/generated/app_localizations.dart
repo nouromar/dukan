@@ -2288,6 +2288,54 @@ abstract class AppLocalizations {
   /// **'Couldn\'t void this expense.'**
   String get expenseVoidFailedMessage;
 
+  /// No description provided for @paymentDetailVoidButton.
+  ///
+  /// In en, this message translates to:
+  /// **'VOID THIS PAYMENT'**
+  String get paymentDetailVoidButton;
+
+  /// No description provided for @paymentVoidConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Void this payment?'**
+  String get paymentVoidConfirmTitle;
+
+  /// No description provided for @paymentVoidConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This reverses the payment and reopens what it settled. It can\'t be undone.'**
+  String get paymentVoidConfirmBody;
+
+  /// No description provided for @paymentVoidConfirmYes.
+  ///
+  /// In en, this message translates to:
+  /// **'VOID'**
+  String get paymentVoidConfirmYes;
+
+  /// No description provided for @paymentVoidedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment voided'**
+  String get paymentVoidedToast;
+
+  /// No description provided for @paymentVoidedHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided'**
+  String get paymentVoidedHeader;
+
+  /// No description provided for @paymentVoidFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t void this payment.'**
+  String get paymentVoidFailedMessage;
+
+  /// No description provided for @paymentVoidWindowPassedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Void window passed'**
+  String get paymentVoidWindowPassedHint;
+
   /// No description provided for @saleDetailLineSubtotal.
   ///
   /// In en, this message translates to:

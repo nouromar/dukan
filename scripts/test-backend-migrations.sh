@@ -6952,6 +6952,211 @@ end;
 $$;
 reset role;
 
+-- §LL void_payment (0087): owner voids a standalone payment → flipped marker,
+-- party balance restored, invoice(s) re-inflated, reconciliation balanced.
+-- Refund leg / at-till leg / double-void / out-of-window / non-owner refused;
+-- idempotent replay; multi-invoice FIFO re-inflates all.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id   uuid;
+  v_unit_id   uuid;
+  v_cust_id   uuid;
+  v_sale_a    uuid;
+  v_sale_b    uuid;
+  v_pay_id    uuid;
+  v_marker    uuid;
+  v_pay_multi uuid;
+  v_recv_bal  numeric;
+  v_remaining numeric;
+  v_open_n    int;
+  v_variance  int;
+  v_till_sale uuid;
+  v_till_pay  uuid;
+  v_refund_sale uuid;
+  v_refund_pay  uuid;
+  v_old_pay   uuid;
+  v_failed    boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select siu.id into v_unit_id
+  from public.shop_item_unit siu
+  where siu.shop_id = v_shop_id and siu.conversion_to_base = 1
+  limit 1;
+  v_cust_id := public.create_party(v_shop_id, 'LL Void-Pay Customer', null, 'customer');
+
+  -- Credit sale of $20, then a standalone $20 inbound payment settles it.
+  v_sale_a := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 10, 'unit_price', 2
+    )),
+    0, null, null, 'LL-sale-a', null, 'credit'
+  );
+  -- receivable now 20; invoice open 20.
+  v_pay_id := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 20, 'cash', 'LL-pay-1', null, null, null, null
+  );
+  select receivable into v_recv_bal from public.party where id = v_cust_id;
+  if v_recv_bal <> 0 then
+    raise exception 'LL setup: receivable should be 0 after pay, got %', v_recv_bal;
+  end if;
+
+  -- (1) Owner voids the payment → flipped marker.
+  v_marker := public.void_payment(v_shop_id, v_pay_id, 'LL-void-1');
+  if not exists (
+    select 1 from public.payment
+    where id = v_marker and reverses_payment_id = v_pay_id and direction = 'O'
+      and amount = 20
+  ) then
+    raise exception 'LL (1): marker must be a flipped O/$20 reversing the payment';
+  end if;
+
+  -- (2) Party balance restored.
+  select receivable into v_recv_bal from public.party where id = v_cust_id;
+  if v_recv_bal <> 20 then
+    raise exception 'LL (2): receivable should be restored to 20, got %', v_recv_bal;
+  end if;
+
+  -- (3) Invoice re-inflated.
+  select remaining into v_remaining
+  from public.list_unpaid_invoices(v_shop_id, v_cust_id, 'I')
+  where transaction_id = v_sale_a;
+  if v_remaining is null or v_remaining <> 20 then
+    raise exception 'LL (3): invoice should re-open to 20, got %', v_remaining;
+  end if;
+
+  -- (4) Reconciliation balanced for this party (cached == derived ledger).
+  --     Scoped to the LL customer: the void only touches parties with a
+  --     reversed payment, and other test sections carry their own balances.
+  select count(*) into v_variance
+  from public.v_party_balance_truth
+  where shop_id = v_shop_id and party_id = v_cust_id
+    and (abs(receivable_variance) > 0.005 or abs(payable_variance) > 0.005);
+  if v_variance <> 0 then
+    raise exception 'LL (4): v_party_balance_truth must balance after void';
+  end if;
+
+  -- (5) Idempotent replay returns the same marker, no double restore.
+  if public.void_payment(v_shop_id, v_pay_id, 'LL-void-1') <> v_marker then
+    raise exception 'LL (5): replay must return the same marker id';
+  end if;
+  select receivable into v_recv_bal from public.party where id = v_cust_id;
+  if v_recv_bal <> 20 then
+    raise exception 'LL (5): replay must not double-restore (got %)', v_recv_bal;
+  end if;
+
+  -- (6) Double-void with a new op id raises.
+  v_failed := false;
+  begin
+    perform public.void_payment(v_shop_id, v_pay_id, 'LL-void-1-dup');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'LL (6): double-void must raise';
+  end if;
+
+  -- (7) Multi-invoice FIFO: re-pay (invoice A is open again), add a 2nd sale,
+  --     one payment covers both, void re-inflates both.
+  v_sale_b := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 5, 'unit_price', 2
+    )),
+    0, null, null, 'LL-sale-b', null, 'credit'
+  );
+  -- receivable now 20 (A) + 10 (B) = 30. FIFO $30 payment settles both.
+  v_pay_multi := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 30, 'cash', 'LL-pay-multi', null, null, null, null
+  );
+  perform public.void_payment(v_shop_id, v_pay_multi, 'LL-void-multi');
+  select count(*) into v_open_n
+  from public.list_unpaid_invoices(v_shop_id, v_cust_id, 'I')
+  where transaction_id in (v_sale_a, v_sale_b);
+  if v_open_n <> 2 then
+    raise exception 'LL (7): both invoices should re-open, got %', v_open_n;
+  end if;
+  select receivable into v_recv_bal from public.party where id = v_cust_id;
+  if v_recv_bal <> 30 then
+    raise exception 'LL (7): receivable should be 30 after multi-void, got %', v_recv_bal;
+  end if;
+
+  -- (8) At-till settlement leg cannot be voided directly.
+  v_till_sale := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 1, 'unit_price', 5
+    )),
+    5, 'cash', null, 'LL-till-sale', null, 'paid at till'
+  );
+  select id into v_till_pay from public.payment
+  where shop_id = v_shop_id and client_op_id = 'LL-till-sale:payment';
+  v_failed := false;
+  begin
+    perform public.void_payment(v_shop_id, v_till_pay, 'LL-void-till');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'LL (8): at-till settlement leg must not be voidable';
+  end if;
+
+  -- (9) Refund leg cannot be voided. Cash sale → void with refund creates an
+  --     outbound refund payment; voiding it must raise.
+  v_refund_sale := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 1, 'unit_price', 4
+    )),
+    4, 'cash', null, 'LL-refund-sale', null, 'cash'
+  );
+  perform public.void_sale(v_shop_id, v_refund_sale, 'LL-refund-void', 4);
+  select id into v_refund_pay from public.payment
+  where shop_id = v_shop_id and refund_of_transaction_id = v_refund_sale;
+  v_failed := false;
+  begin
+    perform public.void_payment(v_shop_id, v_refund_pay, 'LL-void-refund');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'LL (9): refund leg must not be voidable';
+  end if;
+
+  -- (10) Out-of-window payment cannot be voided.
+  v_old_pay := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 5, 'cash', 'LL-pay-old', null, null, null, null
+  );
+  reset role;
+  update public.payment set created_at = pg_catalog.now() - interval '8 days'
+  where id = v_old_pay;
+  set role authenticated;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+  v_failed := false;
+  begin
+    perform public.void_payment(v_shop_id, v_old_pay, 'LL-void-old');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'LL (10): out-of-window payment must not be voidable';
+  end if;
+
+  -- (11) Cashier (…002) cannot void a payment.
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+  v_failed := false;
+  begin
+    perform public.void_payment(v_shop_id, v_old_pay, 'LL-void-cashier');
+  exception when others then v_failed := true;
+  end;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+  if not v_failed then
+    raise exception 'LL (11): cashier must not void a payment';
+  end if;
+
+  raise notice 'LL: void_payment tests passed';
+end;
+$$;
+reset role;
+
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 

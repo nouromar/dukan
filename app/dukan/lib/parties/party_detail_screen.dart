@@ -393,11 +393,13 @@ class _Body extends StatelessWidget {
 
   /// Open the payment detail (read-only — payments are immutable in v1).
   Future<void> _openPayment(BuildContext context, String paymentId) async {
-    await Navigator.of(context).push<void>(
+    final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => PaymentDetailScreen(shop: shop, paymentId: paymentId),
       ),
     );
+    // A payment void restores the party balance — refresh on return.
+    if (changed == true) onChanged();
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/auth/capabilities.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/payment/payment_detail_screen.dart';
 import 'package:dukan/sale/sale_detail_screen.dart';
@@ -34,16 +35,27 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  PaymentDetail payment({String direction = 'I', String? party = 'Ahmed'}) =>
+  PaymentDetail payment({
+    String direction = 'I',
+    String? party = 'Ahmed',
+    DateTime? createdAt,
+    bool isVoided = false,
+    bool isRefund = false,
+    bool isSettlementLeg = false,
+  }) =>
       PaymentDetail(
         paymentId: 'pay-1',
         occurredAt: DateTime(2026, 6, 12),
+        createdAt: createdAt ?? DateTime.now(),
         partyId: party == null ? null : 'p-1',
         partyName: party,
         direction: direction,
         amount: 50,
         paymentMethodCode: 'cash',
         notes: null,
+        isVoided: isVoided,
+        isRefund: isRefund,
+        isSettlementLeg: isSettlementLeg,
       );
 
   PostedAllocation saleAllocation() => PostedAllocation(
@@ -103,5 +115,66 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(SaleDetailScreen), findsOneWidget);
+  });
+
+  group('void gating', () {
+    setUp(() {
+      auth = FakeAuthController(
+        capabilities: Capabilities.forTesting(const ['payment.void']),
+      );
+    });
+
+    testWidgets('owner within window sees VOID → confirm posts void_payment',
+        (tester) async {
+      api.onGetPayment = (_, _) async => payment();
+      api.onListPaymentAllocations = (_, _) async => [saleAllocation()];
+      await pump(tester);
+      expect(find.text(en.paymentDetailVoidButton), findsOneWidget);
+      await tester.tap(find.text(en.paymentDetailVoidButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.paymentVoidConfirmYes));
+      await tester.pumpAndSettle();
+      expect(api.voidPaymentCalls, contains('pay-1'));
+    });
+
+    testWidgets('cashier without payment.void sees no VOID', (tester) async {
+      auth = FakeAuthController(capabilities: Capabilities.forTesting(const []));
+      api.onGetPayment = (_, _) async => payment();
+      api.onListPaymentAllocations = (_, _) async => const [];
+      await pump(tester);
+      expect(find.text(en.paymentDetailVoidButton), findsNothing);
+    });
+
+    testWidgets('refund leg shows no VOID', (tester) async {
+      api.onGetPayment = (_, _) async => payment(isRefund: true);
+      api.onListPaymentAllocations = (_, _) async => const [];
+      await pump(tester);
+      expect(find.text(en.paymentDetailVoidButton), findsNothing);
+    });
+
+    testWidgets('at-till settlement leg shows no VOID', (tester) async {
+      api.onGetPayment = (_, _) async => payment(isSettlementLeg: true);
+      api.onListPaymentAllocations = (_, _) async => const [];
+      await pump(tester);
+      expect(find.text(en.paymentDetailVoidButton), findsNothing);
+    });
+
+    testWidgets('already voided shows banner + no VOID', (tester) async {
+      api.onGetPayment = (_, _) async => payment(isVoided: true);
+      api.onListPaymentAllocations = (_, _) async => const [];
+      await pump(tester);
+      expect(find.text(en.paymentVoidedHeader), findsOneWidget);
+      expect(find.text(en.paymentDetailVoidButton), findsNothing);
+    });
+
+    testWidgets('outside window shows the window-passed hint, no VOID',
+        (tester) async {
+      api.onGetPayment =
+          (_, _) async => payment(createdAt: DateTime(2020, 1, 1));
+      api.onListPaymentAllocations = (_, _) async => const [];
+      await pump(tester);
+      expect(find.text(en.paymentDetailVoidButton), findsNothing);
+      expect(find.text(en.paymentVoidWindowPassedHint), findsOneWidget);
+    });
   });
 }

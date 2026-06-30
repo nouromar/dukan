@@ -1285,6 +1285,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseVoidFailedMessage => 'Couldn\'t void this expense.';
 
   @override
+  String get paymentDetailVoidButton => 'VOID THIS PAYMENT';
+
+  @override
+  String get paymentVoidConfirmTitle => 'Void this payment?';
+
+  @override
+  String get paymentVoidConfirmBody =>
+      'This reverses the payment and reopens what it settled. It can\'t be undone.';
+
+  @override
+  String get paymentVoidConfirmYes => 'VOID';
+
+  @override
+  String get paymentVoidedToast => 'Payment voided';
+
+  @override
+  String get paymentVoidedHeader => 'Voided';
+
+  @override
+  String get paymentVoidFailedMessage => 'Couldn\'t void this payment.';
+
+  @override
+  String get paymentVoidWindowPassedHint => 'Void window passed';
+
+  @override
   String saleDetailLineSubtotal(
     Object quantity,
     Object subtotal,

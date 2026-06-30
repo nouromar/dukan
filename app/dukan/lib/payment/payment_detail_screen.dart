@@ -3,9 +3,12 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/receive/receive_detail_screen.dart';
 import 'package:dukan/sale/sale_detail_screen.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
+import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
@@ -35,11 +38,80 @@ class _PaymentBundle {
 
 class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
   late Future<_PaymentBundle> _future;
+  bool _voiding = false;
 
   @override
   void initState() {
     super.initState();
     _future = _load();
+  }
+
+  /// True when the VOID button should show: owner capability, not already
+  /// voided, not a refund/​at-till leg, and within the per-shop window. Mirrors
+  /// the server guards in void_payment (the server re-enforces regardless).
+  bool _canVoid(BuildContext context, PaymentDetail h) {
+    if (h.isVoided || h.isRefund || h.isSettlementLeg) return false;
+    if (DateTime.now().difference(h.createdAt) >=
+        widget.shop.voidSettings.paymentWindow) {
+      return false;
+    }
+    return context.watch<AuthController>().capabilities.canVoidPayment;
+  }
+
+  /// The window expired on a payment that is otherwise structurally voidable —
+  /// show a small disabled hint instead of silently hiding the affordance.
+  bool _windowPassed(PaymentDetail h) {
+    if (h.isVoided || h.isRefund || h.isSettlementLeg) return false;
+    return DateTime.now().difference(h.createdAt) >=
+        widget.shop.voidSettings.paymentWindow;
+  }
+
+  Future<void> _confirmAndVoid(PaymentDetail h) async {
+    final l = tr(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.paymentVoidConfirmTitle),
+        content: Text(l.paymentVoidConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cartClearConfirmNo),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.paymentVoidConfirmYes),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _voiding = true);
+    final api = context.read<ShopApi>();
+    try {
+      await api.voidPayment(
+        shopId: widget.shop.id,
+        paymentId: h.paymentId,
+        clientOpId: generateClientOpId('void_payment'),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.paymentVoidedToast)));
+      Navigator.of(context).pop(true);
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'dukan payment',
+          context: ErrorDescription('void_payment'),
+        ),
+      );
+      if (mounted) showError(context, l.paymentVoidFailedMessage);
+    } finally {
+      if (mounted) setState(() => _voiding = false);
+    }
   }
 
   Future<_PaymentBundle> _load() async {
@@ -97,6 +169,10 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
               shop: widget.shop,
               bundle: snapshot.data!,
               onOpenTxn: _openTxn,
+              voiding: _voiding,
+              canVoid: _canVoid(context, snapshot.data!.header),
+              windowPassed: _windowPassed(snapshot.data!.header),
+              onVoid: () => _confirmAndVoid(snapshot.data!.header),
             );
           },
         ),
@@ -110,11 +186,19 @@ class _PaymentBody extends StatelessWidget {
     required this.shop,
     required this.bundle,
     required this.onOpenTxn,
+    required this.voiding,
+    required this.canVoid,
+    required this.windowPassed,
+    required this.onVoid,
   });
 
   final ShopSummary shop;
   final _PaymentBundle bundle;
   final Future<void> Function(PostedAllocation) onOpenTxn;
+  final bool voiding;
+  final bool canVoid;
+  final bool windowPassed;
+  final VoidCallback onVoid;
 
   String _methodLabel(String code) =>
       code.isEmpty ? code : code[0].toUpperCase() + code.substring(1);
@@ -130,6 +214,24 @@ class _PaymentBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        if (header.isVoided) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              l.paymentVoidedHeader,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onErrorContainer,
+                fontWeight: FontWeight.w800,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -167,6 +269,9 @@ class _PaymentBody extends StatelessWidget {
                 formatMoney(header.amount, shop),
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
+                  decoration: header.isVoided
+                      ? TextDecoration.lineThrough
+                      : null,
                 ),
               ),
             ],
@@ -235,6 +340,34 @@ class _PaymentBody extends StatelessWidget {
                 ],
               ),
             ),
+        if (canVoid) ...[
+          const SizedBox(height: 24),
+          OutlinedButton(
+            onPressed: voiding ? null : onVoid,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+              foregroundColor: theme.colorScheme.error,
+              side: BorderSide(color: theme.colorScheme.error),
+            ),
+            child: voiding
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(l.paymentDetailVoidButton),
+          ),
+        ] else if (windowPassed) ...[
+          const SizedBox(height: 24),
+          Center(
+            child: Text(
+              l.paymentVoidWindowPassedHint,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
