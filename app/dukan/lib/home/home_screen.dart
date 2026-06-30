@@ -17,6 +17,7 @@ import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/parties/customers_screen.dart';
 import 'package:dukan/parties/suppliers_screen.dart';
 import 'package:dukan/reports/low_stock_screen.dart';
+import 'package:dukan/reports/reports_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/settings/language_sheet.dart';
@@ -161,6 +162,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 onProducts: () => _pushAndRefresh(
                   (_) => ProductsScreen(shop: shop!),
                 ),
+                onReports: () => _pushAndRefresh(
+                  (_) => ReportsScreen(shop: shop!),
+                ),
               ),
             ],
           ),
@@ -179,6 +183,7 @@ class _ActionGrid extends StatelessWidget {
     required this.onPaymentOut,
     required this.onExpense,
     required this.onProducts,
+    required this.onReports,
   });
 
   final ShopSummary? shop;
@@ -188,13 +193,14 @@ class _ActionGrid extends StatelessWidget {
   final VoidCallback onPaymentOut;
   final VoidCallback onExpense;
   final VoidCallback onProducts;
+  final VoidCallback onReports;
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
     // 2-column grid at a fixed cell height matching the original design's
-    // tap-target size. Six tiles in a clean 3×2: Sale, Receive / Money In,
-    // Money Out / Expense, Products. Payment was split into Money In
+    // tap-target size. Seven tiles in two columns: Sale, Receive, Money In,
+    // Money Out, Expense, Products, Reports. Payment was split into Money In
     // (customer pays) and Money Out (pay supplier) so the direction is chosen
     // by which tile you tap, not a question inside the screen (#2 feedback).
     return GridView(
@@ -238,6 +244,12 @@ class _ActionGrid extends StatelessWidget {
           icon: Icons.label_outline,
           label: l.drawerProducts,
           onTap: shop == null ? () {} : onProducts,
+        ),
+        // Reports — also reachable from the drawer; same icon there.
+        HomeAction(
+          icon: Icons.bar_chart,
+          label: l.reportsTitle,
+          onTap: shop == null ? () {} : onReports,
         ),
       ],
     );
