@@ -1264,6 +1264,32 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleDetailVoidButton => 'Ka noqo IIBKA';
 
   @override
+  String get expenseDetailTitle => 'Kharash';
+
+  @override
+  String get expenseDetailVoidButton => 'TIRTIR KHARASHKAN';
+
+  @override
+  String get expenseDetailLoadFailedMessage =>
+      'Lama soo qaadan karin kharashkan.';
+
+  @override
+  String get expenseVoidConfirmTitle => 'Tirtir kharashkan?';
+
+  @override
+  String get expenseVoidConfirmBody =>
+      'Tani way ka noqonaysaa kharashka. Lama soo celin karo.';
+
+  @override
+  String get expenseVoidConfirmYes => 'TIRTIR';
+
+  @override
+  String get expenseVoidedToast => 'Kharash waa la tirtiray';
+
+  @override
+  String get expenseVoidFailedMessage => 'Lama tirtiri karin kharashkan.';
+
+  @override
   String saleDetailLineSubtotal(
     Object quantity,
     Object subtotal,

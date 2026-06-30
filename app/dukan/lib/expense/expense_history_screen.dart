@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/expense/expense_detail_screen.dart';
 import 'package:dukan/expense/expense_history_filter_sheet.dart';
 import 'package:dukan/shared/date_range.dart';
 import 'package:dukan/shared/history_date.dart';
@@ -145,6 +146,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                 itemBuilder: (_, row, _) => _ExpenseRow(
                   shop: widget.shop,
                   row: row,
+                  onChanged: _reload,
                 ),
               ),
             ),
@@ -156,9 +158,17 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
 }
 
 class _ExpenseRow extends StatelessWidget {
-  const _ExpenseRow({required this.shop, required this.row});
+  const _ExpenseRow({
+    required this.shop,
+    required this.row,
+    required this.onChanged,
+  });
   final ShopSummary shop;
   final ExpenseSummary row;
+
+  /// Called after the detail screen pops with a change (a void) so the
+  /// history refreshes.
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -175,6 +185,19 @@ class _ExpenseRow extends StatelessWidget {
     ];
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      onTap: () async {
+        final changed = await Navigator.of(context).push<bool>(
+          MaterialPageRoute(
+            builder: (_) => ExpenseDetailScreen(shop: shop, txnId: row.txnId),
+          ),
+        );
+        if (changed == true) onChanged();
+      },
+      trailing: Icon(
+        Icons.chevron_right,
+        size: 18,
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
       title: Row(
         children: [
           Expanded(

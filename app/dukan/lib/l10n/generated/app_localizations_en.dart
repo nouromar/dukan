@@ -1260,6 +1260,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleDetailVoidButton => 'VOID THIS SALE';
 
   @override
+  String get expenseDetailTitle => 'Expense';
+
+  @override
+  String get expenseDetailVoidButton => 'VOID THIS EXPENSE';
+
+  @override
+  String get expenseDetailLoadFailedMessage => 'Couldn\'t load this expense.';
+
+  @override
+  String get expenseVoidConfirmTitle => 'Void this expense?';
+
+  @override
+  String get expenseVoidConfirmBody =>
+      'This reverses the expense. It can\'t be undone.';
+
+  @override
+  String get expenseVoidConfirmYes => 'VOID';
+
+  @override
+  String get expenseVoidedToast => 'Expense voided';
+
+  @override
+  String get expenseVoidFailedMessage => 'Couldn\'t void this expense.';
+
+  @override
   String saleDetailLineSubtotal(
     Object quantity,
     Object subtotal,

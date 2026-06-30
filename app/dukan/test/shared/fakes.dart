@@ -609,6 +609,10 @@ class FakeShopApi implements ShopApi {
   Future<String> Function(String shopId, String txnId, String clientOpId)?
   onVoidReceive;
   final List<String> voidReceiveCalls = [];
+  Future<String> Function(String shopId, String txnId, String clientOpId)?
+  onVoidExpense;
+  final List<String> voidExpenseCalls = [];
+  Future<ExpenseSummary?> Function(String shopId, String txnId)? onGetExpense;
   Future<String> Function(
     String shopId,
     String categoryId,
@@ -1496,6 +1500,29 @@ class FakeShopApi implements ShopApi {
       return onVoidReceive!(shopId, txnId, clientOpId);
     }
     return 'fake-reversal-${clientOpId.hashCode}';
+  }
+
+  @override
+  Future<String> voidExpense({
+    required String shopId,
+    required String txnId,
+    required String clientOpId,
+  }) async {
+    voidExpenseCalls.add(txnId);
+    if (onVoidExpense != null) {
+      return onVoidExpense!(shopId, txnId, clientOpId);
+    }
+    return 'fake-exp-reversal-${clientOpId.hashCode}';
+  }
+
+  @override
+  Future<ExpenseSummary?> getExpense({
+    required String shopId,
+    required String txnId,
+    String? locale,
+  }) async {
+    if (onGetExpense != null) return onGetExpense!(shopId, txnId);
+    return null;
   }
 
   @override

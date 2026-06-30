@@ -63,6 +63,8 @@ class Capabilities {
   bool get canViewPaymentHistory => has('payment.history.view');
   bool get canPostExpense => has('expense.post');
   bool get canViewExpenseHistory => has('expense.history.view');
+  bool get canVoidPayment => has('payment.void');
+  bool get canVoidExpense => has('expense.void');
 
   // ---- Inventory ----
   bool get canViewProducts => has('inventory.product.view');

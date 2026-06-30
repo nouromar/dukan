@@ -6843,6 +6843,115 @@ begin
 end;
 $$;
 
+-- §KK void_expense + get_expense (0086): owner voids an expense; replay is
+-- idempotent; double-void / out-of-window / cashier all rejected; the reversal
+-- mirrors the line and creates no stock movement; get_expense reflects is_voided.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id     uuid;
+  v_cat_id      uuid;
+  v_exp_id      uuid;
+  v_reversal    uuid;
+  v_old_exp     uuid;
+  v_cashier_exp uuid;
+  v_voided      boolean;
+  v_failed      boolean;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_cat_id from public.expense_category
+   where shop_id = v_shop_id limit 1;
+
+  -- (1) Owner voids a fresh expense → reversal txn mirrors the line, no stock.
+  v_exp_id := public.post_expense(
+    v_shop_id, v_cat_id, 15, 'cash', null, 'KK-exp-1', null, 'expense to void'
+  );
+  v_reversal := public.void_expense(v_shop_id, v_exp_id, 'KK-void-1');
+  if not exists (
+    select 1 from public.txn t
+    join public.transaction_type tt on tt.id = t.type_id
+    where t.id = v_reversal and t.reverses_transaction_id = v_exp_id
+      and tt.code = 'expense'
+  ) then
+    raise exception 'KK (1): reversal expense txn must point at the original';
+  end if;
+  if not exists (
+    select 1 from public.transaction_line
+    where transaction_id = v_reversal and expense_category_id = v_cat_id
+  ) then
+    raise exception 'KK (1): reversal must mirror the expense line';
+  end if;
+  if exists (
+    select 1 from public.stock_movement sm
+    join public.transaction_line tl on tl.id = sm.transaction_line_id
+    where tl.transaction_id = v_reversal
+  ) then
+    raise exception 'KK (1): expense void must not create stock movement';
+  end if;
+
+  -- (2) get_expense reflects is_voided.
+  select is_voided into v_voided
+  from public.get_expense(v_shop_id, v_exp_id, 'en');
+  if not v_voided then
+    raise exception 'KK (2): get_expense should report is_voided=true';
+  end if;
+
+  -- (3) Idempotent replay returns the same reversal id.
+  if public.void_expense(v_shop_id, v_exp_id, 'KK-void-1') <> v_reversal then
+    raise exception 'KK (3): replay must return the same reversal id';
+  end if;
+
+  -- (4) Double-void with a new op id raises.
+  v_failed := false;
+  begin
+    perform public.void_expense(v_shop_id, v_exp_id, 'KK-void-1-dup');
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'KK (4): double-void must raise';
+  end if;
+
+  -- (5) Expense outside the window cannot be voided.
+  v_old_exp := public.post_expense(
+    v_shop_id, v_cat_id, 5, 'cash', null, 'KK-exp-old', null, 'old'
+  );
+  reset role;
+  update public.txn
+  set posted_at = pg_catalog.now() - interval '8 days',
+      occurred_at = pg_catalog.now() - interval '8 days'
+  where id = v_old_exp;
+  set role authenticated;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+  v_failed := false;
+  begin
+    perform public.void_expense(v_shop_id, v_old_exp, null);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'KK (5): void_expense must reject outside the window';
+  end if;
+
+  -- (6) Cashier (sub …002) cannot void an expense.
+  v_cashier_exp := public.post_expense(
+    v_shop_id, v_cat_id, 7, 'cash', null, 'KK-exp-cashier', null, 'x'
+  );
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000002';
+  v_failed := false;
+  begin
+    perform public.void_expense(v_shop_id, v_cashier_exp, 'KK-cashier-void');
+  exception when others then v_failed := true;
+  end;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+  if not v_failed then
+    raise exception 'KK (6): cashier must not void an expense';
+  end if;
+
+  raise notice 'KK: void_expense tests passed';
+end;
+$$;
+reset role;
+
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 

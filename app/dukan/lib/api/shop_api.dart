@@ -1376,6 +1376,42 @@ class ShopApi {
     return result as String;
   }
 
+  /// void_expense — owner-only reversal of a posted expense. Direct RPC
+  /// (not queued), like voidSale/voidReceive.
+  Future<String> voidExpense({
+    required String shopId,
+    required String txnId,
+    required String clientOpId,
+  }) async {
+    final result = await _client.rpc(
+      'void_expense',
+      params: {
+        'p_shop_id': shopId,
+        'p_txn_id': txnId,
+        'p_client_op_id': clientOpId,
+      },
+    );
+    return result as String;
+  }
+
+  /// get_expense — a single expense for the detail screen (incl. is_voided).
+  Future<ExpenseSummary?> getExpense({
+    required String shopId,
+    required String txnId,
+    String? locale,
+  }) async {
+    final rows = await _client.rpc(
+      'get_expense',
+      params: {
+        'p_shop_id': shopId,
+        'p_txn_id': txnId,
+        if (locale != null) 'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    if (rows is! List || rows.isEmpty) return null;
+    return ExpenseSummary.fromJson(Map<String, dynamic>.from(rows.first));
+  }
+
   /// post_payment — settle a party's outstanding balance. Direction is
   /// 'I' for an inbound payment (customer pays down their receivable)
   /// or 'O' for an outbound payment (shop pays down its payable to a

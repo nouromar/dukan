@@ -738,6 +738,7 @@ class ExpenseSummary {
     this.categoryId,
     this.categoryName,
     this.notes,
+    this.isVoided = false,
   });
 
   factory ExpenseSummary.fromJson(Map<String, dynamic> json) => ExpenseSummary(
@@ -749,6 +750,8 @@ class ExpenseSummary {
     categoryId: json['category_id'] as String?,
     categoryName: json['category_name'] as String?,
     notes: json['notes'] as String?,
+    // Only get_expense returns is_voided; the history list omits it.
+    isVoided: json['is_voided'] as bool? ?? false,
   );
 
   final String txnId;
@@ -759,6 +762,7 @@ class ExpenseSummary {
   final String? categoryId;
   final String? categoryName;
   final String? notes;
+  final bool isVoided;
 }
 
 class ExpenseCategoryOption {

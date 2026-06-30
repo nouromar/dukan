@@ -2240,6 +2240,54 @@ abstract class AppLocalizations {
   /// **'VOID THIS SALE'**
   String get saleDetailVoidButton;
 
+  /// No description provided for @expenseDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get expenseDetailTitle;
+
+  /// No description provided for @expenseDetailVoidButton.
+  ///
+  /// In en, this message translates to:
+  /// **'VOID THIS EXPENSE'**
+  String get expenseDetailVoidButton;
+
+  /// No description provided for @expenseDetailLoadFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this expense.'**
+  String get expenseDetailLoadFailedMessage;
+
+  /// No description provided for @expenseVoidConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Void this expense?'**
+  String get expenseVoidConfirmTitle;
+
+  /// No description provided for @expenseVoidConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This reverses the expense. It can\'t be undone.'**
+  String get expenseVoidConfirmBody;
+
+  /// No description provided for @expenseVoidConfirmYes.
+  ///
+  /// In en, this message translates to:
+  /// **'VOID'**
+  String get expenseVoidConfirmYes;
+
+  /// No description provided for @expenseVoidedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense voided'**
+  String get expenseVoidedToast;
+
+  /// No description provided for @expenseVoidFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t void this expense.'**
+  String get expenseVoidFailedMessage;
+
   /// No description provided for @saleDetailLineSubtotal.
   ///
   /// In en, this message translates to:
