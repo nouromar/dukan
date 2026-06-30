@@ -7157,6 +7157,71 @@ end;
 $$;
 reset role;
 
+-- §LM get_payment loads BOTH directions (0087 redefinition). Outbound/supplier
+-- get_payment was previously untested — reproduces the "could not load this
+-- payment" smoke-test report for a supplier payment.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id  uuid;
+  v_unit_id  uuid;
+  v_cust_id  uuid;
+  v_sup_id   uuid;
+  v_sale_id  uuid;
+  v_recv_id  uuid;
+  v_pay_in   uuid;
+  v_pay_out  uuid;
+  v_dir      char(1);
+  v_n        int;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select siu.id into v_unit_id
+  from public.shop_item_unit siu
+  where siu.shop_id = v_shop_id and siu.conversion_to_base = 1
+  limit 1;
+  v_cust_id := public.create_party(v_shop_id, 'LM Customer', null, 'customer');
+  v_sup_id  := public.create_party(v_shop_id, 'LM Supplier', null, 'supplier');
+
+  -- Inbound: credit sale then a standalone customer payment.
+  v_sale_id := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 3, 'unit_price', 2
+    )),
+    0, null, null, 'LM-sale', null, 'credit'
+  );
+  v_pay_in := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 6, 'cash', 'LM-pay-in', null, null, null, null
+  );
+  select count(*), max(direction) into v_n, v_dir
+  from public.get_payment(v_shop_id, v_pay_in);
+  if v_n <> 1 or v_dir <> 'I' then
+    raise exception 'LM: get_payment must load the inbound payment (n=%, dir=%)', v_n, v_dir;
+  end if;
+
+  -- Outbound: credit receive then a standalone supplier payment.
+  v_recv_id := public.post_receive(
+    v_shop_id, v_sup_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 5, 'line_total', 10
+    )),
+    0, 'cash', null, 'LM-recv', null, 'credit bono'
+  );
+  v_pay_out := public.post_payment(
+    v_shop_id, v_sup_id, 'O', 10, 'cash', 'LM-pay-out', null, null, null, null
+  );
+  select count(*), max(direction) into v_n, v_dir
+  from public.get_payment(v_shop_id, v_pay_out);
+  if v_n <> 1 or v_dir <> 'O' then
+    raise exception 'LM: get_payment must load the outbound supplier payment (n=%, dir=%)', v_n, v_dir;
+  end if;
+
+  raise notice 'LM: get_payment both-directions tests passed';
+end;
+$$;
+reset role;
+
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 

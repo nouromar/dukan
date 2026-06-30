@@ -351,7 +351,12 @@ class PaymentDetail {
   factory PaymentDetail.fromJson(Map<String, dynamic> json) => PaymentDetail(
     paymentId: json['payment_id'] as String,
     occurredAt: DateTime.parse(json['occurred_at'] as String),
-    createdAt: DateTime.parse(json['created_at'] as String),
+    // Tolerate a get_payment that predates 0087 (no created_at): fall back to
+    // occurred_at so the screen still loads. The server re-enforces the void
+    // window with the real created_at regardless.
+    createdAt: json['created_at'] == null
+        ? DateTime.parse(json['occurred_at'] as String)
+        : DateTime.parse(json['created_at'] as String),
     partyId: json['party_id'] as String?,
     partyName: json['party_name'] as String?,
     direction: json['direction'] as String,
