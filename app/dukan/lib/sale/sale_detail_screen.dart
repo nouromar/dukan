@@ -27,7 +27,6 @@ import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/receipt_pdf.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
-import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/relative_time.dart';
@@ -543,7 +542,9 @@ class _SaleReceiptBody extends StatelessWidget {
     if (bundle.header.isVoided) return false;
     final posted = bundle.header.postedAt;
     if (posted == null) return false;
-    if (DateTime.now().difference(posted) >= saleVoidWindow) return false;
+    if (DateTime.now().difference(posted) >= shop.voidSettings.saleWindow) {
+      return false;
+    }
     // Capability gate — cashier role lacks sales.void. The receipt
     // sheet (showVoidAffordance: false) skips this branch entirely
     // since it's already gated above; we read capabilities on the

@@ -1,22 +1,11 @@
 // Single source of truth for business-rule numerics that the UI
-// depends on. Values that the backend ALSO depends on (the 7-day void
-// window is enforced in migration 0010's void_sale RPC) MUST be kept
-// in sync server-side. The matching server constant is named in the
-// doc comment per constant — change here AND in the named migration
-// or the client-server contract drifts.
-
-/// How long after posting a Sale can the owner void it.
-///
-/// Server-enforced in `void_sale` (migration `0010`, `v_void_window`).
-/// Decision: `docs/decisions.md` Q12.
-const Duration saleVoidWindow = Duration(days: 7);
-
-/// How long after posting a Receive can the owner void it. Narrower
-/// than the sale window because receive corrections almost always
-/// happen the same shift.
-///
-/// Server-enforced in `void_receive` (migration `0010`).
-const Duration receiveVoidWindow = Duration(hours: 24);
+// depends on.
+//
+// The void windows used to live here as constants; they are now per-shop,
+// per-type and arrive on the shop row's `void_settings` (migration 0085),
+// parsed into `VoidSettings` (lib/config/void_settings.dart) and read off
+// `ShopSummary.voidSettings`. The void_* RPCs re-enforce the same windows
+// server-side via `_void_window_days`.
 
 /// Page size for history list screens (Sale, Receive, Payment, Expense).
 /// The four screens all paginate against the matching `list_*` RPC;

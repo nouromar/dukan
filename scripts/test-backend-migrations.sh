@@ -4639,6 +4639,8 @@ declare
   v_reversal   uuid;
   v_void_back  uuid;
   v_failed     boolean;
+  v_cfg_sale   uuid;
+  v_cfg_reversal uuid;
 begin
   select shop_id into v_shop_id from test_ids;
 
@@ -4728,6 +4730,53 @@ begin
   if not v_failed then
     raise exception 'JJ (3): void_sale must reject partial-paid sale';
   end if;
+
+  -- (5) Configurable window (0085): a tighter void_window_days_sale rejects a
+  --     sale the default 7-day window would allow; loosening re-allows it.
+  v_cfg_sale := public.post_sale(
+    v_shop_id, v_cust_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 1, 'unit_price', 2
+    )),
+    0, null, null, 'JJ-sale-cfg', null, 'config window sale'
+  );
+  reset role;
+  update public.txn
+  set posted_at = pg_catalog.now() - interval '2 days',
+      occurred_at = pg_catalog.now() - interval '2 days'
+  where id = v_cfg_sale;
+  insert into public.shop_setting (shop_id, key, value)
+  values (v_shop_id, 'void_window_days_sale', '1'::jsonb)
+  on conflict (shop_id, key) do update set value = excluded.value;
+  set role authenticated;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+  v_failed := false;
+  begin
+    perform public.void_sale(v_shop_id, v_cfg_sale, null);
+  exception when others then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'JJ (5): void_window_days_sale=1 must reject a 2-day-old sale';
+  end if;
+
+  reset role;
+  update public.shop_setting set value = '30'::jsonb
+  where shop_id = v_shop_id and key = 'void_window_days_sale';
+  set role authenticated;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+  v_cfg_reversal := public.void_sale(v_shop_id, v_cfg_sale, 'JJ-void-cfg');
+  if not exists (
+    select 1 from public.txn
+    where id = v_cfg_reversal and reverses_transaction_id = v_cfg_sale
+  ) then
+    raise exception 'JJ (5): loosened void_window_days_sale must allow the 2-day-old sale';
+  end if;
+
+  reset role;
+  delete from public.shop_setting
+  where shop_id = v_shop_id and key = 'void_window_days_sale';
+  set role authenticated;
+  set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 
 end;
 $$;

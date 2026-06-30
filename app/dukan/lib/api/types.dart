@@ -2,6 +2,7 @@
 // (data). Kept in one place so neither layer "owns" them and consumers
 // (screens, tests, fixtures) import from a single canonical path.
 
+import 'package:dukan/config/void_settings.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 
 class ShopSummary {
@@ -16,6 +17,7 @@ class ShopSummary {
     required this.onboardingDismissedAt,
     this.currencyDecimals = 2,
     this.scannerSettings = ScannerSettings.defaults,
+    this.voidSettings = VoidSettings.defaults,
   });
 
   /// Pass the currency symbols map (code → symbol) and decimals map
@@ -32,6 +34,10 @@ class ShopSummary {
     final scanner = rawScanner is Map
         ? ScannerSettings.fromJson(Map<String, dynamic>.from(rawScanner))
         : ScannerSettings.defaults;
+    final rawVoid = json['void_settings'];
+    final voidS = rawVoid is Map
+        ? VoidSettings.fromJson(Map<String, dynamic>.from(rawVoid))
+        : VoidSettings.defaults;
     return ShopSummary(
       id: json['id'] as String,
       name: json['name'] as String,
@@ -45,6 +51,7 @@ class ShopSummary {
           ? null
           : DateTime.parse(dismissedRaw),
       scannerSettings: scanner,
+      voidSettings: voidS,
     );
   }
 
@@ -74,6 +81,10 @@ class ShopSummary {
   /// min burst length 4. Pushed into ScannerSettings.current by
   /// AuthController on shop selection.
   final ScannerSettings scannerSettings;
+
+  /// Per-shop, per-type void windows (days). Defaults match migration 0085.
+  /// Used to pre-gate the VOID button; the void_* RPCs re-enforce server-side.
+  final VoidSettings voidSettings;
 
   bool get isReady => setupStatus == 'ready';
   bool get isTemplateApplied =>
