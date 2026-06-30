@@ -1,0 +1,4902 @@
+{
+  "appTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "DukanPro",
+    "so": "DukanPro"
+  },
+  "languageEnglish": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "English",
+    "so": "Ingiriis"
+  },
+  "languageSomali": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Somali",
+    "so": "Soomaali"
+  },
+  "homeHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Home",
+    "en": "Choose today's job",
+    "so": "Dooro shaqada maanta"
+  },
+  "sale": {
+    "role": "home_tile",
+    "max_chars": 14,
+    "area": "Sale",
+    "en": "Sale",
+    "so": "Iibi"
+  },
+  "receive": {
+    "role": "home_tile",
+    "max_chars": 14,
+    "area": "Receive",
+    "en": "Receive",
+    "so": "Alaab Dajin"
+  },
+  "payment": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Payment",
+    "so": "Lacag bixin"
+  },
+  "paymentInLabel": {
+    "role": "home_tile",
+    "max_chars": 14,
+    "area": "Payment",
+    "en": "Money In",
+    "so": "Lacag Soo Gal"
+  },
+  "paymentOutLabel": {
+    "role": "home_tile",
+    "max_chars": 14,
+    "area": "Payment",
+    "en": "Money Out",
+    "so": "Lacag Bax"
+  },
+  "paymentDetailSettledHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Payment",
+    "en": "Paid for",
+    "so": "Waxa loo bixiyay"
+  },
+  "paymentDetailNoAllocations": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "This payment isn't linked to a sale or receive yet.",
+    "so": "Lacagtan weli lama xirin iib ama qaadasho."
+  },
+  "paymentDetailLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Couldn't load this payment.",
+    "so": "Lama soo qaadan karin lacagtan."
+  },
+  "expense": {
+    "role": "home_tile",
+    "max_chars": 14,
+    "area": "Expense",
+    "en": "Expense",
+    "so": "Qarashaad"
+  },
+  "cash": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "CASH",
+    "so": "KAASH"
+  },
+  "debt": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "DEBT",
+    "so": "DEYN"
+  },
+  "confirm": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "CONFIRM",
+    "so": "XAQIIJI"
+  },
+  "searchItems": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Search items",
+    "so": "Raadi alaab"
+  },
+  "favorites": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Favorites",
+    "so": "Kuwa la jecel yahay"
+  },
+  "cart": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "CART",
+    "so": "Danbiil"
+  },
+  "total": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Total",
+    "so": "Wadar"
+  },
+  "undo": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Undo",
+    "so": "Ka noqo"
+  },
+  "quantity": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Qty",
+    "so": "Tiro"
+  },
+  "price": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Price",
+    "so": "Qiime"
+  },
+  "cancel": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Cancel",
+    "so": "Jooji"
+  },
+  "receiveTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Receive",
+    "en": "Receive",
+    "so": "Alaab dajin"
+  },
+  "bonoAttachTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Attach bono photo",
+    "so": "Sawir bonoga"
+  },
+  "bonoAttachedTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Bono attached — tap to replace",
+    "so": "Bono waa la sawiray — taabo si aad u beddesho"
+  },
+  "bonoAttachCamera": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Take photo",
+    "so": "Sawir hadda"
+  },
+  "bonoAttachGallery": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Choose from gallery",
+    "so": "Sawir ka hor leh"
+  },
+  "bonoAttachedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Bono photo attached",
+    "so": "Sawirka bonoga waa la raaciyay"
+  },
+  "bonoAttachFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Could not attach the bono. Try again.",
+    "so": "Bonoga lama raacin karin. Isku day mar kale."
+  },
+  "partyDetailTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Parties",
+    "en": "Party",
+    "so": "Qof"
+  },
+  "partyHideTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "Hide",
+    "so": "Qari"
+  },
+  "partyHideConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Parties",
+    "en": "Hide this contact?",
+    "so": "Ma qarinaysaa qofkan?"
+  },
+  "partyHideConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "They'll be removed from your lists. Any balance and history stay. You can ask support to bring them back.",
+    "so": "Waxaa laga saari doonaa liisaskaaga. Lacagta iyo taariikhda way sii jiri doonaan. Waxaad weydiisan kartaa taageerada inay soo celiyaan."
+  },
+  "partyHideConfirmYes": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Parties",
+    "en": "HIDE",
+    "so": "QARI"
+  },
+  "partyHiddenToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "Contact hidden",
+    "so": "Qofka waa la qariyay"
+  },
+  "backdateChipToday": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Today",
+    "so": "Maanta"
+  },
+  "backdateChipTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Change date",
+    "so": "Beddel taariikhda"
+  },
+  "backdateBannerLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Recording for {date}",
+    "so": "Waxaad u diiwaangelinaysaa {date}"
+  },
+  "backdateBackToToday": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "TODAY",
+    "so": "MAANTA"
+  },
+  "reportsTitle": {
+    "role": "home_tile",
+    "max_chars": 14,
+    "area": "Reports",
+    "en": "Reports",
+    "so": "Warbixino"
+  },
+  "drawerReports": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Reports",
+    "so": "Warbixino"
+  },
+  "reportsSalesTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Reports",
+    "en": "Sales",
+    "so": "Iibka"
+  },
+  "reportsProfitTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Reports",
+    "en": "Profit",
+    "so": "Faa'iido"
+  },
+  "reportsStockTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Reports",
+    "en": "Stock",
+    "so": "Bakhaarka"
+  },
+  "reportsRevenueLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Sales total",
+    "so": "Wadarta iibka"
+  },
+  "reportsSalesCountLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Number of sales",
+    "so": "Tirada iibka"
+  },
+  "reportsAvgSaleLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Average sale",
+    "so": "Celceliska iibka"
+  },
+  "reportsCostLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Cost of goods",
+    "so": "Qiimaha alaabta"
+  },
+  "reportsGrossProfitLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Gross profit",
+    "so": "Faa'iidada guud"
+  },
+  "reportsExpensesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Expenses",
+    "so": "Qarashaadka"
+  },
+  "reportsNetProfitLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Net profit",
+    "so": "Faa'iidada saafiga ah"
+  },
+  "reportsMarginLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Margin",
+    "so": "Faa'iido boqolkiiba"
+  },
+  "reportsItemsLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Products in stock",
+    "so": "Alaabta bakhaarka ku jirta"
+  },
+  "reportsStockValueLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Stock value",
+    "so": "Qiimaha bakhaarka"
+  },
+  "reportsLowStockLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Reports",
+    "en": "Low stock",
+    "so": "Alaab yar"
+  },
+  "reportsLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Reports",
+    "en": "Could not load reports. Check your internet and try again.",
+    "so": "Warbixinada lama soo bandhigi karin. Hubi internetkaaga oo isku day mar kale."
+  },
+  "partyDetailLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "Could not load this party.",
+    "so": "Qofkan lama soo dejin karin."
+  },
+  "partyDetailReceivableLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Parties",
+    "en": "They owe you",
+    "so": "Adigaa lacag laguu leeyahay"
+  },
+  "partyDetailPayableLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Parties",
+    "en": "You owe them",
+    "so": "Iyagaa lacag lagu leeyahay"
+  },
+  "partyDetailPayButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Parties",
+    "en": "PAY",
+    "so": "LACAG BIXI"
+  },
+  "partyDetailSalesHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Parties",
+    "en": "Sales",
+    "so": "Iibka"
+  },
+  "partyDetailReceivesHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Parties",
+    "en": "Receives",
+    "so": "Alaab La dajiyey"
+  },
+  "partyDetailPaymentsHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Parties",
+    "en": "Payments",
+    "so": "Lacagaha la bixiyey"
+  },
+  "homeTodayHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Home",
+    "en": "Today",
+    "so": "Maanta"
+  },
+  "homeSalesTodayLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Home",
+    "en": "Sales today",
+    "so": "Iibka manta"
+  },
+  "homeReceivablesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Home",
+    "en": "Customers owe you",
+    "so": "Deynta kaa maqan"
+  },
+  "homePayablesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Home",
+    "en": "You owe suppliers",
+    "so": "Deyn aad qabto"
+  },
+  "homeLowStockLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Home",
+    "en": "Low stock",
+    "so": "Alaab Yaraatey"
+  },
+  "homeLowStockCount": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Home",
+    "en": "{count, plural, =0{none} =1{1 item} other{{count} items}}",
+    "so": "{count, plural, =0{midna} =1{1 alaab} other{{count} alaab}}"
+  },
+  "lowStockReportTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Low stock",
+    "so": "Alaabta yaraatey"
+  },
+  "lowStockReportEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Nothing is running low.",
+    "so": "Wax yaraatey ma jiraan."
+  },
+  "reportLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Could not load. Pull down to try again.",
+    "so": "Ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo."
+  },
+  "filterTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "Filter",
+    "so": "Shaandhee"
+  },
+  "filterSheetTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Filters",
+    "en": "Filter",
+    "so": "Shaandhee"
+  },
+  "filterApplyButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Filters",
+    "en": "APPLY",
+    "so": "ISTICMAAL"
+  },
+  "filterResetButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Filters",
+    "en": "Reset",
+    "so": "Tirtir"
+  },
+  "dateRangeToday": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Filters",
+    "en": "Today",
+    "so": "Maanta"
+  },
+  "dateRangeWeek": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Filters",
+    "en": "Last 7 days",
+    "so": "7-da maalmood ee tegay"
+  },
+  "dateRangeMonth": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Filters",
+    "en": "This month",
+    "so": "Bishaan"
+  },
+  "dateRangeAll": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Filters",
+    "en": "All",
+    "so": "Dhammaan"
+  },
+  "dateRangeCustom": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Filters",
+    "en": "Custom…",
+    "so": "Doorasho…"
+  },
+  "filterPartyAny": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "Anyone",
+    "so": "Qof kasta"
+  },
+  "filterHideVoided": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "Hide voided",
+    "so": "Qari kuwa la tirtiray"
+  },
+  "filterCategoryAny": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "All categories",
+    "so": "Qayb kasta"
+  },
+  "filterLowStockOnly": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "Low stock only",
+    "so": "Kaliya kuwa yaraatey"
+  },
+  "filterNoPriceOnly": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "No price yet",
+    "so": "Aan qiimo lahayn"
+  },
+  "lowStockSearchHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Search product",
+    "so": "Raadi alaab"
+  },
+  "filterChipParty": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "Party: {name}",
+    "so": "Qof: {name}"
+  },
+  "filterChipHideVoided": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "Hiding voided",
+    "so": "La qariyay kuwa la tirtiray"
+  },
+  "filterChipCategory": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "{name}",
+    "so": "{name}"
+  },
+  "filterChipLowStock": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "Low stock",
+    "so": "Yaraatey"
+  },
+  "filterChipNoPrice": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Filters",
+    "en": "No price",
+    "so": "Aan qiimo lahayn"
+  },
+  "drawerHistoryHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Menu",
+    "en": "HISTORY",
+    "so": "TAARIIKH"
+  },
+  "drawerSalesHistory": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Sales history",
+    "so": "Taariikhda iibka"
+  },
+  "drawerReceiveHistory": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Receive history",
+    "so": "Taariikhda alaabta la qaatay"
+  },
+  "drawerExpenseHistory": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Expense history",
+    "so": "Taariikhda kharashka"
+  },
+  "expenseHistoryTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Expense",
+    "en": "Expenses",
+    "so": "Kharashaadka"
+  },
+  "expenseHistoryLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "Could not load expenses. Pull down to try again.",
+    "so": "Kharashka ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo."
+  },
+  "expenseHistoryEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "No expenses yet.",
+    "so": "Kharash weli ma jiro."
+  },
+  "drawerPaymentHistory": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Payment history",
+    "so": "Taariikhda lacagaha"
+  },
+  "paymentHistoryTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Payment",
+    "en": "Payments",
+    "so": "Lacagaha"
+  },
+  "paymentHistoryLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Could not load payments. Pull down to try again.",
+    "so": "Lacagaha ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo."
+  },
+  "paymentHistoryEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "No payments yet.",
+    "so": "Lacag weli ma jiro."
+  },
+  "paymentHistoryNoParty": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Cash",
+    "so": "Kaash"
+  },
+  "paymentHistoryRefundBadge": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Payment",
+    "en": "refund",
+    "so": "celin"
+  },
+  "paymentDirectionLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Payment",
+    "en": "Direction",
+    "so": "Jihada"
+  },
+  "paymentDirectionAny": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Any direction",
+    "so": "Jiho kasta"
+  },
+  "paymentDirectionInbound": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Customer paid you",
+    "so": "Macmiil ku bixiyay"
+  },
+  "paymentDirectionOutbound": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "You paid supplier",
+    "so": "Bixiye aad bixisay"
+  },
+  "partiesLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "Could not load. Pull down to try again.",
+    "so": "Ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo."
+  },
+  "partiesEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "No customers or suppliers yet.",
+    "so": "Macaamiil ama bixiye weli ma jiro."
+  },
+  "partiesEmptyForQuery": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "No matches for \"{query}\".",
+    "so": "Wax la mid ah \"{query}\" lama helin."
+  },
+  "partyNewOpeningReceivableLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Parties",
+    "en": "Opening balance (they owe you)",
+    "so": "Deyn furitaan (kuugu leh)"
+  },
+  "partyNewOpeningPayableLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Parties",
+    "en": "Opening balance (you owe them)",
+    "so": "Deyn furitaan (aad u leh)"
+  },
+  "partyNewOpeningBalanceHelper": {
+    "role": "helper",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "Optional — for old debts from before this app.",
+    "so": "Ikhtiyaari — deynta hore ka horeysay app-kan."
+  },
+  "partyDetailEditTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "Edit name & phone",
+    "so": "Bedel magaca & telefoonka"
+  },
+  "drawerPeopleHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Menu",
+    "en": "PEOPLE",
+    "so": "DADKA"
+  },
+  "drawerCustomers": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Customers",
+    "so": "Macaamiisha"
+  },
+  "drawerSuppliers": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Suppliers",
+    "so": "Alaab Keenayaasha"
+  },
+  "customersTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Customers",
+    "so": "Macaamiisha"
+  },
+  "suppliersTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Receive",
+    "en": "Suppliers",
+    "so": "Alaab Keenayaasha"
+  },
+  "customersSearchHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Search customer",
+    "so": "Raadi macmiil"
+  },
+  "suppliersSearchHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Search supplier",
+    "so": "Raadi bixiye"
+  },
+  "customersAddButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "Add",
+    "so": "Ku dar"
+  },
+  "suppliersAddButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Receive",
+    "en": "Add",
+    "so": "Ku dar"
+  },
+  "customersHasBalanceChip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Has receivable only",
+    "so": "Oo deyn kuu leh"
+  },
+  "suppliersHasBalanceChip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Has payable only",
+    "so": "Oo deyn ku leh"
+  },
+  "customersHeadlineLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Customers owe you",
+    "so": "Deyn lagaa qabo"
+  },
+  "suppliersHeadlineLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "You owe suppliers",
+    "so": "Deyn aad qabto"
+  },
+  "customersHeadlineCount": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "{count, plural, =0{No customers with balance} =1{1 customer with balance} other{{count} customers with balance}}",
+    "so": "{count, plural, =0{Macmiil deyn leh ma jiro} =1{1 macmiil oo deyn leh} other{{count} macaamiil oo deyn leh}}"
+  },
+  "suppliersHeadlineCount": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "{count, plural, =0{No suppliers with balance} =1{1 supplier with balance} other{{count} suppliers with balance}}",
+    "so": "{count, plural, =0{Bixiye deyn leh ma jiro} =1{1 bixiye oo deyn leh} other{{count} bixiye oo deyn leh}}"
+  },
+  "peopleSortLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Sort",
+    "so": "Habayn"
+  },
+  "peopleSortByReceivable": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "By debt (most first)",
+    "so": "Deyn (kii ugu badnaa horta)"
+  },
+  "peopleSortByPayable": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "By debt (most first)",
+    "so": "Deyn (kii ugu badnaa horta)"
+  },
+  "peopleSortByName": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Alphabetical",
+    "so": "Magac (alifba)"
+  },
+  "stockAdjustTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Products",
+    "en": "Adjust {name} stock",
+    "so": "Hagaaji kayd {name}"
+  },
+  "stockAdjustCurrentLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Current: {amount} {unit}",
+    "so": "Hadda: {amount} {unit}"
+  },
+  "stockAdjustModeOpening": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Opening",
+    "so": "Furitaan"
+  },
+  "stockAdjustModeAdd": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Add",
+    "so": "Ku dar"
+  },
+  "stockAdjustModeSubtract": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Subtract",
+    "so": "Ka jar"
+  },
+  "stockAdjustModeSetExact": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Set exact",
+    "so": "Cusub"
+  },
+  "stockAdjustModeOpeningHelper": {
+    "role": "helper",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Stock you had on day one — before this app.",
+    "so": "Kayddii aad hore u haysatay ka hor app-kan."
+  },
+  "stockAdjustModeAddHelper": {
+    "role": "helper",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Stock received outside a bono (e.g. found behind the shelf).",
+    "so": "Kayd la helay oo aan bono ku jirin."
+  },
+  "stockAdjustModeSubtractHelper": {
+    "role": "helper",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Spoilage, waste, or any loss you can't refund.",
+    "so": "Burburin, lumin, ama wax aan dib loo celin karin."
+  },
+  "stockAdjustModeSetExactHelper": {
+    "role": "helper",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Type the new total after a physical count.",
+    "so": "Geli tirada saxda ah ee aad heshay."
+  },
+  "stockAdjustAmountLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Amount ({unit})",
+    "so": "Tirada ({unit})"
+  },
+  "stockAdjustUnitCostLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Cost per {unit} ({currency})",
+    "so": "Qiimaha {unit} ({currency})"
+  },
+  "stockAdjustUnitCostRequiredMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Enter the cost per unit so average cost stays correct.",
+    "so": "Geli qiimaha xidhmadda si qiimaha celceliska u sii saxo."
+  },
+  "stockAdjustNotesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Note (optional)",
+    "so": "Faallo (ikhtiyaari)"
+  },
+  "stockAdjustPreview": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "New stock: {amount} {unit}",
+    "so": "Kaydka cusub: {amount} {unit}"
+  },
+  "stockAdjustSaveButton": {
+    "role": "button_save",
+    "max_chars": 12,
+    "area": "Products",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  "stockAdjustFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Could not save the adjustment. Try again.",
+    "so": "Ma keydin karno hagaajinta. Isku day mar kale."
+  },
+  "stockAdjustInvalidAmountMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Enter a valid amount.",
+    "so": "Geli tiro sax ah."
+  },
+  "barcodeAddDialogTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Add barcode",
+    "so": "Ku dar bar code"
+  },
+  "barcodeAddDialogHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Common",
+    "en": "e.g. 6291100123456",
+    "so": "tusaale: 6291100123456"
+  },
+  "barcodeAddDialogSetPrimary": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Make primary",
+    "so": "Ka dhig kan koowaad"
+  },
+  "barcodeChipMakePrimary": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Make primary",
+    "so": "Ka dhig kan koowaad"
+  },
+  "barcodeChipRemove": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Remove",
+    "so": "Tirtir"
+  },
+  "barcodeAddTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Add barcode",
+    "so": "Ku dar bar code"
+  },
+  "aliasAddDialogTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Add another name",
+    "so": "Ku dar magac kale"
+  },
+  "aliasAddDialogHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Common",
+    "en": "e.g. Riis (Somali)",
+    "so": "tusaale: Rice (Ingiriis)"
+  },
+  "aliasAddDialogLanguage": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Language",
+    "so": "Luqadda"
+  },
+  "aliasAddTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Add other name",
+    "so": "Ku dar magac kale"
+  },
+  "languageNone": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Any",
+    "so": "Mid kasta"
+  },
+  "productsHeadline": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "{total, plural, =0{No products yet} =1{1 product} other{{total} products}} · {low} low · {noPrice} without price",
+    "so": "{total, plural, =0{Alaab weli ma jiro} =1{1 alaab} other{{total} alaab}} · {low} yaraatey · {noPrice} qiimo la'aan"
+  },
+  "productsSortLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Sort",
+    "so": "Habayn"
+  },
+  "productsSortByName": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Name (A–Z)",
+    "so": "Magaca (A–Z)"
+  },
+  "productsSortByStockLow": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Stock (low first)",
+    "so": "Kayd (kii ugu yaraa horta)"
+  },
+  "drawerProductsHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Menu",
+    "en": "PRODUCTS",
+    "so": "ALAAB"
+  },
+  "drawerTopMovers": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Top movers",
+    "so": "Kuwa ugu badan iibka"
+  },
+  "topMoversTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Top movers",
+    "so": "Kuwa ugu badan iibka"
+  },
+  "topMoversPeriodSubtitle": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Last {days} days",
+    "so": "{days}-dii maalmood"
+  },
+  "topMoversPeriodTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Period",
+    "so": "Muddo"
+  },
+  "topMoversPeriodOption": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Last {days} days",
+    "so": "{days}-dii maalmood"
+  },
+  "topMoversTopSegment": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Top sellers",
+    "so": "Kuwa ugu badan iibka"
+  },
+  "topMoversDeadSegment": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Dead stock (no sales)",
+    "so": "Kayd aan iib lahayn"
+  },
+  "topMoversEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "No sales in this period.",
+    "so": "Iib waqtigan ma jiro."
+  },
+  "drawerLowStock": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Low stock",
+    "so": "Alaab yaraatey"
+  },
+  "drawerSetupHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Menu",
+    "en": "SETUP",
+    "so": "DEJINTA"
+  },
+  "drawerProducts": {
+    "role": "home_tile",
+    "max_chars": 14,
+    "area": "Menu",
+    "en": "Products",
+    "so": "Alaab"
+  },
+  "drawerSettings": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Settings",
+    "so": "Qaabayn"
+  },
+  "receiveFrom": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Receive from {supplier}",
+    "so": "Ka qaado {supplier}"
+  },
+  "item": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Item",
+    "so": "Alaab"
+  },
+  "unit": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Unit",
+    "so": "Halbeeg"
+  },
+  "cost": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Cost",
+    "so": "Qiimaha uu ku fadhiyo"
+  },
+  "perUnit": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "per unit",
+    "so": "midkiiba"
+  },
+  "line": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "line",
+    "so": "sadar"
+  },
+  "lineTotal": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Line total",
+    "so": "Wadarta sadar"
+  },
+  "bonoTotal": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Bono total",
+    "so": "Wadarta bono"
+  },
+  "credit": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Credit",
+    "so": "Deyn"
+  },
+  "clear": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "CLEAR",
+    "so": "TIRTIR"
+  },
+  "paymentTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Payment",
+    "en": "Payment",
+    "so": "Lacag bixin"
+  },
+  "amount": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Amount",
+    "so": "qadar Lacag"
+  },
+  "expenseTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Expense",
+    "en": "Expense",
+    "so": "Qarashaad"
+  },
+  "category": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Category",
+    "so": "Nooc"
+  },
+  "rent": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Rent",
+    "so": "Kiro"
+  },
+  "salary": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Salary",
+    "so": "Mushahar"
+  },
+  "other": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Other",
+    "so": "Kale"
+  },
+  "supabaseConfigTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Connect DukanPro to Supabase",
+    "so": "DukanPro ku xir Supabase"
+  },
+  "supabaseConfigMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Add Supabase URL and anon key to use login. You can still open the prototype screens.",
+    "so": "Ku dar Supabase URL iyo anon key si login loo isticmaalo. Weli waad furi kartaa shaashadaha tijaabada."
+  },
+  "supabaseConfigCommand": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...",
+    "so": "flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=..."
+  },
+  "openPrototype": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Open prototype",
+    "so": "Fur tijaabada"
+  },
+  "loginTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Onboarding",
+    "en": "Login",
+    "so": "Soo gal"
+  },
+  "loginTabPhone": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Phone",
+    "so": "Taleefan"
+  },
+  "loginTabEmail": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Email",
+    "so": "Iimayl"
+  },
+  "loginHeadline": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Use your phone number",
+    "so": "Isticmaal telefoonkaaga"
+  },
+  "loginBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "We will send a one-time code. DukanPro can deliver it by WhatsApp from the backend.",
+    "so": "Waxaan kuu diraynaa kood hal mar la isticmaalo, text ama whatsapp."
+  },
+  "loginEmailHeadline": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Use your email",
+    "so": "Isticmaal iimaylkaaga"
+  },
+  "loginEmailBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "We will email you a one-time code.",
+    "so": "Waxaan iimaylkaaga ku soo diri doonnaa kood hal mar la isticmaalo."
+  },
+  "phoneNumberLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Onboarding",
+    "en": "Phone number",
+    "so": "Lambarka telefoonka"
+  },
+  "emailAddressLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Onboarding",
+    "en": "Email",
+    "so": "Iimayl"
+  },
+  "sendOtpButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "SEND CODE",
+    "so": "DIR KOOD"
+  },
+  "sendEmailOtpButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "SEND CODE",
+    "so": "DIR KOOD"
+  },
+  "verifyOtpTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Enter code",
+    "so": "Geli kood"
+  },
+  "verifyOtpHeadline": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Check your phone",
+    "so": "Eeg telefoonkaaga"
+  },
+  "verifyOtpHeadlineEmail": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Check your email",
+    "so": "Eeg iimaylkaaga"
+  },
+  "verifyOtpBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Enter the code sent to {phone}.",
+    "so": "Geli koodka loo diray {phone}."
+  },
+  "verifyOtpBodyEmail": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Enter the code sent to {email}.",
+    "so": "Geli koodka loo diray {email}."
+  },
+  "otpCodeLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Onboarding",
+    "en": "Code",
+    "so": "Kood"
+  },
+  "verifyOtpButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "VERIFY",
+    "so": "XAQIIJI"
+  },
+  "changePhoneButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "Change phone number",
+    "so": "Bedel lambarka telefoonka"
+  },
+  "changeEmailButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "Change email",
+    "so": "Bedel iimaylka"
+  },
+  "ownerOnboardingTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Onboarding",
+    "en": "Create shop",
+    "so": "Abuur dukaan"
+  },
+  "ownerOnboardingHeadline": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Set up your first shop",
+    "so": "Diyaari dukaanka koowaad"
+  },
+  "ownerOnboardingBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Enter the business and shop names. You can add workers later.",
+    "so": "Geli magaca ganacsiga iyo dukaanka. Shaqaale waad ku dari kartaa marka dambe."
+  },
+  "businessNameLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Business name",
+    "so": "Magaca ganacsiga"
+  },
+  "shopNameLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Shop name",
+    "so": "Magaca dukaanka"
+  },
+  "createShopButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Onboarding",
+    "en": "CREATE SHOP",
+    "so": "ABUUR DUKAAN"
+  },
+  "chooseShopTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Choose shop",
+    "so": "Dooro dukaan"
+  },
+  "shopSetupStatus": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Setup: {status}",
+    "so": "Diyaarin: {status}"
+  },
+  "activeShopLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Shop: {shop}",
+    "so": "Dukaan: {shop}"
+  },
+  "signOut": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Sign out",
+    "so": "Ka bax"
+  },
+  "queueCapExceededToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Some old unsynced data was dropped — your phone was offline too long.",
+    "so": "Xog hore oo aan la kaydin ayaa la tirtiray — telefoonkaagu wuxuu daahay xagga internet-ka."
+  },
+  "signOutPendingDialogTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Unsynced data",
+    "so": "Xog aan la kaydin"
+  },
+  "signOutPendingDialogBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "{count, plural, =1{You have 1 post that has not synced yet.} other{You have {count} posts that have not synced yet.}} Sign out anyway? They will sync the next time you sign in.",
+    "so": "{count, plural, =1{Waxaad haysataa 1 diiwaan oo aan weli la kaydin.} other{Waxaad haysataa {count} diiwaan oo aan weli la kaydin.}} Ma rabtaa inaad sii baxdo? Markaad mar kale gasho ayaa la kaydin doonaa."
+  },
+  "signOutPendingDialogCancel": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Cancel",
+    "so": "Jooji"
+  },
+  "signOutPendingDialogConfirm": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Sign out",
+    "so": "Ka bax"
+  },
+  "invalidPhoneMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Enter a valid phone number, for example +252612345678.",
+    "so": "Geli lambar telefoon sax ah, tusaale +252612345678."
+  },
+  "invalidEmailMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Enter a valid email, for example you@example.com.",
+    "so": "Geli iimayl sax ah, tusaale you@example.com."
+  },
+  "missingPendingPhoneMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Start with your phone number first.",
+    "so": "Marka hore ku bilow lambarka telefoonkaaga."
+  },
+  "missingPendingDestinationMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Start with your phone or email first.",
+    "so": "Marka hore ku bilow taleefan ama iimayl."
+  },
+  "missingShopNamesMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Enter both business name and shop name.",
+    "so": "Geli magaca ganacsiga iyo magaca dukaanka labadaba."
+  },
+  "sendOtpFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "We could not send the code. Check the phone number or internet and try again.",
+    "so": "Koodka lama diri karin. Hubi lambarka ama internetka, ka dib mar kale isku day."
+  },
+  "sendEmailOtpFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "We could not email the code. Check the address or your internet and try again.",
+    "so": "Koodka iimaylka lama diri karin. Hubi cinwaanka ama internet-ka, ka dib mar kale isku day."
+  },
+  "emailAccountNotFoundMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "No account found for that email. Ask your shop owner to add you.",
+    "so": "Iimaylkaas account uma jiro. Weydiiso milkiilaha dukaanka inuu ku daro."
+  },
+  "verifyOtpFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "The code is wrong or expired. Check the code and try again.",
+    "so": "Koodku waa khalad ama wuu dhacay. Hubi koodka, ka dib mar kale isku day."
+  },
+  "createShopFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "We could not create the shop. Check your internet and try again.",
+    "so": "Dukaanka lama abuuri karin. Hubi internetka, ka dib mar kale isku day."
+  },
+  "shopLoadFailedTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Could not open shops",
+    "so": "Dukaamada lama furi karin"
+  },
+  "shopLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Check your internet and try again. If this continues, ask the shop owner to check your access.",
+    "so": "Hubi internetka, ka dib mar kale isku day. Haddii ay sii socoto, milkiilaha ha kuu hubiyo gelitaanka."
+  },
+  "tryAgain": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "TRY AGAIN",
+    "so": "MAR KALE ISKU DAY"
+  },
+  "setupStepTemplateTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Onboarding",
+    "en": "Choose your shop type",
+    "so": "Dooro nooca dukaankaaga"
+  },
+  "setupStepTemplateBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Pick a starter pack so common items and settings are ready for you.",
+    "so": "Dooro xirmo bilow si waxyaalaha caadiga ah iyo goobaha loo diyaariyo."
+  },
+  "setupStepTemplateDone": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Type chosen: {name}",
+    "so": "Nooca la doortay: {name}"
+  },
+  "setupStepFinishBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Confirm and start using your shop.",
+    "so": "Xaqiiji oo bilow isticmaalka dukaankaaga."
+  },
+  "setupStepFinishButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Onboarding",
+    "en": "FINISH SETUP",
+    "so": "DHAMEE DIYAARINTA"
+  },
+  "applyTemplateButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "USE THIS",
+    "so": "ISTICMAAL TAN"
+  },
+  "applyTemplateFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Could not apply the template. Check your internet and try again.",
+    "so": "Xirmada lama dabaqi karin. Hubi internetka oo isku day mar kale."
+  },
+  "templatesEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "No shop types are available yet. Contact support if this keeps happening.",
+    "so": "Weli ma jiraan noocyo dukaan. La xiriir support haddii ay sii socoto."
+  },
+  "completeSetupFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Could not finish setup. Try again.",
+    "so": "Diyaarinta lama dhamayn. Isku day mar kale."
+  },
+  "settingsTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Settings",
+    "en": "Settings",
+    "so": "Diyaarinta"
+  },
+  "settingsShopNameLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Shop name",
+    "so": "Magaca dukaanka"
+  },
+  "settingsCurrencyLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Currency",
+    "so": "Lacagta"
+  },
+  "settingsLanguageLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Default language",
+    "so": "Luuqada caadiga ah"
+  },
+  "settingsTimezoneLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Timezone",
+    "so": "Saacadda goobta"
+  },
+  "settingsSaveButton": {
+    "role": "button_save",
+    "max_chars": 12,
+    "area": "Settings",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  "settingsSavedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Settings saved",
+    "so": "Diyaarinta waa la keydiyay"
+  },
+  "settingsSaveFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Could not save settings. Try again.",
+    "so": "Diyaarinta lama keydin karin. Isku day mar kale."
+  },
+  "settingsCurrencyLockedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Currency can't be changed once the shop has recorded a transaction. Contact support to change it.",
+    "so": "Lacagta lama beddeli karo marka dukaanku diiwaangeliyo wax ganacsi. La xiriir taageerada si aad u beddesho."
+  },
+  "productsTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Products",
+    "en": "Products",
+    "so": "Alaab"
+  },
+  "productsSearchHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Search Somali or English",
+    "so": "Ku Raadi Soomaali ama Ingiriis"
+  },
+  "productsNewItemButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "NEW ITEM",
+    "so": "Alaab CUSUB"
+  },
+  "productsEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Products",
+    "en": "No items yet. Add one from the catalog below.",
+    "so": "Alaabo maleh. Kudar hadda liiska guud."
+  },
+  "productsSearchEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Nothing matches “{query}”.",
+    "so": "Wax la mid ah “{query}” maleh."
+  },
+  "productsLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Could not load products. Check your internet and try again.",
+    "so": "Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  "saleTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Sale",
+    "en": "Sale",
+    "so": "Iibin"
+  },
+  "saleSearchHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Search Somali or English",
+    "so": "Ku Raadi Soomaali ama Ingiriis"
+  },
+  "saleCartSummary": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "{count, plural, =0{No items} =1{1 item} other{{count} items}} · {total}",
+    "so": "{count, plural, =0{Alaab maleh} =1{1 shay} other{{count} shay}} · {total}"
+  },
+  "saleEmptyFavoritesMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Add products from the catalog to see them here.",
+    "so": "Ku dar alaabo liiska guud si aad halkan ku aragto."
+  },
+  "saleSearchEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Nothing matches “{query}”.",
+    "so": "Wax la mid ah “{query}” ma jiraan."
+  },
+  "saleLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Could not load items. Check your internet and try again.",
+    "so": "Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  "saleCash": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Cash",
+    "so": "Lacag"
+  },
+  "saleDebt": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Debt",
+    "so": "Deyn"
+  },
+  "salePickCustomerButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Sale",
+    "en": "Pick customer",
+    "so": "Dooro macmiil"
+  },
+  "saleCustomerChip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "{name} · owes {amount}",
+    "so": "{name} · wuxuu qabaa {amount}"
+  },
+  "saleSaveButton": {
+    "role": "button_save",
+    "max_chars": 12,
+    "area": "Sale",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  "salePostFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Could not save the sale. Check your internet and try again.",
+    "so": "Iibka lama keydin karin. Hubi internetka oo isku day mar kale."
+  },
+  "saleNeedItemsMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Add at least one item before saving.",
+    "so": "Marka hore ku dar ugu yaraan hal shay."
+  },
+  "saleNeedCustomerMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Pick the customer for this debt sale.",
+    "so": "Dooro macmiilka iibka deynta ah."
+  },
+  "customerPickerTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Choose customer",
+    "so": "Dooro macmiil"
+  },
+  "customerPickerSearchHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Search name or phone",
+    "so": "Raadi magaca ama telefoonka"
+  },
+  "customerPickerOwesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "owes {amount}",
+    "so": "wuxuu qabaa{amount}"
+  },
+  "customerPickerNoDebtLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "no debt",
+    "so": "deyn la'aan"
+  },
+  "customerPickerEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "No customers yet. Add one when you record a debt sale.",
+    "so": "Wali macmiil ma jiro. Ku dar marka aad qorto iib deyn ah."
+  },
+  "customerPickerSearchEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "No customers match “{query}”.",
+    "so": "Macmiil la mid ah “{query}” ma jiro."
+  },
+  "customerPickerLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Could not load customers. Check your internet and try again.",
+    "so": "Macaamiisha lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  "customerNewButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "+ NEW CUSTOMER",
+    "so": "+ MACMIIL CUSUB"
+  },
+  "partyNewCustomerTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Parties",
+    "en": "New customer",
+    "so": "Macmiil cusub"
+  },
+  "partyNewSupplierTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Parties",
+    "en": "New supplier",
+    "so": "Alaab keene cusub"
+  },
+  "partyNewNameLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Parties",
+    "en": "Name",
+    "so": "Magaca"
+  },
+  "partyNewPhoneLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Parties",
+    "en": "Phone",
+    "so": "Telefoonka"
+  },
+  "partyNewSaveButton": {
+    "role": "button_save",
+    "max_chars": 12,
+    "area": "Parties",
+    "en": "ADD",
+    "so": "KU DAR"
+  },
+  "partyNewNameRequiredMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "Enter a name",
+    "so": "Geli magac"
+  },
+  "partyNewSaveFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "Could not add. Check your internet and try again.",
+    "so": "Luguma dari karin. Hubi internetka oo isku day mar kale."
+  },
+  "paymentTypeCustomer": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Customer",
+    "so": "Macmiil"
+  },
+  "paymentTypeSupplier": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Supplier",
+    "so": "Alaab keene"
+  },
+  "paymentTypeCustomerHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Customer is paying you back",
+    "so": "Macmiilku wuxuu ku siinayaa lacag"
+  },
+  "paymentTypeSupplierHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "You are paying the supplier",
+    "so": "Waxaad alaab keenaha siinaysaa lacag"
+  },
+  "paymentPickCustomerButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Payment",
+    "en": "Pick customer",
+    "so": "Dooro macmiil"
+  },
+  "paymentPickSupplierButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Payment",
+    "en": "Pick supplier",
+    "so": "Dooro alaab keene"
+  },
+  "paymentCustomerOwesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Payment",
+    "en": "Owes you {amount}",
+    "so": "Wuxuu kuu leeyahay {amount}"
+  },
+  "paymentSupplierOwedLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Payment",
+    "en": "You owe {amount}",
+    "so": "Waxaad ka qabtaa {amount}"
+  },
+  "paymentAmountLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Payment",
+    "en": "Amount paid",
+    "so": "Lacagta la bixiyay"
+  },
+  "paymentSaveButton": {
+    "role": "button_save",
+    "max_chars": 12,
+    "area": "Payment",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  "paymentNotesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Payment",
+    "en": "Note",
+    "so": "Qoraal"
+  },
+  "paymentSavedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Payment saved",
+    "so": "Lacag bixinta waa la keydiyay"
+  },
+  "paymentNeedPartyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Pick a {type, select, supplier{supplier} other{customer}} first.",
+    "so": "Marka hore dooro {type, select, supplier{alaab keenaha} other{macmiilka}}."
+  },
+  "paymentNeedAmountMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Enter an amount greater than zero.",
+    "so": "Geli lacag ka badan eber."
+  },
+  "paymentExceedsBalanceMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Amount cannot exceed the outstanding balance ({amount}).",
+    "so": "Lacagtu kama badnaan karto wadarta deynta ({amount})."
+  },
+  "paymentPostFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Could not save the payment. Check your internet and try again.",
+    "so": "Lacag bixinta lama keydin karin. Hubi internetka oo isku day mar kale."
+  },
+  "paymentChooseInvoicesChip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Choose invoices",
+    "so": "Dooro biilasha"
+  },
+  "paymentChooseInvoicesChipDone": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "{count, plural, =1{1 invoice chosen} other{{count} invoices chosen}}",
+    "so": "{count, plural, =1{1 biil ayaa la doortay} other{{count} biil ayaa la doortay}}"
+  },
+  "allocationHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "{party} · choose invoices",
+    "so": "{party} · dooro biilasha"
+  },
+  "allocationToAllocate": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "{amount} to allocate",
+    "so": "{amount} ayaa la qaybinaayaa"
+  },
+  "allocationRowOpen": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Open {open} of {original}",
+    "so": "Furan {open} ee {original}"
+  },
+  "allocationStillToAllocate": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Still to allocate: {amount}",
+    "so": "Wali waxaa hadhay: {amount}"
+  },
+  "allocationOverAllocated": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Over by {amount}",
+    "so": "Waad dheereysay: {amount}"
+  },
+  "allocationBalanced": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Balanced",
+    "so": "Saxan"
+  },
+  "allocationApplyButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "APPLY",
+    "so": "ADKEE"
+  },
+  "allocationNeedAtLeastOne": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Choose at least one invoice to apply.",
+    "so": "Doorro biil ugu yaraan mid si aad u adkayso."
+  },
+  "allocationLoadFailed": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Could not load open invoices.",
+    "so": "Biilasha furan lama soo qaadan karin."
+  },
+  "allocationNoOpenInvoices": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "No open invoices for this person.",
+    "so": "Biil furan oo qofkan ah ma jiraan."
+  },
+  "partyDetailOpenInvoicesHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Parties",
+    "en": "Open invoices",
+    "so": "Biilasha furan"
+  },
+  "partyDetailOpenInvoiceRow": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "{open} open of {original}",
+    "so": "{open} furan oo {original}"
+  },
+  "expenseCategoryLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Expense",
+    "en": "Category",
+    "so": "Nooca"
+  },
+  "expenseAmountLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Expense",
+    "en": "Amount",
+    "so": "Lacagta"
+  },
+  "expenseSaveButton": {
+    "role": "button_save",
+    "max_chars": 12,
+    "area": "Expense",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  "expenseNotesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Expense",
+    "en": "Note",
+    "so": "Qoraal"
+  },
+  "expenseSavedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "Expense saved",
+    "so": "Qarashka waa la keydiyay"
+  },
+  "expenseNeedCategoryMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "Pick a category first.",
+    "so": "Marka hore dooro nooc."
+  },
+  "expenseNeedAmountMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "Enter an amount greater than zero.",
+    "so": "Geli lacag ka badan eber."
+  },
+  "expenseLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "Could not load categories. Check your internet and try again.",
+    "so": "Noocyada lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  "expensePostFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "Could not save the expense. Check your internet and try again.",
+    "so": "Qarashka lama keydin karin. Hubi internetka oo isku day mar kale."
+  },
+  "expenseEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "No expense categories yet. Pick a shop type in Settings.",
+    "so": "Wali noocyada qarashaadka lama galin. Ka dooro nooca dukaanka meesha Diyaarinta."
+  },
+  "saleHistoryTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Sale",
+    "en": "Sales",
+    "so": "Iibin"
+  },
+  "historyYesterday": {
+    "role": "body",
+    "max_chars": null,
+    "area": "History",
+    "en": "Yesterday",
+    "so": "Shalay"
+  },
+  "historyToday": {
+    "role": "body",
+    "max_chars": null,
+    "area": "History",
+    "en": "Today",
+    "so": "Maanta"
+  },
+  "saleHistoryTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Sales history",
+    "so": "Sooyaalka iibka"
+  },
+  "saleHistoryEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "No sales yet. The first SAVE on the Sale screen will land here.",
+    "so": "Wali waxba lama gadin.  Marka hore wax gad."
+  },
+  "saleHistoryLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Could not load sales. Check your internet and try again.",
+    "so": "Iibka lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  "saleHistoryCashLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Cash",
+    "so": "Kaash"
+  },
+  "saleHistoryDebtLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Debt · {name}",
+    "so": "Deyn · {name}"
+  },
+  "saleHistoryVoidedBadge": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Sale",
+    "en": "Voided",
+    "so": "LagaNoqday"
+  },
+  "saleDetailTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Sale",
+    "en": "Sale",
+    "so": "Iib"
+  },
+  "saleDetailVoidedHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Voided",
+    "so": "LagaNoqday"
+  },
+  "saleDetailVoidButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Sale",
+    "en": "VOID THIS SALE",
+    "so": "Ka noqo IIBKA"
+  },
+  "expenseDetailTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Expense",
+    "en": "Expense",
+    "so": "Kharash"
+  },
+  "expenseDetailVoidButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Expense",
+    "en": "VOID THIS EXPENSE",
+    "so": "TIRTIR KHARASHKAN"
+  },
+  "expenseDetailLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "Couldn't load this expense.",
+    "so": "Lama soo qaadan karin kharashkan."
+  },
+  "expenseVoidConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Expense",
+    "en": "Void this expense?",
+    "so": "Tirtir kharashkan?"
+  },
+  "expenseVoidConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "This reverses the expense. It can't be undone.",
+    "so": "Tani way ka noqonaysaa kharashka. Lama soo celin karo."
+  },
+  "expenseVoidConfirmYes": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Expense",
+    "en": "VOID",
+    "so": "TIRTIR"
+  },
+  "expenseVoidedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "Expense voided",
+    "so": "Kharash waa la tirtiray"
+  },
+  "expenseVoidFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Expense",
+    "en": "Couldn't void this expense.",
+    "so": "Lama tirtiri karin kharashkan."
+  },
+  "paymentDetailVoidButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Payment",
+    "en": "VOID THIS PAYMENT",
+    "so": "TIRTIR LACAGTAN"
+  },
+  "paymentVoidConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Payment",
+    "en": "Void this payment?",
+    "so": "Tirtir lacagtan?"
+  },
+  "paymentVoidConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "This reverses the payment and reopens what it settled. It can't be undone.",
+    "so": "Tani way ka noqonaysaa lacagta oo dib u furaysaa wixii la bixiyay. Lama soo celin karo."
+  },
+  "paymentVoidConfirmYes": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Payment",
+    "en": "VOID",
+    "so": "TIRTIR"
+  },
+  "paymentVoidedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Payment voided",
+    "so": "Lacag waa la tirtiray"
+  },
+  "paymentVoidedHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Payment",
+    "en": "Voided",
+    "so": "La tirtiray"
+  },
+  "paymentVoidFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Couldn't void this payment.",
+    "so": "Lama tirtiri karin lacagtan."
+  },
+  "paymentVoidWindowPassedHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Payment",
+    "en": "Void window passed",
+    "so": "Wakhtigii tirtiridda wuu dhammaaday"
+  },
+  "saleDetailLineSubtotal": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "{quantity} {unit} × {unitPrice} = {subtotal}",
+    "so": "{quantity} {unit} × {unitPrice} = {subtotal}"
+  },
+  "saleDetailTotalLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Total",
+    "so": "Wadar"
+  },
+  "saleDetailCashLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Cash",
+    "so": "Kaash"
+  },
+  "saleDetailDebtLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Debt",
+    "so": "Deyn"
+  },
+  "receiptNumberLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Receipt",
+    "so": "Rasiidka"
+  },
+  "receiptDateLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Date",
+    "so": "Taariikhda"
+  },
+  "receiptThankYou": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Thank you!",
+    "so": "Mahadsanid!"
+  },
+  "saleDetailLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Could not load this sale.",
+    "so": "Iibkaan lama soo dejin karin."
+  },
+  "saleReceiptShareButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Sale",
+    "en": "SHARE RECEIPT",
+    "so": "U DIR RASIID"
+  },
+  "saleReceiptDoneButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Sale",
+    "en": "DONE",
+    "so": "DHAMMEYSTIR"
+  },
+  "saleHistoryReceiptTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Open receipt",
+    "so": "Fur rasiidka"
+  },
+  "saleVoidConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Sale",
+    "en": "Void this sale?",
+    "so": "Ka noqo iibkan?"
+  },
+  "saleVoidConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "This will reverse the sale, restore the stock, and clear the customer's debt for it.",
+    "so": "Iibka waa laga noqo doonaa, alaabta kayd-ka lugu celi doonaa, deynta macmiilka waa laga jari doonaa."
+  },
+  "saleVoidConfirmYes": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Sale",
+    "en": "VOID",
+    "so": "KaNoqo"
+  },
+  "saleVoidConfirmNo": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Sale",
+    "en": "CANCEL",
+    "so": "JOOJI"
+  },
+  "saleVoidRefundCheckboxLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Refund cash to the customer",
+    "so": "Lacagta u celi macmiilka"
+  },
+  "saleVoidRefundAmountLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Refund amount",
+    "so": "Lacagta la celiyay"
+  },
+  "saleVoidRefundPaidHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "paid: {amount}",
+    "so": "la bixiyay: {amount}"
+  },
+  "saleVoidRefundExceedsPaidMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Refund cannot exceed the cash paid ({paid}).",
+    "so": "Lacagta la celiyay kama badnaan karto lacagta la bixiyay ({paid})."
+  },
+  "saleVoidedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Sale voided",
+    "so": "Iibka waa laga noqday"
+  },
+  "saleVoidFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Could not void this sale. Try again.",
+    "so": "Iibka lagama noqo karin. Isku day mar kale."
+  },
+  "saleVoidErrorOwnerOnly": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Only the shop owner can void a sale.",
+    "so": "Kaliya milkiilaha dukaanka ayaa joojin kara iibka."
+  },
+  "saleVoidErrorWindowExpired": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Too late to void — sales can only be voided within 7 days of posting.",
+    "so": "Goorta way dhammaatay — iibyada waxaa la joojin karaa 7 maalmood gudahood."
+  },
+  "saleVoidErrorAlreadyVoided": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "This sale was already voided.",
+    "so": "Iibkan hore ayaa loo joojiyay."
+  },
+  "saleVoidErrorRefundNeedsCustomer": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Walk-in sales can't be refunded — there's no customer to refund to.",
+    "so": "Iibyada xayeysiis (walk-in) lama soo celin karo — macmiil aan loogu celiyo ma jiro."
+  },
+  "saleVoidErrorRefundExceedsPaid": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Refund can't be more than the cash paid at the till.",
+    "so": "Soo-celinta lagama wada-weynaan karo lacagta kaashka."
+  },
+  "saleVoidErrorNotFound": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Sale not found. Pull to refresh and try again.",
+    "so": "Iibka lama helin. Cusboonaysii oo isku day mar kale."
+  },
+  "receiveHistoryTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Receive",
+    "en": "Receives",
+    "so": "Alaabtii La dajiyey"
+  },
+  "receiveHistoryTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Receive history",
+    "so": "Sooyaalka Alaab keenida"
+  },
+  "receiveHistoryEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "No receives yet. The first SAVE on the Receive screen will land here.",
+    "so": "Wali Alaab Lama dejin. Marka hore alaab daji."
+  },
+  "receiveHistoryLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Could not load receives. Check your internet and try again.",
+    "so": "Sooyaalka Alaab Keenida lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  "receiveHistorySupplierLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "Supplier · {name}",
+    "so": "Alaab keene · {name}"
+  },
+  "receiveHistoryVoidedBadge": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Receive",
+    "en": "Voided",
+    "so": "Laga Noqday"
+  },
+  "receiveDetailTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Receive",
+    "en": "Receive",
+    "so": "Alaab La Dajiyey"
+  },
+  "receiveDetailVoidedHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "Voided",
+    "so": "Laga Noqday"
+  },
+  "receiveDetailVoidButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Receive",
+    "en": "VOID THIS RECEIVE",
+    "so": "Ka Noqo BONADAN"
+  },
+  "receiveDetailLineSubtotal": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "{quantity} {unit} × {unitCost} = {subtotal}",
+    "so": "{quantity} {unit} × {unitCost} = {subtotal}"
+  },
+  "receiveDetailTotalLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "Total",
+    "so": "Wadar"
+  },
+  "receiveDetailLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Could not load this receive.",
+    "so": "Alaab dajintan lama soo dejin karin."
+  },
+  "receiveVoidConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Receive",
+    "en": "Void this receive?",
+    "so": "Ka noqo alaab dajintan?"
+  },
+  "receiveVoidConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Use this only when you typed the receive wrong. It reverses the receive, removes the stock, and clears what you owe the supplier for it.",
+    "so": "Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dajinta. Alaab dajinta waa laga noqo doonaa, alaabta kayd-ka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto ee alaab dajintan waa la nadiifin doonaa."
+  },
+  "receiveVoidMistakesOnlyHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Mistakes only. For real returns to the supplier, record a Payment instead.",
+    "so": "Kaliya qaladaad. Haddii aad alaab keenaha wax u celineyso, taas u qor lacag-bixinta."
+  },
+  "receiveVoidConfirmYes": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Receive",
+    "en": "VOID",
+    "so": "KaNoqo"
+  },
+  "receiveVoidConfirmNo": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Receive",
+    "en": "CANCEL",
+    "so": "JOOJI"
+  },
+  "receiveVoidedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Receive voided",
+    "so": "Alaab dajinta waa laga noqday"
+  },
+  "receiveVoidFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Could not void this receive. Check your internet and try again.",
+    "so": "Alaab dajinta lagama noqo karin. Hubi internetka oo isku day mar kale."
+  },
+  "receiveVoidBlockedStockMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Some items from this receive have already moved. Void blocked.",
+    "so": "Alaabaha alaab dajintan qaarkood mar hore wuu dhaqaaqay. Ka noqoshada waa la joojiyay."
+  },
+  "cartLineSubtotal": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "{quantity} × {unitPrice} = {subtotal}",
+    "so": "{quantity} × {unitPrice} = {subtotal}"
+  },
+  "cartRemoveLineTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Remove {name}",
+    "so": "Ka saar {name}"
+  },
+  "cartClearAllButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Sale",
+    "en": "Clear",
+    "so": "Tirtir"
+  },
+  "cartClearConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Sale",
+    "en": "Clear {count, plural, =1{1 item} other{{count} items}} from cart?",
+    "so": "Ka tirtir {count, plural, =1{1 shay} other{{count} shay}} danbiisha?"
+  },
+  "cartClearConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "This won't undo any saved sale.",
+    "so": "Tan ma noqonayso iib hore loo keydiyay."
+  },
+  "cartClearConfirmYes": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Sale",
+    "en": "CLEAR",
+    "so": "TIRTIR"
+  },
+  "cartClearConfirmNo": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Sale",
+    "en": "CANCEL",
+    "so": "JOOJI"
+  },
+  "lineEditorDoneButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Sale",
+    "en": "DONE",
+    "so": "DHAMME"
+  },
+  "lineEditorPriceRequiredHelper": {
+    "role": "helper",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Set a price for this item",
+    "so": "Geli qiimaha shaygan"
+  },
+  "lineEditorInvalidPriceMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Enter a number 0 or more",
+    "so": "Geli lambar 0 ama wax ka badan"
+  },
+  "lineEditorTilePriceMissing": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "—",
+    "so": "—"
+  },
+  "supplierPickerTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Receive",
+    "en": "Pick supplier",
+    "so": "Dooro alaab keenaha"
+  },
+  "supplierPickerSearchHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Search name or phone",
+    "so": "Ku Raadi magaca ama telefoonka"
+  },
+  "supplierPickerOwesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "you owe {amount}",
+    "so": "waxaad ka qabtaa {amount}"
+  },
+  "supplierPickerNoBonosLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "no receives yet",
+    "so": "alaab dajin maleh"
+  },
+  "supplierPickerEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "No suppliers yet. Add one when you record a receive.",
+    "so": "Alaab keene maleh. Ku dar marka aad qorto alaab dajin."
+  },
+  "supplierPickerSearchEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "No suppliers match “{query}”.",
+    "so": "Alaab keene la mid ah “{query}” maleh."
+  },
+  "supplierPickerLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Could not load suppliers. Check your internet and try again.",
+    "so": "Alaab keenayaasha lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  "supplierNewButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Receive",
+    "en": "+ NEW SUPPLIER",
+    "so": "+ ALAAB KEENE CUSUB"
+  },
+  "receiveSearchHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Search Somali or English",
+    "so": "Ku Raadi Soomaali ama Ingiriis"
+  },
+  "receiveLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Could not load items. Check your internet and try again.",
+    "so": "Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale."
+  },
+  "receiveEmptyMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Tap an item to start the receive. Search if it's not in the grid.",
+    "so": "Taabo alaab si aad u bilowdo alaab dajin. Ku raadi haddii aysan ku jirin shabakada."
+  },
+  "receiveLineQuantityLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "Qty",
+    "so": "Tirada"
+  },
+  "receiveLineTotalLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "{currency} total",
+    "so": "{currency} wadarta"
+  },
+  "receiveLineDerivedPerUnit": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "= {money} per {packaging}",
+    "so": "= {money} mid kasta {packaging}"
+  },
+  "receiveAddLineButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Receive",
+    "en": "ADD LINE",
+    "so": "KU DAR SADAR"
+  },
+  "receiveLineSubtotal": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "{quantity} {unit} = {total}",
+    "so": "{quantity} {unit} · {total}"
+  },
+  "receiveLineRemoveTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Remove {name}",
+    "so": "Ka saar {name}"
+  },
+  "receiveLinesSummary": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "{count, plural, =0{No lines} =1{1 line} other{{count} lines}} · {total}",
+    "so": "{count, plural, =0{Wax sadar ah maleh} =1{1 sadar} other{{count} sadar}} · {total}"
+  },
+  "receiveLinesClearAllButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Receive",
+    "en": "Clear",
+    "so": "Tirtir"
+  },
+  "receiveLinesClearConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Receive",
+    "en": "Clear {count, plural, =1{1 line} other{{count} lines}}?",
+    "so": "Tirtir {count, plural, =1{1 sadar} other{{count} sadar}}?"
+  },
+  "receiveLinesClearConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "This won't undo any saved receive.",
+    "so": "Tan ma noqonayso alaab dajin hore loo keydiyay."
+  },
+  "receiveLinesClearConfirmYes": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Receive",
+    "en": "CLEAR",
+    "so": "TIRTIR"
+  },
+  "receiveLinesClearConfirmNo": {
+    "role": "button",
+    "max_chars": 14,
+    "area": "Receive",
+    "en": "CANCEL",
+    "so": "JOOJI"
+  },
+  "receiveSaveButton": {
+    "role": "button_save",
+    "max_chars": 12,
+    "area": "Receive",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  "receiveSavedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Receive saved (on credit)",
+    "so": "Alaab dajin waa la keydiyay (deyn)"
+  },
+  "receivePostFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Could not save the receive. Check your internet and try again.",
+    "so": "Alaab dajinta lama keydin karin. Hubi internetka oo isku day mar kale."
+  },
+  "receiveNeedSupplierMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Pick a supplier before saving.",
+    "so": "Dooro alaab keene ka hor inta aadan keydin."
+  },
+  "receiveNeedLinesMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Add at least one line before saving.",
+    "so": "Marka hore ku dar ugu yaraan hal sadar."
+  },
+  "unitPickerTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Receive",
+    "en": "Choose unit",
+    "so": "Dooro halbeeg"
+  },
+  "unitPickerDefaultBadge": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Receive",
+    "en": "default",
+    "so": "caadi"
+  },
+  "unitPickerBaseUnit": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "base unit",
+    "so": "halbeeg aasaasi"
+  },
+  "unitPickerLoadFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Could not load units. Try again.",
+    "so": "Halbeegyada lama soo dejin karin. Isku day mar kale."
+  },
+  "unitPickerAddPackagingButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Receive",
+    "en": "+ Add packaging",
+    "so": "+ Ku dar baakad"
+  },
+  "addNewItemSearchResult": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "+ Add new item: “{query}”",
+    "so": "+ Ku dar alaab cusub: “{query}”"
+  },
+  "addNewItemSheetTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Sale",
+    "en": "Add new item",
+    "so": "Ku dar alaab cusub"
+  },
+  "addNewItemNameLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Name",
+    "so": "Magaca"
+  },
+  "addNewItemUnitChooseHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Choose",
+    "so": "Dooro"
+  },
+  "addNewItemCategoryLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Category (optional)",
+    "so": "Nooca (ikhtiyaari)"
+  },
+  "addNewItemCancelButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Sale",
+    "en": "CANCEL",
+    "so": "JOOJI"
+  },
+  "addNewItemAddToSaleButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Sale",
+    "en": "ADD TO SALE",
+    "so": "KU DAR IIBKA"
+  },
+  "addNewItemAddToReceiveButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Sale",
+    "en": "ADD TO RECEIVE",
+    "so": "KU DAR ALAAB DAJINTA"
+  },
+  "addNewItemMissingNameMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Name is required",
+    "so": "Magaca waa loo baahan yahay"
+  },
+  "addNewItemMissingUnitMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Pick a unit",
+    "so": "Dooro halbeeg"
+  },
+  "addNewItemInvalidPriceMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Enter a price (0 or more)",
+    "so": "Geli qiimaha (0 ama wax ka badan)"
+  },
+  "addNewItemFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Could not create the item. Try again.",
+    "so": "Alaabta lama abuuri karin. Isku day mar kale."
+  },
+  "addNewItemHowSoldHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "How is it sold?",
+    "so": "Sidee loo iibiyaa?"
+  },
+  "addNewItemHowDeliveredHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "How did the supplier deliver?",
+    "so": "Sidee bay alaabkeeneha u keenaan?"
+  },
+  "addNewItemBaseOnlyTile": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "By {base}",
+    "so": "{base} ku iibiya"
+  },
+  "addNewItemPickedPriceLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Sale price per {packaging}",
+    "so": "Qiimaha iibka mid kasta {packaging}"
+  },
+  "addNewItemCustomPackagingEntry": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "+ Custom packaging",
+    "so": "+ Baakad gaar ah"
+  },
+  "addNewItemCustomBaseUnitLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Base unit",
+    "so": "Halbeegga aasaasi"
+  },
+  "addNewItemCustomSoldUnitLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Sold as",
+    "so": "Loo iibiyo"
+  },
+  "addNewItemCustomConversionLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "How many {base} in 1 {sold}?",
+    "so": "Imisa {base} ayaa ku jira 1 {sold}?"
+  },
+  "addNewItemMissingPackagingMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Pick how it is sold",
+    "so": "Dooro sida loo iibiyo"
+  },
+  "addNewItemLoadOptionsFailedHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Could not load suggestions. Pick custom packaging.",
+    "so": "Soo jeedimaha lama soo dejin karin. Dooro baakad gaar ah."
+  },
+  "addNewItemUseCustomButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Sale",
+    "en": "USE THIS PACKAGING",
+    "so": "ISTICMAAL BAAKADAN"
+  },
+  "addNewItemLooseType": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "Loose",
+    "so": "Furan"
+  },
+  "addPackagingSheetTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Receive",
+    "en": "Add packaging",
+    "so": "Ku dar baakad"
+  },
+  "addPackagingUnitLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "Unit",
+    "so": "Halbeeg"
+  },
+  "addPackagingConversionLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "How many {base} in 1 {unit}?",
+    "so": "Imisa {base} ayaa ku jira 1 {unit}?"
+  },
+  "addPackagingPriceLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "Sale price per {unit} (optional)",
+    "so": "Qiimaha iibka mid kasta {unit} (ikhtiyaari)"
+  },
+  "addPackagingSaveButton": {
+    "role": "button_save",
+    "max_chars": 12,
+    "area": "Receive",
+    "en": "ADD PACKAGING",
+    "so": "KU DAR BAAKAD"
+  },
+  "addPackagingFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Could not add the packaging. Try again.",
+    "so": "Baakadda luguma dari karin. Isku day mar kale."
+  },
+  "addPackagingHeaderBaseUnit": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Base unit · {unit}",
+    "so": "Halbeeg aasaasi · {unit}"
+  },
+  "addPackagingSuggestionsHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "Common packagings",
+    "so": "Baakado caadi ah"
+  },
+  "addPackagingCustomEntry": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "+ Custom packaging",
+    "so": "+ Baakad gaar ah"
+  },
+  "addPackagingLessCommonHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "Less common",
+    "so": "Kuwo aan caadi ahayn"
+  },
+  "packagingConversionPreview": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "1 {unit} holds {qty} {base}",
+    "so": "1 {unit} waxay qaaddaa {qty} {base}"
+  },
+  "addPackagingPickedPriceLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Receive",
+    "en": "Sale price per {packaging} (optional)",
+    "so": "Qiimaha iibka mid kasta {packaging} (ikhtiyaari)"
+  },
+  "addPackagingNoSuggestionsHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "No common packagings yet for this base unit — define your own below.",
+    "so": "Halbeegan wali baakado caadi ah uma jiraan — hoosta ka qor mid gaar ah."
+  },
+  "addPackagingLoadFailedHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Receive",
+    "en": "Could not load suggestions. Define your own below.",
+    "so": "Soo jeedimaha lama soo dejin karin. Hoosta ka qor mid gaar ah."
+  },
+  "lineEditorCostHintLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Sale",
+    "en": "Your last cost: {cost}. Add your usual markup.",
+    "so": "Qiimaha aad ku iibsatay ugu dambeysay: {cost}. Ku dar dheeraadkaaga caadi ah."
+  },
+  "shopItemEditorTitleCreate": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Add product",
+    "so": "Ku dar alaab cusub"
+  },
+  "shopItemDetailAliasesHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Other names",
+    "so": "Magacyo kale"
+  },
+  "shopItemEditorNameLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Name",
+    "so": "Magaca"
+  },
+  "shopItemEditorBaseUnitLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Base unit",
+    "so": "Halbeeg aasaasi"
+  },
+  "shopItemEditorCategoryLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Category",
+    "so": "Nooca"
+  },
+  "shopItemEditorReorderThresholdLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Warn when stock drops below",
+    "so": "Soo digi marka kayd-ku ka hooseeyo"
+  },
+  "shopItemEditorReorderThresholdHelper": {
+    "role": "helper",
+    "max_chars": null,
+    "area": "Products",
+    "en": "In {unit}. Leave blank for no warning.",
+    "so": "{unit} ku qor. Ka tag bannaan haddii aadan rabin digniin."
+  },
+  "shopItemEditorScanIdentifyButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "Scan",
+    "so": "Sken"
+  },
+  "shopItemEditorBarcodeNoMatchToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Code {code} isn't in our catalog yet. Fill in the rest and SAVE.",
+    "so": "Koodhka {code} weli kuma jiro cataloga. Buuxi qaybaha kale, ka dibna KAYDI."
+  },
+  "shopItemEditorPrefillBanner": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Found '{name}' in the catalog — review and tweak anything that's different.",
+    "so": "Waxaan ka helay '{name}' cataloga — fiiri oo wax ka beddel haddii uu jiro waxa kala duwan."
+  },
+  "shopItemEditorSuggestionInShop": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Already in your shop — tap to open",
+    "so": "Horey ayuu dukaankaaga ugu jiray — taabo si aad u furto"
+  },
+  "shopItemEditorSuggestionInCatalog": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "From global catalog — tap to use",
+    "so": "Catalog guud — taabo si aad u isticmaasho"
+  },
+  "shopItemEditorSessionCounter": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "{count, plural, one {1 added} other {# added}}",
+    "so": "{count, plural, one {1 la daray} other {# la daray}}"
+  },
+  "shopItemEditorSessionSheetTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Products",
+    "en": "Added this session",
+    "so": "Lagu daray fadhigan"
+  },
+  "shopItemEditorSessionSheetViewAll": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "View all products →",
+    "so": "Eeg dhammaan alaabta →"
+  },
+  "shopItemEditorIdentifyHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Identify",
+    "so": "Aqoonsasho"
+  },
+  "shopItemEditorPackagingHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Packaging",
+    "so": "Xidhmada"
+  },
+  "shopItemEditorSupplierHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Supplier",
+    "so": "Alaab Keene"
+  },
+  "shopItemEditorPickSupplierButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "Pick supplier",
+    "so": "Dooro alaab keene"
+  },
+  "shopItemEditorNewSupplierButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "NEW",
+    "so": "CUSUB"
+  },
+  "shopItemEditorRemoveSupplierTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Remove supplier",
+    "so": "Saar alaab keenaha"
+  },
+  "packagingEditorAddTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Add packaging",
+    "so": "Ku dar xidhmad"
+  },
+  "packagingEditorEditTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Edit packaging",
+    "so": "Bedel xidhmadda"
+  },
+  "packagingEditorSaveButton": {
+    "role": "button_save",
+    "max_chars": 12,
+    "area": "Common",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  "packagingEditorMissingUnitMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Pick a packaging unit (e.g. bag, box).",
+    "so": "Dooro nooca xidhmadda (tusaale: bac, sanduuq)."
+  },
+  "packagingEditorMissingConversionMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "How many base units fit in this pack? Enter a number greater than 0.",
+    "so": "Imisa unug aasaasi ah ayaa ku jira xidhmaddan? Geli tiro ka weyn 0."
+  },
+  "packagingEditorCostLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Cost per {unit}",
+    "so": "Qiimaha {unit}"
+  },
+  "packagingEditorStockLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Stock — how many {unit}?",
+    "so": "Kayd — imisa {unit}?"
+  },
+  "shopItemEditorBaseStockLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Stock — loose {unit}",
+    "so": "Kayd — furan {unit}"
+  },
+  "shopItemEditorBaseSaleLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Sale price per {unit}",
+    "so": "Qiimaha iibka — {unit}"
+  },
+  "shopItemEditorBaseCostLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Cost per {unit}",
+    "so": "Qiimaha keenta — {unit}"
+  },
+  "shopItemEditorPackagingSummary": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Sell {sale} · Cost {cost} · {stock} in stock",
+    "so": "Iib {sale} · Qiimaha {cost} · {stock} kayd"
+  },
+  "shopItemEditorPackagingSummaryEmpty": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "—",
+    "so": "—"
+  },
+  "shopItemEditorEditPackagingTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Edit packaging",
+    "so": "Bedel xidhmadda"
+  },
+  "shopItemEditorRemovePackagingTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Remove packaging",
+    "so": "Saar xidhmadda"
+  },
+  "shopItemEditorBuyHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Suppliers",
+    "so": "Alaab Keenayaasha"
+  },
+  "shopItemEditorBuySubtitle": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Default supplier + typical cost — pre-fills Receive later.",
+    "so": "Alaab keene asaasi + qiimaha caadiga — wuxuu hore u buuxinayaa Qaadasho."
+  },
+  "shopItemEditorTypicalCostHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Typical cost",
+    "so": "Qiimaha caadiga"
+  },
+  "shopItemEditorCostPerPackLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Cost per {pack}",
+    "so": "Qiimaha {pack}"
+  },
+  "shopItemEditorOpeningHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Stock",
+    "so": "Inta Taal"
+  },
+  "shopItemEditorOpeningSubtitle": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Enter current stock per packaging so reports are right from day one.",
+    "so": "Geli kayd hadda baakad walba si warbixinada saxda u shaqeeyaan maalintaa."
+  },
+  "shopItemEditorOpeningPickBaseUnitFirst": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Pick a base unit above to enable this section.",
+    "so": "Marka hore dooro cabbir asaasi ah si aad u isticmaasho qaybtan."
+  },
+  "shopItemEditorOpeningQtyLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Quantity in {unit}",
+    "so": "Tirada {unit}"
+  },
+  "shopItemEditorOpeningAsOf": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "As of {date}",
+    "so": "Laga bilaabo {date}"
+  },
+  "shopItemEditorChangeDateButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "Change",
+    "so": "Bedel"
+  },
+  "shopItemEditorOpeningStockNote": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Opening stock recorded during onboarding.",
+    "so": "Kayd furitaan oo la diiwaan geliyay xilliga hagaajinta."
+  },
+  "shopItemEditorOpeningStockFailedMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Item saved but stock did not save — open the product to adjust.",
+    "so": "Alaabta waa la kaydiyay laakiin kaydka ma kaydsanin — fur alaabta si aad u hagaajiso."
+  },
+  "shopItemEditorDedupTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Products",
+    "en": "You may already have this",
+    "so": "Waxaa laga yaabaa inaad horey u haysatay"
+  },
+  "shopItemEditorDedupBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Your shop has similar items. Open one to edit, or keep going if it's something different:",
+    "so": "Dukaankaaga wuxuu leeyahay alaab la mid ah. Mid ka fur si aad u tafatirto, ama sii wad haddii uu kala duwan yahay:"
+  },
+  "shopItemEditorDedupKeepGoing": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "IT'S DIFFERENT",
+    "so": "WAA KALA DUWAN"
+  },
+  "shopItemEditorDedupOpenExisting": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "OPEN EXISTING",
+    "so": "FUR KII HORE"
+  },
+  "shopItemEditorPackagingsHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Packagings",
+    "so": "Baakado"
+  },
+  "shopItemEditorAddPackagingButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "Add packaging",
+    "so": "Ku dar baakad"
+  },
+  "shopItemEditorBaseBadge": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Products",
+    "en": "BASE",
+    "so": "ASAAS"
+  },
+  "shopItemEditorPackagingMissingMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Fill at least one packaging (price, cost, stock, or barcode).",
+    "so": "Buuxi ugu yaraan hal qaybsasho (qiime, qarash, kayd, ama barcode)."
+  },
+  "shopItemEditorScanBarcodeButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "Scan barcode (optional)",
+    "so": "Sken garee barcode (ikhtiyaari)"
+  },
+  "shopItemEditorRescanBarcodeButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "Scan again",
+    "so": "Mar kale sken"
+  },
+  "shopItemEditorRemoveBarcodeTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Remove barcode",
+    "so": "Saar barcode-ka"
+  },
+  "shopItemEditorBarcodeBoundLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Barcode {code}",
+    "so": "Barcode {code}"
+  },
+  "shopItemEditorBarcodeCapturedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Captured {code}",
+    "so": "Waa la qaaday {code}"
+  },
+  "shopItemEditorDiscoveryHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Aliases",
+    "so": "Magacyo kale"
+  },
+  "shopItemEditorDiscoverySubtitle": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Extra names + bono spelling improve search later.",
+    "so": "Magacyo kale + qoraalka qoraalka ayaa raadinta ka horumarinaya."
+  },
+  "shopItemEditorAliasesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Other names",
+    "so": "Magacyo kale"
+  },
+  "shopItemEditorAliasHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Add another name",
+    "so": "Ku dar magac kale"
+  },
+  "shopItemEditorAddAliasButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "ADD",
+    "so": "KU DAR"
+  },
+  "shopItemEditorAliasHelper": {
+    "role": "helper",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Names a customer might say. Tap a chip to remove it.",
+    "so": "Magacyada macmiilku oran karo. Riix shukaansiga si aad u saarto."
+  },
+  "shopItemEditorBonoSpellingLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Bono spelling (optional)",
+    "so": "Qoraalka qoraalka (ikhtiyaari)"
+  },
+  "shopItemEditorBonoSpellingHelper": {
+    "role": "helper",
+    "max_chars": null,
+    "area": "Products",
+    "en": "How this item appears on supplier paper invoices (e.g. CCL 330x24).",
+    "so": "Sida alaabtan u soo muuqato qoraalka warqada keenaha (tusaale CCL 330x24)."
+  },
+  "removePackagingTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Remove packaging",
+    "so": "Tirtir baakadda"
+  },
+  "deactivateItemTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Hide product",
+    "so": "Qari alaabta"
+  },
+  "deactivateItemConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Products",
+    "en": "Hide this product?",
+    "so": "Ma qarinaysaa alaabtan?"
+  },
+  "deactivateItemConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "It will be removed from Sale, Receive, and Products. Past sales keep it. You can ask support to bring it back.",
+    "so": "Waxaa laga saari doonaa Iibinta, Dajinta, iyo Alaabta. Iibkii hore way sii jiri doonaan. Waxaad weydiisan kartaa taageerada inay soo celiyaan."
+  },
+  "deactivateItemConfirmAction": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "HIDE",
+    "so": "QARI"
+  },
+  "removePackagingConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Remove this packaging? You can add it back later.",
+    "so": "Ma tirtirayaa baakaddan? Mar dambe wad ku celin kartaa."
+  },
+  "removePackagingConfirmAction": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "REMOVE",
+    "so": "TIRTIR"
+  },
+  "shopItemEditorSaveButton": {
+    "role": "button_save",
+    "max_chars": 12,
+    "area": "Products",
+    "en": "SAVE",
+    "so": "KEYDI"
+  },
+  "shopItemEditorSaveAndAddAnotherButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "SAVE & ADD ANOTHER",
+    "so": "KEYDI OO KU DAR MID KALE"
+  },
+  "shopItemEditorSavedAndContinueToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Products",
+    "en": "{name} saved — add another",
+    "so": "{name} waa la keydiyay — ku dar mid kale"
+  },
+  "shopItemDetailEditPrice": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Edit price",
+    "so": "Bedel qiimaha"
+  },
+  "shopItemDetailDefaultSaleBadge": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Products",
+    "en": "Sale",
+    "so": "Iibin"
+  },
+  "shopItemDetailDefaultReceiveBadge": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Products",
+    "en": "Receive",
+    "so": "Soo qaad"
+  },
+  "shopItemDetailDefaultForLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Default for:",
+    "so": "Caadi u ah:"
+  },
+  "shopItemDetailStockLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Stock",
+    "so": "Kayd"
+  },
+  "shopItemDetailNoPriceLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "no price yet",
+    "so": "qiimo maleh"
+  },
+  "shopItemDetailReorderBelowLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Products",
+    "en": "Reorder below {amount} {unit}",
+    "so": "Soo qaado marka uu yaraado {amount} {unit}"
+  },
+  "catalogPickerTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Products",
+    "en": "Browse catalog",
+    "so": "Eeg liiska guud"
+  },
+  "catalogPickerSearchHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Products",
+    "en": "Search global catalog",
+    "so": "Ku Raadi liiska guud"
+  },
+  "catalogPickerActivatedBadge": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Products",
+    "en": "already added",
+    "so": "horeyba"
+  },
+  "catalogPickerAddButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Products",
+    "en": "ADD {count, plural, =1{1 item} other{{count} items}}",
+    "so": "KU DAR {count, plural, =1{1 shay} other{{count} shay}}"
+  },
+  "catalogPickerAddedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Products",
+    "en": "{count, plural, =1{1 item} other{{count} items}} added",
+    "so": "{count, plural, =1{1 shay} other{{count} shay}} ayaa la daray"
+  },
+  "setupOnboardingTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Onboarding",
+    "en": "Set up your products",
+    "so": "U habee alaabadaada"
+  },
+  "setupOnboardingBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "We added {count} items from the {template} template. You can start selling now — prices fill in as you sell.\n\nOr take a minute to:",
+    "so": "Waxaan kuugu darnay {count} alaab oo ka mid ah qaabka {template}. Hadda iibi waad bilaaban kartaa — qiimayaashu way buuxin doonaan markaad iibinayso.\n\nAma daqiiqad ku qaad:"
+  },
+  "setupOnboardingAddItemsTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Onboarding",
+    "en": "Add my own items",
+    "so": "Ku dar alaabadayda"
+  },
+  "setupOnboardingAddItemsBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Items the template didn't include",
+    "so": "Alaabaha qaabku aanu lahayn"
+  },
+  "setupOnboardingSetPricesTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Onboarding",
+    "en": "Set prices on top items",
+    "so": "U dhig qiimayaal alaabta caanka ah"
+  },
+  "setupOnboardingSetPricesBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "So sales don't pause for a price prompt",
+    "so": "Si aanu iibku u dhabaalayn qiimo weydiin"
+  },
+  "setupOnboardingBrowseCatalogTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Onboarding",
+    "en": "Browse the catalog",
+    "so": "Eeg liiska guud"
+  },
+  "setupOnboardingBrowseCatalogBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Onboarding",
+    "en": "Activate more items from our list",
+    "so": "Ka dhaqaaji alaabo dheeraad ah liiskayaga"
+  },
+  "setupOnboardingSkipButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Onboarding",
+    "en": "SKIP — START SELLING",
+    "so": "BOOD — BILOW IIBKA"
+  },
+  "scanCameraTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Scan barcode",
+    "so": "Akhri jeegga"
+  },
+  "scannerSheetTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Settings",
+    "en": "Scan a barcode",
+    "so": "Akhri jeegga"
+  },
+  "scannerTorchTooltip": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Torch",
+    "so": "Iftiin"
+  },
+  "scannerHoldSteady": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Hold steady — 15 to 25 cm from the code",
+    "so": "Si toosan u qabo — 15 ilaa 25 cm meel jeegga"
+  },
+  "scanUnknownPillLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "Unknown barcode: {code}",
+    "so": "Jeeg lama yaqaano: {code}"
+  },
+  "scanUnknownCreateAction": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Create new",
+    "so": "Cusub abuur"
+  },
+  "scanUnknownDismissAction": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Dismiss",
+    "so": "Iska saar"
+  },
+  "scanLookupFailed": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Couldn't look up that barcode",
+    "so": "Jeegga lama heli karo"
+  },
+  "multiScanSheetTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Multi-scan ({count})",
+    "so": "Multi-akhri ({count})"
+  },
+  "multiScanUnknownCount": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "{count, plural, =1{1 unknown code — review after} other{{count} unknown codes — review after}}",
+    "so": "{count, plural, =1{1 jeeg lama yaqaano — eeg ka dib} other{{count} jeeg lama yaqaano — eeg ka dib}}"
+  },
+  "multiScanEmptyHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Aim at a barcode. Successful scans stage as lines below.",
+    "so": "Jeegga camera-da hor dhig. Akhrida guul leh waxay galayaan liiska hoose."
+  },
+  "multiScanDoneAction": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "DONE",
+    "so": "DHAMAYE"
+  },
+  "multiScanLongPressHint": {
+    "role": "hint",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Hold to multi-scan",
+    "so": "Si dheer u taabo si aad u multi-akhrido"
+  },
+  "multiScanAppliedSummary": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "{count, plural, =1{1 line staged} other{{count} lines staged}}",
+    "so": "{count, plural, =1{1 saf la gallinay} other{{count} saf la galiyay}}"
+  },
+  "barcodeScanAndBindAction": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Scan code",
+    "so": "Akhri jeegga"
+  },
+  "barcodeBoundToPackagingMessage": {
+    "role": "empty_error",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Code linked to this packaging",
+    "so": "Jeegga waxa lagu xidhay shaandhada"
+  },
+  "relativeTimeJustNow": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "just now",
+    "so": "hadda"
+  },
+  "relativeTimeMinutesAgo": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "{minutes, plural, =1{1 min ago} other{{minutes} min ago}}",
+    "so": "{minutes, plural, =1{1 daqiiqo ka hor} other{{minutes} daqiiqo ka hor}}"
+  },
+  "relativeTimeHoursAgo": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "{hours, plural, =1{1 hr ago} other{{hours} hr ago}}",
+    "so": "{hours, plural, =1{1 saac ka hor} other{{hours} saac ka hor}}"
+  },
+  "relativeTimeDaysAgo": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "{days, plural, =1{1 day ago} other{{days} days ago}}",
+    "so": "{days, plural, =1{1 maalin ka hor} other{{days} maalmood ka hor}}"
+  },
+  "relativeTimeOn": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "on {date}",
+    "so": "{date}-tii"
+  },
+  "saleHistoryVoidedSubtitle": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Sale",
+    "en": "voided {when}",
+    "so": "la baabi'iyay {when}"
+  },
+  "partyDetailEditedAt": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Parties",
+    "en": "contact info edited {when}",
+    "so": "xog xidhiidh la beddelay {when}"
+  },
+  "offlineQueuePillLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "{count, plural, =1{Syncing 1} other{Syncing {count}}}",
+    "so": "{count, plural, =1{Hubinta 1} other{Hubinta {count}}}"
+  },
+  "storageSyncTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Settings",
+    "en": "Storage & sync",
+    "so": "Kayd & is-waafajin"
+  },
+  "storageSyncStatusConnected": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Connected",
+    "so": "Xidhan"
+  },
+  "storageSyncStatusOffline": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Offline",
+    "so": "Aan xidhneyn"
+  },
+  "storageSyncLastSyncedLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Last synced",
+    "so": "Is-waafajin u dambeysay"
+  },
+  "storageSyncLastSyncedNever": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Never",
+    "so": "Welwaa"
+  },
+  "storageSyncPendingSalesLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Pending posts",
+    "so": "Kuwa sugaya"
+  },
+  "storageSyncPendingCount": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "{count, plural, =0{none waiting} =1{1 waiting} other{{count} waiting}}",
+    "so": "{count, plural, =0{midna} =1{1 sugaya} other{{count} sugaya}}"
+  },
+  "storageSyncFailedPermanentlyLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Failed permanently",
+    "so": "Si rasmi ah u guul-darreystay"
+  },
+  "storageSyncFailedPermanentlyCount": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "{count, plural, =1{1 post} other{{count} posts}}",
+    "so": "{count, plural, =1{1} other{{count}}}"
+  },
+  "storageSyncStorageUsedLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Storage used",
+    "so": "Boos la isticmaalay"
+  },
+  "storageSyncStorageBreakdownPending": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Pending posts",
+    "so": "Kuwa sugaya"
+  },
+  "storageSyncStorageBreakdownCached": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Cached data",
+    "so": "Xog la kaydiyay"
+  },
+  "storageSyncSyncNowButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Settings",
+    "en": "Sync now",
+    "so": "Is-waafaji hadda"
+  },
+  "storageSyncFreeUpSpaceButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Settings",
+    "en": "Free up space",
+    "so": "Furfur booska"
+  },
+  "storageSyncFreeUpSpaceConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Settings",
+    "en": "Clear cached data?",
+    "so": "Tirtir xogta la kaydiyay?"
+  },
+  "storageSyncFreeUpSpaceConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "This refreshes prices and lists from the server. Your saved sales aren't touched.",
+    "so": "Tani waxay cusbooneysiisaa qiimaha iyo liiska serfarka. Iibyada aad kaydisay ma taabankaro."
+  },
+  "storageSyncFreeUpSpaceConfirmAction": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "CLEAR",
+    "so": "TIRTIR"
+  },
+  "storageSyncResyncAllButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Settings",
+    "en": "Re-download all data",
+    "so": "Dib u soo deji xogta oo dhan"
+  },
+  "storageSyncResyncConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Settings",
+    "en": "Re-download all data?",
+    "so": "Dib u soo deji xogta oo dhan?"
+  },
+  "storageSyncResyncConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Fetches a fresh copy of items, customers, and recent transactions from the server. Your saved sales aren't touched.",
+    "so": "Waxaa la soo dejinayaa nuqul cusub oo ka kooban alaab, macaamiil, iyo wax iibinta dhowaan. Iibyada aad kaydisay ma taabankaro."
+  },
+  "storageSyncResyncConfirmAction": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "RE-DOWNLOAD",
+    "so": "DIB U SOO DEJI"
+  },
+  "storageSyncResyncDoneToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Re-downloaded all data",
+    "so": "Xogta oo dhan dib ayaa loo soo dejiyay"
+  },
+  "storageSyncResyncFailedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Couldn't re-download",
+    "so": "Lama soo dejin karin"
+  },
+  "storageSyncCacheClearedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Cache cleared",
+    "so": "Kaydka waa la tirtiray"
+  },
+  "storageSyncSyncedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "{count, plural, =0{Already up to date} =1{Synced 1 post} other{Synced {count} posts}}",
+    "so": "{count, plural, =0{Horeyba u cusub} =1{1 la diray} other{{count} la diray}}"
+  },
+  "storageSyncSyncFailedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Could not sync — check your connection.",
+    "so": "Lama waafajin karin — hubi xidhiidhka."
+  },
+  "storageSyncAlreadyUpToDateToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Already up to date",
+    "so": "Hadda way cusub tahay"
+  },
+  "storageSyncPushedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "{count, plural, =1{Sent 1 pending} other{Sent {count} pending}}",
+    "so": "{count, plural, =1{La diray 1 sugaya} other{La diray {count} sugaya}}"
+  },
+  "storageSyncPulledToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "{count, plural, =1{Got 1 update} other{Got {count} updates}}",
+    "so": "{count, plural, =1{La helay 1 cusbooneysiin} other{La helay {count} cusbooneysiin}}"
+  },
+  "storageSyncPushedAndPulledToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Sent {pushed} pending, got {pulled} updates",
+    "so": "La diray {pushed} sugaya, la helay {pulled} cusbooneysiin"
+  },
+  "storageSyncResetButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Settings",
+    "en": "Reset local data",
+    "so": "Dib u dejis xogta"
+  },
+  "storageSyncResetConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Settings",
+    "en": "Reset local data?",
+    "so": "Dib u dejis xogta maxalliga?"
+  },
+  "storageSyncResetConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "This DELETES all data this device has downloaded from the server. Your shop's data will be re-downloaded on next sync. Any sales that haven't been sent will be lost. Only do this if support tells you to.",
+    "so": "Tani waxay TIRTIRTAA dhammaan xogta uu taleefankaan ka soo dejiyey serverka. Xogta dukaankaaga waxaa dib loo soo dejin doonaa marka xiga ee la xidhiidho. Iibyada aan loo dirin server-ka way lumi doonaan. Tan hel kaliya marka taageerada ay ku weydiisto."
+  },
+  "storageSyncResetTypePrompt": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Type RESET to confirm",
+    "so": "Ku qor TIRTIR si aad u xaqiijiso"
+  },
+  "storageSyncResetTypeWord": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "RESET",
+    "so": "TIRTIR"
+  },
+  "storageSyncResetOfflineBlocker": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Connect to internet first — you have pending sales that need to send before reset.",
+    "so": "Marka hore internet-ka ku xidh — waxaa jira iibyo sugaya in la diro server-ka kahor dib-u-dejinta."
+  },
+  "storageSyncResetPendingFailedBlocker": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "{count, plural, =1{1 post couldn't send. Review it in Failed posts before reset.} other{{count} posts couldn't send. Review them in Failed posts before reset.}}",
+    "so": "{count, plural, =1{1 dirka ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-dejinta.} other{{count} dir ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-dejinta.}}"
+  },
+  "storageSyncResetConfirmAction": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "RESET",
+    "so": "TIRTIR"
+  },
+  "storageSyncResetDoneToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Local data reset. Downloading fresh data...",
+    "so": "Xogta maxalliga waa la dib u dejiyey. Soo dejinta xog cusub..."
+  },
+  "storageSyncResetFailedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Reset failed",
+    "so": "Dib-u-dejinta way fashilantay"
+  },
+  "storageSyncSettingsHeader": {
+    "role": "header",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Settings",
+    "so": "Dejinta"
+  },
+  "storageSyncWifiOnlyLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Sync only on Wi-Fi",
+    "so": "Kaliya marka Wi-Fi jiro"
+  },
+  "storageSyncDrawerEntry": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Storage & sync",
+    "so": "Kayd & is-waafajin"
+  },
+  "drawerManageCategories": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Menu",
+    "en": "Categories",
+    "so": "Qaybaha"
+  },
+  "manageCategoriesTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Settings",
+    "en": "Categories",
+    "so": "Qaybaha"
+  },
+  "manageCategoriesProductsTab": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Settings",
+    "en": "Products",
+    "so": "Alaabta"
+  },
+  "manageCategoriesExpensesTab": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Settings",
+    "en": "Expenses",
+    "so": "Kharashyada"
+  },
+  "manageCategoriesAdd": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Add category",
+    "so": "Ku dar qayb"
+  },
+  "manageCategoriesEmpty": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "No categories yet. Tap + to add one.",
+    "so": "Wali qaybo ma jiraan. Taabo + si aad u darto."
+  },
+  "manageCategoriesDefaultBadge": {
+    "role": "chip",
+    "max_chars": 12,
+    "area": "Settings",
+    "en": "Built-in",
+    "so": "Nidaam"
+  },
+  "manageCategoriesNameLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Settings",
+    "en": "Category name",
+    "so": "Magaca qaybta"
+  },
+  "manageCategoriesNewTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Settings",
+    "en": "New category",
+    "so": "Qayb cusub"
+  },
+  "manageCategoriesRenameTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Settings",
+    "en": "Rename category",
+    "so": "Magac-beddel qaybta"
+  },
+  "manageCategoriesSave": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Save",
+    "so": "Kaydi"
+  },
+  "manageCategoriesRename": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Rename",
+    "so": "Magac beddel"
+  },
+  "manageCategoriesHide": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "Hide",
+    "so": "Qari"
+  },
+  "manageCategoriesHideConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Settings",
+    "en": "Hide category?",
+    "so": "Qari qaybta?"
+  },
+  "manageCategoriesHideConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Settings",
+    "en": "It will no longer appear when adding or editing items. Items already using it keep it until you change them.",
+    "so": "Mar dambe kama soo bixi doonto marka aad alaab dartid ama wax ka beddeshid. Alaabta hadda isticmaasha way sii haysanaysaa ilaa aad beddesho."
+  },
+  "failedPostsTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Failed posts",
+    "so": "Kuwa guul-darreystay"
+  },
+  "failedPostsRetryButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "RETRY",
+    "so": "MAR KALE"
+  },
+  "failedPostsDiscardButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "DISCARD",
+    "so": "TUUR"
+  },
+  "failedPostsDiscardConfirmTitle": {
+    "role": "dialog_title",
+    "max_chars": 30,
+    "area": "Common",
+    "en": "Discard this post?",
+    "so": "Tuur kan?"
+  },
+  "failedPostsDiscardConfirmBody": {
+    "role": "dialog_body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "You can't recover it. Continue?",
+    "so": "Ma soo celin kartid. Sii wad?"
+  },
+  "failedPostsDiscardConfirmAction": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "DISCARD",
+    "so": "TUUR"
+  },
+  "failedPostsEmptyState": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "No failed posts.",
+    "so": "Wax guul-darreystay ma jiro."
+  },
+  "syncFirstTimeSetupTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Connect to load your shop's data",
+    "so": "Ku xidh internet si aad u soo dejiso xogta dukaankaaga"
+  },
+  "syncFirstTimeSetupBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "We need to fetch your items, customers, and recent transactions one time before you can work offline. Open Wi-Fi or mobile data, then tap Retry.",
+    "so": "Waxaan mar u baahanahay inaan soo dejino alaabtaada, macaamiishaada, iyo wax iibinta dhowaan ka hor inta aanad shaqayn karin marka aad offline-tahay. Fur Wi-Fi ama internet-ka taleefanka, ka dibna taabo MAR KALE."
+  },
+  "syncFirstTimeSetupRetryButton": {
+    "role": "button",
+    "max_chars": 18,
+    "area": "Common",
+    "en": "RETRY",
+    "so": "MAR KALE"
+  },
+  "syncFirstTimeLoadingTitle": {
+    "role": "title",
+    "max_chars": 20,
+    "area": "Common",
+    "en": "Setting up your shop…",
+    "so": "Dukaankaaga waa la diyaarinayaa…"
+  },
+  "syncFirstTimeLoadingBody": {
+    "role": "body",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Loading your items, customers, and recent activity. This only happens once.",
+    "so": "Waxaa la soo dejinayaa alaabtaada, macaamiishaada, iyo dhaqdhaqaaqyada dhowaan. Tani hal mar ayey dhacaysaa."
+  },
+  "syncIssueBannerLabel": {
+    "role": "label",
+    "max_chars": 24,
+    "area": "Common",
+    "en": "⚠ Working offline since {time}. Tap to retry sync.",
+    "so": "⚠ Offline tan iyo {time}. Taabo si aad mar kale isku daydid."
+  },
+  "syncForceSyncingToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Syncing…",
+    "so": "Waa la diraaya…"
+  },
+  "syncForceSyncedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Common",
+    "en": "{count, plural, =0{Already up to date} =1{Synced 1 update} other{Synced {count} updates}}",
+    "so": "{count, plural, =0{Horeyba u cusub} =1{1 cusboonaysiis la diray} other{{count} cusboonaysiis la diray}}"
+  },
+  "syncForceFailedToast": {
+    "role": "toast",
+    "max_chars": null,
+    "area": "Common",
+    "en": "Couldn't sync — try again later.",
+    "so": "Lama is-waafajin karin — mar kale isku day."
+  }
+}
