@@ -47,6 +47,15 @@ Future<void> main() async {
     CrashReporter.reportError(error, stackTrace, hint: 'main.openDatabase');
   });
 
+  // Resolve Supabase init + DB open concurrently, but OFF the first-paint
+  // path: runApp shows a splash immediately and swaps to the real app when
+  // these complete. On a "cold after a while" launch, Supabase.initialize
+  // does an expired-token refresh round-trip — keeping that off the
+  // pre-runApp barrier means the cashier sees branded UI instantly instead of
+  // a frozen blank screen while the network call (and its timeout) resolves.
+  final Future<void> initFuture =
+      Future.wait([supabaseFuture, databaseFuture]);
+
   if (appConfig.hasSentry) {
     await SentryFlutter.init(
       (options) {
@@ -64,21 +73,57 @@ Future<void> main() async {
         // up here so the SDK never auto-attaches IP / cookies / etc.
         options.sendDefaultPii = false;
       },
-      appRunner: () async {
-        await Future.wait([supabaseFuture, databaseFuture]);
+      appRunner: () {
         CrashReporter.install(enabled: true);
-        runApp(DukanApp(
-          supabaseClient:
-              appConfig.hasSupabase ? Supabase.instance.client : null,
-        ));
+        runApp(_AppBootstrap(appConfig: appConfig, initFuture: initFuture));
       },
     );
   } else {
-    await Future.wait([supabaseFuture, databaseFuture]);
-    runApp(DukanApp(
-      supabaseClient:
-          appConfig.hasSupabase ? Supabase.instance.client : null,
-    ));
+    runApp(_AppBootstrap(appConfig: appConfig, initFuture: initFuture));
+  }
+}
+
+/// Paints instantly: shows a branded splash while Supabase init + DB open
+/// resolve in the background, then swaps to the real app. This keeps the
+/// expired-token refresh inside Supabase.initialize off the first-paint path
+/// so cold start never shows a frozen screen.
+class _AppBootstrap extends StatelessWidget {
+  const _AppBootstrap({required this.appConfig, required this.initFuture});
+
+  final AppConfig appConfig;
+  final Future<void> initFuture;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: initFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const _SplashApp();
+        }
+        return DukanApp(
+          supabaseClient:
+              appConfig.hasSupabase ? Supabase.instance.client : null,
+        );
+      },
+    );
+  }
+}
+
+/// Minimal, self-contained splash (no session providers / no localization
+/// needed) shown for the brief window before Supabase + the DB are ready.
+class _SplashApp extends StatelessWidget {
+  const _SplashApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Color(0xFF005C46),
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      ),
+    );
   }
 }
 
