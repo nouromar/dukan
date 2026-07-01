@@ -218,10 +218,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get homeSalesTodayLabel => 'Iibka maanta';
 
   @override
-  String get homeReceivablesLabel => 'Lacag laguu leeyahay';
+  String get homeReceivablesLabel => 'Deyn lagaa qabo';
 
   @override
-  String get homePayablesLabel => 'Lacag aad ku leedahay';
+  String get homePayablesLabel => 'Deyn aad qabto';
 
   @override
   String get homeLowStockLabel => 'Alaab yaraatey';

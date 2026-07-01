@@ -473,14 +473,14 @@
     "max_chars": 24,
     "area": "Home",
     "en": "Customers owe you",
-    "so": "Lacag laguu leeyahay"
+    "so": "Deyn lagaa qabo"
   },
   "homePayablesLabel": {
     "role": "label",
     "max_chars": 24,
     "area": "Home",
     "en": "You owe suppliers",
-    "so": "Lacag aad ku leedahay"
+    "so": "Deyn aad qabto"
   },
   "homeLowStockLabel": {
     "role": "label",

@@ -67,8 +67,8 @@
   "partyDetailPaymentsHeader": "Lacagaha la bixiyey",
   "homeTodayHeader": "Maanta",
   "homeSalesTodayLabel": "Iibka maanta",
-  "homeReceivablesLabel": "Lacag laguu leeyahay",
-  "homePayablesLabel": "Lacag aad ku leedahay",
+  "homeReceivablesLabel": "Deyn lagaa qabo",
+  "homePayablesLabel": "Deyn aad qabto",
   "homeLowStockLabel": "Alaab yaraatey",
   "homeLowStockCount": "{count, plural, =0{midna} =1{1 alaab} other{{count} alaab}}",
   "@homeLowStockCount": {

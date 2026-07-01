@@ -1,0 +1,5 @@
+{
+  "_comment": "Owner correction to the home dashboard counters — symmetric deyn pair.",
+  "homeReceivablesLabel": ["Deyn lagaa qabo", "Customers owe you (owed to you)"],
+  "homePayablesLabel": ["Deyn aad qabto", "You owe suppliers (you owe)"]
+}
