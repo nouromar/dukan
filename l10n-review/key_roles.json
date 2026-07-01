@@ -1943,7 +1943,7 @@
     "max_chars": null,
     "area": "Sale",
     "en": "Search Somali or English",
-    "so": "Ku Raadi Soomaali ama Ingiriis"
+    "so": "Ku Raadi (Somaali/ingiriis)"
   },
   "saleCartSummary": {
     "role": "body",
@@ -1978,7 +1978,7 @@
     "max_chars": null,
     "area": "Sale",
     "en": "Cash",
-    "so": "Lacag"
+    "so": "Kaash"
   },
   "saleDebt": {
     "role": "body",
@@ -2475,7 +2475,7 @@
     "max_chars": 12,
     "area": "Sale",
     "en": "Voided",
-    "so": "LagaNoqday"
+    "so": "La tirtiray"
   },
   "saleDetailTitle": {
     "role": "title",
@@ -2489,14 +2489,14 @@
     "max_chars": 24,
     "area": "Sale",
     "en": "Voided",
-    "so": "LagaNoqday"
+    "so": "La tirtiray"
   },
   "saleDetailVoidButton": {
     "role": "button",
     "max_chars": 18,
     "area": "Sale",
     "en": "VOID THIS SALE",
-    "so": "Ka noqo IIBKA"
+    "so": "TIRTIR IIBKA"
   },
   "expenseDetailTitle": {
     "role": "title",
@@ -2678,7 +2678,7 @@
     "max_chars": 18,
     "area": "Sale",
     "en": "DONE",
-    "so": "DHAMMEYSTIR"
+    "so": "DHAMMEE"
   },
   "saleHistoryReceiptTooltip": {
     "role": "body",
@@ -2692,21 +2692,21 @@
     "max_chars": 30,
     "area": "Sale",
     "en": "Void this sale?",
-    "so": "Ka noqo iibkan?"
+    "so": "Iibkan tirtir?"
   },
   "saleVoidConfirmBody": {
     "role": "dialog_body",
     "max_chars": null,
     "area": "Sale",
     "en": "This will reverse the sale, restore the stock, and clear the customer's debt for it.",
-    "so": "Iibka waa laga noqo doonaa, alaabta kayd-ka lugu celi doonaa, deynta macmiilka waa laga jari doonaa."
+    "so": "Iibka waa la tirtiri doonaa, alaabta bakhaarka waa lugu celin doonaa, deynta macmiilkana waa la tirtiri doonaa."
   },
   "saleVoidConfirmYes": {
     "role": "button",
     "max_chars": 14,
     "area": "Sale",
     "en": "VOID",
-    "so": "KaNoqo"
+    "so": "TIRTIR"
   },
   "saleVoidConfirmNo": {
     "role": "button",
@@ -2748,35 +2748,35 @@
     "max_chars": null,
     "area": "Sale",
     "en": "Sale voided",
-    "so": "Iibka waa laga noqday"
+    "so": "Iibka waa la tirtiray"
   },
   "saleVoidFailedMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Sale",
     "en": "Could not void this sale. Try again.",
-    "so": "Iibka lagama noqo karin. Isku day mar kale."
+    "so": "Iibka lama tirtiri karin. Isku day mar kale."
   },
   "saleVoidErrorOwnerOnly": {
     "role": "body",
     "max_chars": null,
     "area": "Sale",
     "en": "Only the shop owner can void a sale.",
-    "so": "Kaliya milkiilaha dukaanka ayaa joojin kara iibka."
+    "so": "Kaliya milkiilaha dukaanka ayaa tirtiri kara iibka."
   },
   "saleVoidErrorWindowExpired": {
     "role": "body",
     "max_chars": null,
     "area": "Sale",
     "en": "Too late to void — sales can only be voided within 7 days of posting.",
-    "so": "Goorta way dhammaatay — iibyada waxaa la joojin karaa 7 maalmood gudahood."
+    "so": "Goorta way dhammaatay — iibyada waxaa la tirtiri karaa 7 maalmood gudahood."
   },
   "saleVoidErrorAlreadyVoided": {
     "role": "body",
     "max_chars": null,
     "area": "Sale",
     "en": "This sale was already voided.",
-    "so": "Iibkan hore ayaa loo joojiyay."
+    "so": "Iibkan hore ayaa la tirtiray."
   },
   "saleVoidErrorRefundNeedsCustomer": {
     "role": "body",
@@ -2790,7 +2790,7 @@
     "max_chars": null,
     "area": "Sale",
     "en": "Refund can't be more than the cash paid at the till.",
-    "so": "Soo-celinta lagama wada-weynaan karo lacagta kaashka."
+    "so": "Soo-celintu kama badnaan karto lacagta kaashka."
   },
   "saleVoidErrorNotFound": {
     "role": "body",
@@ -2993,7 +2993,7 @@
     "max_chars": 18,
     "area": "Sale",
     "en": "DONE",
-    "so": "DHAMME"
+    "so": "DHAMMEE"
   },
   "lineEditorPriceRequiredHelper": {
     "role": "helper",
@@ -4365,7 +4365,7 @@
     "max_chars": null,
     "area": "Sale",
     "en": "voided {when}",
-    "so": "la baabi'iyay {when}"
+    "so": "la tirtiray {when}"
   },
   "partyDetailEditedAt": {
     "role": "body",

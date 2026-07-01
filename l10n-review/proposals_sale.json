@@ -1,0 +1,24 @@
+{
+  "_comment": "AI draft — Sale batch. Theme: unify VOID to the locked term Tirtir (was inconsistently 'ka noqo' / 'joojin' / 'baabi'i', plus 2 camelCase bugs 'LagaNoqday'/'KaNoqo'). Plus Cash->Kaash consistency + DONE consistency. Only changed keys listed; the rest of Sale is left as-is. ⚠ = please confirm.",
+
+  "saleHistoryVoidedBadge": ["La tirtiray", "was 'LagaNoqday' (camelCase bug); chip <=12"],
+  "saleDetailVoidedHeader": ["La tirtiray", "was 'LagaNoqday' (camelCase bug)"],
+  "saleDetailVoidButton": ["TIRTIR IIBKA", "was 'Ka noqo IIBKA'; unify to Tirtir"],
+  "saleVoidConfirmTitle": ["Iibkan tirtir?", "was 'Ka noqo iibkan?'; question kept, Tirtir"],
+  "saleVoidConfirmYes": ["TIRTIR", "was 'KaNoqo' (camelCase bug)"],
+  "saleVoidedToast": ["Iibka waa la tirtiray", "was 'laga noqday'"],
+  "saleVoidFailedMessage": ["Iibka lama tirtiri karin. Isku day mar kale.", "was 'lagama noqo karin'"],
+  "saleVoidConfirmBody": ["Iibka waa la tirtiri doonaa, alaabta bakhaarka waa lugu celin doonaa, deynta macmiilkana waa la tirtiri doonaa.", "⚠ swapped 'laga noqo' -> 'la tirtir'"],
+  "saleVoidErrorOwnerOnly": ["Kaliya milkiilaha dukaanka ayaa tirtiri kara iibka.", "was 'joojin kara'"],
+  "saleVoidErrorWindowExpired": ["Goorta way dhammaatay — iibyada waxaa la tirtiri karaa 7 maalmood gudahood.", "was 'la joojin karaa'"],
+  "saleVoidErrorAlreadyVoided": ["Iibkan hore ayaa la tirtiray.", "was 'loo joojiyay'"],
+  "saleVoidErrorRefundExceedsPaid": ["Soo-celintu kama badnaan karto lacagta kaashka.", "⚠ was awkward 'lagama wada-weynaan karo'"],
+  "saleHistoryVoidedSubtitle": ["la tirtiray {when}", "was 'la baabi'iyay' (3rd void word)"],
+
+  "saleCash": ["Kaash", "Cash -> Kaash (was 'Lacag'); matches saleHistoryCashLabel"],
+
+  "saleReceiptDoneButton": ["DHAMMEE", "DONE; unify with lineEditorDoneButton"],
+  "lineEditorDoneButton": ["DHAMMEE", "was 'DHamme'; unify DONE"],
+
+  "saleSearchHint": ["Ku Raadi (Somaali/ingiriis)", "reviewer-approved"]
+}

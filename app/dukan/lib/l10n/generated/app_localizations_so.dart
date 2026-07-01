@@ -960,7 +960,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleTitle => 'Iibin';
 
   @override
-  String get saleSearchHint => 'Ku Raadi Soomaali ama Ingiriis';
+  String get saleSearchHint => 'Ku Raadi (Somaali/ingiriis)';
 
   @override
   String saleCartSummary(num count, Object total) {
@@ -988,7 +988,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale.';
 
   @override
-  String get saleCash => 'Lacag';
+  String get saleCash => 'Kaash';
 
   @override
   String get saleDebt => 'Deyn';
@@ -1252,16 +1252,16 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get saleHistoryVoidedBadge => 'LagaNoqday';
+  String get saleHistoryVoidedBadge => 'La tirtiray';
 
   @override
   String get saleDetailTitle => 'Iib';
 
   @override
-  String get saleDetailVoidedHeader => 'LagaNoqday';
+  String get saleDetailVoidedHeader => 'La tirtiray';
 
   @override
-  String get saleDetailVoidButton => 'Ka noqo IIBKA';
+  String get saleDetailVoidButton => 'TIRTIR IIBKA';
 
   @override
   String get expenseDetailTitle => 'Kharash';
@@ -1350,20 +1350,20 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleReceiptShareButton => 'U DIR RASIID';
 
   @override
-  String get saleReceiptDoneButton => 'DHAMMEYSTIR';
+  String get saleReceiptDoneButton => 'DHAMMEE';
 
   @override
   String get saleHistoryReceiptTooltip => 'Fur rasiidka';
 
   @override
-  String get saleVoidConfirmTitle => 'Ka noqo iibkan?';
+  String get saleVoidConfirmTitle => 'Iibkan tirtir?';
 
   @override
   String get saleVoidConfirmBody =>
-      'Iibka waa laga noqo doonaa, alaabta kayd-ka lugu celi doonaa, deynta macmiilka waa laga jari doonaa.';
+      'Iibka waa la tirtiri doonaa, alaabta bakhaarka waa lugu celin doonaa, deynta macmiilkana waa la tirtiri doonaa.';
 
   @override
-  String get saleVoidConfirmYes => 'KaNoqo';
+  String get saleVoidConfirmYes => 'TIRTIR';
 
   @override
   String get saleVoidConfirmNo => 'JOOJI';
@@ -1385,22 +1385,22 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get saleVoidedToast => 'Iibka waa laga noqday';
+  String get saleVoidedToast => 'Iibka waa la tirtiray';
 
   @override
   String get saleVoidFailedMessage =>
-      'Iibka lagama noqo karin. Isku day mar kale.';
+      'Iibka lama tirtiri karin. Isku day mar kale.';
 
   @override
   String get saleVoidErrorOwnerOnly =>
-      'Kaliya milkiilaha dukaanka ayaa joojin kara iibka.';
+      'Kaliya milkiilaha dukaanka ayaa tirtiri kara iibka.';
 
   @override
   String get saleVoidErrorWindowExpired =>
-      'Goorta way dhammaatay — iibyada waxaa la joojin karaa 7 maalmood gudahood.';
+      'Goorta way dhammaatay — iibyada waxaa la tirtiri karaa 7 maalmood gudahood.';
 
   @override
-  String get saleVoidErrorAlreadyVoided => 'Iibkan hore ayaa loo joojiyay.';
+  String get saleVoidErrorAlreadyVoided => 'Iibkan hore ayaa la tirtiray.';
 
   @override
   String get saleVoidErrorRefundNeedsCustomer =>
@@ -1408,7 +1408,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get saleVoidErrorRefundExceedsPaid =>
-      'Soo-celinta lagama wada-weynaan karo lacagta kaashka.';
+      'Soo-celintu kama badnaan karto lacagta kaashka.';
 
   @override
   String get saleVoidErrorNotFound =>
@@ -1524,7 +1524,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get cartClearConfirmNo => 'JOOJI';
 
   @override
-  String get lineEditorDoneButton => 'DHAMME';
+  String get lineEditorDoneButton => 'DHAMMEE';
 
   @override
   String get lineEditorPriceRequiredHelper => 'Geli qiimaha shaygan';
@@ -2307,7 +2307,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String saleHistoryVoidedSubtitle(String when) {
-    return 'la baabi\'iyay $when';
+    return 'la tirtiray $when';
   }
 
   @override
