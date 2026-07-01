@@ -1068,14 +1068,14 @@
     "max_chars": 12,
     "area": "Products",
     "en": "SAVE",
-    "so": "KEYDI"
+    "so": "KAYDI"
   },
   "stockAdjustFailedMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Products",
     "en": "Could not save the adjustment. Try again.",
-    "so": "Ma keydin karno hagaajinta. Isku day mar kale."
+    "so": "Ma kaydin karno hagaajinta. Isku day mar kale."
   },
   "stockAdjustInvalidAmountMessage": {
     "role": "empty_error",
@@ -1866,21 +1866,21 @@
     "max_chars": 12,
     "area": "Settings",
     "en": "SAVE",
-    "so": "KEYDI"
+    "so": "KAYDI"
   },
   "settingsSavedToast": {
     "role": "toast",
     "max_chars": null,
     "area": "Settings",
     "en": "Settings saved",
-    "so": "Diyaarinta waa la keydiyay"
+    "so": "Diyaarinta waa la kaydiyay"
   },
   "settingsSaveFailedMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Settings",
     "en": "Could not save settings. Try again.",
-    "so": "Diyaarinta lama keydin karin. Isku day mar kale."
+    "so": "Diyaarinta lama kaydin karin. Isku day mar kale."
   },
   "settingsCurrencyLockedMessage": {
     "role": "empty_error",
@@ -2006,14 +2006,14 @@
     "max_chars": 12,
     "area": "Sale",
     "en": "SAVE",
-    "so": "KEYDI"
+    "so": "KAYDI"
   },
   "salePostFailedMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Sale",
     "en": "Could not save the sale. Check your internet and try again.",
-    "so": "Iibka lama keydin karin. Hubi internetka oo isku day mar kale."
+    "so": "Iibka lama kaydin karin. Hubi internetka oo isku day mar kale."
   },
   "saleNeedItemsMessage": {
     "role": "empty_error",
@@ -2202,7 +2202,7 @@
     "max_chars": 12,
     "area": "Payment",
     "en": "SAVE",
-    "so": "KEYDI"
+    "so": "KAYDI"
   },
   "paymentNotesLabel": {
     "role": "label",
@@ -2216,7 +2216,7 @@
     "max_chars": null,
     "area": "Payment",
     "en": "Payment saved",
-    "so": "Lacag bixinta waa la keydiyay"
+    "so": "Lacag bixinta waa la kaydiyay"
   },
   "paymentNeedPartyMessage": {
     "role": "empty_error",
@@ -2244,7 +2244,7 @@
     "max_chars": null,
     "area": "Payment",
     "en": "Could not save the payment. Check your internet and try again.",
-    "so": "Lacag bixinta lama keydin karin. Hubi internetka oo isku day mar kale."
+    "so": "Lacag bixinta lama kaydin karin. Hubi internetka oo isku day mar kale."
   },
   "paymentChooseInvoicesChip": {
     "role": "body",
@@ -2363,7 +2363,7 @@
     "max_chars": 12,
     "area": "Expense",
     "en": "SAVE",
-    "so": "KEYDI"
+    "so": "KAYDI"
   },
   "expenseNotesLabel": {
     "role": "label",
@@ -2377,7 +2377,7 @@
     "max_chars": null,
     "area": "Expense",
     "en": "Expense saved",
-    "so": "Qarashka waa la keydiyay"
+    "so": "Qarashka waa la kaydiyay"
   },
   "expenseNeedCategoryMessage": {
     "role": "empty_error",
@@ -2405,7 +2405,7 @@
     "max_chars": null,
     "area": "Expense",
     "en": "Could not save the expense. Check your internet and try again.",
-    "so": "Qarashka lama keydin karin. Hubi internetka oo isku day mar kale."
+    "so": "Qarashka lama kaydin karin. Hubi internetka oo isku day mar kale."
   },
   "expenseEmptyMessage": {
     "role": "empty_error",
@@ -2972,7 +2972,7 @@
     "max_chars": null,
     "area": "Sale",
     "en": "This won't undo any saved sale.",
-    "so": "Tan ma noqonayso iib hore loo keydiyay."
+    "so": "Tan ma noqonayso iib hore loo kaydiyay."
   },
   "cartClearConfirmYes": {
     "role": "button",
@@ -3161,7 +3161,7 @@
     "max_chars": null,
     "area": "Receive",
     "en": "This won't undo any saved receive.",
-    "so": "Tan ma noqonayso alaab dejin hore loo keydiyay."
+    "so": "Tan ma noqonayso alaab dejin hore loo kaydiyay."
   },
   "receiveLinesClearConfirmYes": {
     "role": "button",
@@ -3182,28 +3182,28 @@
     "max_chars": 12,
     "area": "Receive",
     "en": "SAVE",
-    "so": "KEYDI"
+    "so": "KAYDI"
   },
   "receiveSavedToast": {
     "role": "toast",
     "max_chars": null,
     "area": "Receive",
     "en": "Receive saved (on credit)",
-    "so": "Alaab dejin waa la keydiyay (deyn)"
+    "so": "Alaab dejin waa la kaydiyay (deyn)"
   },
   "receivePostFailedMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Receive",
     "en": "Could not save the receive. Check your internet and try again.",
-    "so": "Alaab dejinta lama keydin karin. Hubi internetka oo isku day mar kale."
+    "so": "Alaab dejinta lama kaydin karin. Hubi internetka oo isku day mar kale."
   },
   "receiveNeedSupplierMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Receive",
     "en": "Pick a supplier before saving.",
-    "so": "Dooro alaab keene ka hor inta aadan keydin."
+    "so": "Dooro alaab keene ka hor inta aadan kaydin."
   },
   "receiveNeedLinesMessage": {
     "role": "empty_error",
@@ -3686,7 +3686,7 @@
     "max_chars": 12,
     "area": "Common",
     "en": "SAVE",
-    "so": "KEYDI"
+    "so": "KAYDI"
   },
   "packagingEditorMissingUnitMessage": {
     "role": "empty_error",
@@ -4050,21 +4050,21 @@
     "max_chars": 12,
     "area": "Products",
     "en": "SAVE",
-    "so": "KEYDI"
+    "so": "KAYDI"
   },
   "shopItemEditorSaveAndAddAnotherButton": {
     "role": "button",
     "max_chars": 18,
     "area": "Products",
     "en": "SAVE & ADD ANOTHER",
-    "so": "KEYDI + MID KALE"
+    "so": "KAYDI + MID KALE"
   },
   "shopItemEditorSavedAndContinueToast": {
     "role": "toast",
     "max_chars": null,
     "area": "Products",
     "en": "{name} saved — add another",
-    "so": "{name} waa la keydiyay — ku dar mid kale"
+    "so": "{name} waa la kaydiyay — ku dar mid kale"
   },
   "shopItemDetailEditPrice": {
     "role": "body",
@@ -4414,7 +4414,7 @@
     "max_chars": null,
     "area": "Settings",
     "en": "Never",
-    "so": "Welwaa"
+    "so": "Marnaba"
   },
   "storageSyncPendingSalesLabel": {
     "role": "label",
@@ -4596,14 +4596,14 @@
     "max_chars": 18,
     "area": "Settings",
     "en": "Reset local data",
-    "so": "Dib u dejis xogta"
+    "so": "Dib u bilow xogta"
   },
   "storageSyncResetConfirmTitle": {
     "role": "dialog_title",
     "max_chars": 30,
     "area": "Settings",
     "en": "Reset local data?",
-    "so": "Dib u dejis xogta maxalliga?"
+    "so": "Dib u bilow xogta maxalliga?"
   },
   "storageSyncResetConfirmBody": {
     "role": "dialog_body",
@@ -4617,56 +4617,56 @@
     "max_chars": null,
     "area": "Settings",
     "en": "Type RESET to confirm",
-    "so": "Ku qor TIRTIR si aad u xaqiijiso"
+    "so": "Ku qor BILOW si aad u xaqiijiso"
   },
   "storageSyncResetTypeWord": {
     "role": "body",
     "max_chars": null,
     "area": "Settings",
     "en": "RESET",
-    "so": "TIRTIR"
+    "so": "BILOW"
   },
   "storageSyncResetOfflineBlocker": {
     "role": "body",
     "max_chars": null,
     "area": "Settings",
     "en": "Connect to internet first — you have pending sales that need to send before reset.",
-    "so": "Marka hore internet-ka ku xidh — waxaa jira iibyo sugaya in la diro server-ka kahor dib-u-dejinta."
+    "so": "Marka hore internet-ka ku xidh — waxaa jira iibyo sugaya in la diro server-ka kahor dib-u-bilowga."
   },
   "storageSyncResetPendingFailedBlocker": {
     "role": "body",
     "max_chars": null,
     "area": "Settings",
     "en": "{count, plural, =1{1 post couldn't send. Review it in Failed posts before reset.} other{{count} posts couldn't send. Review them in Failed posts before reset.}}",
-    "so": "{count, plural, =1{1 dirka ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-dejinta.} other{{count} dir ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-dejinta.}}"
+    "so": "{count, plural, =1{1 dirka ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-bilowga.} other{{count} dir ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-bilowga.}}"
   },
   "storageSyncResetConfirmAction": {
     "role": "body",
     "max_chars": null,
     "area": "Settings",
     "en": "RESET",
-    "so": "TIRTIR"
+    "so": "DIB U BILOW"
   },
   "storageSyncResetDoneToast": {
     "role": "toast",
     "max_chars": null,
     "area": "Settings",
     "en": "Local data reset. Downloading fresh data...",
-    "so": "Xogta maxalliga waa la dib u dejiyey. Soo dejinta xog cusub..."
+    "so": "Xogta maxalliga waa la dib u bilaabay. Soo dejinta xog cusub..."
   },
   "storageSyncResetFailedToast": {
     "role": "toast",
     "max_chars": null,
     "area": "Settings",
     "en": "Reset failed",
-    "so": "Dib-u-dejinta way fashilantay"
+    "so": "Dib-u-bilowga way fashilantay"
   },
   "storageSyncSettingsHeader": {
     "role": "header",
     "max_chars": 24,
     "area": "Settings",
     "en": "Settings",
-    "so": "Dejinta"
+    "so": "Diyaarinta"
   },
   "storageSyncWifiOnlyLabel": {
     "role": "label",

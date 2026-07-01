@@ -1,0 +1,16 @@
+{
+  "_comment": "AI draft — Settings batch. SAVE keyd->kayd normalized separately (owner: Kaydi). This file: Settings header -> Diyaarinta (owner), Never -> Marnaba (owner), Reset -> 'Dib u bilow' (owner; was mixed 'Dib u dejis' button + 'TIRTIR' type-word). ⚠ = reset inflection to confirm.",
+
+  "storageSyncSettingsHeader": ["Diyaarinta", "owner: Settings = Diyaarinta (was 'Dejinta')"],
+  "storageSyncLastSyncedNever": ["Marnaba", "owner: Never (was 'Welwaa')"],
+
+  "storageSyncResetButton": ["Dib u bilow xogta", "owner: Reset (was 'Dib u dejis')"],
+  "storageSyncResetConfirmTitle": ["Dib u bilow xogta maxalliga?", "was 'Dib u dejis'"],
+  "storageSyncResetConfirmAction": ["DIB U BILOW", "confirm action; was 'TIRTIR'"],
+  "storageSyncResetTypeWord": ["BILOW", "type-to-confirm word; now matches the action; was 'TIRTIR'"],
+  "storageSyncResetTypePrompt": ["Ku qor BILOW si aad u xaqiijiso", "was 'Ku qor TIRTIR'"],
+  "storageSyncResetOfflineBlocker": ["Marka hore internet-ka ku xidh — waxaa jira iibyo sugaya in la diro server-ka kahor dib-u-bilowga.", "⚠ dib-u-dejinta -> dib-u-bilowga"],
+  "storageSyncResetPendingFailedBlocker": ["{count, plural, =1{1 dirka ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-bilowga.} other{{count} dir ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-bilowga.}}", "⚠ dib-u-dejinta -> dib-u-bilowga"],
+  "storageSyncResetDoneToast": ["Xogta maxalliga waa la dib u bilaabay. Soo dejinta xog cusub...", "⚠ 'dib u dejiyey' -> 'dib u bilaabay'"],
+  "storageSyncResetFailedToast": ["Dib-u-bilowga way fashilantay", "⚠ 'Dib-u-dejinta' -> 'Dib-u-bilowga'"]
+}

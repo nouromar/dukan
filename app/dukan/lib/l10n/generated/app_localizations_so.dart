@@ -525,11 +525,11 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get stockAdjustSaveButton => 'KEYDI';
+  String get stockAdjustSaveButton => 'KAYDI';
 
   @override
   String get stockAdjustFailedMessage =>
-      'Ma keydin karno hagaajinta. Isku day mar kale.';
+      'Ma kaydin karno hagaajinta. Isku day mar kale.';
 
   @override
   String get stockAdjustInvalidAmountMessage => 'Geli tiro sax ah.';
@@ -922,14 +922,14 @@ class AppLocalizationsSo extends AppLocalizations {
   String get settingsTimezoneLabel => 'Saacadda goobta';
 
   @override
-  String get settingsSaveButton => 'KEYDI';
+  String get settingsSaveButton => 'KAYDI';
 
   @override
-  String get settingsSavedToast => 'Diyaarinta waa la keydiyay';
+  String get settingsSavedToast => 'Diyaarinta waa la kaydiyay';
 
   @override
   String get settingsSaveFailedMessage =>
-      'Diyaarinta lama keydin karin. Isku day mar kale.';
+      'Diyaarinta lama kaydin karin. Isku day mar kale.';
 
   @override
   String get settingsCurrencyLockedMessage =>
@@ -1002,11 +1002,11 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get saleSaveButton => 'KEYDI';
+  String get saleSaveButton => 'KAYDI';
 
   @override
   String get salePostFailedMessage =>
-      'Iibka lama keydin karin. Hubi internetka oo isku day mar kale.';
+      'Iibka lama kaydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get saleNeedItemsMessage => 'Marka hore ku dar ugu yaraan hal shay.';
@@ -1098,13 +1098,13 @@ class AppLocalizationsSo extends AppLocalizations {
   String get paymentAmountLabel => 'Lacagta la bixiyay';
 
   @override
-  String get paymentSaveButton => 'KEYDI';
+  String get paymentSaveButton => 'KAYDI';
 
   @override
   String get paymentNotesLabel => 'Qoraal';
 
   @override
-  String get paymentSavedToast => 'Lacag bixinta waa la keydiyay';
+  String get paymentSavedToast => 'Lacag bixinta waa la kaydiyay';
 
   @override
   String paymentNeedPartyMessage(String type) {
@@ -1125,7 +1125,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get paymentPostFailedMessage =>
-      'Lacag bixinta lama keydin karin. Hubi internetka oo isku day mar kale.';
+      'Lacag bixinta lama kaydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get paymentChooseInvoicesChip => 'Dooro biilasha';
@@ -1197,13 +1197,13 @@ class AppLocalizationsSo extends AppLocalizations {
   String get expenseAmountLabel => 'Lacagta';
 
   @override
-  String get expenseSaveButton => 'KEYDI';
+  String get expenseSaveButton => 'KAYDI';
 
   @override
   String get expenseNotesLabel => 'Qoraal';
 
   @override
-  String get expenseSavedToast => 'Qarashka waa la keydiyay';
+  String get expenseSavedToast => 'Qarashka waa la kaydiyay';
 
   @override
   String get expenseNeedCategoryMessage => 'Marka hore dooro nooc.';
@@ -1217,7 +1217,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get expensePostFailedMessage =>
-      'Qarashka lama keydin karin. Hubi internetka oo isku day mar kale.';
+      'Qarashka lama kaydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get expenseEmptyMessage =>
@@ -1515,7 +1515,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get cartClearConfirmBody => 'Tan ma noqonayso iib hore loo keydiyay.';
+  String get cartClearConfirmBody => 'Tan ma noqonayso iib hore loo kaydiyay.';
 
   @override
   String get cartClearConfirmYes => 'TIRTIR';
@@ -1630,7 +1630,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get receiveLinesClearConfirmBody =>
-      'Tan ma noqonayso alaab dejin hore loo keydiyay.';
+      'Tan ma noqonayso alaab dejin hore loo kaydiyay.';
 
   @override
   String get receiveLinesClearConfirmYes => 'TIRTIR';
@@ -1639,18 +1639,18 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveLinesClearConfirmNo => 'JOOJI';
 
   @override
-  String get receiveSaveButton => 'KEYDI';
+  String get receiveSaveButton => 'KAYDI';
 
   @override
-  String get receiveSavedToast => 'Alaab dejin waa la keydiyay (deyn)';
+  String get receiveSavedToast => 'Alaab dejin waa la kaydiyay (deyn)';
 
   @override
   String get receivePostFailedMessage =>
-      'Alaab dejinta lama keydin karin. Hubi internetka oo isku day mar kale.';
+      'Alaab dejinta lama kaydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get receiveNeedSupplierMessage =>
-      'Dooro alaab keene ka hor inta aadan keydin.';
+      'Dooro alaab keene ka hor inta aadan kaydin.';
 
   @override
   String get receiveNeedLinesMessage =>
@@ -1901,7 +1901,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get packagingEditorEditTitle => 'Bedel xirmada';
 
   @override
-  String get packagingEditorSaveButton => 'KEYDI';
+  String get packagingEditorSaveButton => 'KAYDI';
 
   @override
   String get packagingEditorMissingUnitMessage =>
@@ -2097,14 +2097,14 @@ class AppLocalizationsSo extends AppLocalizations {
   String get removePackagingConfirmAction => 'TIRTIR';
 
   @override
-  String get shopItemEditorSaveButton => 'KEYDI';
+  String get shopItemEditorSaveButton => 'KAYDI';
 
   @override
-  String get shopItemEditorSaveAndAddAnotherButton => 'KEYDI + MID KALE';
+  String get shopItemEditorSaveAndAddAnotherButton => 'KAYDI + MID KALE';
 
   @override
   String shopItemEditorSavedAndContinueToast(String name) {
-    return '$name waa la keydiyay — ku dar mid kale';
+    return '$name waa la kaydiyay — ku dar mid kale';
   }
 
   @override
@@ -2339,7 +2339,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get storageSyncLastSyncedLabel => 'Is-waafajin u dambeysay';
 
   @override
-  String get storageSyncLastSyncedNever => 'Welwaa';
+  String get storageSyncLastSyncedNever => 'Marnaba';
 
   @override
   String get storageSyncPendingSalesLabel => 'Kuwa sugaya';
@@ -2465,24 +2465,24 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get storageSyncResetButton => 'Dib u dejis xogta';
+  String get storageSyncResetButton => 'Dib u bilow xogta';
 
   @override
-  String get storageSyncResetConfirmTitle => 'Dib u dejis xogta maxalliga?';
+  String get storageSyncResetConfirmTitle => 'Dib u bilow xogta maxalliga?';
 
   @override
   String get storageSyncResetConfirmBody =>
       'Tani waxay TIRTIRTAA dhammaan xogta uu taleefankaan ka soo dejiyey serverka. Xogta dukaankaaga waxaa dib loo soo dejin doonaa marka xiga ee la xidhiidho. Iibyada aan loo dirin server-ka way lumi doonaan. Tan hel kaliya marka taageerada ay ku weydiisto.';
 
   @override
-  String get storageSyncResetTypePrompt => 'Ku qor TIRTIR si aad u xaqiijiso';
+  String get storageSyncResetTypePrompt => 'Ku qor BILOW si aad u xaqiijiso';
 
   @override
-  String get storageSyncResetTypeWord => 'TIRTIR';
+  String get storageSyncResetTypeWord => 'BILOW';
 
   @override
   String get storageSyncResetOfflineBlocker =>
-      'Marka hore internet-ka ku xidh — waxaa jira iibyo sugaya in la diro server-ka kahor dib-u-dejinta.';
+      'Marka hore internet-ka ku xidh — waxaa jira iibyo sugaya in la diro server-ka kahor dib-u-bilowga.';
 
   @override
   String storageSyncResetPendingFailedBlocker(int count) {
@@ -2490,25 +2490,25 @@ class AppLocalizationsSo extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count dir ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-dejinta.',
+          '$count dir ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-bilowga.',
       one:
-          '1 dirka ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-dejinta.',
+          '1 dirka ayaa fashilmay. Eeg Iibyo guuldarreystay ka hor dib-u-bilowga.',
     );
     return '$_temp0';
   }
 
   @override
-  String get storageSyncResetConfirmAction => 'TIRTIR';
+  String get storageSyncResetConfirmAction => 'DIB U BILOW';
 
   @override
   String get storageSyncResetDoneToast =>
-      'Xogta maxalliga waa la dib u dejiyey. Soo dejinta xog cusub...';
+      'Xogta maxalliga waa la dib u bilaabay. Soo dejinta xog cusub...';
 
   @override
-  String get storageSyncResetFailedToast => 'Dib-u-dejinta way fashilantay';
+  String get storageSyncResetFailedToast => 'Dib-u-bilowga way fashilantay';
 
   @override
-  String get storageSyncSettingsHeader => 'Dejinta';
+  String get storageSyncSettingsHeader => 'Diyaarinta';
 
   @override
   String get storageSyncWifiOnlyLabel => 'Kaliya marka Wi-Fi jiro';
