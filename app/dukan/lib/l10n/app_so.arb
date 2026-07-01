@@ -131,9 +131,9 @@
   "paymentDirectionLabel": "Jihada",
   "paymentDirectionAny": "Jiho kasta",
   "paymentDirectionInbound": "Macmiil ku bixiyay",
-  "paymentDirectionOutbound": "Bixiye aad bixisay",
+  "paymentDirectionOutbound": "Alaab keene aad bixisay",
   "partiesLoadFailedMessage": "Ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.",
-  "partiesEmptyMessage": "Macaamiil ama bixiye weli ma jiro.",
+  "partiesEmptyMessage": "Macaamiil ama alaab keene weli ma jiro.",
   "partiesEmptyForQuery": "Wax la mid ah \"{query}\" lama helin.",
   "@partiesEmptyForQuery": {
     "placeholders": {
@@ -152,7 +152,7 @@
   "customersTitle": "Macaamiisha",
   "suppliersTitle": "Alaab Keenayaasha",
   "customersSearchHint": "Raadi macmiil",
-  "suppliersSearchHint": "Raadi bixiye",
+  "suppliersSearchHint": "Raadi alaab keene",
   "customersAddButton": "Ku dar",
   "suppliersAddButton": "Ku dar",
   "customersHasBalanceChip": "Oo deyn kuu leh",
@@ -167,7 +167,7 @@
       }
     }
   },
-  "suppliersHeadlineCount": "{count, plural, =0{Bixiye deyn leh ma jiro} =1{1 bixiye oo deyn leh} other{{count} bixiye oo deyn leh}}",
+  "suppliersHeadlineCount": "{count, plural, =0{Alaab keene deyn leh ma jiro} =1{1 alaab keene oo deyn leh} other{{count} alaab keene oo deyn leh}}",
   "@suppliersHeadlineCount": {
     "placeholders": {
       "count": {
@@ -523,7 +523,7 @@
   "expenseVoidFailedMessage": "Lama tirtiri karin kharashkan.",
   "paymentDetailVoidButton": "TIRTIR LACAGTAN",
   "paymentVoidConfirmTitle": "Tirtir lacagtan?",
-  "paymentVoidConfirmBody": "Tani way ka noqonaysaa lacagta oo dib u furaysaa wixii la bixiyay. Lama soo celin karo.",
+  "paymentVoidConfirmBody": "Tani lacagta way tirtiraysaa oo dib u furaysaa wixii la bixiyay. Lama soo celin karo.",
   "paymentVoidConfirmYes": "TIRTIR",
   "paymentVoidedToast": "Lacag waa la tirtiray",
   "paymentVoidedHeader": "La tirtiray",

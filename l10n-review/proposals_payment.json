@@ -1,0 +1,10 @@
+{
+  "_comment": "AI draft — Payment batch. Payment void already uses Tirtir (clean). This batch: normalize Supplier 'Bixiye' -> 'Alaab keene' (locked term) in the 4 outliers, via exact per-key values (NOT a substring swap — 'bixiye' is also inside payment verbs like 'bixiyey'/'bixisay'). Plus a void-body consistency tweak.",
+
+  "paymentDirectionOutbound": ["Alaab keene aad bixisay", "was 'Bixiye aad bixisay'"],
+  "partiesEmptyMessage": ["Macaamiil ama alaab keene weli ma jiro.", "was '...bixiye...'"],
+  "suppliersSearchHint": ["Raadi alaab keene", "was 'Raadi bixiye'"],
+  "suppliersHeadlineCount": ["{count, plural, =0{Alaab keene deyn leh ma jiro} =1{1 alaab keene oo deyn leh} other{{count} alaab keene oo deyn leh}}", "was '...bixiye...'"],
+
+  "paymentVoidConfirmBody": ["Tani lacagta way tirtiraysaa oo dib u furaysaa wixii la bixiyay. Lama soo celin karo.", "was 'way ka noqonaysaa'; match Sale/Receive void bodies"]
+}

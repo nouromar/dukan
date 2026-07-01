@@ -363,14 +363,14 @@ class AppLocalizationsSo extends AppLocalizations {
   String get paymentDirectionInbound => 'Macmiil ku bixiyay';
 
   @override
-  String get paymentDirectionOutbound => 'Bixiye aad bixisay';
+  String get paymentDirectionOutbound => 'Alaab keene aad bixisay';
 
   @override
   String get partiesLoadFailedMessage =>
       'Ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.';
 
   @override
-  String get partiesEmptyMessage => 'Macaamiil ama bixiye weli ma jiro.';
+  String get partiesEmptyMessage => 'Macaamiil ama alaab keene weli ma jiro.';
 
   @override
   String partiesEmptyForQuery(String query) {
@@ -409,7 +409,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get customersSearchHint => 'Raadi macmiil';
 
   @override
-  String get suppliersSearchHint => 'Raadi bixiye';
+  String get suppliersSearchHint => 'Raadi alaab keene';
 
   @override
   String get customersAddButton => 'Ku dar';
@@ -446,9 +446,9 @@ class AppLocalizationsSo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count bixiye oo deyn leh',
-      one: '1 bixiye oo deyn leh',
-      zero: 'Bixiye deyn leh ma jiro',
+      other: '$count alaab keene oo deyn leh',
+      one: '1 alaab keene oo deyn leh',
+      zero: 'Alaab keene deyn leh ma jiro',
     );
     return '$_temp0';
   }
@@ -1297,7 +1297,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get paymentVoidConfirmBody =>
-      'Tani way ka noqonaysaa lacagta oo dib u furaysaa wixii la bixiyay. Lama soo celin karo.';
+      'Tani lacagta way tirtiraysaa oo dib u furaysaa wixii la bixiyay. Lama soo celin karo.';
 
   @override
   String get paymentVoidConfirmYes => 'TIRTIR';

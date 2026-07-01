@@ -774,7 +774,7 @@
     "max_chars": null,
     "area": "Payment",
     "en": "You paid supplier",
-    "so": "Bixiye aad bixisay"
+    "so": "Alaab keene aad bixisay"
   },
   "partiesLoadFailedMessage": {
     "role": "empty_error",
@@ -788,7 +788,7 @@
     "max_chars": null,
     "area": "Parties",
     "en": "No customers or suppliers yet.",
-    "so": "Macaamiil ama bixiye weli ma jiro."
+    "so": "Macaamiil ama alaab keene weli ma jiro."
   },
   "partiesEmptyForQuery": {
     "role": "body",
@@ -872,7 +872,7 @@
     "max_chars": null,
     "area": "Receive",
     "en": "Search supplier",
-    "so": "Raadi bixiye"
+    "so": "Raadi alaab keene"
   },
   "customersAddButton": {
     "role": "button",
@@ -928,7 +928,7 @@
     "max_chars": null,
     "area": "Receive",
     "en": "{count, plural, =0{No suppliers with balance} =1{1 supplier with balance} other{{count} suppliers with balance}}",
-    "so": "{count, plural, =0{Bixiye deyn leh ma jiro} =1{1 bixiye oo deyn leh} other{{count} bixiye oo deyn leh}}"
+    "so": "{count, plural, =0{Alaab keene deyn leh ma jiro} =1{1 alaab keene oo deyn leh} other{{count} alaab keene oo deyn leh}}"
   },
   "peopleSortLabel": {
     "role": "label",
@@ -2573,7 +2573,7 @@
     "max_chars": null,
     "area": "Payment",
     "en": "This reverses the payment and reopens what it settled. It can't be undone.",
-    "so": "Tani way ka noqonaysaa lacagta oo dib u furaysaa wixii la bixiyay. Lama soo celin karo."
+    "so": "Tani lacagta way tirtiraysaa oo dib u furaysaa wixii la bixiyay. Lama soo celin karo."
   },
   "paymentVoidConfirmYes": {
     "role": "button",
