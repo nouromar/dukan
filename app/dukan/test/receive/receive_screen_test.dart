@@ -116,8 +116,8 @@ void main() {
   );
 
   testWidgets(
-    'changing qty keeps total as-typed; the derived per-packaging caption'
-    ' recomputes',
+    'changing qty auto-scales the seeded total until it is hand-edited;'
+    ' the derived per-packaging caption recomputes',
     (tester) async {
       api.onSearchItems = (_, _, _, _, _, _) async => [
         fakeActivatedItem(
@@ -137,15 +137,31 @@ void main() {
       await tester.tap(find.text('Bariis'));
       await tester.pumpAndSettle();
 
-      // Total seeded at 24 from last_cost. Bump qty to 5 directly.
-      await tester.enterText(find.widgetWithText(TextField, '1'), '5');
-      // Now type the actual bono total: 120 (5 × 24).
-      await tester.enterText(find.widgetWithText(TextField, '24'), '120');
-      await tester.pump();
+      final qtyField = find.byWidgetPredicate((w) =>
+          w is TextField &&
+          w.decoration?.labelText == en.receiveLineQuantityLabel);
+      final totalField = find.byWidgetPredicate((w) =>
+          w is TextField &&
+          w.decoration?.labelText == en.receiveLineTotalLabel('\$'));
 
-      // Derived caption shows $24 per bag (120 / 5).
+      // Seeded at 24 (last_cost × 1). Bump qty to 5 — the total
+      // auto-scales to 120 because it hasn't been hand-edited yet.
+      await tester.enterText(qtyField, '5');
+      await tester.pump();
+      expect(tester.widget<TextField>(totalField).controller!.text, '120');
       expect(
         find.text(en.receiveLineDerivedPerUnit('\$24.00', '25 Kg Bag')),
+        findsOneWidget,
+      );
+
+      // Hand-edit the total → it's now locked. Changing qty no longer
+      // rescales it; the derived caption reflects the new split (100/2).
+      await tester.enterText(totalField, '100');
+      await tester.enterText(qtyField, '2');
+      await tester.pump();
+      expect(tester.widget<TextField>(totalField).controller!.text, '100');
+      expect(
+        find.text(en.receiveLineDerivedPerUnit('\$50.00', '25 Kg Bag')),
         findsOneWidget,
       );
     },
@@ -194,9 +210,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Bariis'));
       await tester.pumpAndSettle();
-      // Bump qty to 5 + type the bono total ($120).
+      // Bump qty to 5 — the seeded total auto-scales to $120 (5 × 24),
+      // no manual total entry needed.
       await tester.enterText(find.widgetWithText(TextField, '1'), '5');
-      await tester.enterText(find.widgetWithText(TextField, '24'), '120');
       await tester.pump();
       await tester.tap(find.text(en.receiveAddLineButton));
       await tester.pumpAndSettle();

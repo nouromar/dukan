@@ -1397,6 +1397,12 @@ class _LineEntryFormState extends State<_LineEntryForm> {
   // can route through `switchLinePackaging` if it was swapped.
   late String _shopItemUnitId;
   late String _packagingLabel;
+  /// Per-unit cost used to auto-fill the line total as the quantity
+  /// changes. Refreshed when the packaging is swapped.
+  late num _seedPerUnit;
+  /// True once the cashier hand-edits the total field. After that we
+  /// stop auto-scaling it from qty so their bono figure is preserved.
+  bool _totalEdited = false;
 
   @override
   void initState() {
@@ -1407,12 +1413,29 @@ class _LineEntryFormState extends State<_LineEntryForm> {
     // Pre-fill the line total from last cost × qty so a familiar bono
     // line lands in one tap. The cashier always corrects to whatever
     // the paper says.
-    final perUnit = widget.selected.perUnitCost ?? 0;
+    _seedPerUnit = widget.selected.perUnitCost ?? 0;
     _totalController = TextEditingController(
-      text: perUnit > 0 ? _formatField(perUnit * 1) : '',
+      text: _seedPerUnit > 0 ? _formatField(_seedPerUnit * 1) : '',
     );
     _qtyController.addListener(_onChanged);
     _totalController.addListener(_onChanged);
+  }
+
+  /// Re-fill the line total from `_seedPerUnit × qty` whenever the qty
+  /// changes — but only while the cashier hasn't hand-typed a total.
+  /// Set programmatically, so it never trips the total field's
+  /// `onChanged` (that's what flips [_totalEdited]).
+  void _maybeReseedTotal() {
+    if (_totalEdited || _seedPerUnit <= 0) return;
+    final qty = _parsedQty;
+    final next = (qty != null && qty > 0)
+        ? _formatField(_seedPerUnit * qty)
+        : '';
+    if (_totalController.text != next) {
+      _totalController.text = next;
+      _totalController.selection =
+          TextSelection.collapsed(offset: next.length);
+    }
   }
 
   Future<void> _onTapUnit() async {
@@ -1429,16 +1452,16 @@ class _LineEntryFormState extends State<_LineEntryForm> {
     setState(() {
       _shopItemUnitId = picked.shopItemUnitId;
       _packagingLabel = picked.packagingLabel;
-      // Re-pre-fill the total from the new packaging's last_cost ×
-      // current qty so the cashier doesn't lose their typed qty just
-      // because they corrected the packaging.
-      final newCost = picked.lastCost;
-      final qty = num.tryParse(_qtyController.text.trim()) ?? 0;
-      if (newCost != null && newCost > 0 && qty > 0) {
-        _totalController.text = _formatField(newCost * qty);
-      } else {
-        _totalController.text = '';
-      }
+      // A packaging swap resets the money default: adopt the new
+      // packaging's last_cost as the seed, clear the stale total, and
+      // re-fill it from seed × current qty. Correcting the packaging is
+      // a fresh start, so we clear the hand-edited flag too — and if the
+      // new packaging has no known cost the total stays blank for the
+      // cashier to type.
+      _seedPerUnit = picked.lastCost ?? 0;
+      _totalEdited = false;
+      _totalController.text = '';
+      _maybeReseedTotal();
     });
   }
 
@@ -1530,6 +1553,42 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
+                // Packaging selector sits beside the item name — the
+                // "are you entering against the right packaging?" anchor,
+                // now inline to save a row. Bounded + ellipsis so a long
+                // label ("25 kg bag") never crowds the name.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 150),
+                  child: InkWell(
+                    onTap: widget.saving ? null : _onTapUnit,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _packagingLabel,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const Icon(Icons.arrow_drop_down, size: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 IconButton(
                   icon: const Icon(Icons.close, size: 20),
                   onPressed: widget.saving ? null : widget.onCancel,
@@ -1560,6 +1619,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                       // of meat) can land on a bono.
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                     ],
+                    onChanged: (_) => _maybeReseedTotal(),
                     decoration: InputDecoration(
                       labelText: l.receiveLineQuantityLabel,
                       isDense: true,
@@ -1579,45 +1639,13 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                       _qtyController.selection = TextSelection.collapsed(
                         offset: _qtyController.text.length,
                       );
+                      _maybeReseedTotal();
                     },
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            // Packaging selector — full width below the quantity. The "are you
-            // entering against the right packaging?" anchor (the v2 key UX win),
-            // now with room for the full label.
-            InkWell(
-              onTap: widget.saving ? null : _onTapUnit,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  border: Border.all(color: theme.colorScheme.outlineVariant),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _packagingLabel,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const Icon(Icons.arrow_drop_down, size: 22),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             // One money field only: the line total straight off the
             // bono. Per-packaging cost is derived and shown as a small
             // caption below so the cashier can sanity-check without
@@ -1631,6 +1659,9 @@ class _LineEntryFormState extends State<_LineEntryForm> {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               ],
+              // First hand-edit locks the total so qty changes stop
+              // auto-scaling it — the cashier's bono figure wins.
+              onChanged: (_) => _totalEdited = true,
               decoration: InputDecoration(
                 labelText: l.receiveLineTotalLabel(widget.shop.currencySymbol),
                 isDense: true,
