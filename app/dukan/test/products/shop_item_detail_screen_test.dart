@@ -135,7 +135,7 @@ void main() {
       await pumpDetail(tester);
 
       // Stock readout (now its own section under the ITEM tiles).
-      expect(find.text('50 Kg'), findsOneWidget);
+      expect(find.text('50Kg'), findsOneWidget);
 
       // First packaging row (base) is in view by default.
       expect(find.text('Kg'), findsWidgets);
@@ -282,7 +282,7 @@ void main() {
     await pumpDetail(tester);
 
     // Tap the big stock readout to open the adjust sheet.
-    await tester.tap(find.text('50 Kg'));
+    await tester.tap(find.text('50Kg'));
     await tester.pumpAndSettle();
 
     // Default mode is "Set exact" (Opening is hidden post-onboarding
@@ -312,7 +312,7 @@ void main() {
       api.onGetShopItem = (_, _, _) async => _detail(currentStock: 50);
       await pumpDetail(tester);
 
-      await tester.tap(find.text('50 Kg'));
+      await tester.tap(find.text('50Kg'));
       await tester.pumpAndSettle();
       // Pick "Set exact" mode.
       await tester.tap(find.widgetWithText(

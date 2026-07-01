@@ -5,7 +5,7 @@ import 'package:dukan/shared/stock_format.dart';
 void main() {
   group('formatCompoundStock', () {
     test('strips the number prefix then annotates the packaging size', () {
-      // 498 kg, sack = 50 kg → "9 Sack(50kg) + 48 kg" (NOT "9 50 Sack …").
+      // 498 kg, sack = 50 kg → "9 Sack(50kg) + 48kg" (NOT "9 50 Sack …").
       expect(
         formatCompoundStock(
           stock: 498,
@@ -13,12 +13,12 @@ void main() {
           packagingLabel: '50 Sack',
           conversion: 50,
         ),
-        '9 Sack(50kg) + 48 kg',
+        '9 Sack(50kg) + 48kg',
       );
     });
 
     test('strips a "{conv} {base} {unit}" label then annotates size', () {
-      // 47 kg, bag = 25 kg, label "25 Kg Bag" → "1 Bag(25kg) + 22 kg".
+      // 47 kg, bag = 25 kg, label "25 Kg Bag" → "1 Bag(25kg) + 22kg".
       expect(
         formatCompoundStock(
           stock: 47,
@@ -26,7 +26,7 @@ void main() {
           packagingLabel: '25 Kg Bag',
           conversion: 25,
         ),
-        '1 Bag(25kg) + 22 kg',
+        '1 Bag(25kg) + 22kg',
       );
     });
 
@@ -50,7 +50,7 @@ void main() {
           packagingLabel: '25 Kg Bag',
           conversion: 25,
         ),
-        '22 kg',
+        '22kg',
       );
     });
 
@@ -62,7 +62,7 @@ void main() {
           packagingLabel: 'Bag',
           conversion: 25,
         ),
-        '1 Bag(25kg) + 22 kg',
+        '1 Bag(25kg) + 22kg',
       );
     });
 
@@ -74,7 +74,7 @@ void main() {
           packagingLabel: '50 Sack',
           conversion: 50,
         ),
-        '9 Sack(50kg) + 48.5 kg',
+        '9 Sack(50kg) + 48.5kg',
       );
     });
 
@@ -86,7 +86,7 @@ void main() {
           packagingLabel: 'Kg',
           conversion: 1,
         ),
-        '20 kg',
+        '20kg',
       );
     });
 
@@ -98,7 +98,7 @@ void main() {
           packagingLabel: '50 Sack',
           conversion: 50,
         ),
-        '-3 kg',
+        '-3kg',
       );
     });
   });

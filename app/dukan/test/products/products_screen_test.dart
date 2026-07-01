@@ -95,7 +95,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('50 Kg'),
+      find.text('50Kg'),
       findsOneWidget,
     );
   });

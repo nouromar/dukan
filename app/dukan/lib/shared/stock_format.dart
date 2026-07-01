@@ -3,17 +3,17 @@
 // default sale packaging count with any remainder in the base unit.
 //
 // Examples (base=kg, default packaging = "25 Kg Bag", conversion=25):
-//   47   → "1 Bag(25kg) + 22 kg"
+//   47   → "1 Bag(25kg) + 22kg"
 //   50   → "2 Bag(25kg)"     (no remainder)
-//   22   → "22 kg"           (less than one bag)
-//   0    → "0 kg"            (caller decides color via isLowStock)
-//   −3   → "−3 kg"           (negative: skip compound, raw base)
+//   22   → "22kg"            (less than one bag)
+//   0    → "0kg"             (caller decides color via isLowStock)
+//   −3   → "−3kg"            (negative: skip compound, raw base)
 //
 // The packaging label frequently embeds its own conversion ("50 Sack",
 // "25 Kg Bag"). On the count line that collides with the count itself —
 // "9 50 Sack" reads as one number — so we strip the leading conversion
 // (and base-label) prefix down to the bare noun, then re-attach the size
-// in parens: "9 Sack(50kg) + 48 kg".
+// in parens: "9 Sack(50kg) + 48kg".
 //
 // When the default packaging IS the base (conversion = 1) or no
 // packaging info is available, the helper degrades to plain
@@ -32,14 +32,14 @@ String formatCompoundStock({
   // mathematically right but bewildering to shopkeepers. Show the
   // raw base value so the sign is unambiguous.
   if (stock < 0) {
-    return '${_pretty(stock)} $baseLabel';
+    return '${_pretty(stock)}$baseLabel';
   }
 
   final pkg = packagingLabel;
   final conv = conversion;
   // No packaging info, or packaging == base (conversion 1) → base only.
   if (pkg == null || conv == null || conv <= 1) {
-    return '${_pretty(stock)} $baseLabel';
+    return '${_pretty(stock)}$baseLabel';
   }
 
   final whole = (stock / conv).floor();
@@ -47,7 +47,7 @@ String formatCompoundStock({
 
   if (whole == 0) {
     // Less than one packaging — show the partial in base.
-    return '${_pretty(stock)} $baseLabel';
+    return '${_pretty(stock)}$baseLabel';
   }
   // Use the bare packaging noun so the count doesn't collide with a
   // number-prefixed label ("9 50 Sack" → "9 Sack"), then annotate it with
@@ -59,7 +59,7 @@ String formatCompoundStock({
   if (remainder == 0) {
     return '${_pretty(whole)} $sized';
   }
-  return '${_pretty(whole)} $sized + ${_pretty(remainder)} $baseLabel';
+  return '${_pretty(whole)} $sized + ${_pretty(remainder)}$baseLabel';
 }
 
 /// Strip a leading "{conversion} " and optional "{baseLabel} " prefix from a
