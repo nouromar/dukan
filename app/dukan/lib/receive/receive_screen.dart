@@ -1545,48 +1545,58 @@ class _LineEntryFormState extends State<_LineEntryForm> {
           children: [
             Row(
               children: [
+                // Name + packaging travel together on the left; the close
+                // button stays pinned to the right. The packaging sits
+                // right after the name rather than shoved against the ✕.
                 Expanded(
-                  child: Text(
-                    displayName(widget.selected.displayName),
-                    style: theme.textTheme.titleSmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Packaging selector sits beside the item name — the
-                // "are you entering against the right packaging?" anchor,
-                // now inline to save a row. Bounded + ellipsis so a long
-                // label ("25 kg bag") never crowds the name.
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 150),
-                  child: InkWell(
-                    onTap: widget.saving ? null : _onTapUnit,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: theme.colorScheme.outlineVariant,
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          displayName(widget.selected.displayName),
+                          style: theme.textTheme.titleSmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              _packagingLabel,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
+                      const SizedBox(width: 8),
+                      // Packaging selector — the "are you entering against
+                      // the right packaging?" anchor, inline to save a row.
+                      // Bounded + ellipsis so a long label never crowds the
+                      // name.
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 150),
+                        child: InkWell(
+                          onTap: widget.saving ? null : _onTapUnit,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: theme.colorScheme.outlineVariant,
                               ),
-                              overflow: TextOverflow.ellipsis,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    _packagingLabel,
+                                    style: theme.textTheme.bodyMedium
+                                        ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_drop_down, size: 20),
+                              ],
                             ),
                           ),
-                          const Icon(Icons.arrow_drop_down, size: 20),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
                 IconButton(

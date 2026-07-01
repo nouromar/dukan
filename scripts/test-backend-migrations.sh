@@ -6490,6 +6490,50 @@ $$;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 
+-- §ST Offline packaging_label carries the base unit (0090). The mobile
+-- items payload must format "25 Kg Bag" (conversion + base + sold), not
+-- "25 Bag" — matching the online search_items / get_shop_item labels, so a
+-- useLocalDb shop can tell how big a "Bag"/"Sack" is.
+do $$
+declare
+  v_siu       record;
+  v_base_lbl  text;
+  v_payload   jsonb;
+  v_label     text;
+begin
+  select siu.id, siu.shop_id, siu.shop_item_id, siu.conversion_to_base
+    into v_siu
+  from public.shop_item_unit siu
+  where siu.conversion_to_base <> 1 and siu.is_active
+  limit 1;
+  if v_siu.id is null then
+    raise notice 'ST: no packaged-unit fixture — skipping';
+    return;
+  end if;
+
+  select coalesce(bu.default_label, si.base_unit_code)
+    into v_base_lbl
+  from public.shop_item si
+  left join public.unit bu on bu.code = si.base_unit_code
+  where si.id = v_siu.shop_item_id and si.shop_id = v_siu.shop_id;
+
+  v_payload := public._build_items_payload(v_siu.shop_id, null);
+  select (u->>'packaging_label') into v_label
+  from jsonb_array_elements(v_payload->'units') u
+  where (u->>'shop_item_unit_id')::uuid = v_siu.id;
+
+  if v_label is null then
+    raise exception 'ST: packaged unit % missing from items payload', v_siu.id;
+  end if;
+  if position(v_base_lbl in v_label) = 0 then
+    raise exception
+      'ST: offline packaging_label "%" omits base unit label "%"',
+      v_label, v_base_lbl;
+  end if;
+  raise notice 'ST: offline packaging_label carries base unit ("%")', v_label;
+end;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- §TT mutation_idempotency (0074). Verify the new p_client_op_id
 -- short-circuit on three representative RPCs (one add, one set,
