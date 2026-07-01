@@ -151,7 +151,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get reportsProfitTitle => 'Faa\'iido';
 
   @override
-  String get reportsStockTitle => 'Bakhaarka';
+  String get reportsStockTitle => 'Kaydka';
 
   @override
   String get reportsRevenueLabel => 'Wadarta iibka';
@@ -178,10 +178,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get reportsMarginLabel => 'Faa\'iido boqolkiiba';
 
   @override
-  String get reportsItemsLabel => 'Alaab bakhaarka jirta';
+  String get reportsItemsLabel => 'Alaab kaydka ku jirta';
 
   @override
-  String get reportsStockValueLabel => 'Qiimaha bakhaarka';
+  String get reportsStockValueLabel => 'Qiimaha kaydka';
 
   @override
   String get reportsLowStockLabel => 'Alaab yar';
@@ -485,7 +485,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get stockAdjustModeSubtract => 'Ka jar';
 
   @override
-  String get stockAdjustModeSetExact => 'Cusub';
+  String get stockAdjustModeSetExact => 'Tiro Go\'an';
 
   @override
   String get stockAdjustModeOpeningHelper =>
@@ -514,7 +514,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get stockAdjustUnitCostRequiredMessage =>
-      'Geli qiimaha xidhmadda si qiimaha celceliska u sii saxo.';
+      'Geli qiimaha xirmada si qiimaha celceliska u sii saxo.';
 
   @override
   String get stockAdjustNotesLabel => 'Faallo (ikhtiyaari)';
@@ -1360,7 +1360,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get saleVoidConfirmBody =>
-      'Iibka waa la tirtiri doonaa, alaabta bakhaarka waa lugu celin doonaa, deynta macmiilkana waa la tirtiri doonaa.';
+      'Iibka waa la tirtiri doonaa, alaabta kaydka waa lugu celin doonaa, deynta macmiilkana waa la tirtiri doonaa.';
 
   @override
   String get saleVoidConfirmYes => 'TIRTIR';
@@ -1467,7 +1467,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get receiveVoidConfirmBody =>
-      'Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dejinta. Alaab dejinta waa la tirtiri doonaa, alaabta bakhaarka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto waa la tirtiri doonaa.';
+      'Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dejinta. Alaab dejinta waa la tirtiri doonaa, alaabta kaydka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto waa la tirtiri doonaa.';
 
   @override
   String get receiveVoidMistakesOnlyHint =>
@@ -1670,7 +1670,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Halbeegyada lama soo dejin karin. Isku day mar kale.';
 
   @override
-  String get unitPickerAddPackagingButton => '+ Ku dar baakad';
+  String get unitPickerAddPackagingButton => '+ Ku dar xirmo';
 
   @override
   String addNewItemSearchResult(Object query) {
@@ -1729,7 +1729,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get addNewItemCustomPackagingEntry => '+ Baakad gaar ah';
+  String get addNewItemCustomPackagingEntry => '+ Xirmo gaar ah';
 
   @override
   String get addNewItemCustomBaseUnitLabel => 'Halbeegga aasaasi';
@@ -1747,16 +1747,16 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get addNewItemLoadOptionsFailedHint =>
-      'Soo jeedimaha lama soo dejin karin. Dooro baakad gaar ah.';
+      'Soo jeedimaha lama soo dejin karin. Dooro xirmo gaar ah.';
 
   @override
-  String get addNewItemUseCustomButton => 'ISTICMAAL BAAKADAN';
+  String get addNewItemUseCustomButton => 'ISTICMAAL XIRMADAN';
 
   @override
   String get addNewItemLooseType => 'Furan';
 
   @override
-  String get addPackagingSheetTitle => 'Ku dar baakad';
+  String get addPackagingSheetTitle => 'Ku dar xirmo';
 
   @override
   String get addPackagingUnitLabel => 'Halbeeg';
@@ -1776,7 +1776,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get addPackagingFailedMessage =>
-      'Baakadda luguma dari karin. Isku day mar kale.';
+      'Xirmada luguma dari karin. Isku day mar kale.';
 
   @override
   String addPackagingHeaderBaseUnit(Object unit) {
@@ -1784,10 +1784,10 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get addPackagingSuggestionsHeader => 'Baakado caadi ah';
+  String get addPackagingSuggestionsHeader => 'Xirmooyin la isticmaalo';
 
   @override
-  String get addPackagingCustomEntry => '+ Baakad gaar ah';
+  String get addPackagingCustomEntry => '+ Xirmo gaar ah';
 
   @override
   String get addPackagingLessCommonHeader => 'Kuwo aan caadi ahayn';
@@ -1804,7 +1804,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get addPackagingNoSuggestionsHint =>
-      'Halbeegan wali baakado caadi ah uma jiraan — hoosta ka qor mid gaar ah.';
+      'Halbeegan wali xirmooyin la isticmaalo uma jiraan — hoosta ka qor mid gaar ah.';
 
   @override
   String get addPackagingLoadFailedHint =>
@@ -1880,7 +1880,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorIdentifyHeader => 'Aqoonsasho';
 
   @override
-  String get shopItemEditorPackagingHeader => 'Xidhmada';
+  String get shopItemEditorPackagingHeader => 'Xirmada';
 
   @override
   String get shopItemEditorSupplierHeader => 'Alaab Keene';
@@ -1895,21 +1895,21 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorRemoveSupplierTooltip => 'Saar alaab keenaha';
 
   @override
-  String get packagingEditorAddTitle => 'Ku dar xidhmad';
+  String get packagingEditorAddTitle => 'Ku dar xirmo';
 
   @override
-  String get packagingEditorEditTitle => 'Bedel xidhmadda';
+  String get packagingEditorEditTitle => 'Bedel xirmada';
 
   @override
   String get packagingEditorSaveButton => 'KEYDI';
 
   @override
   String get packagingEditorMissingUnitMessage =>
-      'Dooro nooca xidhmadda (tusaale: bac, sanduuq).';
+      'Dooro nooca xirmada (tusaale: bac, sanduuq).';
 
   @override
   String get packagingEditorMissingConversionMessage =>
-      'Imisa unug aasaasi ah ayaa ku jira xidhmaddan? Geli tiro ka weyn 0.';
+      'Imisa unug aasaasi ah ayaa ku jira xirmadan? Geli tiro ka weyn 0.';
 
   @override
   String packagingEditorCostLabel(String unit) {
@@ -1949,10 +1949,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorPackagingSummaryEmpty => '—';
 
   @override
-  String get shopItemEditorEditPackagingTooltip => 'Bedel xidhmadda';
+  String get shopItemEditorEditPackagingTooltip => 'Bedel xirmada';
 
   @override
-  String get shopItemEditorRemovePackagingTooltip => 'Saar xidhmadda';
+  String get shopItemEditorRemovePackagingTooltip => 'Saar xirmada';
 
   @override
   String get shopItemEditorBuyHeader => 'Alaab Keenayaasha';
@@ -1974,7 +1974,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get shopItemEditorOpeningSubtitle =>
-      'Geli kayd hadda baakad walba si warbixinada saxda u shaqeeyaan maalintaa.';
+      'Geli kayd hadda xirmo walba si warbixinada saxda u shaqeeyaan maalintaa.';
 
   @override
   String get shopItemEditorOpeningPickBaseUnitFirst =>
@@ -2015,10 +2015,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorDedupOpenExisting => 'FUR KII HORE';
 
   @override
-  String get shopItemEditorPackagingsHeader => 'Baakado';
+  String get shopItemEditorPackagingsHeader => 'Xirmooyin';
 
   @override
-  String get shopItemEditorAddPackagingButton => 'Ku dar baakad';
+  String get shopItemEditorAddPackagingButton => 'Ku dar xirmo';
 
   @override
   String get shopItemEditorBaseBadge => 'ASAAS';
@@ -2051,7 +2051,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get shopItemEditorDiscoverySubtitle =>
-      'Magacyo kale + qoraalka qoraalka ayaa raadinta ka horumarinaya.';
+      'Magacyo kale + sida bonada loo qoro ayaa raadinta ka horumarinaya.';
 
   @override
   String get shopItemEditorAliasesLabel => 'Magacyo kale';
@@ -2074,7 +2074,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Sida alaabtan u soo muuqato qoraalka warqada keenaha (tusaale CCL 330x24).';
 
   @override
-  String get removePackagingTooltip => 'Tirtir baakadda';
+  String get removePackagingTooltip => 'Tirtir xirmada';
 
   @override
   String get deactivateItemTooltip => 'Qari alaabta';
@@ -2091,7 +2091,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get removePackagingConfirmBody =>
-      'Ma tirtirayaa baakaddan? Mar dambe wad ku celin kartaa.';
+      'Ma tirtirayaa xirmadan? Mar dambe wad ku celin kartaa.';
 
   @override
   String get removePackagingConfirmAction => 'TIRTIR';
@@ -2114,7 +2114,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemDetailDefaultSaleBadge => 'Iibin';
 
   @override
-  String get shopItemDetailDefaultReceiveBadge => 'Soo qaad';
+  String get shopItemDetailDefaultReceiveBadge => 'Dejin';
 
   @override
   String get shopItemDetailDefaultForLabel => 'Caadi u ah:';

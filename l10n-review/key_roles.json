@@ -319,7 +319,7 @@
     "max_chars": 20,
     "area": "Reports",
     "en": "Stock",
-    "so": "Bakhaarka"
+    "so": "Kaydka"
   },
   "reportsRevenueLabel": {
     "role": "label",
@@ -382,14 +382,14 @@
     "max_chars": 24,
     "area": "Reports",
     "en": "Products in stock",
-    "so": "Alaab bakhaarka jirta"
+    "so": "Alaab kaydka ku jirta"
   },
   "reportsStockValueLabel": {
     "role": "label",
     "max_chars": 24,
     "area": "Reports",
     "en": "Stock value",
-    "so": "Qiimaha bakhaarka"
+    "so": "Qiimaha kaydka"
   },
   "reportsLowStockLabel": {
     "role": "label",
@@ -998,7 +998,7 @@
     "max_chars": null,
     "area": "Products",
     "en": "Set exact",
-    "so": "Cusub"
+    "so": "Tiro Go'an"
   },
   "stockAdjustModeOpeningHelper": {
     "role": "helper",
@@ -1047,7 +1047,7 @@
     "max_chars": null,
     "area": "Products",
     "en": "Enter the cost per unit so average cost stays correct.",
-    "so": "Geli qiimaha xidhmadda si qiimaha celceliska u sii saxo."
+    "so": "Geli qiimaha xirmada si qiimaha celceliska u sii saxo."
   },
   "stockAdjustNotesLabel": {
     "role": "label",
@@ -2699,7 +2699,7 @@
     "max_chars": null,
     "area": "Sale",
     "en": "This will reverse the sale, restore the stock, and clear the customer's debt for it.",
-    "so": "Iibka waa la tirtiri doonaa, alaabta bakhaarka waa lugu celin doonaa, deynta macmiilkana waa la tirtiri doonaa."
+    "so": "Iibka waa la tirtiri doonaa, alaabta kaydka waa lugu celin doonaa, deynta macmiilkana waa la tirtiri doonaa."
   },
   "saleVoidConfirmYes": {
     "role": "button",
@@ -2895,7 +2895,7 @@
     "max_chars": null,
     "area": "Receive",
     "en": "Use this only when you typed the receive wrong. It reverses the receive, removes the stock, and clears what you owe the supplier for it.",
-    "so": "Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dejinta. Alaab dejinta waa la tirtiri doonaa, alaabta bakhaarka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto waa la tirtiri doonaa."
+    "so": "Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dejinta. Alaab dejinta waa la tirtiri doonaa, alaabta kaydka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto waa la tirtiri doonaa."
   },
   "receiveVoidMistakesOnlyHint": {
     "role": "hint",
@@ -3245,7 +3245,7 @@
     "max_chars": 18,
     "area": "Receive",
     "en": "+ Add packaging",
-    "so": "+ Ku dar baakad"
+    "so": "+ Ku dar xirmo"
   },
   "addNewItemSearchResult": {
     "role": "body",
@@ -3364,7 +3364,7 @@
     "max_chars": null,
     "area": "Sale",
     "en": "+ Custom packaging",
-    "so": "+ Baakad gaar ah"
+    "so": "+ Xirmo gaar ah"
   },
   "addNewItemCustomBaseUnitLabel": {
     "role": "label",
@@ -3399,14 +3399,14 @@
     "max_chars": null,
     "area": "Sale",
     "en": "Could not load suggestions. Pick custom packaging.",
-    "so": "Soo jeedimaha lama soo dejin karin. Dooro baakad gaar ah."
+    "so": "Soo jeedimaha lama soo dejin karin. Dooro xirmo gaar ah."
   },
   "addNewItemUseCustomButton": {
     "role": "button",
     "max_chars": 18,
     "area": "Sale",
     "en": "USE THIS PACKAGING",
-    "so": "ISTICMAAL BAAKADAN"
+    "so": "ISTICMAAL XIRMADAN"
   },
   "addNewItemLooseType": {
     "role": "body",
@@ -3420,7 +3420,7 @@
     "max_chars": 20,
     "area": "Receive",
     "en": "Add packaging",
-    "so": "Ku dar baakad"
+    "so": "Ku dar xirmo"
   },
   "addPackagingUnitLabel": {
     "role": "label",
@@ -3455,7 +3455,7 @@
     "max_chars": null,
     "area": "Receive",
     "en": "Could not add the packaging. Try again.",
-    "so": "Baakadda luguma dari karin. Isku day mar kale."
+    "so": "Xirmada luguma dari karin. Isku day mar kale."
   },
   "addPackagingHeaderBaseUnit": {
     "role": "body",
@@ -3469,14 +3469,14 @@
     "max_chars": 24,
     "area": "Receive",
     "en": "Common packagings",
-    "so": "Baakado caadi ah"
+    "so": "Xirmooyin la isticmaalo"
   },
   "addPackagingCustomEntry": {
     "role": "body",
     "max_chars": null,
     "area": "Receive",
     "en": "+ Custom packaging",
-    "so": "+ Baakad gaar ah"
+    "so": "+ Xirmo gaar ah"
   },
   "addPackagingLessCommonHeader": {
     "role": "header",
@@ -3504,7 +3504,7 @@
     "max_chars": null,
     "area": "Receive",
     "en": "No common packagings yet for this base unit — define your own below.",
-    "so": "Halbeegan wali baakado caadi ah uma jiraan — hoosta ka qor mid gaar ah."
+    "so": "Halbeegan wali xirmooyin la isticmaalo uma jiraan — hoosta ka qor mid gaar ah."
   },
   "addPackagingLoadFailedHint": {
     "role": "hint",
@@ -3637,7 +3637,7 @@
     "max_chars": 24,
     "area": "Products",
     "en": "Packaging",
-    "so": "Xidhmada"
+    "so": "Xirmada"
   },
   "shopItemEditorSupplierHeader": {
     "role": "header",
@@ -3672,14 +3672,14 @@
     "max_chars": 20,
     "area": "Common",
     "en": "Add packaging",
-    "so": "Ku dar xidhmad"
+    "so": "Ku dar xirmo"
   },
   "packagingEditorEditTitle": {
     "role": "title",
     "max_chars": 20,
     "area": "Common",
     "en": "Edit packaging",
-    "so": "Bedel xidhmadda"
+    "so": "Bedel xirmada"
   },
   "packagingEditorSaveButton": {
     "role": "button_save",
@@ -3693,14 +3693,14 @@
     "max_chars": null,
     "area": "Common",
     "en": "Pick a packaging unit (e.g. bag, box).",
-    "so": "Dooro nooca xidhmadda (tusaale: bac, sanduuq)."
+    "so": "Dooro nooca xirmada (tusaale: bac, sanduuq)."
   },
   "packagingEditorMissingConversionMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Common",
     "en": "How many base units fit in this pack? Enter a number greater than 0.",
-    "so": "Imisa unug aasaasi ah ayaa ku jira xidhmaddan? Geli tiro ka weyn 0."
+    "so": "Imisa unug aasaasi ah ayaa ku jira xirmadan? Geli tiro ka weyn 0."
   },
   "packagingEditorCostLabel": {
     "role": "label",
@@ -3756,14 +3756,14 @@
     "max_chars": null,
     "area": "Products",
     "en": "Edit packaging",
-    "so": "Bedel xidhmadda"
+    "so": "Bedel xirmada"
   },
   "shopItemEditorRemovePackagingTooltip": {
     "role": "body",
     "max_chars": null,
     "area": "Products",
     "en": "Remove packaging",
-    "so": "Saar xidhmadda"
+    "so": "Saar xirmada"
   },
   "shopItemEditorBuyHeader": {
     "role": "header",
@@ -3805,7 +3805,7 @@
     "max_chars": null,
     "area": "Products",
     "en": "Enter current stock per packaging so reports are right from day one.",
-    "so": "Geli kayd hadda baakad walba si warbixinada saxda u shaqeeyaan maalintaa."
+    "so": "Geli kayd hadda xirmo walba si warbixinada saxda u shaqeeyaan maalintaa."
   },
   "shopItemEditorOpeningPickBaseUnitFirst": {
     "role": "body",
@@ -3882,14 +3882,14 @@
     "max_chars": 24,
     "area": "Products",
     "en": "Packagings",
-    "so": "Baakado"
+    "so": "Xirmooyin"
   },
   "shopItemEditorAddPackagingButton": {
     "role": "button",
     "max_chars": 18,
     "area": "Products",
     "en": "Add packaging",
-    "so": "Ku dar baakad"
+    "so": "Ku dar xirmo"
   },
   "shopItemEditorBaseBadge": {
     "role": "chip",
@@ -3952,7 +3952,7 @@
     "max_chars": null,
     "area": "Products",
     "en": "Extra names + bono spelling improve search later.",
-    "so": "Magacyo kale + qoraalka qoraalka ayaa raadinta ka horumarinaya."
+    "so": "Magacyo kale + sida bonada loo qoro ayaa raadinta ka horumarinaya."
   },
   "shopItemEditorAliasesLabel": {
     "role": "label",
@@ -4001,7 +4001,7 @@
     "max_chars": null,
     "area": "Common",
     "en": "Remove packaging",
-    "so": "Tirtir baakadda"
+    "so": "Tirtir xirmada"
   },
   "deactivateItemTooltip": {
     "role": "body",
@@ -4036,7 +4036,7 @@
     "max_chars": null,
     "area": "Common",
     "en": "Remove this packaging? You can add it back later.",
-    "so": "Ma tirtirayaa baakaddan? Mar dambe wad ku celin kartaa."
+    "so": "Ma tirtirayaa xirmadan? Mar dambe wad ku celin kartaa."
   },
   "removePackagingConfirmAction": {
     "role": "body",
@@ -4085,7 +4085,7 @@
     "max_chars": 12,
     "area": "Products",
     "en": "Receive",
-    "so": "Soo qaad"
+    "so": "Dejin"
   },
   "shopItemDetailDefaultForLabel": {
     "role": "label",

@@ -1,0 +1,36 @@
+{
+  "_comment": "AI draft — Products batch. Two term normalizations: Stock bakhaar->kayd (owner: Kayd), Packaging baakad/xidhmad->xirmo (owner: Xirmo). ⚠ = Xirmo inflection to confirm (esp. plural 'Xirmooyin'). Plus clear fixes.",
+
+  "reportsStockTitle": ["Kaydka", "bakhaar->kayd (Stock report title)"],
+  "reportsItemsLabel": ["Alaab kaydka ku jirta", "bakhaar->kayd"],
+  "reportsStockValueLabel": ["Qiimaha kaydka", "bakhaar->kayd"],
+  "saleVoidConfirmBody": ["Iibka waa la tirtiri doonaa, alaabta kaydka waa lugu celin doonaa, deynta macmiilkana waa la tirtiri doonaa.", "bakhaar->kayd"],
+  "receiveVoidConfirmBody": ["Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dejinta. Alaab dejinta waa la tirtiri doonaa, alaabta kaydka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto waa la tirtiri doonaa.", "bakhaar->kayd"],
+
+  "stockAdjustUnitCostRequiredMessage": ["Geli qiimaha xirmada si qiimaha celceliska u sii saxo.", "xidhmadda->xirmada"],
+  "unitPickerAddPackagingButton": ["+ Ku dar xirmo", "baakad->xirmo"],
+  "addNewItemCustomPackagingEntry": ["+ Xirmo gaar ah", "baakad->xirmo"],
+  "addNewItemLoadOptionsFailedHint": ["Soo jeedimaha lama soo dejin karin. Dooro xirmo gaar ah.", "baakad->xirmo"],
+  "addNewItemUseCustomButton": ["ISTICMAAL XIRMADAN", "BAAKADAN->XIRMADAN"],
+  "addPackagingSheetTitle": ["Ku dar xirmo", "baakad->xirmo"],
+  "addPackagingFailedMessage": ["Xirmada luguma dari karin. Isku day mar kale.", "Baakadda->Xirmada"],
+  "addPackagingSuggestionsHeader": ["Xirmooyin la isticmaalo", "reviewer: Common packagings"],
+  "addPackagingCustomEntry": ["+ Xirmo gaar ah", "baakad->xirmo"],
+  "addPackagingNoSuggestionsHint": ["Halbeegan wali xirmooyin la isticmaalo uma jiraan — hoosta ka qor mid gaar ah.", "match 'Xirmooyin la isticmaalo'"],
+  "shopItemEditorPackagingHeader": ["Xirmada", "Xidhmada->Xirmada"],
+  "packagingEditorAddTitle": ["Ku dar xirmo", "xidhmad->xirmo"],
+  "packagingEditorEditTitle": ["Bedel xirmada", "xidhmadda->xirmada"],
+  "packagingEditorMissingUnitMessage": ["Dooro nooca xirmada (tusaale: bac, sanduuq).", "xidhmadda->xirmada"],
+  "packagingEditorMissingConversionMessage": ["Imisa unug aasaasi ah ayaa ku jira xirmadan? Geli tiro ka weyn 0.", "xidhmaddan->xirmadan"],
+  "shopItemEditorEditPackagingTooltip": ["Bedel xirmada", "xidhmadda->xirmada"],
+  "shopItemEditorRemovePackagingTooltip": ["Saar xirmada", "xidhmadda->xirmada"],
+  "shopItemEditorOpeningSubtitle": ["Geli kayd hadda xirmo walba si warbixinada saxda u shaqeeyaan maalintaa.", "baakad->xirmo"],
+  "shopItemEditorPackagingsHeader": ["Xirmooyin", "⚠ plural Baakado->Xirmooyin"],
+  "shopItemEditorAddPackagingButton": ["Ku dar xirmo", "baakad->xirmo"],
+  "removePackagingTooltip": ["Tirtir xirmada", "baakadda->xirmada"],
+  "removePackagingConfirmBody": ["Ma tirtirayaa xirmadan? Mar dambe wad ku celin kartaa.", "baakaddan->xirmadan"],
+
+  "shopItemEditorDiscoverySubtitle": ["Magacyo kale + sida bonada loo qoro ayaa raadinta ka horumarinaya.", "fixes duplicate 'qoraalka qoraalka'"],
+  "shopItemDetailDefaultReceiveBadge": ["Dejin", "Receive badge; was 'Soo qaad'; chip <=12"],
+  "stockAdjustModeSetExact": ["Tiro Go'an", "reviewer: 'Set exact'; was 'Cusub'"]
+}
