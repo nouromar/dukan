@@ -32,6 +32,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/shared/feedback.dart';
@@ -169,8 +170,12 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
       final api = context.read<ShopApi>();
       _optionsFuture =
           api.fetchNewItemOptions(categoryId: _categoryId, locale: current);
-      _categoriesFuture =
-          api.listCategories(locale: current, shopId: widget.shop.id);
+      // #393: local-mirror-aware so the category picker works offline.
+      _categoriesFuture = loadCategoryOptions(
+        context,
+        shopId: widget.shop.id,
+        locale: current,
+      );
     }
   }
 

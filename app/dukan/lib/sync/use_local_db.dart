@@ -13,8 +13,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
+import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/config/config_keys.dart';
 import 'package:dukan/config/config_resolver.dart';
+import 'package:dukan/sync/local_repository.dart';
 
 /// True when the app should use its on-device sqflite mirror for
 /// daily-flow reads/writes; false when it should hit the server
@@ -65,3 +68,24 @@ bool useLocalDb(BuildContext context) {
 /// path not yet renamed still compiles. Drop in `#385`.
 @Deprecated('use useLocalDb(context) — see #382')
 bool offlineModeFull(BuildContext context) => useLocalDb(context);
+
+/// #393: resolves the product-category picker options via the same
+/// data-path rule the daily flows use — the local mirror when
+/// [useLocalDb] is on (so the dropdown works offline), otherwise the
+/// live `list_categories` RPC. Falls back to the network if the local
+/// read throws. Providers are read synchronously up front so no
+/// [BuildContext] is used across the await.
+Future<List<CategoryOption>> loadCategoryOptions(
+  BuildContext context, {
+  required String shopId,
+  required String locale,
+}) {
+  final api = context.read<ShopApi>();
+  if (useLocalDb(context)) {
+    final repo = context.read<LocalRepository>();
+    return repo
+        .listCategoriesLocal(shopId: shopId)
+        .catchError((_) => api.listCategories(locale: locale, shopId: shopId));
+  }
+  return api.listCategories(locale: locale, shopId: shopId);
+}

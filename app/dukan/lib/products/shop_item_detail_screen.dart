@@ -130,10 +130,12 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       final repo = context.read<LocalRepository>();
       final detail = await repo.getShopItemDetail(widget.shopItemId);
       if (detail != null) {
+        // #393: category picker from the local mirror so it works
+        // offline (the data is synced into local_category).
         List<CategoryOption> categories;
         try {
           categories =
-              await api.listCategories(locale: _locale, shopId: widget.shop.id);
+              await repo.listCategoriesLocal(shopId: widget.shop.id);
         } catch (_) {
           categories = const <CategoryOption>[];
         }

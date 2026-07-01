@@ -27,6 +27,7 @@ import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/shared/relative_time.dart';
 import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 class PartyDetailScreen extends StatefulWidget {
   const PartyDetailScreen({
@@ -95,6 +96,46 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
 
   Future<_PartyBootstrap> _load() async {
     final api = context.read<ShopApi>();
+    // Offline-first: with the local mirror on, assemble the customer /
+    // supplier page (header + sales/receives/payments + open invoices)
+    // from the mirror so the page — and the sale/receive/payment links
+    // off it — open while offline. Fall through to the server when the
+    // party isn't mirrored yet.
+    if (useLocalDb(context)) {
+      try {
+        final repo = context.read<LocalRepository>();
+        final localDetail = await repo.getPartyDetailLocal(
+          shopId: widget.shop.id,
+          partyId: widget.partyId,
+        );
+        if (localDetail != null) {
+          final direction =
+              localDetail.header.typeCode == 'supplier' ? 'O' : 'I';
+          final localInvoices = await repo.listUnpaidInvoices(
+            shopId: widget.shop.id,
+            partyId: widget.partyId,
+            direction: direction,
+          );
+          // The "edited" chip is server-only audit metadata; best-effort
+          // and simply absent while offline.
+          final localAudits = await api
+              .listAuditEntriesForEntity(
+                shopId: widget.shop.id,
+                entityType: 'party',
+                entityId: widget.partyId,
+                limit: 1,
+              )
+              .catchError((_) => const <AuditEntry>[]);
+          return _PartyBootstrap(
+            detail: localDetail,
+            openInvoices: localInvoices,
+            editedAt: localAudits.isEmpty ? null : localAudits.first.occurredAt,
+          );
+        }
+      } catch (_) {
+        // Local assembly failed — fall through to the network path.
+      }
+    }
     final detailF = api.getPartyDetail(
       shopId: widget.shop.id,
       partyId: widget.partyId,

@@ -9,11 +9,10 @@
 // per-row fetch (or a backend column). Add when we extend the RPC.
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 class ProductsFilters {
   const ProductsFilters({
@@ -89,10 +88,12 @@ class _ProductsFilterSheetBodyState extends State<_ProductsFilterSheetBody> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _categoriesFuture ??= context.read<ShopApi>().listCategories(
-          locale: Localizations.localeOf(context).languageCode,
-          shopId: widget.shopId,
-        );
+    // #393: local-mirror-aware so category filtering works offline.
+    _categoriesFuture ??= loadCategoryOptions(
+      context,
+      shopId: widget.shopId,
+      locale: Localizations.localeOf(context).languageCode,
+    );
   }
 
   Future<void> _pickCategory() async {

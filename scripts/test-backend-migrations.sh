@@ -6414,6 +6414,16 @@ begin
   if v_payload->'transactions' is null then
     raise exception 'SS (5c): transactions_delta missing transactions array';
   end if;
+  -- (5d) Every transaction row must carry paid_amount (0089). Without
+  --      it, the mobile mirror defaults a credit sale to fully-paid and
+  --      renders debt sales as CASH on the receipt.
+  if exists (
+    select 1
+    from jsonb_array_elements(v_payload->'transactions') x
+    where not (x ? 'paid_amount')
+  ) then
+    raise exception 'SS (5d): a transactions_delta row is missing paid_amount';
+  end if;
 end;
 $$;
 

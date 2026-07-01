@@ -53,6 +53,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/products/packaging_editor_sheet.dart';
@@ -155,9 +156,16 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
   Future<_EditorBootstrap> _loadBootstrap() async {
     final api = context.read<ShopApi>();
     final locale = Localizations.localeOf(context).languageCode;
+    // #393: resolve categories via the local-mirror-aware helper (read
+    // synchronously, before the first await, so no BuildContext crosses
+    // the gap) so the category picker works offline.
+    final categoriesF = loadCategoryOptions(
+      context,
+      shopId: widget.shop.id,
+      locale: locale,
+    );
     final units = await api.listUnits();
-    final categories =
-        await api.listCategories(locale: locale, shopId: widget.shop.id);
+    final categories = await categoriesF;
     return _EditorBootstrap(units: units, categories: categories);
   }
 

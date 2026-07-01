@@ -120,6 +120,31 @@ void main() {
       expect(s.postedAt, isNotNull);
     });
 
+    test('credit sale (paid_amount 0) reads as debt, not cash', () async {
+      // Regression: a debt sale opened from the local mirror used to
+      // render as a fully-paid CASH sale because the sync payload
+      // omitted paid_amount and toSaleSummary defaulted it to the full
+      // total. With paid_amount carried in the payload (migration 0089)
+      // the cash/debt split is honoured.
+      await repo.applyTransactionsPayload({
+        'transactions': [
+          _txn('t-debt', 'sale', occurredMs: 2000, total: 28.8, partyId: 'c',
+              extra: {
+                'party_name': 'New Customer',
+                'payment_method_code': 'cash',
+                'paid_amount': 0,
+              }),
+        ],
+      });
+      final t = (await repo.historySales(shopId: shopId))
+          .firstWhere((e) => e.txnId == 't-debt');
+      final s = repo.toSaleSummary(t);
+      expect(s.paidAmount, 0);
+      expect(s.totalAmount, 28.8);
+      expect(s.isDebt, isTrue,
+          reason: 'partyId set and paidAmount < total → debt');
+    });
+
     test('toPaymentSummary reads direction + isRefund', () async {
       await repo.applyTransactionsPayload({
         'transactions': [
@@ -156,6 +181,149 @@ void main() {
       expect(s.categoryId, 'cat-1');
       expect(s.categoryName, 'Cleaning');
       expect(s.notes, 'mop');
+    });
+  });
+
+  group('getPartyDetailLocal', () {
+    Map<String, dynamic> party(String id, String type,
+            {num receivable = 0, num payable = 0}) =>
+        {
+          'party_id': id,
+          'shop_id': shopId,
+          'name': type == 'supplier' ? 'ACME Supplies' : 'New Customer',
+          'phone': null,
+          'type_code': type,
+          'receivable': receivable,
+          'payable': payable,
+          'is_active': true,
+          'server_updated_at_ms': 1,
+        };
+
+    test('returns null when the party is not mirrored', () async {
+      final d = await repo.getPartyDetailLocal(shopId: shopId, partyId: 'nope');
+      expect(d, isNull);
+    });
+
+    test('customer: debt sale surfaces with correct paid/debt split offline',
+        () async {
+      await repo.applyPartiesPayload({
+        'parties': [party('c-1', 'customer', receivable: 28.8)],
+      });
+      await repo.applyTransactionsPayload({
+        'transactions': [
+          _txn('t-debt', 'sale', occurredMs: 2000, total: 28.8, partyId: 'c-1',
+              extra: {'party_name': 'New Customer', 'paid_amount': 0}),
+        ],
+      });
+      final d = await repo.getPartyDetailLocal(shopId: shopId, partyId: 'c-1');
+      expect(d, isNotNull);
+      expect(d!.header.typeCode, 'customer');
+      expect(d.header.receivable, 28.8);
+      expect(d.sales.single.txnId, 't-debt');
+      expect(d.sales.single.totalAmount, 28.8);
+      expect(d.sales.single.paidAmount, 0,
+          reason: 'debt sale must not read as fully paid offline');
+      expect(d.receives, isEmpty);
+      expect(d.payments, isEmpty);
+    });
+
+    test('supplier: receives + outbound payment surface offline', () async {
+      await repo.applyPartiesPayload({
+        'parties': [party('s-1', 'supplier', payable: 100)],
+      });
+      await repo.applyTransactionsPayload({
+        'transactions': [
+          _txn('r-1', 'receive', occurredMs: 1000, total: 100, partyId: 's-1',
+              extra: {'paid_amount': 0}),
+          _txn('pay-1', 'payment', occurredMs: 1500, total: 40, partyId: 's-1',
+              extra: {'direction': 'O'}),
+        ],
+      });
+      final d = await repo.getPartyDetailLocal(shopId: shopId, partyId: 's-1');
+      expect(d, isNotNull);
+      expect(d!.header.typeCode, 'supplier');
+      expect(d.header.payable, 100);
+      expect(d.sales, isEmpty);
+      expect(d.receives.single.txnId, 'r-1');
+      expect(d.payments.single.paymentId, 'pay-1');
+      expect(d.payments.single.amount, 40);
+      expect(d.payments.single.direction, 'O');
+    });
+  });
+
+  group('listCategoriesLocal', () {
+    test('returns active top-level rows, global first then custom',
+        () async {
+      await repo.applyCategoriesPayload({
+        'expense_categories': [],
+        'units': [],
+        'categories': [
+          // global (shop_id null), out-of-order sort to prove ordering
+          {
+            'id': 'g-2',
+            'shop_id': null,
+            'code': 'drinks',
+            'parent_id': null,
+            'name': 'Drinks',
+            'sort_order': 2,
+            'is_active': true,
+          },
+          {
+            'id': 'g-1',
+            'shop_id': null,
+            'code': 'food',
+            'parent_id': null,
+            'name': 'Food',
+            'sort_order': 1,
+            'is_active': true,
+          },
+          // a child (parent_id set) — must be excluded from the picker
+          {
+            'id': 'g-1a',
+            'shop_id': null,
+            'code': 'rice',
+            'parent_id': 'g-1',
+            'name': 'Rice',
+            'sort_order': 1,
+            'is_active': true,
+          },
+          // inactive — excluded
+          {
+            'id': 'g-3',
+            'shop_id': null,
+            'code': 'old',
+            'parent_id': null,
+            'name': 'Old',
+            'sort_order': 3,
+            'is_active': false,
+          },
+          // this shop's custom category — after globals
+          {
+            'id': 'c-1',
+            'shop_id': shopId,
+            'code': 'custom',
+            'parent_id': null,
+            'name': 'Custom',
+            'sort_order': 1,
+            'is_active': true,
+          },
+          // another shop's custom — excluded
+          {
+            'id': 'x-1',
+            'shop_id': 'other-shop',
+            'code': 'nope',
+            'parent_id': null,
+            'name': 'Nope',
+            'sort_order': 1,
+            'is_active': true,
+          },
+        ],
+      });
+      final cats = await repo.listCategoriesLocal(shopId: shopId);
+      expect(cats.map((c) => c.id), ['g-1', 'g-2', 'c-1'],
+          reason: 'globals by sort_order first, then this shop custom; '
+              'child + inactive + other-shop excluded');
+      expect(cats.first.name, 'Food');
     });
   });
 

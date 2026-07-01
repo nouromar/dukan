@@ -291,9 +291,10 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
   Future<_SaleBundle> _load() async {
     // #375: when offline_mode = full, render from the local mirror
     // first. If the row hasn't synced yet, fall back to the cart
-    // snapshot the SAVE flow handed us. Only fall through to the
-    // network as a last resort (and only when light, since `full`
-    // mode is meant to never block on network).
+    // snapshot the SAVE flow handed us, then — as a last resort —
+    // fetch from the server. A receipt opened from party/history
+    // before sync caught up must still open (and with the correct
+    // cash/debt split), not show a "cannot load" frame.
     if (useLocalDb(context)) {
       try {
         final repo = context.read<LocalRepository>();
@@ -328,11 +329,14 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
           lines: fallback.lines,
         );
       }
-      // No local + no fallback — the user hit the receipt from
-      // history before sync caught up. Throw so the FutureBuilder
-      // shows the standard error frame.
-      throw StateError('Sale not found in local mirror yet');
+      // No local + no fallback — the row hasn't reached the mirror
+      // yet. Fetch from the server rather than showing an error.
+      return _loadFromNetwork();
     }
+    return _loadFromNetwork();
+  }
+
+  Future<_SaleBundle> _loadFromNetwork() async {
     final api = context.read<ShopApi>();
     final header = await api.getSale(
       shopId: widget.shop.id,

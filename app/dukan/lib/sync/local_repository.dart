@@ -910,6 +910,13 @@ class LocalRepository {
         partyId: t.partyId,
         partyName: t.payload['party_name'] as String?,
         totalAmount: t.total.toDouble(),
+        // paid_amount drives the cash/debt split on the receipt. The
+        // server payload carries it (migration 0089); the `?? total`
+        // fallback only fires for rows synced before that migration —
+        // they self-heal on the next full sync. Defaulting to `total`
+        // there means a stale credit sale reads as cash until re-sync,
+        // which is the lesser evil (it never fabricates a phantom debt
+        // on a genuine cash sale).
         paidAmount: (t.payload['paid_amount'] as num?)?.toDouble() ??
             t.total.toDouble(),
         paymentMethodCode: t.payload['payment_method_code'] as String?,
@@ -1247,6 +1254,108 @@ class LocalRepository {
               alreadyPaid: (r['already_paid'] as num).toDouble(),
               remaining: (r['remaining'] as num).toDouble(),
               documentId: r['document_id'] as String?,
+            ))
+        .toList(growable: false);
+  }
+
+  /// #392: assembles a [PartyDetail] entirely from the local mirror so the
+  /// customer / supplier page — and the sale / receive / payment links off
+  /// it — open while offline. Mirrors the server `get_party_detail` shape:
+  /// header (from `local_party`) plus the party's sales, receives and
+  /// payments (from `local_transaction`, most-recent first, capped at
+  /// [limit] each). Returns null when the party isn't mirrored yet so the
+  /// caller can fall back to the live RPC.
+  Future<PartyDetail?> getPartyDetailLocal({
+    required String shopId,
+    required String partyId,
+    int limit = 20,
+  }) async {
+    final db = await _db;
+    final headerRows = await db.query(
+      'local_party',
+      where: 'shop_id = ? AND party_id = ?',
+      whereArgs: [shopId, partyId],
+      limit: 1,
+    );
+    if (headerRows.isEmpty) return null;
+    final h = headerRows.first;
+
+    Future<List<LocalTransaction>> txnsOfType(String typeCode) async {
+      final rows = await db.query(
+        'local_transaction',
+        where: 'shop_id = ? AND party_id = ? AND type_code = ?',
+        whereArgs: [shopId, partyId, typeCode],
+        orderBy: 'occurred_at DESC',
+        limit: limit,
+      );
+      return rows.map(LocalTransaction._fromRow).toList(growable: false);
+    }
+
+    PartyTxnRow toTxnRow(LocalTransaction t) => PartyTxnRow(
+          txnId: t.txnId,
+          occurredAt: DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs),
+          totalAmount: t.total.toDouble(),
+          // paid_amount drives the debt/cash split on the row; carried in
+          // the payload (server migration 0089 + optimistic write). The
+          // `?? total` fallback only bites pre-0089 rows (self-heal on
+          // next full sync).
+          paidAmount: (t.payload['paid_amount'] as num?)?.toDouble() ??
+              t.total.toDouble(),
+          isVoided: t.isVoided,
+        );
+
+    final sales =
+        (await txnsOfType('sale')).map(toTxnRow).toList(growable: false);
+    final receives =
+        (await txnsOfType('receive')).map(toTxnRow).toList(growable: false);
+    final payments = (await txnsOfType('payment'))
+        .map((t) => PartyPaymentRow(
+              paymentId: t.txnId,
+              occurredAt: DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs),
+              amount: t.total.toDouble(),
+              direction: (t.payload['direction'] as String?) ?? 'I',
+            ))
+        .toList(growable: false);
+
+    return PartyDetail(
+      header: PartyDetailHeader(
+        id: h['party_id'] as String,
+        name: h['name'] as String,
+        phone: h['phone'] as String?,
+        typeCode: h['type_code'] as String,
+        receivable: (h['receivable'] as num?)?.toDouble() ?? 0,
+        payable: (h['payable'] as num?)?.toDouble() ?? 0,
+        isActive: ((h['is_active'] as num?) ?? 1).toInt() == 1,
+      ),
+      sales: sales,
+      receives: receives,
+      payments: payments,
+    );
+  }
+
+  /// #393: reads the product-category picker options from the local
+  /// mirror so the item detail / editor / add-item / filter category
+  /// dropdown works offline. Mirrors the server `list_categories`
+  /// shape (top-level active rows; global first, then sort_order,
+  /// then name). The stored `name` is the base label — offline it
+  /// won't be locale-resolved, but the picker still functions.
+  Future<List<CategoryOption>> listCategoriesLocal({
+    required String shopId,
+  }) async {
+    final db = await _db;
+    final rows = await db.query(
+      'local_category',
+      where: 'is_active = 1 AND parent_id IS NULL '
+          'AND (shop_id IS NULL OR shop_id = ?)',
+      whereArgs: [shopId],
+      orderBy: 'CASE WHEN shop_id IS NULL THEN 0 ELSE 1 END ASC, '
+          'sort_order ASC, name COLLATE NOCASE ASC',
+    );
+    return rows
+        .map((r) => CategoryOption(
+              id: r['category_id'] as String,
+              code: r['code'] as String,
+              name: r['name'] as String,
             ))
         .toList(growable: false);
   }
