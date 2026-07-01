@@ -1,0 +1,36 @@
+{
+  "_comment": "AI draft — Batch 1 (Home + tight roles + the 24 budget overflows). Purpose-driven, budget-fitting. ⚠ in note = native reviewer please confirm word choice. Format: key -> [somali_ai, note].",
+
+  "homeHint": ["Maxaad qabaneysaa maanta.", "question form (locked)"],
+  "homeSalesTodayLabel": ["Iibka maanta", "typo fix: manta -> maanta"],
+  "homeLowStockLabel": ["Alaab yaraatey", "locked casing"],
+
+  "dateRangeWeek": ["7 maalmood", "chip <=12; was 22 chars"],
+
+  "reportsItemsLabel": ["Alaab bakhaarka jirta", "<=24; trimmed"],
+  "partyDetailReceivableLabel": ["Lacag laguu leeyahay", "They owe you; <=24"],
+  "partyDetailPayableLabel": ["Lacag aad ku leedahay", "You owe them; <=24"],
+  "partyNewOpeningReceivableLabel": ["Deyn furitaan (kuu leh)", "<=24"],
+  "partyNewOpeningPayableLabel": ["Deyn furitaan (aad leh)", "<=24"],
+
+  "changePhoneButton": ["Bedel lambarka", "button <=18; dropped 'telefoonka'"],
+  "supabaseConfigTitle": ["Ku xir Supabase", "title <=20"],
+  "shopLoadFailedTitle": ["Dukaan lama furin", "⚠ title <=20"],
+
+  "supplierNewButton": ["+ KEENE CUSUB", "button <=18; 'Alaab keene'->'keene'"],
+  "addNewItemAddToReceiveButton": ["KU DAR DAJINTA", "<=18"],
+  "addNewItemHowDeliveredHeader": ["Sidee loo keenay?", "question; <=24"],
+  "addPackagingSaveButton": ["KU DAR", "save button; context = packaging"],
+
+  "shopItemEditorReorderThresholdLabel": ["Digniin marka ay yaraato", "⚠ 'Warn when stock drops below'; <=24"],
+  "shopItemEditorDedupTitle": ["Ma horaad haysataa?", "question form; <=20"],
+  "shopItemEditorScanBarcodeButton": ["Sken barcode", "<=18; '(optional)' moves to helper"],
+  "shopItemEditorBonoSpellingLabel": ["Sida Bonada loogu qoro", "reviewer-approved; fixes duplicate 'Qoraalka qoraalka'"],
+  "shopItemEditorSaveAndAddAnotherButton": ["KEYDI + MID KALE", "button <=18"],
+
+  "setupOnboardingSetPricesTitle": ["Qiime u Samee Alaabta Caanka ah", "reviewer-approved (onboarding heading, can wrap)"],
+  "storageSyncFailedPermanentlyLabel": ["ma shaqeynayo si joogto ah", "reviewer-approved"],
+  "storageSyncResyncAllButton": ["Dib u soo deji", "button <=18"],
+  "syncFirstTimeSetupTitle": ["Ku xir internetka", "⚠ 'Connect to load data'; <=20"],
+  "syncFirstTimeLoadingTitle": ["Waa la diyaarinayaa…", "<=20"]
+}

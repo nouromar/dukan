@@ -82,12 +82,13 @@ confirm or improve.
 | Saved (toast) | **Waa la kaydiyay** | |
 | Void / reverse | **Tirtir** | imperative; "tirtiray" past |
 | Confirm | **Xaqiiji** | |
-| Cancel | **Jooji** ⚠ | or "Ka noqo" |
+| Cancel | **Ka noqo** | LOCKED |
 | Undo / back | **Ka noqo** | |
 | Add | **Ku dar** | "Ku dar alaab" = add item |
-| Delete / hide | **Qari** ⚠ (hide) / **Tirtir** (delete) | distinguish hide vs delete |
+| Hide | **Qari** | LOCKED — distinct from Delete |
+| Delete | **Tirtir** | LOCKED (same verb as Void — both "remove") |
 | Sale | **Iibin** | home tile |
-| Receive (goods) | **Alaab dajin** ⚠ | tile wraps — consider "Soo dejin" |
+| Receive (goods) | **Alaab Dejin** | LOCKED (home tile) |
 | Payment | **Lacag bixin** | |
 | Money In (customer pays) | **Lacag soo gal** | |
 | Money Out (pay supplier) | **Lacag bax** | |
@@ -96,14 +97,14 @@ confirm or improve.
 | Credit / debt | **Deyn** | |
 | Customer | **Macmiil** | |
 | Supplier | **Alaab keene** | |
-| Party (customer/supplier) | **Qof** ⚠ | generic person; reviewer may prefer context word |
+| Party (customer/supplier) | **Qof** | LOCKED |
 | Cart | **Danbiil** | basket |
 | Quantity / Qty | **Tiro** | |
 | Price | **Qiime** | |
 | Cost | **Kharash / Qiimaha alaabta** ⚠ | COGS = "Qiimaha alaabta" |
 | Total | **Wadar** | |
 | Stock / inventory | **Bakhaar** | |
-| Low stock | **Bakhaar yar / Alaab yar** ⚠ | be consistent |
+| Low stock | **Alaab yaraatey** | LOCKED |
 | Product / item | **Alaab** | |
 | Packaging | **Baakad** ⚠ | reviewer confirm |
 | Supplier bono (invoice) | **Bono** | keep the loanword |
@@ -111,6 +112,7 @@ confirm or improve.
 | Today | **Maanta** | |
 | All (filter) | **Dhammaan** | chip ≤ 12 |
 | Report(s) | **Warbixin(o)** | |
+| History | **Sooyaal** | LOCKED |
 | Settings | **Dejinta** ⚠ | |
 | Search | **Raadi** | imperative hint |
 | Built-in (system) | **Nidaam** | category badge |
@@ -125,8 +127,8 @@ confirm or improve.
 | `saleVoidConfirmTitle` (q) | Void this sale? | "Tirtirida iibkan" | **Iibkan tirtir?** | question form, shorter |
 | `settingsSavedToast` | Settings saved | "Dejinta la kaydiyay" | **Waa la kaydiyay** | toast = done-report, drop the noun |
 | `saleSearchHint` (hint) | Search Somali or English | literal long | **Raadi (Soomaali/Ingiriis)** | imperative, trimmed |
-| `homeHint` | Choose today's job | "Dooro shaqada maanta" | **Maxaad qabanaysaa maanta?** ⚠ | question is friendlier (reviewer's call) |
-| `receive` (tile) | Receive | "Alaab dajin" (wraps) | **Soo dejin** ⚠ | fit the 14-char tile, 1 line |
+| `homeHint` | Choose today's job | "Dooro shaqada maanta" | **Maxaad qabaneysaa maanta.** | question form, friendlier (LOCKED) |
+| `receive` (tile) | Receive | — | **Alaab Dejin** | LOCKED |
 
 ---
 

@@ -25,7 +25,7 @@
     "max_chars": null,
     "area": "Home",
     "en": "Choose today's job",
-    "so": "Dooro shaqada maanta"
+    "so": "Maxaad qabaneysaa maanta."
   },
   "sale": {
     "role": "home_tile",
@@ -382,7 +382,7 @@
     "max_chars": 24,
     "area": "Reports",
     "en": "Products in stock",
-    "so": "Alaabta bakhaarka ku jirta"
+    "so": "Alaab bakhaarka jirta"
   },
   "reportsStockValueLabel": {
     "role": "label",
@@ -417,14 +417,14 @@
     "max_chars": 24,
     "area": "Parties",
     "en": "They owe you",
-    "so": "Adigaa lacag laguu leeyahay"
+    "so": "Lacag laguu leeyahay"
   },
   "partyDetailPayableLabel": {
     "role": "label",
     "max_chars": 24,
     "area": "Parties",
     "en": "You owe them",
-    "so": "Iyagaa lacag lagu leeyahay"
+    "so": "Lacag aad ku leedahay"
   },
   "partyDetailPayButton": {
     "role": "button",
@@ -466,7 +466,7 @@
     "max_chars": 24,
     "area": "Home",
     "en": "Sales today",
-    "so": "Iibka manta"
+    "so": "Iibka maanta"
   },
   "homeReceivablesLabel": {
     "role": "label",
@@ -487,7 +487,7 @@
     "max_chars": 24,
     "area": "Home",
     "en": "Low stock",
-    "so": "Alaab Yaraatey"
+    "so": "Alaab yaraatey"
   },
   "homeLowStockCount": {
     "role": "body",
@@ -557,7 +557,7 @@
     "max_chars": 12,
     "area": "Filters",
     "en": "Last 7 days",
-    "so": "7-da maalmood ee tegay"
+    "so": "7 maalmood"
   },
   "dateRangeMonth": {
     "role": "chip",
@@ -802,14 +802,14 @@
     "max_chars": 24,
     "area": "Parties",
     "en": "Opening balance (they owe you)",
-    "so": "Deyn furitaan (kuugu leh)"
+    "so": "Deyn furitaan (kuu leh)"
   },
   "partyNewOpeningPayableLabel": {
     "role": "label",
     "max_chars": 24,
     "area": "Parties",
     "en": "Opening balance (you owe them)",
-    "so": "Deyn furitaan (aad u leh)"
+    "so": "Deyn furitaan (aad leh)"
   },
   "partyNewOpeningBalanceHelper": {
     "role": "helper",
@@ -1404,7 +1404,7 @@
     "max_chars": 20,
     "area": "Common",
     "en": "Connect DukanPro to Supabase",
-    "so": "DukanPro ku xir Supabase"
+    "so": "Ku xir Supabase"
   },
   "supabaseConfigMessage": {
     "role": "empty_error",
@@ -1558,7 +1558,7 @@
     "max_chars": 18,
     "area": "Common",
     "en": "Change phone number",
-    "so": "Bedel lambarka telefoonka"
+    "so": "Bedel lambarka"
   },
   "changeEmailButton": {
     "role": "button",
@@ -1747,7 +1747,7 @@
     "max_chars": 20,
     "area": "Common",
     "en": "Could not open shops",
-    "so": "Dukaamada lama furi karin"
+    "so": "Dukaan lama furin"
   },
   "shopLoadFailedMessage": {
     "role": "empty_error",
@@ -3070,7 +3070,7 @@
     "max_chars": 18,
     "area": "Receive",
     "en": "+ NEW SUPPLIER",
-    "so": "+ ALAAB KEENE CUSUB"
+    "so": "+ KEENE CUSUB"
   },
   "receiveSearchHint": {
     "role": "hint",
@@ -3301,7 +3301,7 @@
     "max_chars": 18,
     "area": "Sale",
     "en": "ADD TO RECEIVE",
-    "so": "KU DAR ALAAB DAJINTA"
+    "so": "KU DAR DAJINTA"
   },
   "addNewItemMissingNameMessage": {
     "role": "empty_error",
@@ -3343,7 +3343,7 @@
     "max_chars": 24,
     "area": "Sale",
     "en": "How did the supplier deliver?",
-    "so": "Sidee bay alaabkeeneha u keenaan?"
+    "so": "Sidee loo keenay?"
   },
   "addNewItemBaseOnlyTile": {
     "role": "body",
@@ -3448,7 +3448,7 @@
     "max_chars": 12,
     "area": "Receive",
     "en": "ADD PACKAGING",
-    "so": "KU DAR BAAKAD"
+    "so": "KU DAR"
   },
   "addPackagingFailedMessage": {
     "role": "empty_error",
@@ -3560,7 +3560,7 @@
     "max_chars": 24,
     "area": "Products",
     "en": "Warn when stock drops below",
-    "so": "Soo digi marka kayd-ku ka hooseeyo"
+    "so": "Digniin marka ay yaraato"
   },
   "shopItemEditorReorderThresholdHelper": {
     "role": "helper",
@@ -3854,7 +3854,7 @@
     "max_chars": 20,
     "area": "Products",
     "en": "You may already have this",
-    "so": "Waxaa laga yaabaa inaad horey u haysatay"
+    "so": "Ma horaad haysataa?"
   },
   "shopItemEditorDedupBody": {
     "role": "body",
@@ -3910,7 +3910,7 @@
     "max_chars": 18,
     "area": "Products",
     "en": "Scan barcode (optional)",
-    "so": "Sken garee barcode (ikhtiyaari)"
+    "so": "Sken barcode"
   },
   "shopItemEditorRescanBarcodeButton": {
     "role": "button",
@@ -3987,7 +3987,7 @@
     "max_chars": 24,
     "area": "Products",
     "en": "Bono spelling (optional)",
-    "so": "Qoraalka qoraalka (ikhtiyaari)"
+    "so": "Sida Bonada loogu qoro"
   },
   "shopItemEditorBonoSpellingHelper": {
     "role": "helper",
@@ -4057,7 +4057,7 @@
     "max_chars": 18,
     "area": "Products",
     "en": "SAVE & ADD ANOTHER",
-    "so": "KEYDI OO KU DAR MID KALE"
+    "so": "KEYDI + MID KALE"
   },
   "shopItemEditorSavedAndContinueToast": {
     "role": "toast",
@@ -4183,7 +4183,7 @@
     "max_chars": 20,
     "area": "Onboarding",
     "en": "Set prices on top items",
-    "so": "U dhig qiimayaal alaabta caanka ah"
+    "so": "Qiime u Samee Alaabta Caanka ah"
   },
   "setupOnboardingSetPricesBody": {
     "role": "body",
@@ -4435,7 +4435,7 @@
     "max_chars": 24,
     "area": "Settings",
     "en": "Failed permanently",
-    "so": "Si rasmi ah u guul-darreystay"
+    "so": "ma shaqeynayo si joogto ah"
   },
   "storageSyncFailedPermanentlyCount": {
     "role": "body",
@@ -4505,7 +4505,7 @@
     "max_chars": 18,
     "area": "Settings",
     "en": "Re-download all data",
-    "so": "Dib u soo deji xogta oo dhan"
+    "so": "Dib u soo deji"
   },
   "storageSyncResyncConfirmTitle": {
     "role": "dialog_title",
@@ -4841,7 +4841,7 @@
     "max_chars": 20,
     "area": "Common",
     "en": "Connect to load your shop's data",
-    "so": "Ku xidh internet si aad u soo dejiso xogta dukaankaaga"
+    "so": "Ku xir internetka"
   },
   "syncFirstTimeSetupBody": {
     "role": "body",
@@ -4862,7 +4862,7 @@
     "max_chars": 20,
     "area": "Common",
     "en": "Setting up your shop…",
-    "so": "Dukaankaaga waa la diyaarinayaa…"
+    "so": "Waa la diyaarinayaa…"
   },
   "syncFirstTimeLoadingBody": {
     "role": "body",

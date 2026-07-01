@@ -18,7 +18,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get languageSomali => 'Soomaali';
 
   @override
-  String get homeHint => 'Dooro shaqada maanta';
+  String get homeHint => 'Maxaad qabaneysaa maanta.';
 
   @override
   String get sale => 'Iibi';
@@ -178,7 +178,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get reportsMarginLabel => 'Faa\'iido boqolkiiba';
 
   @override
-  String get reportsItemsLabel => 'Alaabta bakhaarka ku jirta';
+  String get reportsItemsLabel => 'Alaab bakhaarka jirta';
 
   @override
   String get reportsStockValueLabel => 'Qiimaha bakhaarka';
@@ -194,10 +194,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get partyDetailLoadFailedMessage => 'Qofkan lama soo dejin karin.';
 
   @override
-  String get partyDetailReceivableLabel => 'Adigaa lacag laguu leeyahay';
+  String get partyDetailReceivableLabel => 'Lacag laguu leeyahay';
 
   @override
-  String get partyDetailPayableLabel => 'Iyagaa lacag lagu leeyahay';
+  String get partyDetailPayableLabel => 'Lacag aad ku leedahay';
 
   @override
   String get partyDetailPayButton => 'LACAG BIXI';
@@ -215,7 +215,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get homeTodayHeader => 'Maanta';
 
   @override
-  String get homeSalesTodayLabel => 'Iibka manta';
+  String get homeSalesTodayLabel => 'Iibka maanta';
 
   @override
   String get homeReceivablesLabel => 'Deynta kaa maqan';
@@ -224,7 +224,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get homePayablesLabel => 'Deyn aad qabto';
 
   @override
-  String get homeLowStockLabel => 'Alaab Yaraatey';
+  String get homeLowStockLabel => 'Alaab yaraatey';
 
   @override
   String homeLowStockCount(int count) {
@@ -264,7 +264,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get dateRangeToday => 'Maanta';
 
   @override
-  String get dateRangeWeek => '7-da maalmood ee tegay';
+  String get dateRangeWeek => '7 maalmood';
 
   @override
   String get dateRangeMonth => 'Bishaan';
@@ -378,10 +378,10 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get partyNewOpeningReceivableLabel => 'Deyn furitaan (kuugu leh)';
+  String get partyNewOpeningReceivableLabel => 'Deyn furitaan (kuu leh)';
 
   @override
-  String get partyNewOpeningPayableLabel => 'Deyn furitaan (aad u leh)';
+  String get partyNewOpeningPayableLabel => 'Deyn furitaan (aad leh)';
 
   @override
   String get partyNewOpeningBalanceHelper =>
@@ -685,7 +685,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get other => 'Kale';
 
   @override
-  String get supabaseConfigTitle => 'DukanPro ku xir Supabase';
+  String get supabaseConfigTitle => 'Ku xir Supabase';
 
   @override
   String get supabaseConfigMessage =>
@@ -759,7 +759,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get verifyOtpButton => 'XAQIIJI';
 
   @override
-  String get changePhoneButton => 'Bedel lambarka telefoonka';
+  String get changePhoneButton => 'Bedel lambarka';
 
   @override
   String get changeEmailButton => 'Bedel iimaylka';
@@ -864,7 +864,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Dukaanka lama abuuri karin. Hubi internetka, ka dib mar kale isku day.';
 
   @override
-  String get shopLoadFailedTitle => 'Dukaamada lama furi karin';
+  String get shopLoadFailedTitle => 'Dukaan lama furin';
 
   @override
   String get shopLoadFailedMessage =>
@@ -1563,7 +1563,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Alaab keenayaasha lama soo dejin karin. Hubi internetka oo isku day mar kale.';
 
   @override
-  String get supplierNewButton => '+ ALAAB KEENE CUSUB';
+  String get supplierNewButton => '+ KEENE CUSUB';
 
   @override
   String get receiveSearchHint => 'Ku Raadi Soomaali ama Ingiriis';
@@ -1696,7 +1696,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get addNewItemAddToSaleButton => 'KU DAR IIBKA';
 
   @override
-  String get addNewItemAddToReceiveButton => 'KU DAR ALAAB DAJINTA';
+  String get addNewItemAddToReceiveButton => 'KU DAR DAJINTA';
 
   @override
   String get addNewItemMissingNameMessage => 'Magaca waa loo baahan yahay';
@@ -1716,8 +1716,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get addNewItemHowSoldHeader => 'Sidee loo iibiyaa?';
 
   @override
-  String get addNewItemHowDeliveredHeader =>
-      'Sidee bay alaabkeeneha u keenaan?';
+  String get addNewItemHowDeliveredHeader => 'Sidee loo keenay?';
 
   @override
   String addNewItemBaseOnlyTile(String base) {
@@ -1773,7 +1772,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get addPackagingSaveButton => 'KU DAR BAAKAD';
+  String get addPackagingSaveButton => 'KU DAR';
 
   @override
   String get addPackagingFailedMessage =>
@@ -1832,8 +1831,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorCategoryLabel => 'Nooca';
 
   @override
-  String get shopItemEditorReorderThresholdLabel =>
-      'Soo digi marka kayd-ku ka hooseeyo';
+  String get shopItemEditorReorderThresholdLabel => 'Digniin marka ay yaraato';
 
   @override
   String shopItemEditorReorderThresholdHelper(String unit) {
@@ -2004,8 +2002,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Alaabta waa la kaydiyay laakiin kaydka ma kaydsanin — fur alaabta si aad u hagaajiso.';
 
   @override
-  String get shopItemEditorDedupTitle =>
-      'Waxaa laga yaabaa inaad horey u haysatay';
+  String get shopItemEditorDedupTitle => 'Ma horaad haysataa?';
 
   @override
   String get shopItemEditorDedupBody =>
@@ -2031,8 +2028,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Buuxi ugu yaraan hal qaybsasho (qiime, qarash, kayd, ama barcode).';
 
   @override
-  String get shopItemEditorScanBarcodeButton =>
-      'Sken garee barcode (ikhtiyaari)';
+  String get shopItemEditorScanBarcodeButton => 'Sken barcode';
 
   @override
   String get shopItemEditorRescanBarcodeButton => 'Mar kale sken';
@@ -2071,8 +2067,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Magacyada macmiilku oran karo. Riix shukaansiga si aad u saarto.';
 
   @override
-  String get shopItemEditorBonoSpellingLabel =>
-      'Qoraalka qoraalka (ikhtiyaari)';
+  String get shopItemEditorBonoSpellingLabel => 'Sida Bonada loogu qoro';
 
   @override
   String get shopItemEditorBonoSpellingHelper =>
@@ -2105,8 +2100,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorSaveButton => 'KEYDI';
 
   @override
-  String get shopItemEditorSaveAndAddAnotherButton =>
-      'KEYDI OO KU DAR MID KALE';
+  String get shopItemEditorSaveAndAddAnotherButton => 'KEYDI + MID KALE';
 
   @override
   String shopItemEditorSavedAndContinueToast(String name) {
@@ -2182,8 +2176,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get setupOnboardingAddItemsBody => 'Alaabaha qaabku aanu lahayn';
 
   @override
-  String get setupOnboardingSetPricesTitle =>
-      'U dhig qiimayaal alaabta caanka ah';
+  String get setupOnboardingSetPricesTitle => 'Qiime u Samee Alaabta Caanka ah';
 
   @override
   String get setupOnboardingSetPricesBody =>
@@ -2364,8 +2357,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get storageSyncFailedPermanentlyLabel =>
-      'Si rasmi ah u guul-darreystay';
+  String get storageSyncFailedPermanentlyLabel => 'ma shaqeynayo si joogto ah';
 
   @override
   String storageSyncFailedPermanentlyCount(int count) {
@@ -2404,7 +2396,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get storageSyncFreeUpSpaceConfirmAction => 'TIRTIR';
 
   @override
-  String get storageSyncResyncAllButton => 'Dib u soo deji xogta oo dhan';
+  String get storageSyncResyncAllButton => 'Dib u soo deji';
 
   @override
   String get storageSyncResyncConfirmTitle => 'Dib u soo deji xogta oo dhan?';
@@ -2593,8 +2585,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get failedPostsEmptyState => 'Wax guul-darreystay ma jiro.';
 
   @override
-  String get syncFirstTimeSetupTitle =>
-      'Ku xidh internet si aad u soo dejiso xogta dukaankaaga';
+  String get syncFirstTimeSetupTitle => 'Ku xir internetka';
 
   @override
   String get syncFirstTimeSetupBody =>
@@ -2604,7 +2595,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get syncFirstTimeSetupRetryButton => 'MAR KALE';
 
   @override
-  String get syncFirstTimeLoadingTitle => 'Dukaankaaga waa la diyaarinayaa…';
+  String get syncFirstTimeLoadingTitle => 'Waa la diyaarinayaa…';
 
   @override
   String get syncFirstTimeLoadingBody =>
