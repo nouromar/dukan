@@ -39,7 +39,7 @@
     "max_chars": 14,
     "area": "Receive",
     "en": "Receive",
-    "so": "Alaab Dajin"
+    "so": "Alaab Dejin"
   },
   "payment": {
     "role": "body",
@@ -172,7 +172,7 @@
     "max_chars": 20,
     "area": "Receive",
     "en": "Receive",
-    "so": "Alaab dajin"
+    "so": "Alaab dejin"
   },
   "bonoAttachTooltip": {
     "role": "body",
@@ -445,7 +445,7 @@
     "max_chars": 24,
     "area": "Parties",
     "en": "Receives",
-    "so": "Alaab La dajiyey"
+    "so": "Alaab La dejiyey"
   },
   "partyDetailPaymentsHeader": {
     "role": "header",
@@ -2804,7 +2804,7 @@
     "max_chars": 20,
     "area": "Receive",
     "en": "Receives",
-    "so": "Alaabtii La dajiyey"
+    "so": "Alaabtii La dejiyey"
   },
   "receiveHistoryTooltip": {
     "role": "body",
@@ -2818,7 +2818,7 @@
     "max_chars": null,
     "area": "Receive",
     "en": "No receives yet. The first SAVE on the Receive screen will land here.",
-    "so": "Wali Alaab Lama dejin. Marka hore alaab daji."
+    "so": "Wali Alaab Lama dejin. Marka hore alaab deji."
   },
   "receiveHistoryLoadFailedMessage": {
     "role": "empty_error",
@@ -2839,28 +2839,28 @@
     "max_chars": 12,
     "area": "Receive",
     "en": "Voided",
-    "so": "Laga Noqday"
+    "so": "La tirtiray"
   },
   "receiveDetailTitle": {
     "role": "title",
     "max_chars": 20,
     "area": "Receive",
     "en": "Receive",
-    "so": "Alaab La Dajiyey"
+    "so": "Alaab La Dejiyey"
   },
   "receiveDetailVoidedHeader": {
     "role": "header",
     "max_chars": 24,
     "area": "Receive",
     "en": "Voided",
-    "so": "Laga Noqday"
+    "so": "La tirtiray"
   },
   "receiveDetailVoidButton": {
     "role": "button",
     "max_chars": 18,
     "area": "Receive",
     "en": "VOID THIS RECEIVE",
-    "so": "Ka Noqo BONADAN"
+    "so": "TIRTIR BONADAN"
   },
   "receiveDetailLineSubtotal": {
     "role": "body",
@@ -2881,21 +2881,21 @@
     "max_chars": null,
     "area": "Receive",
     "en": "Could not load this receive.",
-    "so": "Alaab dajintan lama soo dejin karin."
+    "so": "Alaab dejintan lama soo dejin karin."
   },
   "receiveVoidConfirmTitle": {
     "role": "dialog_title",
     "max_chars": 30,
     "area": "Receive",
     "en": "Void this receive?",
-    "so": "Ka noqo alaab dajintan?"
+    "so": "Alaab dejintan tirtir?"
   },
   "receiveVoidConfirmBody": {
     "role": "dialog_body",
     "max_chars": null,
     "area": "Receive",
     "en": "Use this only when you typed the receive wrong. It reverses the receive, removes the stock, and clears what you owe the supplier for it.",
-    "so": "Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dajinta. Alaab dajinta waa laga noqo doonaa, alaabta kayd-ka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto ee alaab dajintan waa la nadiifin doonaa."
+    "so": "Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dejinta. Alaab dejinta waa la tirtiri doonaa, alaabta bakhaarka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto waa la tirtiri doonaa."
   },
   "receiveVoidMistakesOnlyHint": {
     "role": "hint",
@@ -2909,7 +2909,7 @@
     "max_chars": 14,
     "area": "Receive",
     "en": "VOID",
-    "so": "KaNoqo"
+    "so": "TIRTIR"
   },
   "receiveVoidConfirmNo": {
     "role": "button",
@@ -2923,21 +2923,21 @@
     "max_chars": null,
     "area": "Receive",
     "en": "Receive voided",
-    "so": "Alaab dajinta waa laga noqday"
+    "so": "Alaab dejinta waa la tirtiray"
   },
   "receiveVoidFailedMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Receive",
     "en": "Could not void this receive. Check your internet and try again.",
-    "so": "Alaab dajinta lagama noqo karin. Hubi internetka oo isku day mar kale."
+    "so": "Alaab dejinta lama tirtiri karin. Hubi internetka oo isku day mar kale."
   },
   "receiveVoidBlockedStockMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Receive",
     "en": "Some items from this receive have already moved. Void blocked.",
-    "so": "Alaabaha alaab dajintan qaarkood mar hore wuu dhaqaaqay. Ka noqoshada waa la joojiyay."
+    "so": "Alaabaha alaab dejintan qaarkood mar hore wuu dhaqaaqay. Tirtiridda waa la diiday."
   },
   "cartLineSubtotal": {
     "role": "body",
@@ -3042,14 +3042,14 @@
     "max_chars": 24,
     "area": "Receive",
     "en": "no receives yet",
-    "so": "alaab dajin maleh"
+    "so": "alaab dejin maleh"
   },
   "supplierPickerEmptyMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Receive",
     "en": "No suppliers yet. Add one when you record a receive.",
-    "so": "Alaab keene maleh. Ku dar marka aad qorto alaab dajin."
+    "so": "Alaab keene maleh. Ku dar marka aad qorto alaab dejin."
   },
   "supplierPickerSearchEmptyMessage": {
     "role": "empty_error",
@@ -3077,7 +3077,7 @@
     "max_chars": null,
     "area": "Receive",
     "en": "Search Somali or English",
-    "so": "Ku Raadi Soomaali ama Ingiriis"
+    "so": "Ku Raadi (Somaali/ingiriis)"
   },
   "receiveLoadFailedMessage": {
     "role": "empty_error",
@@ -3091,7 +3091,7 @@
     "max_chars": null,
     "area": "Receive",
     "en": "Tap an item to start the receive. Search if it's not in the grid.",
-    "so": "Taabo alaab si aad u bilowdo alaab dajin. Ku raadi haddii aysan ku jirin shabakada."
+    "so": "Taabo alaab si aad u bilowdo alaab dejin. Ku raadi haddii aysan ku jirin shabakada."
   },
   "receiveLineQuantityLabel": {
     "role": "label",
@@ -3161,7 +3161,7 @@
     "max_chars": null,
     "area": "Receive",
     "en": "This won't undo any saved receive.",
-    "so": "Tan ma noqonayso alaab dajin hore loo keydiyay."
+    "so": "Tan ma noqonayso alaab dejin hore loo keydiyay."
   },
   "receiveLinesClearConfirmYes": {
     "role": "button",
@@ -3189,14 +3189,14 @@
     "max_chars": null,
     "area": "Receive",
     "en": "Receive saved (on credit)",
-    "so": "Alaab dajin waa la keydiyay (deyn)"
+    "so": "Alaab dejin waa la keydiyay (deyn)"
   },
   "receivePostFailedMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Receive",
     "en": "Could not save the receive. Check your internet and try again.",
-    "so": "Alaab dajinta lama keydin karin. Hubi internetka oo isku day mar kale."
+    "so": "Alaab dejinta lama keydin karin. Hubi internetka oo isku day mar kale."
   },
   "receiveNeedSupplierMessage": {
     "role": "empty_error",
@@ -3301,7 +3301,7 @@
     "max_chars": 18,
     "area": "Sale",
     "en": "ADD TO RECEIVE",
-    "so": "KU DAR DAJINTA"
+    "so": "KU DAR DEJINTA"
   },
   "addNewItemMissingNameMessage": {
     "role": "empty_error",
@@ -4022,7 +4022,7 @@
     "max_chars": null,
     "area": "Products",
     "en": "It will be removed from Sale, Receive, and Products. Past sales keep it. You can ask support to bring it back.",
-    "so": "Waxaa laga saari doonaa Iibinta, Dajinta, iyo Alaabta. Iibkii hore way sii jiri doonaan. Waxaad weydiisan kartaa taageerada inay soo celiyaan."
+    "so": "Waxaa laga saari doonaa Iibinta, Dejinta, iyo Alaabta. Iibkii hore way sii jiri doonaan. Waxaad weydiisan kartaa taageerada inay soo celiyaan."
   },
   "deactivateItemConfirmAction": {
     "role": "body",

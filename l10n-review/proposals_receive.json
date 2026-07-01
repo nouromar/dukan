@@ -1,0 +1,15 @@
+{
+  "_comment": "AI draft — Receive batch. Same theme as Sale: unify VOID to Tirtir (was 'ka noqo'/'joojin' + camelCase bug 'KaNoqo'). Plus search-hint consistency with Sale. NOTE: kept existing 'dajin' spelling here — see the separate dajin->dejin question. ⚠ = confirm.",
+
+  "receiveHistoryVoidedBadge": ["La tirtiray", "was 'Laga Noqday'; chip <=12"],
+  "receiveDetailVoidedHeader": ["La tirtiray", "was 'Laga Noqday'"],
+  "receiveDetailVoidButton": ["TIRTIR BONADAN", "was 'Ka Noqo BONADAN'; <=18"],
+  "receiveVoidConfirmTitle": ["Alaab dajintan tirtir?", "was 'Ka noqo alaab dajintan?'; question kept"],
+  "receiveVoidConfirmYes": ["TIRTIR", "was 'KaNoqo' (camelCase bug)"],
+  "receiveVoidedToast": ["Alaab dajinta waa la tirtiray", "was 'laga noqday'"],
+  "receiveVoidFailedMessage": ["Alaab dajinta lama tirtiri karin. Hubi internetka oo isku day mar kale.", "was 'lagama noqo karin'"],
+  "receiveVoidConfirmBody": ["Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dajinta. Alaab dajinta waa la tirtiri doonaa, alaabta bakhaarka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto waa la tirtiri doonaa.", "⚠ swapped 'laga noqo'->'la tirtir', 'kayd-ka'->'bakhaarka'"],
+  "receiveVoidBlockedStockMessage": ["Alaabaha alaab dajintan qaarkood mar hore wuu dhaqaaqay. Tirtiridda waa la diiday.", "⚠ was 'Ka noqoshada waa la joojiyay'"],
+
+  "receiveSearchHint": ["Ku Raadi (Somaali/ingiriis)", "match the Sale search hint you approved"]
+}

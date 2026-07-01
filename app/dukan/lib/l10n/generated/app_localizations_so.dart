@@ -24,7 +24,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get sale => 'Iibi';
 
   @override
-  String get receive => 'Alaab Dajin';
+  String get receive => 'Alaab Dejin';
 
   @override
   String get payment => 'Lacag bixin';
@@ -83,7 +83,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get cancel => 'Jooji';
 
   @override
-  String get receiveTitle => 'Alaab dajin';
+  String get receiveTitle => 'Alaab dejin';
 
   @override
   String get bonoAttachTooltip => 'Sawir bonoga';
@@ -206,7 +206,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get partyDetailSalesHeader => 'Iibka';
 
   @override
-  String get partyDetailReceivesHeader => 'Alaab La dajiyey';
+  String get partyDetailReceivesHeader => 'Alaab La dejiyey';
 
   @override
   String get partyDetailPaymentsHeader => 'Lacagaha la bixiyey';
@@ -1415,14 +1415,14 @@ class AppLocalizationsSo extends AppLocalizations {
       'Iibka lama helin. Cusboonaysii oo isku day mar kale.';
 
   @override
-  String get receiveHistoryTitle => 'Alaabtii La dajiyey';
+  String get receiveHistoryTitle => 'Alaabtii La dejiyey';
 
   @override
   String get receiveHistoryTooltip => 'Sooyaalka Alaab keenida';
 
   @override
   String get receiveHistoryEmptyMessage =>
-      'Wali Alaab Lama dejin. Marka hore alaab daji.';
+      'Wali Alaab Lama dejin. Marka hore alaab deji.';
 
   @override
   String get receiveHistoryLoadFailedMessage =>
@@ -1434,16 +1434,16 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get receiveHistoryVoidedBadge => 'Laga Noqday';
+  String get receiveHistoryVoidedBadge => 'La tirtiray';
 
   @override
-  String get receiveDetailTitle => 'Alaab La Dajiyey';
+  String get receiveDetailTitle => 'Alaab La Dejiyey';
 
   @override
-  String get receiveDetailVoidedHeader => 'Laga Noqday';
+  String get receiveDetailVoidedHeader => 'La tirtiray';
 
   @override
-  String get receiveDetailVoidButton => 'Ka Noqo BONADAN';
+  String get receiveDetailVoidButton => 'TIRTIR BONADAN';
 
   @override
   String receiveDetailLineSubtotal(
@@ -1460,35 +1460,35 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get receiveDetailLoadFailedMessage =>
-      'Alaab dajintan lama soo dejin karin.';
+      'Alaab dejintan lama soo dejin karin.';
 
   @override
-  String get receiveVoidConfirmTitle => 'Ka noqo alaab dajintan?';
+  String get receiveVoidConfirmTitle => 'Alaab dejintan tirtir?';
 
   @override
   String get receiveVoidConfirmBody =>
-      'Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dajinta. Alaab dajinta waa laga noqo doonaa, alaabta kayd-ka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto ee alaab dajintan waa la nadiifin doonaa.';
+      'Tan u isticmaal kaliya marka aad qaladka u dhigtay alaab dejinta. Alaab dejinta waa la tirtiri doonaa, alaabta bakhaarka waa laga dhimi doonaa, oo lacagta aad alaab keenaha ka qabto waa la tirtiri doonaa.';
 
   @override
   String get receiveVoidMistakesOnlyHint =>
       'Kaliya qaladaad. Haddii aad alaab keenaha wax u celineyso, taas u qor lacag-bixinta.';
 
   @override
-  String get receiveVoidConfirmYes => 'KaNoqo';
+  String get receiveVoidConfirmYes => 'TIRTIR';
 
   @override
   String get receiveVoidConfirmNo => 'JOOJI';
 
   @override
-  String get receiveVoidedToast => 'Alaab dajinta waa laga noqday';
+  String get receiveVoidedToast => 'Alaab dejinta waa la tirtiray';
 
   @override
   String get receiveVoidFailedMessage =>
-      'Alaab dajinta lagama noqo karin. Hubi internetka oo isku day mar kale.';
+      'Alaab dejinta lama tirtiri karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get receiveVoidBlockedStockMessage =>
-      'Alaabaha alaab dajintan qaarkood mar hore wuu dhaqaaqay. Ka noqoshada waa la joojiyay.';
+      'Alaabaha alaab dejintan qaarkood mar hore wuu dhaqaaqay. Tirtiridda waa la diiday.';
 
   @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {
@@ -1547,11 +1547,11 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get supplierPickerNoBonosLabel => 'alaab dajin maleh';
+  String get supplierPickerNoBonosLabel => 'alaab dejin maleh';
 
   @override
   String get supplierPickerEmptyMessage =>
-      'Alaab keene maleh. Ku dar marka aad qorto alaab dajin.';
+      'Alaab keene maleh. Ku dar marka aad qorto alaab dejin.';
 
   @override
   String supplierPickerSearchEmptyMessage(Object query) {
@@ -1566,7 +1566,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get supplierNewButton => '+ KEENE CUSUB';
 
   @override
-  String get receiveSearchHint => 'Ku Raadi Soomaali ama Ingiriis';
+  String get receiveSearchHint => 'Ku Raadi (Somaali/ingiriis)';
 
   @override
   String get receiveLoadFailedMessage =>
@@ -1574,7 +1574,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get receiveEmptyMessage =>
-      'Taabo alaab si aad u bilowdo alaab dajin. Ku raadi haddii aysan ku jirin shabakada.';
+      'Taabo alaab si aad u bilowdo alaab dejin. Ku raadi haddii aysan ku jirin shabakada.';
 
   @override
   String get receiveLineQuantityLabel => 'Tirada';
@@ -1630,7 +1630,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get receiveLinesClearConfirmBody =>
-      'Tan ma noqonayso alaab dajin hore loo keydiyay.';
+      'Tan ma noqonayso alaab dejin hore loo keydiyay.';
 
   @override
   String get receiveLinesClearConfirmYes => 'TIRTIR';
@@ -1642,11 +1642,11 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveSaveButton => 'KEYDI';
 
   @override
-  String get receiveSavedToast => 'Alaab dajin waa la keydiyay (deyn)';
+  String get receiveSavedToast => 'Alaab dejin waa la keydiyay (deyn)';
 
   @override
   String get receivePostFailedMessage =>
-      'Alaab dajinta lama keydin karin. Hubi internetka oo isku day mar kale.';
+      'Alaab dejinta lama keydin karin. Hubi internetka oo isku day mar kale.';
 
   @override
   String get receiveNeedSupplierMessage =>
@@ -1696,7 +1696,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get addNewItemAddToSaleButton => 'KU DAR IIBKA';
 
   @override
-  String get addNewItemAddToReceiveButton => 'KU DAR DAJINTA';
+  String get addNewItemAddToReceiveButton => 'KU DAR DEJINTA';
 
   @override
   String get addNewItemMissingNameMessage => 'Magaca waa loo baahan yahay';
@@ -2084,7 +2084,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get deactivateItemConfirmBody =>
-      'Waxaa laga saari doonaa Iibinta, Dajinta, iyo Alaabta. Iibkii hore way sii jiri doonaan. Waxaad weydiisan kartaa taageerada inay soo celiyaan.';
+      'Waxaa laga saari doonaa Iibinta, Dejinta, iyo Alaabta. Iibkii hore way sii jiri doonaan. Waxaad weydiisan kartaa taageerada inay soo celiyaan.';
 
   @override
   String get deactivateItemConfirmAction => 'QARI';
