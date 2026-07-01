@@ -206,7 +206,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get partyDetailSalesHeader => 'Iibka';
 
   @override
-  String get partyDetailReceivesHeader => 'Alaab La dejiyey';
+  String get partyDetailReceivesHeader => 'Alaab Dejin';
 
   @override
   String get partyDetailPaymentsHeader => 'Lacagaha la bixiyey';
@@ -218,10 +218,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get homeSalesTodayLabel => 'Iibka maanta';
 
   @override
-  String get homeReceivablesLabel => 'Deynta kaa maqan';
+  String get homeReceivablesLabel => 'Lacag laguu leeyahay';
 
   @override
-  String get homePayablesLabel => 'Deyn aad qabto';
+  String get homePayablesLabel => 'Lacag aad ku leedahay';
 
   @override
   String get homeLowStockLabel => 'Alaab yaraatey';

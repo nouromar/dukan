@@ -445,7 +445,7 @@
     "max_chars": 24,
     "area": "Parties",
     "en": "Receives",
-    "so": "Alaab La dejiyey"
+    "so": "Alaab Dejin"
   },
   "partyDetailPaymentsHeader": {
     "role": "header",
@@ -473,14 +473,14 @@
     "max_chars": 24,
     "area": "Home",
     "en": "Customers owe you",
-    "so": "Deynta kaa maqan"
+    "so": "Lacag laguu leeyahay"
   },
   "homePayablesLabel": {
     "role": "label",
     "max_chars": 24,
     "area": "Home",
     "en": "You owe suppliers",
-    "so": "Deyn aad qabto"
+    "so": "Lacag aad ku leedahay"
   },
   "homeLowStockLabel": {
     "role": "label",

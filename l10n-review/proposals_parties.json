@@ -1,0 +1,7 @@
+{
+  "_comment": "AI draft — Parties batch. Home counters clarified (owner-approved). partyDetailReceivesHeader held pending casing decision.",
+
+  "homeReceivablesLabel": ["Lacag laguu leeyahay", "Customers owe you; owner: clearer; matches party detail"],
+  "homePayablesLabel": ["Lacag aad ku leedahay", "You owe suppliers; symmetry"],
+  "partyDetailReceivesHeader": ["Alaab Dejin", "owner: matches the Receive tile; was 'Alaab La dejiyey'"]
+}
