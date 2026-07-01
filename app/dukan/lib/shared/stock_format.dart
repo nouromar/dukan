@@ -3,8 +3,8 @@
 // default sale packaging count with any remainder in the base unit.
 //
 // Examples (base=kg, default packaging = "25 Kg Bag", conversion=25):
-//   47   → "1 Bag (25 kg) + 22 kg"
-//   50   → "2 Bag (25 kg)"   (no remainder)
+//   47   → "1 Bag(25kg) + 22 kg"
+//   50   → "2 Bag(25kg)"     (no remainder)
 //   22   → "22 kg"           (less than one bag)
 //   0    → "0 kg"            (caller decides color via isLowStock)
 //   −3   → "−3 kg"           (negative: skip compound, raw base)
@@ -13,7 +13,7 @@
 // "25 Kg Bag"). On the count line that collides with the count itself —
 // "9 50 Sack" reads as one number — so we strip the leading conversion
 // (and base-label) prefix down to the bare noun, then re-attach the size
-// in parens: "9 Sack (50 kg) + 48 kg".
+// in parens: "9 Sack(50kg) + 48 kg".
 //
 // When the default packaging IS the base (conversion = 1) or no
 // packaging info is available, the helper degrades to plain
@@ -51,10 +51,11 @@ String formatCompoundStock({
   }
   // Use the bare packaging noun so the count doesn't collide with a
   // number-prefixed label ("9 50 Sack" → "9 Sack"), then annotate it with
-  // its size so the count is unambiguous — "9 Sack (50 kg)" makes clear
-  // how big a sack is (a 50-kg sack vs a 25-kg sack).
+  // its size so the count is unambiguous — "9 Sack(50kg)" makes clear how
+  // big a sack is (a 50-kg sack vs a 25-kg sack). Compact (no spaces around
+  // the size) to save room on the tile.
   final noun = _countNoun(pkg, conv, baseLabel);
-  final sized = '$noun (${_pretty(conv)} $baseLabel)';
+  final sized = '$noun(${_pretty(conv)}$baseLabel)';
   if (remainder == 0) {
     return '${_pretty(whole)} $sized';
   }
