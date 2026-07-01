@@ -90,9 +90,9 @@ confirm or improve.
 | Sale | **Iibin** | home tile |
 | Receive (goods) | **Alaab Dejin** | LOCKED (home tile) |
 | Payment | **Lacag bixin** | |
-| Money In (customer pays) | **Lacag soo gal** | |
-| Money Out (pay supplier) | **Lacag bax** | |
-| Expense | **Qarashaad** | |
+| Money In (customer pays) | **Lacag Timid** | LOCKED |
+| Money Out (pay supplier) | **Lacag Baxday** | LOCKED |
+| Expense | **Qarash / Qarashaad** | LOCKED (Q, not "Kharash") |
 | Cash | **Kaash** | |
 | Credit / debt | **Deyn** | |
 | Customer | **Macmiil** | |

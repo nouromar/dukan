@@ -30,10 +30,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get payment => 'Lacag bixin';
 
   @override
-  String get paymentInLabel => 'Lacag Soo Gal';
+  String get paymentInLabel => 'Lacag Timid';
 
   @override
-  String get paymentOutLabel => 'Lacag Bax';
+  String get paymentOutLabel => 'Lacag Baxday';
 
   @override
   String get paymentDetailSettledHeader => 'Waxa loo bixiyay';
@@ -322,17 +322,17 @@ class AppLocalizationsSo extends AppLocalizations {
   String get drawerReceiveHistory => 'Taariikhda alaabta la qaatay';
 
   @override
-  String get drawerExpenseHistory => 'Taariikhda kharashka';
+  String get drawerExpenseHistory => 'Taariikhda qarashka';
 
   @override
-  String get expenseHistoryTitle => 'Kharashaadka';
+  String get expenseHistoryTitle => 'Qarashaadka';
 
   @override
   String get expenseHistoryLoadFailedMessage =>
-      'Kharashka ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.';
+      'Qarashka ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.';
 
   @override
-  String get expenseHistoryEmptyMessage => 'Kharash weli ma jiro.';
+  String get expenseHistoryEmptyMessage => 'Qarash weli ma jiro.';
 
   @override
   String get drawerPaymentHistory => 'Taariikhda lacagaha';
@@ -1264,30 +1264,30 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleDetailVoidButton => 'TIRTIR IIBKA';
 
   @override
-  String get expenseDetailTitle => 'Kharash';
+  String get expenseDetailTitle => 'Qarash';
 
   @override
-  String get expenseDetailVoidButton => 'TIRTIR KHARASHKAN';
+  String get expenseDetailVoidButton => 'TIRTIR QARASHKAN';
 
   @override
   String get expenseDetailLoadFailedMessage =>
-      'Lama soo qaadan karin kharashkan.';
+      'Lama soo qaadan karin qarashkan.';
 
   @override
-  String get expenseVoidConfirmTitle => 'Tirtir kharashkan?';
+  String get expenseVoidConfirmTitle => 'Tirtir qarashkan?';
 
   @override
   String get expenseVoidConfirmBody =>
-      'Tani way ka noqonaysaa kharashka. Lama soo celin karo.';
+      'Tani way tirtiraysaa qarashka. Lama soo celin karo.';
 
   @override
   String get expenseVoidConfirmYes => 'TIRTIR';
 
   @override
-  String get expenseVoidedToast => 'Kharash waa la tirtiray';
+  String get expenseVoidedToast => 'Qarash waa la tirtiray';
 
   @override
-  String get expenseVoidFailedMessage => 'Lama tirtiri karin kharashkan.';
+  String get expenseVoidFailedMessage => 'Lama tirtiri karin qarashkan.';
 
   @override
   String get paymentDetailVoidButton => 'TIRTIR LACAGTAN';
@@ -2526,7 +2526,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get manageCategoriesProductsTab => 'Alaabta';
 
   @override
-  String get manageCategoriesExpensesTab => 'Kharashyada';
+  String get manageCategoriesExpensesTab => 'Qarashyada';
 
   @override
   String get manageCategoriesAdd => 'Ku dar qayb';

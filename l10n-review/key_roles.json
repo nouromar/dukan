@@ -53,14 +53,14 @@
     "max_chars": 14,
     "area": "Payment",
     "en": "Money In",
-    "so": "Lacag Soo Gal"
+    "so": "Lacag Timid"
   },
   "paymentOutLabel": {
     "role": "home_tile",
     "max_chars": 14,
     "area": "Payment",
     "en": "Money Out",
-    "so": "Lacag Bax"
+    "so": "Lacag Baxday"
   },
   "paymentDetailSettledHeader": {
     "role": "header",
@@ -683,28 +683,28 @@
     "max_chars": null,
     "area": "Menu",
     "en": "Expense history",
-    "so": "Taariikhda kharashka"
+    "so": "Taariikhda qarashka"
   },
   "expenseHistoryTitle": {
     "role": "title",
     "max_chars": 20,
     "area": "Expense",
     "en": "Expenses",
-    "so": "Kharashaadka"
+    "so": "Qarashaadka"
   },
   "expenseHistoryLoadFailedMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Expense",
     "en": "Could not load expenses. Pull down to try again.",
-    "so": "Kharashka ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo."
+    "so": "Qarashka ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo."
   },
   "expenseHistoryEmptyMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Expense",
     "en": "No expenses yet.",
-    "so": "Kharash weli ma jiro."
+    "so": "Qarash weli ma jiro."
   },
   "drawerPaymentHistory": {
     "role": "body",
@@ -2503,35 +2503,35 @@
     "max_chars": 20,
     "area": "Expense",
     "en": "Expense",
-    "so": "Kharash"
+    "so": "Qarash"
   },
   "expenseDetailVoidButton": {
     "role": "button",
     "max_chars": 18,
     "area": "Expense",
     "en": "VOID THIS EXPENSE",
-    "so": "TIRTIR KHARASHKAN"
+    "so": "TIRTIR QARASHKAN"
   },
   "expenseDetailLoadFailedMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Expense",
     "en": "Couldn't load this expense.",
-    "so": "Lama soo qaadan karin kharashkan."
+    "so": "Lama soo qaadan karin qarashkan."
   },
   "expenseVoidConfirmTitle": {
     "role": "dialog_title",
     "max_chars": 30,
     "area": "Expense",
     "en": "Void this expense?",
-    "so": "Tirtir kharashkan?"
+    "so": "Tirtir qarashkan?"
   },
   "expenseVoidConfirmBody": {
     "role": "dialog_body",
     "max_chars": null,
     "area": "Expense",
     "en": "This reverses the expense. It can't be undone.",
-    "so": "Tani way ka noqonaysaa kharashka. Lama soo celin karo."
+    "so": "Tani way tirtiraysaa qarashka. Lama soo celin karo."
   },
   "expenseVoidConfirmYes": {
     "role": "button",
@@ -2545,14 +2545,14 @@
     "max_chars": null,
     "area": "Expense",
     "en": "Expense voided",
-    "so": "Kharash waa la tirtiray"
+    "so": "Qarash waa la tirtiray"
   },
   "expenseVoidFailedMessage": {
     "role": "empty_error",
     "max_chars": null,
     "area": "Expense",
     "en": "Couldn't void this expense.",
-    "so": "Lama tirtiri karin kharashkan."
+    "so": "Lama tirtiri karin qarashkan."
   },
   "paymentDetailVoidButton": {
     "role": "button",
@@ -4708,7 +4708,7 @@
     "max_chars": 12,
     "area": "Settings",
     "en": "Expenses",
-    "so": "Kharashyada"
+    "so": "Qarashyada"
   },
   "manageCategoriesAdd": {
     "role": "body",

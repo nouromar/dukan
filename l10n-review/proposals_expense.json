@@ -1,0 +1,7 @@
+{
+  "_comment": "AI draft — Expense batch + Money In/Out. Expense spelling normalized kharash->qarash separately (owner: Qarash is standard). This file: the Money In/Out relabel (owner) + the expense void-body Tirtir tweak.",
+
+  "paymentInLabel": ["Lacag Timid", "Money In (owner); was 'Lacag Soo Gal'; tile <=14"],
+  "paymentOutLabel": ["Lacag Baxday", "Money Out (owner); was 'Lacag Bax'; tile <=14"],
+  "expenseVoidConfirmBody": ["Tani way tirtiraysaa qarashka. Lama soo celin karo.", "was 'ka noqonaysaa'; match void bodies"]
+}
