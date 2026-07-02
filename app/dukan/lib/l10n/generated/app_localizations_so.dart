@@ -80,7 +80,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get price => 'Qiime';
 
   @override
-  String get cancel => 'Jooji';
+  String get cancel => 'Ka noqo';
 
   @override
   String get receiveTitle => 'Alaab dejin';
@@ -258,7 +258,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get filterApplyButton => 'ISTICMAAL';
 
   @override
-  String get filterResetButton => 'Tirtir';
+  String get filterResetButton => 'Dib u bilow';
 
   @override
   String get dateRangeToday => 'Maanta';
@@ -818,7 +818,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get signOutPendingDialogCancel => 'Jooji';
+  String get signOutPendingDialogCancel => 'Ka noqo';
 
   @override
   String get signOutPendingDialogConfirm => 'Ka bax';
@@ -1693,7 +1693,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get addNewItemCategoryLabel => 'Nooca (ikhtiyaari)';
 
   @override
-  String get addNewItemCancelButton => 'JOOJI';
+  String get addNewItemCancelButton => 'KA NOQO';
 
   @override
   String get addNewItemAddToSaleButton => 'KU DAR IIBKA';
