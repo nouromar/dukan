@@ -352,6 +352,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           learnedQty: item.learnedQty,
         );
       });
+      // Drop the search focus so the keyboard dismisses and the
+      // line-entry form gets room (it's hidden while search is focused,
+      // so the results grid isn't covered). See _onSearchFocusChanged.
+      _searchFocus.unfocus();
       return;
     }
     // Unactivated catalog row — itemId is set, shopItemId is null.
@@ -393,6 +397,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           perUnitCost: unit.lastCost,
         );
       });
+      // Same as the fast path: dismiss the keyboard so the line-entry
+      // form has room and the results grid isn't covered.
+      _searchFocus.unfocus();
     } on PostgrestException catch (error, stackTrace) {
       _reportError(error, stackTrace, 'ensure_shop_item');
       if (mounted) showError(context, l.receiveLoadFailedMessage);
@@ -566,12 +573,16 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     });
   }
 
-  /// Focusing the search field collapses the lines drawer so the item results
-  /// aren't hidden behind the expanded drawer and the keyboard.
+  /// Focusing the search field collapses the lines drawer AND hides the
+  /// line-entry form (via the `!_searchFocus.hasFocus` guard in build) so
+  /// the item results — and the keyboard — aren't fighting for space while
+  /// the cashier types a new query. Rebuild on every focus change so the
+  /// form re-appears once search is dismissed / a tile is tapped.
   void _onSearchFocusChanged() {
-    if (_searchFocus.hasFocus && _linesExpanded && mounted) {
-      setState(() => _linesExpanded = false);
-    }
+    if (!mounted) return;
+    setState(() {
+      if (_searchFocus.hasFocus) _linesExpanded = false;
+    });
   }
 
   void _onRemoveLine(String key) {
@@ -1128,7 +1139,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 },
               ),
             ),
-            if (_selectedItem != null)
+            // Hidden while the search field is focused so the results grid
+            // keeps the full height above the keyboard — otherwise the form
+            // + keyboard cover the grid (poor usability while searching).
+            if (_selectedItem != null && !_searchFocus.hasFocus)
               _LineEntryForm(
                 key: ValueKey(_selectedItem!.shopItemId),
                 shop: widget.shop,

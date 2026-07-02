@@ -116,6 +116,50 @@ void main() {
   );
 
   testWidgets(
+    'focusing search hides the line-entry form so the results grid is not '
+    'covered (matches Sale basket/keyboard behaviour)',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          shopItemId: 'si-1',
+          itemId: 'i1',
+          defaultShopItemUnitId: 'siu-bag',
+          displayName: 'Bariis',
+          baseUnitCode: 'kg',
+          baseUnitLabel: 'Kg',
+          defaultUnitCode: 'bag',
+          defaultUnitLabel: 'Bag',
+          defaultUnitConversionToBase: 25,
+          packagingLabel: '25 Kg Bag',
+          defaultUnitLastCost: 24,
+        ),
+      ];
+
+      await pumpReceive(tester);
+      await tester.pumpAndSettle();
+
+      // Tap a tile → line-entry form appears (tapping drops search focus).
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+      expect(
+        find.widgetWithText(FilledButton, en.receiveAddLineButton),
+        findsOneWidget,
+      );
+
+      // Re-focus search (cashier types another query) → the form hides so
+      // the results grid keeps the full height above the keyboard.
+      await tester.tap(find.byType(TextField).first);
+      await tester.pumpAndSettle();
+      expect(
+        find.widgetWithText(FilledButton, en.receiveAddLineButton),
+        findsNothing,
+      );
+      // The results tile is still there (grid not covered).
+      expect(find.text('Bariis'), findsWidgets);
+    },
+  );
+
+  testWidgets(
     'changing qty auto-scales the seeded total until it is hand-edited;'
     ' the derived per-packaging caption recomputes',
     (tester) async {
