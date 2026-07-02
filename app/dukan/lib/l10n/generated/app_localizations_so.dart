@@ -184,7 +184,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get reportsStockValueLabel => 'Qiimaha kaydka';
 
   @override
-  String get reportsLowStockLabel => 'Alaab yar';
+  String get reportsLowStockLabel => 'Alaab yaraatey';
 
   @override
   String get reportsLoadFailedMessage =>
@@ -313,16 +313,16 @@ class AppLocalizationsSo extends AppLocalizations {
   String get filterChipNoPrice => 'Aan qiimo lahayn';
 
   @override
-  String get drawerHistoryHeader => 'TAARIIKH';
+  String get drawerHistoryHeader => 'SOOYAAL';
 
   @override
-  String get drawerSalesHistory => 'Taariikhda iibka';
+  String get drawerSalesHistory => 'Sooyaalka iibka';
 
   @override
-  String get drawerReceiveHistory => 'Taariikhda alaabta la qaatay';
+  String get drawerReceiveHistory => 'Sooyaalka alaab dejinta';
 
   @override
-  String get drawerExpenseHistory => 'Taariikhda qarashka';
+  String get drawerExpenseHistory => 'Sooyaalka qarashka';
 
   @override
   String get expenseHistoryTitle => 'Qarashaadka';
@@ -335,7 +335,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get expenseHistoryEmptyMessage => 'Qarash weli ma jiro.';
 
   @override
-  String get drawerPaymentHistory => 'Taariikhda lacagaha';
+  String get drawerPaymentHistory => 'Sooyaalka lacagaha';
 
   @override
   String get paymentHistoryTitle => 'Lacagaha';
