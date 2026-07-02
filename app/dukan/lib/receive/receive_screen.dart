@@ -50,6 +50,7 @@ import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
 import 'package:dukan/shared/dismiss_keyboard.dart';
+import 'package:dukan/shared/item_grid.dart';
 import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/display_name.dart';
@@ -59,8 +60,6 @@ import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
-import 'package:dukan/shared/quantity_chips.dart';
-import 'package:dukan/shared/quantity_format.dart';
 import 'package:dukan/shared/stock_format.dart';
 import 'package:dukan/shared/typography.dart';
 
@@ -1101,16 +1100,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                       Expanded(
                         child: GridView.builder(
                           padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
-                          // Two columns × ~110dp — denser tile so the
-                          // name + cost don't float in whitespace.
-                          // Matches Sale.
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                                mainAxisExtent: 110,
-                              ),
+                          // Dragging the grid dismisses the keyboard so it
+                          // reclaims the space the numpad ate. Matches Sale.
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          // Responsive density shared with Sale — ~110dp tiles
+                          // that grow with the font scale, columns adapting to
+                          // width (2 → 3+ on wider phones).
+                          gridDelegate: itemGridDelegate(context),
                           itemCount: results.length,
                           itemBuilder: (context, i) {
                             final item = results[i];
@@ -1611,13 +1608,17 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                   onPressed: widget.saving ? null : widget.onCancel,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
-                    minWidth: 36,
-                    minHeight: 36,
+                    minWidth: 48,
+                    minHeight: 48,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 4),
+            // The two numbers the cashier fills — qty and total — share
+            // one row so the form stays short and the results grid keeps
+            // room while the keyboard is up. Per-packaging cost is derived
+            // below; quantity chips sit on their own compact row.
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -1644,46 +1645,32 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                // Slice 4: quick-tap quantity chips beside the box (learned
-                // usual + up to 3 defaults, capped to stay on one line).
                 Expanded(
-                  child: QuantityChips(
-                    learnedQty: widget.selected.learnedQty,
-                    maxChips: 3,
-                    alignment: WrapAlignment.start,
-                    onSelected: (v) {
-                      _qtyController.text = formatQty(v);
-                      _qtyController.selection = TextSelection.collapsed(
-                        offset: _qtyController.text.length,
-                      );
-                      _maybeReseedTotal();
-                    },
+                  child: TextField(
+                    controller: _totalController,
+                    onTapOutside: dismissKeyboardOnTapOutside,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    // First hand-edit locks the total so qty changes stop
+                    // auto-scaling it — the cashier's bono figure wins.
+                    onChanged: (_) => _totalEdited = true,
+                    decoration: InputDecoration(
+                      labelText:
+                          l.receiveLineTotalLabel(widget.shop.currencySymbol),
+                      isDense: true,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            // One money field only: the line total straight off the
-            // bono. Per-packaging cost is derived and shown as a small
-            // caption below so the cashier can sanity-check without
-            // having to fill an extra field.
-            TextField(
-              controller: _totalController,
-              onTapOutside: dismissKeyboardOnTapOutside,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              // First hand-edit locks the total so qty changes stop
-              // auto-scaling it — the cashier's bono figure wins.
-              onChanged: (_) => _totalEdited = true,
-              decoration: InputDecoration(
-                labelText: l.receiveLineTotalLabel(widget.shop.currencySymbol),
-                isDense: true,
-              ),
-            ),
+            // Quantity chips were dropped from the bono form: on Receive
+            // they only ever offered [1,2,5] (the learned "usual" qty is a
+            // Sale-only signal) and the cashier types the qty off the paper
+            // anyway — not worth a row in this space-tight inline form.
             if (_derivedPerUnit != null) ...[
               const SizedBox(height: 4),
               Text(
@@ -1696,7 +1683,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                 ),
               ),
             ],
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -1924,12 +1911,14 @@ class _ReceiveLineTile extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       subtitle: Text(subtitle),
+      // ≥48dp hit target so removing a bono line — destructive, right by
+      // the tap-to-edit body — isn't a fat-finger gamble one-handed.
       trailing: IconButton(
         tooltip: l.receiveLineRemoveTooltip(line.displayName),
         icon: const Icon(Icons.close, size: 20),
         onPressed: enabled ? onRemove : null,
         padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
       ),
     );
   }

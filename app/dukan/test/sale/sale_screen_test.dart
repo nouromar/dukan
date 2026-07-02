@@ -438,6 +438,38 @@ void main() {
     expect(find.text(en.cartLineSubtotal('1', '\$1.00', '\$1.00')), findsNothing);
   });
 
+  testWidgets(
+    'results grid dismisses keyboard on scroll; cart-line remove is a '
+    '≥48dp target', (tester) async {
+    api.onSearchItems = (_, _, _, _, _, _) async => [
+      fakeActivatedItem(
+        shopItemId: 'si-rice',
+        itemId: 'item-rice',
+        defaultShopItemUnitId: 'siu-rice',
+        displayName: 'Bariis Basmati',
+        defaultUnitSalePrice: 1.5,
+      ),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+
+    // Dragging the results grid dismisses the keyboard (reclaims space).
+    expect(
+      tester.widget<GridView>(find.byType(GridView)).keyboardDismissBehavior,
+      ScrollViewKeyboardDismissBehavior.onDrag,
+    );
+
+    // Add a line, then assert its remove ✕ is a ≥48dp hit target (was 36).
+    await tester.tap(find.text('Bariis Basmati'));
+    await tester.pumpAndSettle();
+    final removeBtn = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.close).first,
+    );
+    expect(removeBtn.constraints?.minWidth, greaterThanOrEqualTo(48));
+    expect(removeBtn.constraints?.minHeight, greaterThanOrEqualTo(48));
+  });
+
   testWidgets('SAVE button stays visible even with many cart lines', (
     tester,
   ) async {

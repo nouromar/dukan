@@ -37,6 +37,7 @@ import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/quantity_format.dart';
 import 'package:dukan/shared/dismiss_keyboard.dart';
+import 'package:dukan/shared/item_grid.dart';
 import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/typography.dart';
 import 'package:dukan/shared/stock_format.dart';
@@ -1285,15 +1286,13 @@ class _SaleScreenState extends State<SaleScreen> {
         Expanded(
           child: GridView.builder(
             padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
-            // Two columns × ~110dp — denser than the prior 140dp tile so
-            // text + price aren't lost in a sea of whitespace; still
-            // well above the 56dp tap-target floor.
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              mainAxisExtent: 110,
-            ),
+            // Dragging the results dismisses the keyboard (the natural
+            // one-handed gesture) so it reclaims the space the numpad ate.
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            // Responsive density: ~110dp tiles that grow with the font
+            // scale, column count adapting to width (2 → 3+ on wider
+            // phones). Shared with Receive so both grids stay identical.
+            gridDelegate: itemGridDelegate(context),
             itemCount: results.length,
             itemBuilder: (context, i) {
               final item = results[i];
@@ -1769,12 +1768,15 @@ class _CartLineTile extends StatelessWidget {
         ],
       ),
       subtitle: Text(subtitle),
+      // ≥48dp hit target (Material floor) so removing a line — a
+      // destructive action sitting right next to the tap-to-edit body —
+      // isn't a fat-finger gamble one-handed.
       trailing: IconButton(
         tooltip: l.cartRemoveLineTooltip(name),
         icon: const Icon(Icons.close, size: 20),
         onPressed: enabled ? onRemove : null,
         padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
       ),
     );
   }

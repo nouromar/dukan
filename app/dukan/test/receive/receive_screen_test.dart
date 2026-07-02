@@ -10,6 +10,7 @@ import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
+import 'package:dukan/shared/quantity_chips.dart';
 import 'package:dukan/storage/app_database.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
 
@@ -156,6 +157,48 @@ void main() {
       );
       // The results tile is still there (grid not covered).
       expect(find.text('Bariis'), findsWidgets);
+    },
+  );
+
+  testWidgets(
+    'results grid dismisses the keyboard on scroll; line form has no '
+    'quantity chips (trimmed for screen space)',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          shopItemId: 'si-1',
+          itemId: 'i1',
+          defaultShopItemUnitId: 'siu-bag',
+          displayName: 'Bariis',
+          baseUnitCode: 'kg',
+          baseUnitLabel: 'Kg',
+          defaultUnitCode: 'bag',
+          defaultUnitLabel: 'Bag',
+          defaultUnitConversionToBase: 25,
+          packagingLabel: '25 Kg Bag',
+          defaultUnitLastCost: 24,
+        ),
+      ];
+
+      await pumpReceive(tester);
+      await tester.pumpAndSettle();
+
+      // Dragging the results grid dismisses the keyboard (reclaims space).
+      expect(
+        tester.widget<GridView>(find.byType(GridView)).keyboardDismissBehavior,
+        ScrollViewKeyboardDismissBehavior.onDrag,
+      );
+
+      // Tap a tile → line-entry form, which no longer renders quantity chips.
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+      expect(find.byType(QuantityChips), findsNothing);
+      // Qty + total + ADD LINE all still present after the trim.
+      expect(find.widgetWithText(TextField, '24'), findsOneWidget); // total
+      expect(
+        find.widgetWithText(FilledButton, en.receiveAddLineButton),
+        findsOneWidget,
+      );
     },
   );
 
