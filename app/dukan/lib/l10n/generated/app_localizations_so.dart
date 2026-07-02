@@ -319,7 +319,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get drawerSalesHistory => 'Sooyaalka iibka';
 
   @override
-  String get drawerReceiveHistory => 'Sooyaalka alaab dejinta';
+  String get drawerReceiveHistory => 'Sooyaalka Alaab Keenida';
 
   @override
   String get drawerExpenseHistory => 'Sooyaalka qarashka';
@@ -629,7 +629,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get drawerProducts => 'Alaab';
 
   @override
-  String get drawerSettings => 'Qaabayn';
+  String get drawerSettings => 'Qaabeyn';
 
   @override
   String receiveFrom(Object supplier) {
@@ -907,7 +907,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Diyaarinta lama dhamayn. Isku day mar kale.';
 
   @override
-  String get settingsTitle => 'Diyaarinta';
+  String get settingsTitle => 'Qaabeyn';
 
   @override
   String get settingsShopNameLabel => 'Magaca dukaanka';
@@ -1224,7 +1224,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Wali noocyada qarashaadka lama galin. Ka dooro nooca dukaanka meesha Diyaarinta.';
 
   @override
-  String get saleHistoryTitle => 'Iibin';
+  String get saleHistoryTitle => 'Iibka';
 
   @override
   String get historyYesterday => 'Shalay';
@@ -1415,10 +1415,10 @@ class AppLocalizationsSo extends AppLocalizations {
       'Iibka lama helin. Cusboonaysii oo isku day mar kale.';
 
   @override
-  String get receiveHistoryTitle => 'Alaabtii La dejiyey';
+  String get receiveHistoryTitle => 'Alaab Keenida';
 
   @override
-  String get receiveHistoryTooltip => 'Sooyaalka Alaab keenida';
+  String get receiveHistoryTooltip => 'Sooyaalka Alaab Keenida';
 
   @override
   String get receiveHistoryEmptyMessage =>
@@ -2511,7 +2511,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get storageSyncResetFailedToast => 'Dib-u-bilowga way fashilantay';
 
   @override
-  String get storageSyncSettingsHeader => 'Diyaarinta';
+  String get storageSyncSettingsHeader => 'Qaabeyn';
 
   @override
   String get storageSyncWifiOnlyLabel => 'Kaliya marka Wi-Fi jiro';
