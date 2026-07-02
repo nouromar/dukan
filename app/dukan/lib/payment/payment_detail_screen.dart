@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/shared/void_action.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/receive/receive_detail_screen.dart';
@@ -90,27 +92,39 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
     if (confirmed != true || !mounted) return;
     setState(() => _voiding = true);
     final api = context.read<ShopApi>();
+    final opId = generateClientOpId('void_payment');
     try {
-      await api.voidPayment(
+      await voidWithQueueFallback(
+        context: context,
         shopId: widget.shop.id,
-        paymentId: h.paymentId,
-        clientOpId: generateClientOpId('void_payment'),
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.paymentVoidedToast)));
-      Navigator.of(context).pop(true);
-    } catch (error, stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'dukan payment',
-          context: ErrorDescription('void_payment'),
+        optimisticTxnId: h.paymentId,
+        rpc: 'void_payment',
+        params: buildVoidPaymentParams(paymentId: h.paymentId),
+        clientOpId: opId,
+        direct: () => api.voidPayment(
+          shopId: widget.shop.id,
+          paymentId: h.paymentId,
+          clientOpId: opId,
         ),
+        onDone: () {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l.paymentVoidedToast)));
+          Navigator.of(context).pop(true);
+        },
+        onFailure: (error, stackTrace) {
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: error,
+              stack: stackTrace,
+              library: 'dukan payment',
+              context: ErrorDescription('void_payment'),
+            ),
+          );
+          if (mounted) showError(context, l.paymentVoidFailedMessage);
+        },
       );
-      if (mounted) showError(context, l.paymentVoidFailedMessage);
     } finally {
       if (mounted) setState(() => _voiding = false);
     }

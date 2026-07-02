@@ -185,6 +185,9 @@ class PostExecutor {
       case 'create_shop_item':
       case 'create_shop_item_unit':
       case 'void_sale':
+      case 'void_receive':
+      case 'void_payment':
+      case 'void_expense':
       case 'set_shop_item_active':
       case 'create_shop_category':
       case 'rename_shop_category':
@@ -316,6 +319,24 @@ class PostExecutor {
           txnId: p['txn_id'] as String,
           clientOpId: clientOpId,
           refundAmount: p['refund_amount'] as num?,
+        );
+      case 'void_receive':
+        await _api.voidReceive(
+          shopId: shopId,
+          txnId: p['txn_id'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'void_payment':
+        await _api.voidPayment(
+          shopId: shopId,
+          paymentId: p['payment_id'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'void_expense':
+        await _api.voidExpense(
+          shopId: shopId,
+          txnId: p['txn_id'] as String,
+          clientOpId: clientOpId,
         );
       case 'set_supplier_item_unit_cost':
         // Naturally idempotent (last-write-wins), so no client_op_id needed.
@@ -639,7 +660,8 @@ Map<String, dynamic> buildPostOpeningPartyBalanceParams({
       if (notes != null) 'notes': notes,
     };
 
-// Offline sale void. The server dedups the reversal on client_op_id.
+// Offline voids. The server dedups every reversal on client_op_id, so a
+// re-drained void is a safe no-op.
 Map<String, dynamic> buildVoidSaleParams({
   required String txnId,
   num? refundAmount,
@@ -648,6 +670,15 @@ Map<String, dynamic> buildVoidSaleParams({
       'txn_id': txnId,
       if (refundAmount != null) 'refund_amount': refundAmount,
     };
+
+Map<String, dynamic> buildVoidReceiveParams({required String txnId}) =>
+    <String, dynamic>{'txn_id': txnId};
+
+Map<String, dynamic> buildVoidPaymentParams({required String paymentId}) =>
+    <String, dynamic>{'payment_id': paymentId};
+
+Map<String, dynamic> buildVoidExpenseParams({required String txnId}) =>
+    <String, dynamic>{'txn_id': txnId};
 
 // Supplier per-unit cost (offline Products editor). Naturally idempotent —
 // re-draining sets the same last-write-wins cost.

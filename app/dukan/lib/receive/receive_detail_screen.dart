@@ -18,9 +18,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/shared/void_action.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
@@ -115,21 +116,29 @@ class _ReceiveDetailScreenState extends State<ReceiveDetailScreen> {
 
     setState(() => _voiding = true);
     final api = context.read<ShopApi>();
+    final opId = _generateClientOpId();
     try {
-      await api.voidReceive(
+      await voidWithQueueFallback(
+        context: context,
         shopId: widget.shop.id,
-        txnId: header.txnId,
-        clientOpId: _generateClientOpId(),
+        optimisticTxnId: header.txnId,
+        rpc: 'void_receive',
+        params: buildVoidReceiveParams(txnId: header.txnId),
+        clientOpId: opId,
+        direct: () => api.voidReceive(
+          shopId: widget.shop.id,
+          txnId: header.txnId,
+          clientOpId: opId,
+        ),
+        onDone: () {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l.receiveVoidedToast)),
+          );
+          Navigator.of(context).pop(true);
+        },
+        onFailure: _handleVoidFailure,
       );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.receiveVoidedToast)),
-      );
-      Navigator.of(context).pop(true);
-    } on PostgrestException catch (error, stackTrace) {
-      _handleVoidFailure(error, stackTrace);
-    } catch (error, stackTrace) {
-      _handleVoidFailure(error, stackTrace);
     } finally {
       if (mounted) setState(() => _voiding = false);
     }

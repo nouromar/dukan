@@ -182,6 +182,18 @@ void main() {
     expect(api.voidSaleCalls.single.refundAmount, isNull);
   });
 
+  test('void_receive / void_payment / void_expense dispatch by id', () async {
+    await executor.execute(
+        _post('void_receive', buildVoidReceiveParams(txnId: 'rcv-1')));
+    await executor.execute(
+        _post('void_payment', buildVoidPaymentParams(paymentId: 'pay-1')));
+    await executor.execute(
+        _post('void_expense', buildVoidExpenseParams(txnId: 'exp-1')));
+    expect(api.voidReceiveCalls, ['rcv-1']);
+    expect(api.voidPaymentCalls, ['pay-1']);
+    expect(api.voidExpenseCalls, ['exp-1']);
+  });
+
   test('unknown rpc throws UnsupportedError', () async {
     await expectLater(
       executor.execute(_post('post_unknown', const {})),

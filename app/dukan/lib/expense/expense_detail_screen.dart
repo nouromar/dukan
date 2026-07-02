@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/shared/void_action.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/shared/client_op_id.dart';
@@ -99,27 +101,39 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     if (confirmed != true || !mounted) return;
     setState(() => _voiding = true);
     final api = context.read<ShopApi>();
+    final opId = generateClientOpId('void_expense');
     try {
-      await api.voidExpense(
+      await voidWithQueueFallback(
+        context: context,
         shopId: widget.shop.id,
-        txnId: e.txnId,
-        clientOpId: generateClientOpId('void_expense'),
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.expenseVoidedToast)));
-      Navigator.of(context).pop(true);
-    } catch (error, stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'dukan expense',
-          context: ErrorDescription('void_expense'),
+        optimisticTxnId: e.txnId,
+        rpc: 'void_expense',
+        params: buildVoidExpenseParams(txnId: e.txnId),
+        clientOpId: opId,
+        direct: () => api.voidExpense(
+          shopId: widget.shop.id,
+          txnId: e.txnId,
+          clientOpId: opId,
         ),
+        onDone: () {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l.expenseVoidedToast)));
+          Navigator.of(context).pop(true);
+        },
+        onFailure: (error, stackTrace) {
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: error,
+              stack: stackTrace,
+              library: 'dukan expense',
+              context: ErrorDescription('void_expense'),
+            ),
+          );
+          if (mounted) showError(context, l.expenseVoidFailedMessage);
+        },
       );
-      if (mounted) showError(context, l.expenseVoidFailedMessage);
     } finally {
       if (mounted) setState(() => _voiding = false);
     }
