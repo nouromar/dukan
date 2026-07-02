@@ -6424,6 +6424,16 @@ begin
   ) then
     raise exception 'SS (5d): a transactions_delta row is missing paid_amount';
   end if;
+  -- (5e) Every transaction row must carry client_op_id (0091). The mobile
+  --      dedup deletes the optimistic row by client_op_id; if the payload
+  --      omits it, the optimistic + server rows both survive → duplicates.
+  if exists (
+    select 1
+    from jsonb_array_elements(v_payload->'transactions') x
+    where not (x ? 'client_op_id')
+  ) then
+    raise exception 'SS (5e): a transactions_delta row is missing client_op_id';
+  end if;
 end;
 $$;
 
