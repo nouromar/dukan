@@ -129,7 +129,25 @@ class _AuthBootstrapState extends State<AuthBootstrap>
       // local repo no-ops gracefully if no projections exist
       // (light mode), so this is safe in both flag states.
       onProjectionCleanup: _localRepository.clearProjectionsForPost,
+      // Failure-type-aware, never-expiring retry: an expired token
+      // refreshes and retries without penalty; a genuine server reject
+      // parks quietly; everything else retries forever.
+      isAuthError: _isQueueAuthError,
+      refreshSession: () async {
+        await widget.supabaseClient.auth.refreshSession();
+      },
+      isPermanentError: _isQueuePermanentError,
     );
+    // Log a parked (server-rejected) post — the one non-retryable case.
+    // Kept as a listener so the controller stays log-free / test-quiet.
+    _offlineQueueController.addFailedPermanentListener((post) {
+      unawaited(CrashReporter.reportError(
+        StateError('post parked — server rejected on retry'),
+        StackTrace.current,
+        hint: 'queue.parked rpc=${post.rpc} shop=${post.shopId} '
+            'op=${post.clientOpId} lastError=${post.lastError}',
+      ));
+    });
     // #376: realtime debounce + delta poll interval resolve from
     // ConfigResolver so they're tunable per-shop without a build.
     // Defaults baked into the keys match the previous hard-coded
@@ -204,6 +222,9 @@ class _AuthBootstrapState extends State<AuthBootstrap>
       unawaited(CrashReporter.reportError(error, stack,
           hint: 'auth_bootstrap.recover.delta'));
     }
+    // Connection just returned — nudge the queue to drain now instead of
+    // waiting out the backoff timer. drainNow swallows its own errors.
+    unawaited(_offlineQueueController.drainNow());
   }
 
   /// Run the one-shot SharedPreferences migration if needed, then
@@ -465,4 +486,29 @@ class AuthRouter extends StatelessWidget {
       onSignOut: () => confirmSignOut(context),
     );
   }
+}
+
+// --- Queue failure classification --------------------------------------
+// Keep these consistent with the app's inline boundary: a
+// PostgrestException is a structured server reject (won't succeed on
+// retry), everything else is transient. The expired-token case is
+// carved out first so it refreshes rather than parking.
+
+bool _isQueueAuthError(Object error) {
+  if (error is AuthException) return true;
+  if (error is PostgrestException) {
+    // PostgREST returns PGRST301/302 (and HTTP 401) for a missing/expired
+    // JWT; the message mentions "JWT" in practice.
+    final code = error.code ?? '';
+    if (code == 'PGRST301' || code == 'PGRST302') return true;
+    if (error.message.toLowerCase().contains('jwt')) return true;
+  }
+  return false;
+}
+
+bool _isQueuePermanentError(Object error) {
+  // A structured server reject (business rule / constraint) fails
+  // identically forever — park it. Auth errors are handled earlier by
+  // the drain, so a JWT-expired PostgrestException never reaches here.
+  return error is PostgrestException;
 }

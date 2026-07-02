@@ -46,7 +46,7 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('surfaces failed posts loudly and wires the tap to retry',
+  testWidgets('shows a quiet indicator for parked posts, wired to retry',
       (tester) async {
     final dao = PendingPostDao(AppDatabase.instance());
     final controller = OfflineQueueController(
@@ -56,11 +56,8 @@ void main() {
       clock: () => DateTime.utc(2026, 6, 12),
     );
 
-    // Seed a post that already gave up in a prior session, then start —
-    // failedCount loads from the mirror. Pending is empty so no drain
-    // timer is armed (keeps the widget test deterministic). The
-    // drain→failed transition and retryFailed→drain behaviour are
-    // covered by the controller test.
+    // Seed a parked post from a prior session (failedCount loads from
+    // the mirror; pending empty so no drain timer — deterministic).
     await dao.insert(_post('s1'));
     await dao.markFailedPermanent('s1');
     await controller.start();
@@ -72,14 +69,53 @@ void main() {
     ));
     await tester.pump();
 
-    // The alarm shows the "not sent" copy + its distinct icon, and its
-    // tap is wired to retryFailed (not the softer drainNow).
-    expect(find.textContaining('not sent'), findsOneWidget);
-    expect(find.byIcon(Icons.sync_problem), findsOneWidget);
+    // A quiet grey "Syncing 1" chip (NOT a red alarm), wired to retry.
+    expect(find.textContaining('Syncing'), findsOneWidget);
+    final container = tester.widget<Container>(
+      find.descendant(
+        of: find.byType(InkWell),
+        matching: find.byType(Container),
+      ),
+    );
+    final decoration = container.decoration as BoxDecoration;
+    final scheme = Theme.of(tester.element(find.byType(QueueStatusPill)))
+        .colorScheme;
+    expect(decoration.color, scheme.surfaceContainerHighest,
+        reason: 'neutral grey — never a red alarm');
     final inkWell = tester.widget<InkWell>(find.byType(InkWell));
-    expect(inkWell.onTap, equals(controller.retryFailed),
-        reason: 'the alarm tap must retry stranded posts');
+    expect(inkWell.onTap, equals(controller.retryFailed));
 
+    controller.dispose();
+  });
+
+  testWidgets('shows the combined pending + parked count', (tester) async {
+    final dao = PendingPostDao(AppDatabase.instance());
+    // One parked + one pending seeded directly (no drain-driving under
+    // the widget-test fake clock). Executor throws a transient so if the
+    // start() drain does fire on pump, the pending post stays queued
+    // (transient → never parks); the big backoff timer is cancelled on
+    // dispose.
+    final controller = OfflineQueueController(
+      dao: dao,
+      executor: (_) async => throw StateError('offline'),
+      backoff: (_) => const Duration(hours: 1),
+      clock: () => DateTime.utc(2026, 6, 12),
+    );
+    await dao.insert(_post('parked'));
+    await dao.markFailedPermanent('parked');
+    await dao.insert(_post('pending'));
+    await controller.start();
+    expect(controller.pendingCount, 1);
+    expect(controller.failedCount, 1);
+
+    await tester.pumpWidget(wrapWithApp(
+      const Scaffold(body: QueueStatusPill()),
+      offlineQueueController: controller,
+    ));
+    await tester.pump();
+
+    expect(find.textContaining('2'), findsOneWidget,
+        reason: 'pending + parked are summed into one count');
     controller.dispose();
   });
 }

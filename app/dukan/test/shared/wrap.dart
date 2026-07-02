@@ -68,6 +68,13 @@ Widget wrapWithApp(
         // and pumpAndSettle drains it without holding pending timers
         // past the test.
         backoff: (_) => Duration.zero,
+        // The queue now retries transient failures FOREVER, which would
+        // wedge pumpAndSettle on a fake api that always throws. In tests
+        // treat every drain failure as terminal so the post parks after
+        // one attempt and the tree settles (matches the pre-never-expire
+        // effective behaviour). Tests wanting real retry semantics inject
+        // their own controller.
+        isPermanentError: (_) => true,
       );
 
   final providers = <SingleChildWidget>[

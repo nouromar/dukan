@@ -2321,17 +2321,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String offlineQueueFailedLabel(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count not sent — retry',
-      one: '1 not sent — retry',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get storageSyncTitle => 'Storage & sync';
 
   @override

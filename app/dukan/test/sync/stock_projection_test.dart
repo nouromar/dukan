@@ -148,7 +148,6 @@ void main() {
         executorCalls++;
       },
       onProjectionCleanup: repo.clearProjectionsForPost,
-      maxAttempts: 5,
       backoff: (_) => const Duration(seconds: 5),
     );
     await controller.start();
@@ -189,7 +188,7 @@ void main() {
         throw StateError('permanent error');
       },
       onProjectionCleanup: repo.clearProjectionsForPost,
-      maxAttempts: 1, // single attempt → straight to failed_permanent
+      isPermanentError: (_) => true, // server reject → parks immediately
       backoff: (_) => const Duration(milliseconds: 1),
     );
     await controller.start();

@@ -154,37 +154,95 @@ void main() {
     tiny.dispose();
   });
 
-  test('failed-permanent transition: drain stops retrying after maxAttempts',
+  test('permanent (server-reject) failure parks the post; transient never does',
       () async {
+    // A permanent-classified error parks immediately (one attempt).
     final terminal = OfflineQueueController(
       dao: dao,
       executor: (post) async {
-        // Always fail — testing the transition itself.
-        throw StateError('persistent failure');
+        throw StateError('server rejected');
       },
+      isPermanentError: (_) => true,
       backoff: (_) => Duration.zero,
       clock: () => DateTime.utc(2026, 6, 12, 12, 0, 0),
-      maxAttempts: 3,
     );
     final failed = <String>[];
     terminal.addFailedPermanentListener((p) => failed.add(p.id));
     await terminal.start();
     await terminal.enqueue(_post('a'));
-    // Pump enough microtasks for 3 retries to fire.
     for (var i = 0; i < 30; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 1));
-      if (terminal.pendingCount == 0) break;
+      if (terminal.failedCount > 0) break;
     }
     expect(failed, ['a']);
     expect(terminal.pendingCount, 0,
-        reason: 'failed-permanent rows leave the pending list');
-    expect(terminal.failedCount, 1,
-        reason: 'stranded posts are counted so the pill can surface them');
-    final stillPending = await dao.load();
-    expect(stillPending, isEmpty);
-    final inTerminal = await dao.loadFailedPermanent();
-    expect(inTerminal.map((p) => p.id), ['a']);
+        reason: 'parked rows leave the pending list');
+    expect(terminal.failedCount, 1);
+    expect((await dao.loadFailedPermanent()).map((p) => p.id), ['a']);
     terminal.dispose();
+  });
+
+  test('transient failure retries FOREVER and never parks', () async {
+    // Always fails, but the error is NOT classified permanent → the
+    // post must keep climbing attempts and never leave the queue.
+    final forever = OfflineQueueController(
+      dao: dao,
+      executor: (post) async {
+        throw StateError('network down');
+      },
+      backoff: (_) => Duration.zero,
+      clock: () => DateTime.utc(2026, 6, 12, 12, 0, 0),
+    );
+    await forever.start();
+    await forever.enqueue(_post('b'));
+    // Let many retries fire.
+    for (var i = 0; i < 40; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+    }
+    expect(forever.failedCount, 0, reason: 'never parked');
+    expect(forever.pendingCount, 1, reason: 'still queued, still retrying');
+    expect((await dao.load()).map((p) => p.id), ['b']);
+    final head = (await dao.load()).single;
+    expect(head.attempts, greaterThan(2),
+        reason: 'attempts keep climbing (drives backoff), not a death count');
+    forever.dispose();
+  });
+
+  test('auth failure refreshes the session and never consumes an attempt',
+      () async {
+    var refreshes = 0;
+    var failWithAuth = true;
+    final authy = OfflineQueueController(
+      dao: dao,
+      executor: (post) async {
+        if (failWithAuth) throw StateError('JWT expired');
+        executed.add(post.id);
+      },
+      isAuthError: (e) => e.toString().contains('JWT'),
+      refreshSession: () async => refreshes++,
+      backoff: (_) => Duration.zero,
+      clock: () => DateTime.utc(2026, 6, 12, 12, 0, 0),
+    );
+    await authy.start();
+    await authy.enqueue(_post('c'));
+    for (var i = 0; i < 20; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+      if (refreshes > 0) break;
+    }
+    expect(refreshes, greaterThan(0), reason: 'a 401 triggers a refresh');
+    expect((await dao.load()).single.attempts, 0,
+        reason: 'auth failures never burn an attempt');
+    expect(authy.failedCount, 0, reason: 'auth never parks a post');
+
+    // Token restored — the post now drains.
+    failWithAuth = false;
+    await authy.drainNow();
+    for (var i = 0; i < 20; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+      if (authy.pendingCount == 0) break;
+    }
+    expect(executed, ['c']);
+    authy.dispose();
   });
 
   test('start() reloads failedCount from a prior session', () async {
@@ -203,36 +261,28 @@ void main() {
     reloaded.dispose();
   });
 
-  test('retryFailed(): resets stranded posts to pending and drains them',
+  test('retryFailed(): resets parked posts to pending and drains them',
       () async {
-    var failNext = true;
+    // Seed a post the server parked in a prior run.
+    await dao.insert(_post('s1'));
+    await dao.markFailedPermanent('s1');
     final retryable = OfflineQueueController(
       dao: dao,
-      executor: (post) async {
-        if (failNext) throw StateError('offline');
-        executed.add(post.id);
-      },
+      executor: (post) async => executed.add(post.id),
       backoff: (_) => Duration.zero,
       clock: () => DateTime.utc(2026, 6, 12, 12, 0, 0),
-      maxAttempts: 2,
     );
     await retryable.start();
-    await retryable.enqueue(_post('s1'));
-    for (var i = 0; i < 30; i++) {
-      await Future<void>.delayed(const Duration(milliseconds: 1));
-      if (retryable.failedCount > 0) break;
-    }
     expect(retryable.failedCount, 1);
     expect(executed, isEmpty);
 
-    // Connectivity is back — cashier taps "retry".
-    failNext = false;
+    // Manual retry (pill tap / reconnect) — the post finally drains.
     await retryable.retryFailed();
     for (var i = 0; i < 30; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 1));
       if (retryable.failedCount == 0 && retryable.pendingCount == 0) break;
     }
-    expect(executed, ['s1'], reason: 'the once-stranded post finally posts');
+    expect(executed, ['s1'], reason: 'the once-parked post finally posts');
     expect(retryable.failedCount, 0);
     expect(await dao.loadFailedPermanent(), isEmpty);
     retryable.dispose();

@@ -3882,12 +3882,6 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Syncing 1} other{Syncing {count}}}'**
   String offlineQueuePillLabel(int count);
 
-  /// No description provided for @offlineQueueFailedLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 not sent — retry} other{{count} not sent — retry}}'**
-  String offlineQueueFailedLabel(int count);
-
   /// No description provided for @storageSyncTitle.
   ///
   /// In en, this message translates to:

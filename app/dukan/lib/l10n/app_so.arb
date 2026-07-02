@@ -1019,14 +1019,6 @@
       }
     }
   },
-  "offlineQueueFailedLabel": "{count, plural, =1{1 lama dirin — dib u dir} other{{count} lama dirin — dib u dir}}",
-  "@offlineQueueFailedLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "storageSyncTitle": "Kayd & is-waafajin",
   "storageSyncStatusConnected": "Xidhan",
   "storageSyncStatusOffline": "Aan xidhneyn",

@@ -1032,14 +1032,6 @@
       }
     }
   },
-  "offlineQueueFailedLabel": "{count, plural, =1{1 not sent — retry} other{{count} not sent — retry}}",
-  "@offlineQueueFailedLabel": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "storageSyncTitle": "Storage & sync",
   "storageSyncStatusConnected": "Connected",
   "storageSyncStatusOffline": "Offline",

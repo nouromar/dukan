@@ -1,16 +1,15 @@
-// Compact pill that appears in the app bar of any screen wrapped in
-// the OfflineQueueController provider. Two states:
+// Quiet, non-alarming upload indicator in the app bar of any screen
+// wrapped in the OfflineQueueController provider.
 //
-//   * SYNCING (pending posts, none failed) — soft error-container pill,
-//     "Syncing N"; tapping drains immediately (useful when the cashier
-//     knows connectivity just came back).
-//   * NOT SENT (any failed_permanent posts) — a LOUD solid-red alarm,
-//     "N not sent — retry". These are sales/receives that gave up after
-//     the retry cap and are stranded on the device. This must never be
-//     silent — an unnoticed stranded post is lost on reinstall. Tapping
-//     resets them to pending and retries.
+// The queue retries forever in the background (silent, connection- and
+// failure-aware), so this is deliberately NOT an alert — no red, no
+// popup, no blocking. It's a soft grey "Syncing N" chip that simply
+// shows how many posts are still on the device and not yet on the
+// server. Its whole job is uninstall insurance: a careful owner /
+// support can notice unsent items before wiping the app. Tapping nudges
+// an immediate drain (and revives any post the server parked).
 //
-// Renders nothing only when there is genuinely nothing outstanding.
+// Hidden whenever nothing is outstanding.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -24,29 +23,25 @@ class QueueStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final queue = context.watch<OfflineQueueController>();
-    final failed = queue.failedCount;
-    if (queue.pendingCount == 0 && failed == 0) {
-      return const SizedBox.shrink();
-    }
+    // Everything still on the device: actively-retrying (pending) plus
+    // the rare parked (server-rejected) post. Both are "not yet on the
+    // server", which is what the shopkeeper cares about.
+    final outstanding = queue.pendingCount + queue.failedCount;
+    if (outstanding == 0) return const SizedBox.shrink();
+
     final l = tr(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-
-    // Failed posts dominate: they're the data-loss risk, so they get the
-    // loud solid-red alarm and own the tap (retry). Otherwise the softer
-    // "syncing" treatment.
-    final alarm = failed > 0;
-    final bg = alarm ? scheme.error : scheme.errorContainer;
-    final fg = alarm ? scheme.onError : scheme.onErrorContainer;
-    final label = alarm
-        ? l.offlineQueueFailedLabel(failed)
-        : l.offlineQueuePillLabel(queue.pendingCount);
-    final onTap = alarm ? queue.retryFailed : queue.drainNow;
+    // Neutral grey — informational, never alarming.
+    final bg = scheme.surfaceContainerHighest;
+    final fg = scheme.onSurfaceVariant;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: InkWell(
-        onTap: onTap,
+        // retryFailed revives any parked post AND drains pending, so one
+        // tap does the right thing whatever the mix.
+        onTap: queue.retryFailed,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -62,15 +57,11 @@ class QueueStatusPill extends StatelessWidget {
                 height: 14,
                 child: queue.isDraining
                     ? CircularProgressIndicator(strokeWidth: 2, color: fg)
-                    : Icon(
-                        alarm ? Icons.sync_problem : Icons.cloud_off,
-                        size: 14,
-                        color: fg,
-                      ),
+                    : Icon(Icons.cloud_upload_outlined, size: 14, color: fg),
               ),
               const SizedBox(width: 6),
               Text(
-                label,
+                l.offlineQueuePillLabel(outstanding),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: fg,
                   fontWeight: FontWeight.w700,

@@ -2336,17 +2336,6 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String offlineQueueFailedLabel(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count lama dirin — dib u dir',
-      one: '1 lama dirin — dib u dir',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get storageSyncTitle => 'Kayd & is-waafajin';
 
   @override

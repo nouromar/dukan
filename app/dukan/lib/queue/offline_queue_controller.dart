@@ -3,21 +3,25 @@
 // persistence — every mutation hits a single row, not a re-encoded
 // blob.
 //
-// Retry policy (exponential, capped):
-//   attempt 1 fail -> 5 s
-//   attempt 2     -> 15 s
-//   attempt 3     -> 60 s
-//   attempt 4     -> 5 min
-//   attempt 5+    -> 30 min  (cap)
+// Retry policy — SILENT, NEVER-EXPIRING, FAILURE-TYPE-AWARE. A queued
+// post retries forever until it lands; nothing is ever silently
+// abandoned. The drain classifies each failure (see the constructor
+// callbacks):
+//   * auth/token (401)  -> refresh the session, retry, DON'T count it.
+//   * permanent reject  -> park quietly (failed_permanent) + log; a
+//                          poison post that would fail identically
+//                          forever is the only thing that stops.
+//   * transient (net /   -> keep the post at the head and retry FOREVER
+//     timeout / offline)    on exponential backoff (5s→15s→60s→5m→30m cap).
 //
-// The drain loop processes the queue head-first. On the first
-// failure it stops to avoid hammering the network with a backlog;
-// the next backoff fires another drain. Server-enforced idempotency
-// via client_op_id ensures retried posts never duplicate.
+// The drain loop processes head-first and stops on the first transient
+// failure to avoid hammering a backlog; the next backoff — or an
+// immediate drainNow() on a reconnect edge — re-attempts. Server-enforced
+// idempotency via client_op_id ensures retried posts never duplicate.
 //
-// Connectivity: no explicit detection. Failed posts retry on the
-// timer regardless. If the network's down, the retry fails fast
-// (~1 s) and re-arms; if the network's up, it succeeds.
+// Connectivity: no in-loop polling. Offline, the head fails fast (~1s)
+// and re-arms on backoff; the app wires drainNow() to the OS
+// offline→online edge + resume so a returning connection drains at once.
 
 import 'dart:async';
 
@@ -47,17 +51,38 @@ class OfflineQueueController extends ChangeNotifier {
     required this.executor,
     this.configResolver,
     this.onProjectionCleanup,
+    this.isAuthError,
+    this.refreshSession,
+    this.isPermanentError,
     Duration Function(int attempts)? backoff,
     DateTime Function()? clock,
     int? maxPending,
-    int? maxAttempts,
   })  : _explicitBackoff = backoff,
         _clock = clock ?? DateTime.now,
-        _explicitMaxPending = maxPending,
-        _explicitMaxAttempts = maxAttempts;
+        _explicitMaxPending = maxPending;
 
   final PendingPostDao dao;
   final PostExecutorFn executor;
+
+  /// Classifies a drain error as an auth/token failure (e.g. expired
+  /// access token → 401). When it returns true the drain refreshes the
+  /// session and retries WITHOUT consuming a retry attempt, so a token
+  /// outage can never strand a post. Null (unit tests / not wired) → no
+  /// error is treated as auth.
+  final bool Function(Object error)? isAuthError;
+
+  /// Best-effort session refresh, invoked when [isAuthError] flags a
+  /// drain error. Null → skip the refresh; either way the auth failure
+  /// doesn't consume an attempt.
+  final Future<void> Function()? refreshSession;
+
+  /// Classifies a drain error as a PERMANENT/non-retryable failure — a
+  /// genuine server reject (business rule, constraint) that will fail
+  /// identically no matter how often we retry. Only such errors park a
+  /// post (quietly, logged); everything else (network, timeout, offline,
+  /// unknown) retries FOREVER — the queue never expires. Null → nothing
+  /// is permanent, so every failure retries indefinitely.
+  final bool Function(Object error)? isPermanentError;
 
   /// Called when a queue entry leaves the pending state — either
   /// drained successfully or transitioned to failed_permanent. Used
@@ -77,20 +102,12 @@ class OfflineQueueController extends ChangeNotifier {
   final Duration Function(int)? _explicitBackoff;
   final DateTime Function() _clock;
   final int? _explicitMaxPending;
-  final int? _explicitMaxAttempts;
 
   int get _maxPending {
     if (_explicitMaxPending != null) return _explicitMaxPending;
     final r = configResolver;
     if (r != null) return r.resolve(ConfigKeys.queueMaxPending);
     return kQueueMaxPending;
-  }
-
-  int get _maxAttempts {
-    if (_explicitMaxAttempts != null) return _explicitMaxAttempts;
-    final r = configResolver;
-    if (r != null) return r.resolve(ConfigKeys.queueMaxAttempts);
-    return kQueueMaxAttempts;
   }
 
   Duration _backoff(int attempts) {
@@ -150,15 +167,14 @@ class OfflineQueueController extends ChangeNotifier {
 
   int get pendingCount => _pending.length;
 
-  /// Count of posts that exhausted their retries and are now in the
-  /// terminal `failed_permanent` state — i.e. sales/receives that were
-  /// written locally but never reached the server. These are NOT in
-  /// [_pending] (load() filters to state='pending'), so the queue
-  /// would otherwise fall silent while unposted data sits stranded on
-  /// the device. Surfaced by the status pill so the cashier can retry
-  /// before the data is lost (e.g. on reinstall). Refreshed on
-  /// [start], on each failed-permanent transition, and after
-  /// [retryFailed].
+  /// Count of posts PARKED in the terminal `failed_permanent` state
+  /// because the server rejected them on retry (permanent/non-retryable
+  /// — see [isPermanentError]). Transient failures never land here; they
+  /// retry forever. Parked posts are NOT in [_pending] (load() filters
+  /// to state='pending'), so this count is what keeps them visible in
+  /// the quiet status indicator (and manually retryable via
+  /// [retryFailed]) instead of vanishing. Refreshed on [start], on each
+  /// park, and after [retryFailed].
   int _failedCount = 0;
   int get failedCount => _failedCount;
 
@@ -177,10 +193,9 @@ class OfflineQueueController extends ChangeNotifier {
     }
   }
 
-  /// Reset every `failed_permanent` post back to `pending` and drain
-  /// immediately. Wired to the status pill's "N not uploaded — tap to
-  /// retry" affordance: the manual escape hatch for posts that gave up
-  /// after [_maxAttempts] (e.g. a long auth-token outage). Idempotent
+  /// Reset every parked `failed_permanent` post back to `pending` and
+  /// drain immediately. Wired to the status indicator's tap: the manual
+  /// escape hatch for a post the server rejected on retry. Idempotent
   /// when there's nothing to retry.
   Future<void> retryFailed() async {
     final failed = await dao.loadFailedPermanent();
@@ -303,41 +318,74 @@ class OfflineQueueController extends ChangeNotifier {
           if (_disposed) return;
           notifyListeners();
         } catch (error) {
+          final now = _clock();
+          // (1) Auth/token failure (e.g. expired access token → 401):
+          // refresh the session and retry WITHOUT consuming an attempt,
+          // so a token outage can never strand a post. This was the
+          // likely original data-loss trigger.
+          if (isAuthError?.call(error) ?? false) {
+            final refresh = refreshSession;
+            if (refresh != null) {
+              try {
+                await refresh();
+              } catch (_) {
+                // Refresh failed (truly signed out) — still don't burn
+                // the attempt; we'll try again on the next drain.
+              }
+            }
+            if (_disposed) return;
+            await dao.updateAttempts(
+              id: head.id,
+              attempts: head.attempts,
+              lastAttemptAt: now,
+              lastError: 'auth: $error',
+            );
+            _pending = [
+              head.copyWith(lastAttemptAt: now, lastError: 'auth: $error'),
+              ..._pending.sublist(1),
+            ];
+            if (_disposed) return;
+            notifyListeners();
+            break;
+          }
           final attempts = head.attempts + 1;
-          final lastAttemptAt = _clock();
           final errorString = error.toString();
           await dao.updateAttempts(
             id: head.id,
             attempts: attempts,
-            lastAttemptAt: lastAttemptAt,
+            lastAttemptAt: now,
             lastError: errorString,
           );
           final updated = head.copyWith(
             attempts: attempts,
-            lastAttemptAt: lastAttemptAt,
+            lastAttemptAt: now,
             lastError: errorString,
           );
-          // Failed-permanent transition. After [_maxAttempts] tries
-          // we stop retrying this post — drain skips it (load()
-          // filters to state='pending' only) and the UI can surface
-          // it for manual retry / discard.
-          if (attempts >= _maxAttempts) {
+          // (2) Permanent/non-retryable failure — a genuine server reject
+          // that will fail identically forever. Park it QUIETLY (no
+          // alert) and log, so a poison post can't spin indefinitely.
+          // Rare: most rejects are caught inline and never queue.
+          if (isPermanentError?.call(error) ?? false) {
             await dao.markFailedPermanent(head.id);
             _pending = _pending.sublist(1);
             _failedCount += 1;
-            // #374: clear projection so stock reverts to pre-post
-            // value. Cashier can manually retry from the Failed
-            // posts screen if they want to try again.
+            // #374: clear projection so on-screen stock reverts.
             await _safeCleanupProjection(head.id);
+            // Notify listeners (production wires one to CrashReporter so
+            // a parked post is logged; kept out of the controller so the
+            // park path stays log-free and test-quiet).
             for (final l in _failedListeners) {
               l(updated);
             }
             if (_disposed) return;
             notifyListeners();
-            // Don't break — keep draining the rest of the queue.
-            // Other pending posts may still succeed.
+            // Keep draining the rest — other posts may still succeed.
             continue;
           }
+          // (3) Transient (network / timeout / offline / unknown): keep
+          // the post at the head and retry FOREVER. The queue never
+          // expires; a reconnect (drainNow) or the backoff timer will
+          // re-attempt it.
           _pending = [updated, ..._pending.sublist(1)];
           if (_disposed) return;
           notifyListeners();
