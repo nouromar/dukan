@@ -12,6 +12,10 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/products/packaging_editor_sheet.dart';
 import 'package:dukan/products/shop_item_editor_screen.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
 
 import '../shared/fakes.dart';
 import '../shared/wrap.dart';
@@ -159,6 +163,72 @@ void main() {
   );
 
   testWidgets(
+    'offline: the item create is queued with the client id, not lost',
+    (tester) async {
+      api.onListUnits = () async => const [
+            UnitOption(id: 'unit-kg', code: 'kg', label: 'Kg'),
+          ];
+      // The item create fails as if offline (transient — NOT a reject).
+      api.onCreateShopItem =
+          (_, _, _, _, _, _, _, _, _) async => throw Exception('offline');
+
+      final drained = <PendingPost>[];
+      final queue = OfflineQueueController(
+        dao: PendingPostDao(AppDatabase.instance()),
+        executor: (p) async => drained.add(p),
+        backoff: (_) => Duration.zero,
+        clock: () => DateTime.utc(2026, 7, 2),
+      );
+      addTearDown(queue.dispose);
+
+      await tester.pumpWidget(wrapWithApp(
+        ShopItemEditorScreen(shop: shop),
+        shopApi: api,
+        offlineQueueController: queue,
+        configResolver:
+            FakeConfigResolver(values: const {'use_local_db': true}),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextField, en.shopItemEditorNameLabel),
+        'Sonkor',
+      );
+      await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kg').last);
+      await tester.pumpAndSettle();
+      await fillBaseSalePriceViaSheet(tester, '15');
+
+      await tester.scrollUntilVisible(
+        find.text(en.shopItemEditorSaveAndAddAnotherButton),
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byType(ShopItemEditorScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.text(en.shopItemEditorSaveAndAddAnotherButton),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      // The item create was queued (not lost) with a client-minted id +
+      // client_op_id — base-only, so no extra-packaging post.
+      final post = drained.singleWhere((p) => p.rpc == 'create_shop_item');
+      expect(post.params['name'], 'Sonkor');
+      expect(post.params['shop_item_id'], isNotNull);
+      expect(post.params['base_unit_id'], isNotNull);
+      expect(post.clientOpId, isNotNull);
+      expect(drained.where((p) => p.rpc == 'create_shop_item_unit'), isEmpty);
+    },
+  );
+
+  testWidgets(
     'SAVE without any packaging field surfaces the "fill a packaging" error',
     (tester) async {
       api.onListUnits = () async => const [
@@ -293,12 +363,16 @@ void main() {
 
       // set_default_flags fired on the non-base packaging id, setting
       // both default-sale and default-receive true so the Sale screen
-      // leads with the Bag packaging.
+      // leads with the Bag packaging. The editor now mints the unit id
+      // client-side (0094/0095), so the flags target that same client id
+      // it passed to create_shop_item_unit — not the server's return.
       expect(api.setShopItemUnitDefaultFlagsCalls, hasLength(1));
+      expect(api.createShopItemUnitCalls, hasLength(1));
       expect(
         api.setShopItemUnitDefaultFlagsCalls.first.shopItemUnitId,
-        'unit-id-bag-25',
+        api.createShopItemUnitCalls.first.shopItemUnitId,
       );
+      expect(api.createShopItemUnitCalls.first.shopItemUnitId, isNotNull);
       expect(
         api.setShopItemUnitDefaultFlagsCalls.first.isDefaultSale,
         isTrue,

@@ -51,11 +51,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/products/packaging_editor_sheet.dart';
 import 'package:dukan/products/shop_item_detail_screen.dart';
 import 'package:dukan/products/products_screen.dart';
@@ -576,7 +582,14 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
     if (!mounted) return;
     setState(() => _saving = true);
     final api = context.read<ShopApi>();
+    final queue = context.read<OfflineQueueController>();
+    final localRepo =
+        useLocalDb(context) ? context.read<LocalRepository>() : null;
     final languageCode = Localizations.localeOf(context).languageCode;
+    String actorId = '';
+    try {
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {}
     try {
       final basePackaging = _packagings.first;
       // Back-compute base sale price from the first non-base packaging
@@ -601,90 +614,219 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
           }
         }
       }
-      final created = await api.createShopItem(
-        shopId: widget.shop.id,
-        name: name,
-        languageCode: languageCode,
-        baseUnitCode: baseUnit,
-        salePrice: baseSalePrice,
-        categoryId: _categoryId,
-      );
-      final shopItemId = created.shopItemId;
-      final baseUnitId = created.defaultShopItemUnitId;
+      // Mint client ids for the item + its base packaging up front (0093-
+      // 0095) so the whole create can run offline. `emit` calls the RPC
+      // directly while online; the moment any call hits a transient failure
+      // it flips to queuing this op and every later one (FIFO drains them in
+      // dependency order: item → units → barcodes/costs/flags/stock/aliases).
+      // A structured reject on the (critical) item create aborts the save;
+      // on the soft extras it's reported and skipped.
+      final shopItemId = generateUuidV4();
+      final baseUnitId = generateUuidV4();
+      final itemOpId = generateClientOpId('item');
+      var offline = false;
 
-      // Base packaging — if a barcode was scanned, bind it.
+      Future<void> emit({
+        required String rpc,
+        required String opId,
+        required Map<String, dynamic> params,
+        Future<void> Function()? direct,
+        Future<void> Function()? mirror,
+        void Function(Object, StackTrace)? onReject,
+      }) async {
+        if (!offline && direct != null) {
+          try {
+            await direct();
+            await mirror?.call();
+            return;
+          } on PostgrestException catch (error, st) {
+            if (onReject == null) rethrow; // critical → abort the save
+            onReject(error, st);
+            return;
+          } catch (error, st) {
+            // Transient. Thin-client mode has no queue, so behave as before
+            // (abort the item / soft-skip the extra).
+            if (localRepo == null) {
+              if (onReject == null) rethrow;
+              onReject(error, st);
+              return;
+            }
+            offline = true; // queue this op and everything after it
+          }
+        }
+        await mirror?.call();
+        await queue.enqueue(PendingPost(
+          id: generateClientOpId('post'),
+          clientOpId: opId,
+          shopId: widget.shop.id,
+          originalActorUserId: actorId,
+          rpc: rpc,
+          params: params,
+          queuedAt: DateTime.now(),
+        ));
+      }
+
+      final supplier = _supplier;
+
+      // 1) The item + base packaging + display alias (critical).
+      await emit(
+        rpc: 'create_shop_item',
+        opId: itemOpId,
+        params: buildCreateShopItemParams(
+          shopItemId: shopItemId,
+          baseUnitId: baseUnitId,
+          name: name,
+          languageCode: languageCode,
+          baseUnitCode: baseUnit,
+          salePrice: baseSalePrice,
+          categoryId: _categoryId,
+        ),
+        direct: () async {
+          await api.createShopItem(
+            shopId: widget.shop.id,
+            name: name,
+            languageCode: languageCode,
+            baseUnitCode: baseUnit,
+            salePrice: baseSalePrice,
+            categoryId: _categoryId,
+            shopItemId: shopItemId,
+            baseUnitId: baseUnitId,
+            clientOpId: itemOpId,
+          );
+        },
+        mirror: () async {
+          await localRepo?.insertLocalShopItem(
+            shopItemId: shopItemId,
+            shopId: widget.shop.id,
+            displayName: name,
+            baseUnitCode: baseUnit,
+            categoryId: _categoryId,
+          );
+          await localRepo?.insertLocalShopItemUnit(
+            shopItemUnitId: baseUnitId,
+            shopItemId: shopItemId,
+            unitCode: baseUnit,
+            packagingLabel: baseUnit,
+            conversionToBase: 1,
+            salePrice: baseSalePrice,
+          );
+          await localRepo?.insertLocalShopItemAlias(
+            shopItemId: shopItemId,
+            aliasText: name,
+            isDisplay: true,
+          );
+        },
+      );
+
+      final perUnitIds = <_PackagingDraft, String>{};
+      perUnitIds[basePackaging] = baseUnitId;
+
+      // 2) Base packaging barcode.
       if (basePackaging.barcode != null && basePackaging.barcode!.isNotEmpty) {
-        try {
-          await api.addShopItemBarcode(
+        await emit(
+          rpc: 'add_shop_item_barcode',
+          opId: generateClientOpId('bc'),
+          params: buildAddShopItemBarcodeParams(
+            shopItemUnitId: baseUnitId,
+            barcode: basePackaging.barcode!,
+          ),
+          direct: () => api.addShopItemBarcode(
             shopId: widget.shop.id,
             shopItemUnitId: baseUnitId,
             barcode: basePackaging.barcode!,
-          );
-        } catch (error, stackTrace) {
-          _reportNonFatal(error, stackTrace, 'adding base barcode');
-        }
+          ),
+          onReject: (e, st) => _reportNonFatal(e, st, 'adding base barcode'),
+        );
       }
 
-      // Supplier cost on the base packaging if the owner entered one.
-      final supplier = _supplier;
+      // 3) Supplier cost on the base packaging.
       final baseCost = basePackaging.parsedCost;
       if (supplier != null && baseCost != null) {
-        try {
-          await api.setSupplierItemUnitCost(
+        await emit(
+          rpc: 'set_supplier_item_unit_cost',
+          opId: generateClientOpId('cost'),
+          params: buildSetSupplierItemUnitCostParams(
+            partyId: supplier.id,
+            shopItemUnitId: baseUnitId,
+            unitCost: baseCost,
+          ),
+          direct: () => api.setSupplierItemUnitCost(
             shopId: widget.shop.id,
             partyId: supplier.id,
             shopItemUnitId: baseUnitId,
             unitCost: baseCost,
-          );
-        } catch (error, stackTrace) {
-          _reportNonFatal(error, stackTrace, 'set supplier cost (base)');
-        }
+          ),
+          onReject: (e, st) =>
+              _reportNonFatal(e, st, 'set supplier cost (base)'),
+        );
       }
 
-      // Additional packagings (rows 1..n) — each requires unit + conversion.
-      final perUnitIds = <_PackagingDraft, String>{};
-      perUnitIds[basePackaging] = baseUnitId;
+      // 4) Additional packagings (rows 1..n) — each needs unit + conversion.
       for (var i = 1; i < _packagings.length; i++) {
         final p = _packagings[i];
         final unitCode = p.unitCode;
         final conversion = p.parsedConversion;
         if (unitCode == null || conversion == null || conversion <= 0) continue;
-        final unitId = await api.createShopItemUnit(
-          shopId: widget.shop.id,
-          shopItemId: shopItemId,
-          unitCode: unitCode,
-          conversionToBase: conversion,
-          salePrice: p.parsedSalePrice,
-        );
+        final unitId = generateUuidV4();
+        final unitOpId = generateClientOpId('unit');
         perUnitIds[p] = unitId;
+        await emit(
+          rpc: 'create_shop_item_unit',
+          opId: unitOpId,
+          params: buildCreateShopItemUnitParams(
+            shopItemUnitId: unitId,
+            shopItemId: shopItemId,
+            unitCode: unitCode,
+            conversionToBase: conversion,
+            salePrice: p.parsedSalePrice,
+          ),
+          direct: () => api.createShopItemUnit(
+            shopId: widget.shop.id,
+            shopItemId: shopItemId,
+            unitCode: unitCode,
+            conversionToBase: conversion,
+            salePrice: p.parsedSalePrice,
+            shopItemUnitId: unitId,
+            clientOpId: unitOpId,
+          ),
+          onReject: (e, st) =>
+              _reportNonFatal(e, st, 'creating extra packaging'),
+        );
         if (p.barcode != null && p.barcode!.isNotEmpty) {
-          try {
-            await api.addShopItemBarcode(
+          await emit(
+            rpc: 'add_shop_item_barcode',
+            opId: generateClientOpId('bc'),
+            params: buildAddShopItemBarcodeParams(
+              shopItemUnitId: unitId,
+              barcode: p.barcode!,
+            ),
+            direct: () => api.addShopItemBarcode(
               shopId: widget.shop.id,
               shopItemUnitId: unitId,
               barcode: p.barcode!,
-            );
-          } catch (error, stackTrace) {
-            _reportNonFatal(error, stackTrace, 'adding extra barcode');
-          }
+            ),
+            onReject: (e, st) => _reportNonFatal(e, st, 'adding extra barcode'),
+          );
         }
-        // Per-packaging supplier cost.
         final cost = p.parsedCost;
         if (supplier != null && cost != null) {
-          try {
-            await api.setSupplierItemUnitCost(
+          await emit(
+            rpc: 'set_supplier_item_unit_cost',
+            opId: generateClientOpId('cost'),
+            params: buildSetSupplierItemUnitCostParams(
+              partyId: supplier.id,
+              shopItemUnitId: unitId,
+              unitCost: cost,
+            ),
+            direct: () => api.setSupplierItemUnitCost(
               shopId: widget.shop.id,
               partyId: supplier.id,
               shopItemUnitId: unitId,
               unitCost: cost,
-            );
-          } catch (error, stackTrace) {
-            _reportNonFatal(
-              error,
-              stackTrace,
-              'set supplier cost (extra)',
-            );
-          }
+            ),
+            onReject: (e, st) =>
+                _reportNonFatal(e, st, 'set supplier cost (extra)'),
+          );
         }
       }
 
@@ -697,20 +839,23 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
       if (baseDefaultsHolder != null) {
         final unitId = perUnitIds[baseDefaultsHolder];
         if (unitId != null) {
-          try {
-            await api.setShopItemUnitDefaultFlags(
+          await emit(
+            rpc: 'set_shop_item_unit_default_flags',
+            opId: generateClientOpId('flags'),
+            params: buildSetShopItemUnitDefaultFlagsParams(
+              shopItemUnitId: unitId,
+              isDefaultSale: true,
+              isDefaultReceive: true,
+            ),
+            direct: () => api.setShopItemUnitDefaultFlags(
               shopId: widget.shop.id,
               shopItemUnitId: unitId,
               isDefaultSale: true,
               isDefaultReceive: true,
-            );
-          } catch (error, stackTrace) {
-            _reportNonFatal(
-              error,
-              stackTrace,
-              'flip non-base default flags',
-            );
-          }
+            ),
+            onReject: (e, st) =>
+                _reportNonFatal(e, st, 'flip non-base default flags'),
+          );
         }
       }
 
@@ -740,63 +885,85 @@ class _ShopItemEditorScreenState extends State<ShopItemEditorScreen> {
       }
       if (openingBase > 0) {
         final avgUnitCost = openingCostTotal / openingBase;
-        try {
-          await api.postOpeningStockAdjustment(
+        final stockOpId = generateClientOpId('stock');
+        await emit(
+          rpc: 'post_inventory_adjustment',
+          opId: stockOpId,
+          params: buildPostInventoryAdjustmentParams(
+            reasonCode: 'opening',
+            shopItemId: shopItemId,
+            quantityDelta: openingBase,
+            unitCost: avgUnitCost,
+            notes: l.shopItemEditorOpeningStockNote,
+          ),
+          direct: () => api.postOpeningStockAdjustment(
             shopId: widget.shop.id,
             shopItemId: shopItemId,
             baseQuantity: openingBase,
             unitCost: avgUnitCost,
+            clientOpId: stockOpId,
             notes: l.shopItemEditorOpeningStockNote,
-          );
-        } catch (error, stackTrace) {
-          // Surface the failure to the cashier — opening stock IS
-          // the user's data and a silent 0 in product detail is
-          // the worst outcome (#357 from the iPhone test pass).
-          // We also include the raw error string in the toast so
-          // we can actually diagnose what's failing in production
-          // (Sentry-only reports are invisible to the cashier and
-          // the developer alike when iterating live on device).
-          _reportNonFatal(error, stackTrace, 'opening stock adjustment');
-          if (mounted) {
-            showError(
-              context,
-              '${l.shopItemEditorOpeningStockFailedMessage}\n$error',
-            );
-          }
-        }
+          ),
+          // Surface a structured reject to the cashier — opening stock IS
+          // the user's data and a silent 0 in product detail is the worst
+          // outcome (#357). A transient failure instead queues silently.
+          onReject: (error, st) {
+            _reportNonFatal(error, st, 'opening stock adjustment');
+            if (mounted) {
+              showError(
+                context,
+                '${l.shopItemEditorOpeningStockFailedMessage}\n$error',
+              );
+            }
+          },
+        );
       }
 
       // Aliases — soft failures; the item save is the headline.
       for (final alias in _aliases) {
-        try {
-          await api.addShopItemAlias(
+        await emit(
+          rpc: 'add_shop_item_alias',
+          opId: generateClientOpId('alias'),
+          params: buildAddShopItemAliasParams(
+            shopItemId: shopItemId,
+            aliasText: alias,
+            languageCode: languageCode,
+            source: 'manual',
+          ),
+          direct: () => api.addShopItemAlias(
             shopId: widget.shop.id,
             shopItemId: shopItemId,
             aliasText: alias,
             languageCode: languageCode,
             isDisplay: false,
             source: 'manual',
-          );
-        } catch (error, stackTrace) {
-          _reportNonFatal(error, stackTrace, 'adding alias');
-        }
+          ),
+          onReject: (e, st) => _reportNonFatal(e, st, 'adding alias'),
+        );
       }
 
       // Bono spelling — stored as a plain alias.
       final bonoSpelling = _bonoSpellingController.text.trim();
       if (bonoSpelling.isNotEmpty) {
-        try {
-          await api.addShopItemAlias(
+        await emit(
+          rpc: 'add_shop_item_alias',
+          opId: generateClientOpId('alias'),
+          params: buildAddShopItemAliasParams(
+            shopItemId: shopItemId,
+            aliasText: bonoSpelling,
+            source: 'manual',
+          ),
+          direct: () => api.addShopItemAlias(
             shopId: widget.shop.id,
             shopItemId: shopItemId,
             aliasText: bonoSpelling,
             languageCode: null,
             isDisplay: false,
             source: 'manual',
-          );
-        } catch (error, stackTrace) {
-          _reportNonFatal(error, stackTrace, 'adding bono spelling alias');
-        }
+          ),
+          onReject: (e, st) =>
+              _reportNonFatal(e, st, 'adding bono spelling alias'),
+        );
       }
 
       // Record in the session list so the counter chip + sheet reflect

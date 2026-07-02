@@ -173,6 +173,7 @@ class PostExecutor {
       case 'set_shop_item_unit_sale_price':
       case 'set_shop_item_unit_default_flags':
       case 'set_shop_item_category':
+      case 'set_supplier_item_unit_cost':
       case 'remove_or_disable_shop_item_unit':
       case 'add_shop_item_barcode':
       case 'remove_shop_item_barcode':
@@ -305,6 +306,14 @@ class PostExecutor {
           baseUnitId: p['base_unit_id'] as String,
           soldUnitId: p['sold_unit_id'] as String?,
           clientOpId: clientOpId,
+        );
+      case 'set_supplier_item_unit_cost':
+        // Naturally idempotent (last-write-wins), so no client_op_id needed.
+        await _api.setSupplierItemUnitCost(
+          shopId: shopId,
+          partyId: p['party_id'] as String,
+          shopItemUnitId: p['shop_item_unit_id'] as String,
+          unitCost: p['unit_cost'] as num,
         );
       case 'create_shop_item_unit':
         // Offline packaging create (0094): client minted the id → idempotent
@@ -618,6 +627,19 @@ Map<String, dynamic> buildPostOpeningPartyBalanceParams({
       'amount': amount,
       'direction': direction,
       if (notes != null) 'notes': notes,
+    };
+
+// Supplier per-unit cost (offline Products editor). Naturally idempotent —
+// re-draining sets the same last-write-wins cost.
+Map<String, dynamic> buildSetSupplierItemUnitCostParams({
+  required String partyId,
+  required String shopItemUnitId,
+  required num unitCost,
+}) =>
+    <String, dynamic>{
+      'party_id': partyId,
+      'shop_item_unit_id': shopItemUnitId,
+      'unit_cost': unitCost,
     };
 
 // Offline product create (0095). The client mints the item id + both
