@@ -21,7 +21,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get homeHint => 'Maxaad qabaneysaa maanta.';
 
   @override
-  String get sale => 'Iibi';
+  String get sale => 'Iibin';
 
   @override
   String get receive => 'Alaab Dejin';
@@ -44,7 +44,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get paymentDetailLoadFailedMessage =>
-      'Lama soo qaadan karin lacagtan.';
+      'Waa cabbayn kari waayey xogtaas';
 
   @override
   String get expense => 'Qarashaad';
@@ -80,7 +80,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get price => 'Qiime';
 
   @override
-  String get cancel => 'Ka noqo';
+  String get cancel => 'Jooji';
 
   @override
   String get receiveTitle => 'Alaab dejin';
@@ -258,7 +258,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get filterApplyButton => 'DABBAQ';
 
   @override
-  String get filterResetButton => 'Dib u bilow';
+  String get filterResetButton => 'Sidii hore ku celi';
 
   @override
   String get dateRangeToday => 'Maanta';
@@ -279,7 +279,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get filterPartyAny => 'Qof kasta';
 
   @override
-  String get filterHideVoided => 'Qari kuwa la tirtiray';
+  String get filterHideVoided => 'Qari kuwa la ka noqday';
 
   @override
   String get filterCategoryAny => 'Qayb kasta';
@@ -360,10 +360,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get paymentDirectionAny => 'Jiho kasta';
 
   @override
-  String get paymentDirectionInbound => 'Macmiil ku bixiyay';
+  String get paymentDirectionInbound => 'Macmiil ku siiyey';
 
   @override
-  String get paymentDirectionOutbound => 'Alaab keene aad bixisay';
+  String get paymentDirectionOutbound => 'Alaab Keene aad siisay';
 
   @override
   String get partiesLoadFailedMessage =>
@@ -623,7 +623,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get drawerLowStock => 'Alaab yaraatey';
 
   @override
-  String get drawerSetupHeader => 'DEJINTA';
+  String get drawerSetupHeader => 'DIYAARIN';
 
   @override
   String get drawerProducts => 'Alaab';
@@ -818,7 +818,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get signOutPendingDialogCancel => 'Ka noqo';
+  String get signOutPendingDialogCancel => 'Jooji';
 
   @override
   String get signOutPendingDialogConfirm => 'Ka bax';
@@ -1252,7 +1252,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get saleHistoryVoidedBadge => 'La tirtiray';
+  String get saleHistoryVoidedBadge => 'La ka noqday';
 
   @override
   String get saleDetailTitle => 'Iib';
@@ -1261,13 +1261,13 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleDetailVoidedHeader => 'La tirtiray';
 
   @override
-  String get saleDetailVoidButton => 'TIRTIR IIBKA';
+  String get saleDetailVoidButton => 'KA NOQO IIBKA';
 
   @override
   String get expenseDetailTitle => 'Qarash';
 
   @override
-  String get expenseDetailVoidButton => 'TIRTIR QARASHKAN';
+  String get expenseDetailVoidButton => 'KA NOQO QARASHKAN';
 
   @override
   String get expenseDetailLoadFailedMessage =>
@@ -1281,7 +1281,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Tani way tirtiraysaa qarashka. Lama soo celin karo.';
 
   @override
-  String get expenseVoidConfirmYes => 'TIRTIR';
+  String get expenseVoidConfirmYes => 'KA NOQO';
 
   @override
   String get expenseVoidedToast => 'Qarash waa la tirtiray';
@@ -1290,7 +1290,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get expenseVoidFailedMessage => 'Lama tirtiri karin qarashkan.';
 
   @override
-  String get paymentDetailVoidButton => 'TIRTIR LACAGTAN';
+  String get paymentDetailVoidButton => 'KA NOQO LACAGTAN';
 
   @override
   String get paymentVoidConfirmTitle => 'Tirtir lacagtan?';
@@ -1300,7 +1300,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Tani lacagta way tirtiraysaa oo dib u furaysaa wixii la bixiyay. Lama soo celin karo.';
 
   @override
-  String get paymentVoidConfirmYes => 'TIRTIR';
+  String get paymentVoidConfirmYes => 'KA NOQO';
 
   @override
   String get paymentVoidedToast => 'Lacag waa la tirtiray';
@@ -1363,7 +1363,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Iibka waa la tirtiri doonaa, alaabta kaydka waa lugu celin doonaa, deynta macmiilkana waa la tirtiri doonaa.';
 
   @override
-  String get saleVoidConfirmYes => 'TIRTIR';
+  String get saleVoidConfirmYes => 'KA NOQO';
 
   @override
   String get saleVoidConfirmNo => 'JOOJI';
@@ -1443,7 +1443,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveDetailVoidedHeader => 'La tirtiray';
 
   @override
-  String get receiveDetailVoidButton => 'TIRTIR BONADAN';
+  String get receiveDetailVoidButton => 'KA NOQO BONADAN';
 
   @override
   String receiveDetailLineSubtotal(
@@ -1474,7 +1474,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Kaliya qaladaad. Haddii aad alaab keenaha wax u celineyso, taas u qor lacag-bixinta.';
 
   @override
-  String get receiveVoidConfirmYes => 'TIRTIR';
+  String get receiveVoidConfirmYes => 'KA NOQO';
 
   @override
   String get receiveVoidConfirmNo => 'JOOJI';
@@ -1699,7 +1699,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get addNewItemCategoryLabel => 'Nooca (ikhtiyaari)';
 
   @override
-  String get addNewItemCancelButton => 'KA NOQO';
+  String get addNewItemCancelButton => 'JOOJI';
 
   @override
   String get addNewItemAddToSaleButton => 'KU DAR IIBKA';
@@ -2339,7 +2339,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get storageSyncTitle => 'Kayd & is-waafajin';
 
   @override
-  String get storageSyncStatusConnected => 'Xidhan';
+  String get storageSyncStatusConnected => 'Ku xidhan';
 
   @override
   String get storageSyncStatusOffline => 'Aan xidhneyn';
@@ -2405,7 +2405,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get storageSyncFreeUpSpaceConfirmAction => 'TIRTIR';
 
   @override
-  String get storageSyncResyncAllButton => 'Dib u soo deji';
+  String get storageSyncResyncAllButton => 'Dib u soo deji xogta';
 
   @override
   String get storageSyncResyncConfirmTitle => 'Dib u soo deji xogta oo dhan?';
