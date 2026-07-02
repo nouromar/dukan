@@ -6434,6 +6434,20 @@ begin
   ) then
     raise exception 'SS (5e): a transactions_delta row is missing client_op_id';
   end if;
+  -- (5f) Every line snapshot must carry unit_amount + unit_label +
+  --      packaging_label (0073, restored in 0092). Without them the receipt
+  --      renders "1  × — = $X" — empty unit label, "—" for the unit price.
+  if exists (
+    select 1
+    from jsonb_array_elements(v_payload->'transactions') x,
+         jsonb_array_elements(x->'lines_summary') l
+    where not (l ? 'unit_amount')
+       or not (l ? 'unit_label')
+       or not (l ? 'packaging_label')
+  ) then
+    raise exception
+      'SS (5f): a lines_summary row is missing unit_amount/unit_label/packaging_label';
+  end if;
 end;
 $$;
 
