@@ -425,6 +425,11 @@ class ShopApi {
   /// default (base row stays receive-default); `'receive'` mirrors it.
   /// Returns the new shop_item id plus the packaging id the caller
   /// should attach to the cart line.
+  /// [shopItemId] / [baseUnitId] / [soldUnitId] / [clientOpId] enable the
+  /// offline path (0095): the caller mints the item + packaging UUIDs so the
+  /// create can be queued and drained later, idempotently, and the new item
+  /// drops straight into the cart via the client-minted default-unit id.
+  /// Null → the server generates the ids as before.
   Future<CreateShopItemResult> createShopItem({
     required String shopId,
     required String name,
@@ -435,6 +440,10 @@ class ShopApi {
     String? soldUnitCode,
     num? soldConversion,
     String defaultSide = 'sale',
+    String? shopItemId,
+    String? baseUnitId,
+    String? soldUnitId,
+    String? clientOpId,
   }) async {
     final result = await _client.rpc(
       'create_shop_item',
@@ -448,6 +457,10 @@ class ShopApi {
         'p_sold_unit_code': soldUnitCode,
         'p_sold_conversion': soldConversion,
         'p_default_side': defaultSide,
+        'p_shop_item_id': shopItemId,
+        'p_base_unit_id': baseUnitId,
+        'p_sold_unit_id': soldUnitId,
+        'p_client_op_id': clientOpId,
       },
     );
     final row = (result is List && result.isNotEmpty)

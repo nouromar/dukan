@@ -516,6 +516,56 @@ begin
       end if;
     end;
 
+    -- create_shop_item offline path (0095): client-supplied item + base
+    -- unit ids, idempotent replay (no duplicate item / units / alias).
+    declare
+      v_cli_item uuid := '00000000-0000-4000-8000-0000000000c1'::uuid;
+      v_cli_base uuid := '00000000-0000-4000-8000-0000000000c2'::uuid;
+      v_op       text := 'op-item-offline-1';
+      v_ret_item uuid;
+      v_ret_unit uuid;
+      v_cnt      integer;
+    begin
+      select shop_item_id, default_shop_item_unit_id into v_ret_item, v_ret_unit
+      from public.create_shop_item(
+        v_shop_id, 'Sokor', 'en', 'kg', 1.50, null, null, null, 'sale',
+        v_cli_item, v_cli_base, null, v_op
+      );
+      if v_ret_item <> v_cli_item then
+        raise exception 'create_shop_item did not honour client item id';
+      end if;
+      if v_ret_unit <> v_cli_base then
+        raise exception 'create_shop_item default unit id mismatch (base-only)';
+      end if;
+      if not exists (
+        select 1 from public.shop_item where id = v_cli_item and shop_id = v_shop_id
+      ) then
+        raise exception 'create_shop_item did not persist the client item';
+      end if;
+      -- Replay: same ids + op → same return, no duplicate rows anywhere.
+      select shop_item_id into v_ret_item from public.create_shop_item(
+        v_shop_id, 'Sokor', 'en', 'kg', 1.50, null, null, null, 'sale',
+        v_cli_item, v_cli_base, null, v_op
+      );
+      if v_ret_item <> v_cli_item then
+        raise exception 'create_shop_item replay returned a different id';
+      end if;
+      select count(*) into v_cnt from public.shop_item where id = v_cli_item;
+      if v_cnt <> 1 then
+        raise exception 'create_shop_item replay duplicated the item';
+      end if;
+      select count(*) into v_cnt
+        from public.shop_item_unit where shop_item_id = v_cli_item;
+      if v_cnt <> 1 then
+        raise exception 'create_shop_item replay duplicated units (count=%)', v_cnt;
+      end if;
+      select count(*) into v_cnt
+        from public.shop_item_alias where shop_item_id = v_cli_item and is_display;
+      if v_cnt <> 1 then
+        raise exception 'create_shop_item replay duplicated alias (count=%)', v_cnt;
+      end if;
+    end;
+
     -- add_shop_item_alias (#12): is_display=true supersedes prior display.
     declare
       v_first_alias_id uuid;

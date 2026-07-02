@@ -136,10 +136,14 @@ void main() {
       // Sheet synthesizes the packaging label locally — no extra trip.
       expect(listCalls, 0);
 
+      // The sheet mints the ids client-side (0095) and returns THOSE —
+      // base-only, so the default unit is the base unit.
       final result = readResult();
       expect(result, isNotNull);
-      expect(result!.shopItemId, 'new-id');
-      expect(result.shopItemUnitId, 'siu-new');
+      expect(result!.shopItemId, isNotEmpty);
+      expect(result.shopItemId, api.createShopItemCalls.last.shopItemId);
+      expect(result.shopItemUnitId, api.createShopItemCalls.last.baseUnitId);
+      expect(api.createShopItemCalls.last.clientOpId, isNotNull);
       expect(result.salePrice, isNull);
     },
   );

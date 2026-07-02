@@ -32,9 +32,14 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/locale_controller.dart';
@@ -310,9 +315,98 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
 
     setState(() => _saving = true);
     final api = context.read<ShopApi>();
+    final queue = context.read<OfflineQueueController>();
+    final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
     final languageCode = context.read<LocaleController>().locale.languageCode;
+    final defaultSide =
+        widget.variant == AddNewItemVariant.sale ? 'sale' : 'receive';
+
+    // Synthesize the packaging label locally (mirrors the server's
+    // `_format_conversion` helper) — no round trip needed.
+    final label = choice.isBaseOnly
+        ? choice.baseUnitLabel
+        : packagingLabel(
+            choice.conversion!,
+            choice.baseUnitLabel,
+            choice.soldUnitLabel!,
+          );
+
+    // Mint ids up front (0095): the item, its base packaging, and — when
+    // the sold packaging is distinct — the sold packaging. The unit dropped
+    // into the cart is the sold unit if present, else the base.
+    final shopItemId = generateUuidV4();
+    final baseUnitId = generateUuidV4();
+    final soldUnitId = choice.isBaseOnly ? null : generateUuidV4();
+    final defaultUnitId = soldUnitId ?? baseUnitId;
+    final itemOpId = generateClientOpId('item');
+    String actorId = '';
     try {
-      final created = await api.createShopItem(
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {}
+
+    // Optimistically mirror the whole item (row + packaging(s) + display
+    // alias) so it's searchable + selectable immediately, before the create
+    // drains.
+    Future<void> writeMirror() async {
+      if (repo == null) return;
+      try {
+        await repo.insertLocalShopItem(
+          shopItemId: shopItemId,
+          shopId: widget.shop.id,
+          displayName: name,
+          baseUnitCode: choice.baseUnitCode,
+          categoryId: _categoryId,
+        );
+        await repo.insertLocalShopItemUnit(
+          shopItemUnitId: baseUnitId,
+          shopItemId: shopItemId,
+          unitCode: choice.baseUnitCode,
+          packagingLabel: choice.baseUnitLabel,
+          conversionToBase: 1,
+          salePrice: choice.isBaseOnly ? price : null,
+        );
+        if (!choice.isBaseOnly) {
+          await repo.insertLocalShopItemUnit(
+            shopItemUnitId: soldUnitId!,
+            shopItemId: shopItemId,
+            unitCode: choice.soldUnitCode!,
+            packagingLabel: label,
+            conversionToBase: choice.conversion!,
+            salePrice: price,
+          );
+        }
+        await repo.insertLocalShopItemAlias(
+          shopItemId: shopItemId,
+          aliasText: name,
+          isDisplay: true,
+        );
+      } catch (e, st) {
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan add-new-item',
+          context: ErrorDescription('optimistic shop_item create mirror'),
+        ));
+      }
+    }
+
+    void popResult() {
+      if (!mounted) return;
+      Navigator.of(context).pop(
+        AddNewItemResult(
+          shopItemId: shopItemId,
+          shopItemUnitId: defaultUnitId,
+          displayName: name,
+          packagingLabel: label,
+          baseUnitCode: choice.baseUnitCode,
+          baseUnitLabel: choice.baseUnitLabel,
+          salePrice: price,
+        ),
+      );
+    }
+
+    try {
+      await api.createShopItem(
         shopId: widget.shop.id,
         name: name,
         languageCode: languageCode,
@@ -321,36 +415,46 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
         categoryId: _categoryId,
         soldUnitCode: choice.isBaseOnly ? null : choice.soldUnitCode,
         soldConversion: choice.isBaseOnly ? null : choice.conversion,
-        defaultSide: widget.variant == AddNewItemVariant.sale
-            ? 'sale'
-            : 'receive',
+        defaultSide: defaultSide,
+        shopItemId: shopItemId,
+        baseUnitId: baseUnitId,
+        soldUnitId: soldUnitId,
+        clientOpId: itemOpId,
       );
-      // Synthesize the packaging label locally (mirrors the server's
-      // `_format_conversion` helper) so we don't need a round trip just
-      // to fetch the new row's display name.
-      final label = choice.isBaseOnly
-          ? choice.baseUnitLabel
-          : packagingLabel(
-              choice.conversion!,
-              choice.baseUnitLabel,
-              choice.soldUnitLabel!,
-            );
-      if (!mounted) return;
-      Navigator.of(context).pop(
-        AddNewItemResult(
-          shopItemId: created.shopItemId,
-          shopItemUnitId: created.defaultShopItemUnitId,
-          displayName: name,
-          packagingLabel: label,
-          baseUnitCode: choice.baseUnitCode,
-          baseUnitLabel: choice.baseUnitLabel,
-          salePrice: price,
-        ),
-      );
+      await writeMirror();
+      popResult();
     } on PostgrestException catch (error, stackTrace) {
       _handleFailure(error, stackTrace, l.addNewItemFailedMessage);
     } catch (error, stackTrace) {
-      _handleFailure(error, stackTrace, l.addNewItemFailedMessage);
+      // Transient (offline / network) — mirror + queue with the client
+      // ids. Thin-client → surface.
+      if (repo == null) {
+        _handleFailure(error, stackTrace, l.addNewItemFailedMessage);
+      } else {
+        await writeMirror();
+        await queue.enqueue(PendingPost(
+          id: generateClientOpId('post'),
+          clientOpId: itemOpId,
+          shopId: widget.shop.id,
+          originalActorUserId: actorId,
+          rpc: 'create_shop_item',
+          params: buildCreateShopItemParams(
+            shopItemId: shopItemId,
+            baseUnitId: baseUnitId,
+            name: name,
+            languageCode: languageCode,
+            baseUnitCode: choice.baseUnitCode,
+            salePrice: price,
+            categoryId: _categoryId,
+            soldUnitCode: choice.isBaseOnly ? null : choice.soldUnitCode,
+            soldConversion: choice.isBaseOnly ? null : choice.conversion,
+            soldUnitId: soldUnitId,
+            defaultSide: defaultSide,
+          ),
+          queuedAt: DateTime.now(),
+        ));
+        popResult();
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

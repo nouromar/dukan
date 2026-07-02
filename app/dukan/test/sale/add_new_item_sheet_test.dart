@@ -4,7 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/sale/add_new_item_sheet.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
 
 import '../shared/fakes.dart';
 import '../shared/wrap.dart';
@@ -223,10 +227,16 @@ void main() {
       expect(createCall!.defaultSide, 'sale');
       expect(createCall!.salePrice, 2.5);
 
+      // The sheet mints the item + base-unit ids client-side (0095) and
+      // returns THOSE — the same ids it sent to create_shop_item — not the
+      // server's. Base-only, so the default unit is the base unit.
       final result = readResult();
       expect(result, isNotNull);
-      expect(result!.shopItemId, 'new-shop-item-id');
-      expect(result.shopItemUnitId, 'new-siu-id');
+      expect(result!.shopItemId, isNotEmpty);
+      expect(result.shopItemId, api.createShopItemCalls.last.shopItemId);
+      expect(result.shopItemUnitId, api.createShopItemCalls.last.baseUnitId);
+      expect(api.createShopItemCalls.last.soldUnitId, isNull);
+      expect(api.createShopItemCalls.last.clientOpId, isNotNull);
       expect(result.packagingLabel, 'Kg');
       expect(result.baseUnitLabel, 'Kg');
       expect(result.salePrice, 2.5);
@@ -285,6 +295,12 @@ void main() {
       expect(result.packagingLabel, '25 Kg Bag');
       expect(result.baseUnitCode, 'kg');
       expect(result.baseUnitLabel, 'Kg');
+      // Distinct sold packaging (0095): the client minted a separate sold
+      // unit id, and it's the one dropped into the cart (the default).
+      final call = api.createShopItemCalls.last;
+      expect(call.soldUnitId, isNotNull);
+      expect(call.baseUnitId, isNotNull);
+      expect(result.shopItemUnitId, call.soldUnitId);
     },
   );
 
@@ -296,4 +312,73 @@ void main() {
     await tester.pumpAndSettle();
     expect(readResult(), isNull);
   });
+
+  testWidgets(
+    'offline: new item is queued with the client ids, not lost',
+    (tester) async {
+      // Direct create fails as if offline (transient — NOT a server reject).
+      api.onCreateShopItem =
+          (_, _, _, _, _, _, _, _, _) async => throw Exception('offline');
+
+      final drained = <PendingPost>[];
+      final queue = OfflineQueueController(
+        dao: PendingPostDao(AppDatabase.instance()),
+        executor: (p) async => drained.add(p),
+        backoff: (_) => Duration.zero,
+        clock: () => DateTime.utc(2026, 7, 2),
+      );
+      addTearDown(queue.dispose);
+
+      AddNewItemResult? captured;
+      await tester.pumpWidget(
+        wrapWithApp(
+          Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: FilledButton(
+                  onPressed: () async {
+                    captured = await AddNewItemSheet.show(
+                      context,
+                      shop,
+                      initialName: 'Caano',
+                      variant: AddNewItemVariant.sale,
+                    );
+                  },
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+          shopApi: api,
+          offlineQueueController: queue,
+          configResolver:
+              FakeConfigResolver(values: const {'use_local_db': true}),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.addNewItemLooseType));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.addNewItemBaseOnlyTile('Kg')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, '2.5');
+      await tester.pump();
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.addNewItemAddToSaleButton),
+      );
+      await tester.pumpAndSettle();
+
+      // The sheet still returns an item — with the client-minted ids.
+      expect(captured, isNotNull);
+      expect(captured!.shopItemId, isNotEmpty);
+      expect(captured!.shopItemUnitId, isNotEmpty);
+
+      // The create was queued (not lost) with those ids + a client_op_id.
+      final post = drained.singleWhere((p) => p.rpc == 'create_shop_item');
+      expect(post.params['shop_item_id'], captured!.shopItemId);
+      expect(post.params['base_unit_id'], captured!.shopItemUnitId);
+      expect(post.params['name'], 'Caano');
+      expect(post.clientOpId, isNotNull);
+    },
+  );
 }

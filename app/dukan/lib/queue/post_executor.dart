@@ -181,6 +181,7 @@ class PostExecutor {
       case 'set_party_active':
       case 'create_party':
       case 'post_opening_party_balance':
+      case 'create_shop_item':
       case 'create_shop_item_unit':
       case 'set_shop_item_active':
       case 'create_shop_category':
@@ -285,6 +286,25 @@ class PostExecutor {
           direction: p['direction'] as String,
           clientOpId: clientOpId,
           notes: p['notes'] as String?,
+        );
+      case 'create_shop_item':
+        // Offline product create (0095): client minted the item + unit ids
+        // → idempotent fire-and-confirm; the returned ids are ignored (the
+        // cart/mirror already hold them).
+        await _api.createShopItem(
+          shopId: shopId,
+          name: p['name'] as String,
+          languageCode: p['language_code'] as String,
+          baseUnitCode: p['base_unit_code'] as String,
+          salePrice: p['sale_price'] as num?,
+          categoryId: p['category_id'] as String?,
+          soldUnitCode: p['sold_unit_code'] as String?,
+          soldConversion: p['sold_conversion'] as num?,
+          defaultSide: (p['default_side'] as String?) ?? 'sale',
+          shopItemId: p['shop_item_id'] as String,
+          baseUnitId: p['base_unit_id'] as String,
+          soldUnitId: p['sold_unit_id'] as String?,
+          clientOpId: clientOpId,
         );
       case 'create_shop_item_unit':
         // Offline packaging create (0094): client minted the id → idempotent
@@ -598,6 +618,36 @@ Map<String, dynamic> buildPostOpeningPartyBalanceParams({
       'amount': amount,
       'direction': direction,
       if (notes != null) 'notes': notes,
+    };
+
+// Offline product create (0095). The client mints the item id + both
+// possible packaging ids (base, and the distinct sold unit when present)
+// so the optimistic mirror rows and the server rows share ids.
+Map<String, dynamic> buildCreateShopItemParams({
+  required String shopItemId,
+  required String baseUnitId,
+  required String name,
+  required String languageCode,
+  required String baseUnitCode,
+  num? salePrice,
+  String? categoryId,
+  String? soldUnitCode,
+  num? soldConversion,
+  String? soldUnitId,
+  String defaultSide = 'sale',
+}) =>
+    <String, dynamic>{
+      'shop_item_id': shopItemId,
+      'base_unit_id': baseUnitId,
+      'name': name,
+      'language_code': languageCode,
+      'base_unit_code': baseUnitCode,
+      'default_side': defaultSide,
+      if (salePrice != null) 'sale_price': salePrice,
+      if (categoryId != null) 'category_id': categoryId,
+      if (soldUnitCode != null) 'sold_unit_code': soldUnitCode,
+      if (soldConversion != null) 'sold_conversion': soldConversion,
+      if (soldUnitId != null) 'sold_unit_id': soldUnitId,
     };
 
 // Offline packaging create (0094). shopItemUnitId is client-generated so

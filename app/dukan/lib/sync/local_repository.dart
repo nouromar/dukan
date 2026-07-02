@@ -1785,6 +1785,39 @@ class LocalRepository {
   /// items-sync unit upsert; a new extra packaging is active and non-default,
   /// with no cost/learned-qty yet. `server_updated_at = 0` so the next delta
   /// sync's authoritative row (replace semantics) overwrites this.
+  /// Optimistically mirror a brand-new shop_item (0095 offline create) so
+  /// it shows in the products list + search immediately, before the create
+  /// drains. `server_updated_at = 0` marks it optimistic; the next
+  /// items-sync replaces it. Pair with [insertLocalShopItemUnit] for its
+  /// packaging(s) and [insertLocalShopItemAlias] for the display name.
+  Future<void> insertLocalShopItem({
+    required String shopItemId,
+    required String shopId,
+    required String displayName,
+    required String baseUnitCode,
+    String? categoryId,
+  }) async {
+    final db = await _db;
+    await db.insert(
+      'local_shop_item',
+      {
+        'shop_item_id': shopItemId,
+        'shop_id': shopId,
+        'item_id': null,
+        'display_name': displayName,
+        'category_id': categoryId,
+        'base_unit_code': baseUnitCode,
+        'current_stock': 0,
+        'avg_cost': 0,
+        'is_active': 1,
+        'updated_at': 0,
+        'server_updated_at': 0,
+        'sale_count': 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<void> insertLocalShopItemUnit({
     required String shopItemUnitId,
     required String shopItemId,

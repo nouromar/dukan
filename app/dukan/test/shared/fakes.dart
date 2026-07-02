@@ -446,6 +446,10 @@ class FakeShopApi implements ShopApi {
       String? soldUnitCode,
       num? soldConversion,
       String defaultSide,
+      String? shopItemId,
+      String? baseUnitId,
+      String? soldUnitId,
+      String? clientOpId,
     })
   >
   createShopItemCalls = [];
@@ -783,6 +787,10 @@ class FakeShopApi implements ShopApi {
     String? soldUnitCode,
     num? soldConversion,
     String defaultSide = 'sale',
+    String? shopItemId,
+    String? baseUnitId,
+    String? soldUnitId,
+    String? clientOpId,
   }) async {
     createShopItemCalls.add((
       name: name,
@@ -793,6 +801,10 @@ class FakeShopApi implements ShopApi {
       soldUnitCode: soldUnitCode,
       soldConversion: soldConversion,
       defaultSide: defaultSide,
+      shopItemId: shopItemId,
+      baseUnitId: baseUnitId,
+      soldUnitId: soldUnitId,
+      clientOpId: clientOpId,
     ));
     if (onCreateShopItem != null) {
       return onCreateShopItem!(
@@ -807,11 +819,12 @@ class FakeShopApi implements ShopApi {
         defaultSide,
       );
     }
-    final id = 'fake-shop-item-${name.hashCode}';
-    return (
-      shopItemId: id,
-      defaultShopItemUnitId: 'fake-default-unit-${name.hashCode}',
-    );
+    // Mimic the server (0095): honour the client-supplied ids when present.
+    final id = shopItemId ?? 'fake-shop-item-${name.hashCode}';
+    final defaultUnit = soldUnitId ??
+        baseUnitId ??
+        'fake-default-unit-${name.hashCode}';
+    return (shopItemId: id, defaultShopItemUnitId: defaultUnit);
   }
 
   @override
