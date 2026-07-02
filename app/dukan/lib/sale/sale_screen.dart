@@ -923,6 +923,40 @@ class _SaleScreenState extends State<SaleScreen> {
     final localRepo = useLocalDb(context)
         ? context.read<LocalRepository>()
         : null;
+
+    // Open the receipt sheet (DONE + Share). Shared by the online-success
+    // path (server txn id) and the offline path (the optimistic row's id ==
+    // clientOpId). The cart-snapshot fallback renders the receipt even when
+    // the txn isn't in the mirror yet, so it works offline.
+    Future<void> openReceipt(String receiptTxnId) async {
+      if (!mounted) return;
+      try {
+        await showSaleReceiptSheet(
+          context,
+          shop: widget.shop,
+          txnId: receiptTxnId,
+          fallback: SaleReceiptFallback.fromCart(snapshot),
+        );
+      } catch (error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'dukan sale',
+            context: ErrorDescription('show sale receipt sheet'),
+          ),
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Receipt sheet failed: $error'),
+              duration: const Duration(seconds: 6),
+            ),
+          );
+        }
+      }
+    }
+
     String txnId;
     try {
       txnId = await api.postSale(
@@ -1017,6 +1051,10 @@ class _SaleScreenState extends State<SaleScreen> {
       // lives directly in current_stock).
       final queue = context.read<OfflineQueueController>();
       await queue.enqueue(post);
+      // Open the receipt just like an online sale — the optimistic
+      // local_transaction shares the sale's clientOpId as its id, and the
+      // cart fallback renders it regardless. DONE + Share work offline.
+      await openReceipt(clientOpId);
       return;
     }
 
@@ -1056,35 +1094,8 @@ class _SaleScreenState extends State<SaleScreen> {
     //
     // #371 + #372 (extended): re-check `mounted` immediately
     // before opening — the network round-trip above can outlive
-    // the widget if the cashier navigated away. Awaiting +
-    // try/catch + visible toast on failure (was Sentry-only,
-    // which the cashier can't see during smoke testing).
-    if (!mounted) return;
-    try {
-      await showSaleReceiptSheet(
-        context,
-        shop: widget.shop,
-        txnId: txnId,
-        fallback: SaleReceiptFallback.fromCart(snapshot),
-      );
-    } catch (error, stackTrace) {
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: error,
-          stack: stackTrace,
-          library: 'dukan sale',
-          context: ErrorDescription('show sale receipt sheet'),
-        ),
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Receipt sheet failed: $error'),
-            duration: const Duration(seconds: 6),
-          ),
-        );
-      }
-    }
+    // the widget if the cashier navigated away.
+    await openReceipt(txnId);
   }
 
   void _handleOptimisticSaveFailure(

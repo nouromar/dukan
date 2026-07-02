@@ -164,6 +164,24 @@ void main() {
     expect(capturedAmount, 200);
   });
 
+  test('void_sale dispatches txn + refund + clientOpId', () async {
+    await executor.execute(_post(
+      'void_sale',
+      buildVoidSaleParams(txnId: 'txn-99', refundAmount: 3.5),
+    ));
+    expect(api.voidSaleCalls, hasLength(1));
+    expect(api.voidSaleCalls.first.txnId, 'txn-99');
+    expect(api.voidSaleCalls.first.refundAmount, 3.5);
+  });
+
+  test('void_sale without a refund passes null', () async {
+    await executor.execute(_post(
+      'void_sale',
+      buildVoidSaleParams(txnId: 'txn-100'),
+    ));
+    expect(api.voidSaleCalls.single.refundAmount, isNull);
+  });
+
   test('unknown rpc throws UnsupportedError', () async {
     await expectLater(
       executor.execute(_post('post_unknown', const {})),

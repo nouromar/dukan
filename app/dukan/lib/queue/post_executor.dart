@@ -184,6 +184,7 @@ class PostExecutor {
       case 'post_opening_party_balance':
       case 'create_shop_item':
       case 'create_shop_item_unit':
+      case 'void_sale':
       case 'set_shop_item_active':
       case 'create_shop_category':
       case 'rename_shop_category':
@@ -306,6 +307,15 @@ class PostExecutor {
           baseUnitId: p['base_unit_id'] as String,
           soldUnitId: p['sold_unit_id'] as String?,
           clientOpId: clientOpId,
+        );
+      case 'void_sale':
+        // Offline void: the server dedups on client_op_id (reversal txn),
+        // so a re-drained void returns the same reversal — safe no-op.
+        await _api.voidSale(
+          shopId: shopId,
+          txnId: p['txn_id'] as String,
+          clientOpId: clientOpId,
+          refundAmount: p['refund_amount'] as num?,
         );
       case 'set_supplier_item_unit_cost':
         // Naturally idempotent (last-write-wins), so no client_op_id needed.
@@ -627,6 +637,16 @@ Map<String, dynamic> buildPostOpeningPartyBalanceParams({
       'amount': amount,
       'direction': direction,
       if (notes != null) 'notes': notes,
+    };
+
+// Offline sale void. The server dedups the reversal on client_op_id.
+Map<String, dynamic> buildVoidSaleParams({
+  required String txnId,
+  num? refundAmount,
+}) =>
+    <String, dynamic>{
+      'txn_id': txnId,
+      if (refundAmount != null) 'refund_amount': refundAmount,
     };
 
 // Supplier per-unit cost (offline Products editor). Naturally idempotent —

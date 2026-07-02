@@ -7,6 +7,7 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_state_cache.dart';
 import 'package:dukan/auth/capabilities.dart';
+import 'package:dukan/auth/capabilities_cache.dart';
 import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 
@@ -374,11 +375,17 @@ class AuthController extends ChangeNotifier {
     if (_capabilitiesShopId == shop.id && _capabilities.codes.isNotEmpty) {
       return;
     }
+    final userId = _session?.user.id;
     try {
       final codes = await _shopApi.listUserShopCapabilities(shopId: shop.id);
-      _capabilities = Capabilities(codes.toSet());
+      final set = codes.toSet();
+      _capabilities = Capabilities(set);
       _capabilitiesShopId = shop.id;
       notifyListeners();
+      // Cache for offline so the edit UI stays usable in airplane mode.
+      if (userId != null) {
+        unawaited(CapabilitiesCache.put(userId, shop.id, set));
+      }
     } catch (error, stackTrace) {
       FlutterError.reportError(
         FlutterErrorDetails(
@@ -388,7 +395,19 @@ class AuthController extends ChangeNotifier {
           context: ErrorDescription('loading shop capabilities'),
         ),
       );
-      // Leave capabilities empty so UI gates fail closed.
+      // Offline (or the RPC failed): fall back to the last-known
+      // capabilities for this shop so edit affordances stay available.
+      // The server still re-checks auth when the queued mutation drains,
+      // so a stale cache can't grant an unauthorized write. With NO cache
+      // the gates still fail closed (empty).
+      if (userId != null) {
+        final cached = await CapabilitiesCache.get(userId, shop.id);
+        if (cached != null && cached.isNotEmpty) {
+          _capabilities = Capabilities(cached);
+          _capabilitiesShopId = shop.id;
+          notifyListeners();
+        }
+      }
     }
   }
 

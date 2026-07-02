@@ -23,8 +23,12 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/receipt_pdf.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -363,22 +367,57 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
 
     setState(() => _voiding = true);
     final api = context.read<ShopApi>();
+    final queue = context.read<OfflineQueueController>();
+    final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
+    final opId = _generateClientOpId();
+    String actorId = '';
     try {
-      await api.voidSale(
-        shopId: widget.shop.id,
-        txnId: header.txnId,
-        clientOpId: _generateClientOpId(),
-        refundAmount: outcome.refundAmount,
-      );
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {}
+
+    void onVoided() {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l.saleVoidedToast)),
       );
       widget.onAfterVoid?.call();
+    }
+
+    try {
+      await api.voidSale(
+        shopId: widget.shop.id,
+        txnId: header.txnId,
+        clientOpId: opId,
+        refundAmount: outcome.refundAmount,
+      );
+      await repo?.applyOptimisticVoid(header.txnId);
+      onVoided();
     } on PostgrestException catch (error, stackTrace) {
+      // Structured reject (outside the void window, not owner…) — surface
+      // it; nothing was voided.
       _handleVoidFailure(error, stackTrace);
     } catch (error, stackTrace) {
-      _handleVoidFailure(error, stackTrace);
+      // Transient (offline / network). With a local mirror, flag the void
+      // optimistically + queue it — the server dedups the reversal on
+      // client_op_id, so a re-drain is a safe no-op. Thin-client → surface.
+      if (repo == null) {
+        _handleVoidFailure(error, stackTrace);
+      } else {
+        await repo.applyOptimisticVoid(header.txnId);
+        await queue.enqueue(PendingPost(
+          id: generateClientOpId('post'),
+          clientOpId: opId,
+          shopId: widget.shop.id,
+          originalActorUserId: actorId,
+          rpc: 'void_sale',
+          params: buildVoidSaleParams(
+            txnId: header.txnId,
+            refundAmount: outcome.refundAmount,
+          ),
+          queuedAt: DateTime.now(),
+        ));
+        onVoided();
+      }
     } finally {
       if (mounted) setState(() => _voiding = false);
     }

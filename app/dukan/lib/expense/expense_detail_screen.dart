@@ -10,6 +10,8 @@ import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 /// Read-only expense detail with an owner-only VOID. Opened from the expense
 /// history. Mirrors the sale/receive detail void flow: a direct `void_expense`
@@ -46,6 +48,14 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
   }
 
   Future<ExpenseSummary> _load() async {
+    // Offline-first (mirrors sale/receive/payment detail): read from the
+    // local mirror so the screen opens in airplane mode.
+    if (useLocalDb(context)) {
+      final repo = context.read<LocalRepository>();
+      final local = await repo.getExpenseDetailLocal(widget.txnId);
+      if (local != null) return local;
+      // Not in the mirror — fall through to the network as a last resort.
+    }
     final api = context.read<ShopApi>();
     final expense = await api.getExpense(
       shopId: widget.shop.id,

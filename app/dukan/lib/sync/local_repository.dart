@@ -944,6 +944,66 @@ class LocalRepository {
         isRefund: t.payload['is_refund'] as bool? ?? false,
       );
 
+  /// Optimistically flag a local transaction as voided so the receipt +
+  /// history show "voided" immediately, before the queued void_sale drains
+  /// and the authoritative server payload syncs back. Stock / receivable
+  /// reversal is applied by the server on drain (and reconciled on sync).
+  Future<void> applyOptimisticVoid(String txnId) async {
+    final db = await _db;
+    await db.update(
+      'local_transaction',
+      {'is_voided': 1},
+      where: 'txn_id = ?',
+      whereArgs: [txnId],
+    );
+  }
+
+  /// Read a single payment's detail from the local mirror (offline-first,
+  /// mirrors getTransaction + toSaleSummary). Payments live in
+  /// `local_transaction` with type_code='payment'; the header fields all
+  /// come from the denormalized payload. Allocations are NOT mirrored, so
+  /// the caller renders the "Settled" section from its empty state offline.
+  /// Returns null when the payment isn't in the mirror.
+  Future<PaymentDetail?> getPaymentDetailLocal(String txnId) async {
+    final t = await getTransaction(txnId);
+    if (t == null || t.typeCode != 'payment') return null;
+    final at = DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs);
+    return PaymentDetail(
+      paymentId: t.txnId,
+      occurredAt: at,
+      createdAt: at,
+      partyId: t.partyId,
+      partyName: t.payload['party_name'] as String?,
+      direction: (t.payload['direction'] as String?) ?? 'I',
+      amount: t.total.toDouble(),
+      paymentMethodCode: t.payload['payment_method_code'] as String?,
+      notes: t.payload['notes'] as String?,
+      isVoided: t.isVoided,
+      isRefund: t.payload['is_refund'] as bool? ?? false,
+    );
+  }
+
+  /// Read a single expense's detail from the local mirror (offline-first,
+  /// mirrors getPaymentDetailLocal). Expenses live in `local_transaction`
+  /// with type_code='expense'; all header fields come from the payload.
+  /// Returns null when the expense isn't in the mirror.
+  Future<ExpenseSummary?> getExpenseDetailLocal(String txnId) async {
+    final t = await getTransaction(txnId);
+    if (t == null || t.typeCode != 'expense') return null;
+    final at = DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs);
+    return ExpenseSummary(
+      txnId: t.txnId,
+      occurredAt: at,
+      postedAt: at,
+      amount: t.total.toDouble(),
+      paymentMethodCode: t.payload['payment_method_code'] as String?,
+      categoryId: t.payload['category_id'] as String?,
+      categoryName: t.payload['category_name'] as String?,
+      notes: t.payload['notes'] as String?,
+      isVoided: t.isVoided,
+    );
+  }
+
   /// LocalTransaction → ExpenseSummary.
   ExpenseSummary toExpenseSummary(LocalTransaction t) => ExpenseSummary(
         txnId: t.txnId,

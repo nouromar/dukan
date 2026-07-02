@@ -362,6 +362,66 @@ void main() {
     expect(sales.map((t) => t.txnId), ['t-2', 't-1']);
   });
 
+  test('getPaymentDetailLocal reads a payment from the mirror (offline)',
+      () async {
+    await repo.applyTransactionsPayload({
+      'transactions': [
+        {
+          ..._txn('pay-1', 'payment', occurredMs: 1000, total: 25),
+          'party_id': 'party-9',
+          'direction': 'I',
+          'party_name': 'Axmed',
+          'notes': 'debt settle',
+          'is_refund': false,
+        },
+      ],
+    });
+
+    final d = await repo.getPaymentDetailLocal('pay-1');
+    expect(d, isNotNull);
+    expect(d!.paymentId, 'pay-1');
+    expect(d.amount, 25);
+    expect(d.direction, 'I');
+    expect(d.partyId, 'party-9');
+    expect(d.partyName, 'Axmed');
+    expect(d.notes, 'debt settle');
+
+    // A non-payment txn (or missing) returns null.
+    expect(await repo.getPaymentDetailLocal('nope'), isNull);
+  });
+
+  test('getExpenseDetailLocal reads an expense from the mirror (offline)',
+      () async {
+    await repo.applyTransactionsPayload({
+      'transactions': [
+        {
+          ..._txn('exp-1', 'expense', occurredMs: 2000, total: 40),
+          'category_id': 'cat-rent',
+          'category_name': 'Rent',
+          'notes': 'July',
+        },
+      ],
+    });
+
+    final e = await repo.getExpenseDetailLocal('exp-1');
+    expect(e, isNotNull);
+    expect(e!.txnId, 'exp-1');
+    expect(e.amount, 40);
+    expect(e.categoryName, 'Rent');
+    expect(e.notes, 'July');
+    expect(await repo.getExpenseDetailLocal('nope'), isNull);
+  });
+
+  test('applyOptimisticVoid flags the local txn as voided', () async {
+    await repo.applyTransactionsPayload({
+      'transactions': [_txn('s-void', 'sale', occurredMs: 1000, total: 12)],
+    });
+    expect((await repo.getTransaction('s-void'))!.isVoided, isFalse);
+
+    await repo.applyOptimisticVoid('s-void');
+    expect((await repo.getTransaction('s-void'))!.isVoided, isTrue);
+  });
+
   test('projectedStock subtracts pending sale deltas', () async {
     await repo.applyItemsPayload({
       'items': [_item('si-1', 'Rice 5kg', stock: 10)],

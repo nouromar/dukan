@@ -12,6 +12,8 @@ import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 /// Read-only detail for a single payment — opened from the party detail or
 /// payment history. Shows the direction (Money In/Out), party, amount, date,
@@ -115,6 +117,18 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
   }
 
   Future<_PaymentBundle> _load() async {
+    // Offline-first (mirrors sale/receive detail): read the header from
+    // the local mirror so the screen opens in airplane mode. Allocations
+    // aren't mirrored, so the "Settled" section shows its empty state
+    // offline; the next online open backfills it.
+    if (useLocalDb(context)) {
+      final repo = context.read<LocalRepository>();
+      final local = await repo.getPaymentDetailLocal(widget.paymentId);
+      if (local != null) {
+        return _PaymentBundle(header: local, allocations: const []);
+      }
+      // Not in the mirror — fall through to the network as a last resort.
+    }
     final api = context.read<ShopApi>();
     final header = await api.getPayment(
       shopId: widget.shop.id,
