@@ -4,7 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/receive/add_packaging_sheet.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/pending_post_dao.dart';
 
 import '../shared/fakes.dart';
 import '../shared/wrap.dart';
@@ -163,8 +167,13 @@ void main() {
       expect(createCall!.conversionToBase, 25);
       expect(createCall!.salePrice, isNull);
 
+      // The sheet mints the unit id client-side (0094) and returns THAT —
+      // the same id it sent to create_shop_item_unit — not the server's.
       final result = readResult()!;
-      expect(result.shopItemUnitId, 'new-siu-id');
+      expect(result.shopItemUnitId, isNotEmpty);
+      expect(result.shopItemUnitId,
+          api.createShopItemUnitCalls.last.shopItemUnitId);
+      expect(api.createShopItemUnitCalls.last.clientOpId, isNotNull);
       expect(result.packagingLabel, '25 Kg Bag');
       expect(result.conversionToBase, 25);
     },
@@ -280,6 +289,79 @@ void main() {
       final result = readResult()!;
       expect(result.packagingLabel, '25 Kg Bag');
       expect(result.conversionToBase, 25);
+    },
+  );
+
+  testWidgets(
+    'offline: new packaging is queued with the client id, not lost',
+    (tester) async {
+      // Direct create fails as if offline (transient — NOT a server reject).
+      api.onSuggestItemPackagings = (_, _, _, _, _, _) async => const [
+            PackagingSuggestion(
+              unitCode: 'bag',
+              unitLabel: 'Bag',
+              conversionToBase: 25,
+              uses: 3,
+              source: 'category',
+            ),
+          ];
+      api.onCreateShopItemUnit =
+          (_, _, _, _, _) async => throw Exception('offline');
+
+      final drained = <PendingPost>[];
+      final queue = OfflineQueueController(
+        dao: PendingPostDao(AppDatabase.instance()),
+        executor: (p) async => drained.add(p),
+        backoff: (_) => Duration.zero,
+        clock: () => DateTime.utc(2026, 7, 2),
+      );
+      addTearDown(queue.dispose);
+
+      ReceiveUnitOption? captured;
+      await tester.pumpWidget(
+        wrapWithApp(
+          Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: FilledButton(
+                  onPressed: () async {
+                    captured = await AddPackagingSheet.show(
+                      context,
+                      'shop-1',
+                      'si-1',
+                      'kg',
+                      'Kg',
+                    );
+                  },
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+          shopApi: api,
+          offlineQueueController: queue,
+          configResolver:
+              FakeConfigResolver(values: const {'use_local_db': true}),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('25 Kg Bag'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.addPackagingSaveButton),
+      );
+      await tester.pumpAndSettle();
+
+      // The sheet still returns a packaging — with the client-minted id.
+      expect(captured, isNotNull);
+      expect(captured!.shopItemUnitId, isNotEmpty);
+
+      // The create was queued (not lost) with that same id + a client_op_id.
+      final post = drained.singleWhere((p) => p.rpc == 'create_shop_item_unit');
+      expect(post.params['shop_item_unit_id'], captured!.shopItemUnitId);
+      expect(post.params['shop_item_id'], 'si-1');
+      expect(post.clientOpId, isNotNull);
     },
   );
 

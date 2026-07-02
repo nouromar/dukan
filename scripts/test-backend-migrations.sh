@@ -490,6 +490,32 @@ begin
       end if;
     end;
 
+    -- create_shop_item_unit offline path (0094): client-supplied id +
+    -- client_op_id, idempotent on replay (a re-drained packaging create
+    -- must not duplicate).
+    declare
+      v_cli_unit uuid := '00000000-0000-4000-8000-0000000000bb'::uuid;
+      v_op       text := 'op-unit-offline-1';
+      v_r1       uuid;
+      v_cnt      integer;
+    begin
+      v_r1 := public.create_shop_item_unit(
+        v_shop_id, v_eggs_id, 'piece', 12, 1.00, v_cli_unit, v_op
+      );
+      if v_r1 <> v_cli_unit then
+        raise exception 'create_shop_item_unit did not honour client id';
+      end if;
+      -- Replay: same id + op → same return, one row.
+      if public.create_shop_item_unit(
+           v_shop_id, v_eggs_id, 'piece', 12, 1.00, v_cli_unit, v_op) <> v_cli_unit then
+        raise exception 'create_shop_item_unit replay returned a different id';
+      end if;
+      select count(*) into v_cnt from public.shop_item_unit where id = v_cli_unit;
+      if v_cnt <> 1 then
+        raise exception 'create_shop_item_unit replay duplicated the packaging (count=%)', v_cnt;
+      end if;
+    end;
+
     -- add_shop_item_alias (#12): is_display=true supersedes prior display.
     declare
       v_first_alias_id uuid;

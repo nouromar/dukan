@@ -462,12 +462,17 @@ class ShopApi {
   /// Adds a non-base packaging to an existing shop_item ("+ Add
   /// packaging" entry in the unit picker). Returns the new
   /// `shop_item_unit_id`.
+  /// [shopItemUnitId] / [clientOpId] enable the offline path (0094): the
+  /// caller mints the packaging UUID so the create can be queued and
+  /// drained later, idempotently. Null → the server generates the id.
   Future<String> createShopItemUnit({
     required String shopId,
     required String shopItemId,
     required String unitCode,
     required num conversionToBase,
     num? salePrice,
+    String? shopItemUnitId,
+    String? clientOpId,
   }) async {
     final result = await _client.rpc(
       'create_shop_item_unit',
@@ -477,6 +482,8 @@ class ShopApi {
         'p_unit_code': unitCode,
         'p_conversion_to_base': conversionToBase,
         'p_sale_price': salePrice,
+        'p_shop_item_unit_id': shopItemUnitId,
+        'p_client_op_id': clientOpId,
       },
     );
     return result as String;

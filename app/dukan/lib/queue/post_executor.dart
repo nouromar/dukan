@@ -181,6 +181,7 @@ class PostExecutor {
       case 'set_party_active':
       case 'create_party':
       case 'post_opening_party_balance':
+      case 'create_shop_item_unit':
       case 'set_shop_item_active':
       case 'create_shop_category':
       case 'rename_shop_category':
@@ -284,6 +285,18 @@ class PostExecutor {
           direction: p['direction'] as String,
           clientOpId: clientOpId,
           notes: p['notes'] as String?,
+        );
+      case 'create_shop_item_unit':
+        // Offline packaging create (0094): client minted the id → idempotent
+        // fire-and-confirm; the returned id is ignored (mirror already holds it).
+        await _api.createShopItemUnit(
+          shopId: shopId,
+          shopItemId: p['shop_item_id'] as String,
+          unitCode: p['unit_code'] as String,
+          conversionToBase: p['conversion_to_base'] as num,
+          salePrice: p['sale_price'] as num?,
+          shopItemUnitId: p['shop_item_unit_id'] as String,
+          clientOpId: clientOpId,
         );
       case 'update_party':
         await _api.updateParty(
@@ -585,6 +598,23 @@ Map<String, dynamic> buildPostOpeningPartyBalanceParams({
       'amount': amount,
       'direction': direction,
       if (notes != null) 'notes': notes,
+    };
+
+// Offline packaging create (0094). shopItemUnitId is client-generated so
+// the optimistic mirror row and the server row share one id.
+Map<String, dynamic> buildCreateShopItemUnitParams({
+  required String shopItemUnitId,
+  required String shopItemId,
+  required String unitCode,
+  required num conversionToBase,
+  num? salePrice,
+}) =>
+    <String, dynamic>{
+      'shop_item_unit_id': shopItemUnitId,
+      'shop_item_id': shopItemId,
+      'unit_code': unitCode,
+      'conversion_to_base': conversionToBase,
+      if (salePrice != null) 'sale_price': salePrice,
     };
 
 Map<String, dynamic> buildUpdatePartyParams({

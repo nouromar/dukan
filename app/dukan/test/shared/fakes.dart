@@ -457,8 +457,14 @@ class FakeShopApi implements ShopApi {
     num? salePrice,
   )?
   onCreateShopItemUnit;
-  final List<({String shopItemId, String unitCode, num conversionToBase})>
-  createShopItemUnitCalls = [];
+  final List<
+      ({
+        String shopItemId,
+        String unitCode,
+        num conversionToBase,
+        String? shopItemUnitId,
+        String? clientOpId,
+      })> createShopItemUnitCalls = [];
   Future<String> Function(
     String shopId,
     String shopItemId,
@@ -815,11 +821,15 @@ class FakeShopApi implements ShopApi {
     required String unitCode,
     required num conversionToBase,
     num? salePrice,
+    String? shopItemUnitId,
+    String? clientOpId,
   }) async {
     createShopItemUnitCalls.add((
       shopItemId: shopItemId,
       unitCode: unitCode,
       conversionToBase: conversionToBase,
+      shopItemUnitId: shopItemUnitId,
+      clientOpId: clientOpId,
     ));
     if (onCreateShopItemUnit != null) {
       return onCreateShopItemUnit!(
@@ -830,8 +840,10 @@ class FakeShopApi implements ShopApi {
         salePrice,
       );
     }
-    return 'fake-shop-item-unit-${unitCode.hashCode}-'
-        '${conversionToBase.hashCode}';
+    // Mimic the server (0094): honour the client-supplied id when present.
+    return shopItemUnitId ??
+        'fake-shop-item-unit-${unitCode.hashCode}-'
+            '${conversionToBase.hashCode}';
   }
 
   final List<

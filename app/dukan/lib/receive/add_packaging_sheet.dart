@@ -23,6 +23,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/packaging_label.dart';
@@ -239,25 +243,29 @@ class _AddPackagingBodyState extends State<_AddPackagingBody> {
 
     setState(() => _saving = true);
     final api = context.read<ShopApi>();
+    final queue = context.read<OfflineQueueController>();
     final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
+
+    final label = packagingLabel(
+      chosen.conversion,
+      widget.baseUnitLabel,
+      chosen.unitLabel,
+    );
+    // Mint the id up front (0094) so the online + offline paths are
+    // identical and a retried create is idempotent.
+    final unitId = generateUuidV4();
+    final unitOpId = generateClientOpId('unit');
+    String actorId = '';
     try {
-      final shopItemUnitId = await api.createShopItemUnit(
-        shopId: widget.shopId,
-        shopItemId: widget.shopItemId,
-        unitCode: chosen.unitCode,
-        conversionToBase: chosen.conversion,
-        salePrice: price,
-      );
-      final label = packagingLabel(
-        chosen.conversion,
-        widget.baseUnitLabel,
-        chosen.unitLabel,
-      );
-      // Optimistically mirror the new packaging so screens that read the local
-      // DB (e.g. Product detail) reflect it immediately, not only after a sync.
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {}
+
+    // Optimistically mirror the new packaging so screens that read the
+    // local DB (e.g. Product detail) reflect it immediately.
+    Future<void> writeMirror() async {
       try {
         await repo?.insertLocalShopItemUnit(
-          shopItemUnitId: shopItemUnitId,
+          shopItemUnitId: unitId,
           shopItemId: widget.shopItemId,
           unitCode: chosen.unitCode,
           packagingLabel: label,
@@ -267,10 +275,13 @@ class _AddPackagingBodyState extends State<_AddPackagingBody> {
       } catch (_) {
         // Non-fatal — the next delta sync brings the row in.
       }
+    }
+
+    void popResult() {
       if (!mounted) return;
       Navigator.of(context).pop(
         ReceiveUnitOption(
-          shopItemUnitId: shopItemUnitId,
+          shopItemUnitId: unitId,
           unitCode: chosen.unitCode,
           unitLabel: chosen.unitLabel,
           packagingLabel: label,
@@ -282,10 +293,46 @@ class _AddPackagingBodyState extends State<_AddPackagingBody> {
           isBaseUnit: false,
         ),
       );
+    }
+
+    try {
+      await api.createShopItemUnit(
+        shopId: widget.shopId,
+        shopItemId: widget.shopItemId,
+        unitCode: chosen.unitCode,
+        conversionToBase: chosen.conversion,
+        salePrice: price,
+        shopItemUnitId: unitId,
+        clientOpId: unitOpId,
+      );
+      await writeMirror();
+      popResult();
     } on PostgrestException catch (error, stackTrace) {
       _handleFailure(error, stackTrace, l.addPackagingFailedMessage);
     } catch (error, stackTrace) {
-      _handleFailure(error, stackTrace, l.addPackagingFailedMessage);
+      // Transient (offline / network) — mirror + queue for background
+      // upload with the client-minted id. Thin-client → surface.
+      if (repo == null) {
+        _handleFailure(error, stackTrace, l.addPackagingFailedMessage);
+      } else {
+        await writeMirror();
+        await queue.enqueue(PendingPost(
+          id: generateClientOpId('post'),
+          clientOpId: unitOpId,
+          shopId: widget.shopId,
+          originalActorUserId: actorId,
+          rpc: 'create_shop_item_unit',
+          params: buildCreateShopItemUnitParams(
+            shopItemUnitId: unitId,
+            shopItemId: widget.shopItemId,
+            unitCode: chosen.unitCode,
+            conversionToBase: chosen.conversion,
+            salePrice: price,
+          ),
+          queuedAt: DateTime.now(),
+        ));
+        popResult();
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
