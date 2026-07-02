@@ -2179,7 +2179,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get setupOnboardingAddItemsBody => 'Alaabaha qaabku aanu lahayn';
 
   @override
-  String get setupOnboardingSetPricesTitle => 'Qiime u Samee Alaabta Caanka ah';
+  String get setupOnboardingSetPricesTitle => 'Qiime u samee alaabta caanka ah';
 
   @override
   String get setupOnboardingSetPricesBody =>

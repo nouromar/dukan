@@ -911,7 +911,7 @@
   "setupOnboardingBody": "Waxaan kuugu darnay {count} alaab oo ka mid ah qaabka {template}. Hadda iibi waad bilaaban kartaa — qiimayaashu way buuxin doonaan markaad iibinayso.\n\nAma daqiiqad ku qaad:",
   "setupOnboardingAddItemsTitle": "Ku dar alaabadayda",
   "setupOnboardingAddItemsBody": "Alaabaha qaabku aanu lahayn",
-  "setupOnboardingSetPricesTitle": "Qiime u Samee Alaabta Caanka ah",
+  "setupOnboardingSetPricesTitle": "Qiime u samee alaabta caanka ah",
   "setupOnboardingSetPricesBody": "Si aanu iibku u dhabaalayn qiimo weydiin",
   "setupOnboardingBrowseCatalogTitle": "Eeg liiska guud",
   "setupOnboardingBrowseCatalogBody": "Ka dhaqaaji alaabo dheeraad ah liiskayaga",
