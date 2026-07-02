@@ -83,7 +83,7 @@
   "reportLoadFailedMessage": "Ma soo dejin karno. Hoos u jiid si aad mar kale isku daydo.",
   "filterTooltip": "Shaandhee",
   "filterSheetTitle": "Shaandhee",
-  "filterApplyButton": "ISTICMAAL",
+  "filterApplyButton": "DABBAQ",
   "filterResetButton": "Dib u bilow",
   "dateRangeToday": "Maanta",
   "dateRangeWeek": "7 maalmood",
@@ -94,7 +94,7 @@
   "filterHideVoided": "Qari kuwa la tirtiray",
   "filterCategoryAny": "Qayb kasta",
   "filterLowStockOnly": "Kaliya kuwa yaraatey",
-  "filterNoPriceOnly": "Aan qiimo lahayn",
+  "filterNoPriceOnly": "Qiimo la'aan",
   "lowStockSearchHint": "Raadi alaab",
   "filterChipParty": "Qof: {name}",
   "@filterChipParty": {
@@ -104,7 +104,7 @@
       }
     }
   },
-  "filterChipHideVoided": "La qariyay kuwa la tirtiray",
+  "filterChipHideVoided": "Qari Kuwa la tiray",
   "filterChipCategory": "{name}",
   "@filterChipCategory": {
     "placeholders": {
@@ -114,7 +114,7 @@
     }
   },
   "filterChipLowStock": "Yaraatey",
-  "filterChipNoPrice": "Aan qiimo lahayn",
+  "filterChipNoPrice": "Qiimo la'aan",
   "drawerHistoryHeader": "SOOYAAL",
   "drawerSalesHistory": "Sooyaalka iibka",
   "drawerReceiveHistory": "Sooyaalka Alaab Keenida",

@@ -255,7 +255,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get filterSheetTitle => 'Shaandhee';
 
   @override
-  String get filterApplyButton => 'ISTICMAAL';
+  String get filterApplyButton => 'DABBAQ';
 
   @override
   String get filterResetButton => 'Dib u bilow';
@@ -288,7 +288,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get filterLowStockOnly => 'Kaliya kuwa yaraatey';
 
   @override
-  String get filterNoPriceOnly => 'Aan qiimo lahayn';
+  String get filterNoPriceOnly => 'Qiimo la\'aan';
 
   @override
   String get lowStockSearchHint => 'Raadi alaab';
@@ -299,7 +299,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get filterChipHideVoided => 'La qariyay kuwa la tirtiray';
+  String get filterChipHideVoided => 'Qari Kuwa la tiray';
 
   @override
   String filterChipCategory(String name) {
@@ -310,7 +310,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get filterChipLowStock => 'Yaraatey';
 
   @override
-  String get filterChipNoPrice => 'Aan qiimo lahayn';
+  String get filterChipNoPrice => 'Qiimo la\'aan';
 
   @override
   String get drawerHistoryHeader => 'SOOYAAL';
