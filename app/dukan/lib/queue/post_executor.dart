@@ -179,6 +179,8 @@ class PostExecutor {
       case 'set_primary_shop_item_barcode':
       case 'update_party':
       case 'set_party_active':
+      case 'create_party':
+      case 'post_opening_party_balance':
       case 'set_shop_item_active':
       case 'create_shop_category':
       case 'rename_shop_category':
@@ -261,6 +263,27 @@ class PostExecutor {
           shopId: shopId,
           barcodeId: p['barcode_id'] as String,
           clientOpId: clientOpId,
+        );
+      case 'create_party':
+        // Offline party create (0093): the client minted party_id, so the
+        // drain is a fire-and-confirm idempotent upsert; the returned id is
+        // ignored (the cart/mirror already hold it).
+        await _api.createParty(
+          shopId: shopId,
+          name: p['name'] as String,
+          typeCode: p['type_code'] as String,
+          phone: p['phone'] as String?,
+          partyId: p['party_id'] as String,
+          clientOpId: clientOpId,
+        );
+      case 'post_opening_party_balance':
+        await _api.postOpeningPartyBalance(
+          shopId: shopId,
+          partyId: p['party_id'] as String,
+          amount: p['amount'] as num,
+          direction: p['direction'] as String,
+          clientOpId: clientOpId,
+          notes: p['notes'] as String?,
         );
       case 'update_party':
         await _api.updateParty(
@@ -535,6 +558,34 @@ Map<String, dynamic> buildSetPrimaryShopItemBarcodeParams({
   required String barcodeId,
 }) =>
     <String, dynamic>{'barcode_id': barcodeId};
+
+// Offline party create (0093). partyId is client-generated so the
+// optimistic mirror row and the eventual server row share one id.
+Map<String, dynamic> buildCreatePartyParams({
+  required String partyId,
+  required String name,
+  required String typeCode,
+  String? phone,
+}) =>
+    <String, dynamic>{
+      'party_id': partyId,
+      'name': name,
+      'type_code': typeCode,
+      if (phone != null) 'phone': phone,
+    };
+
+Map<String, dynamic> buildPostOpeningPartyBalanceParams({
+  required String partyId,
+  required num amount,
+  required String direction,
+  String? notes,
+}) =>
+    <String, dynamic>{
+      'party_id': partyId,
+      'amount': amount,
+      'direction': direction,
+      if (notes != null) 'notes': notes,
+    };
 
 Map<String, dynamic> buildUpdatePartyParams({
   required String partyId,

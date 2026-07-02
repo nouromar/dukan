@@ -14,9 +14,13 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/queue/offline_queue_controller.dart';
+import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 
@@ -91,68 +95,133 @@ class _AddPartyBodyState extends State<_AddPartyBody> {
     final opening = _parsedOpening;
     setState(() => _saving = true);
     // Capture before the awaits so an unmounted context can't break the
-    // optimistic mirror write.
+    // optimistic mirror write / enqueue.
     final api = context.read<ShopApi>();
+    final queue = context.read<OfflineQueueController>();
     final localRepo =
         useLocalDb(context) ? context.read<LocalRepository>() : null;
+
+    final phoneOrNull = phone.isEmpty ? null : phone;
+    final direction = widget.typeCode == 'supplier' ? 'O' : 'I';
+    final num receivable = widget.typeCode == 'customer' ? (opening ?? 0) : 0;
+    final num payable = widget.typeCode == 'supplier' ? (opening ?? 0) : 0;
+    final postBalance = widget.allowOpeningBalance && opening != null;
+
+    // Mint the ids up front (0093) so the online and offline paths are
+    // identical and a retried create is idempotent (client id == server id).
+    final partyId = generateUuidV4();
+    final partyOpId = generateClientOpId('party');
+    final balanceOpId = generateClientOpId('obal');
+    String actorId = '';
     try {
-      final partyId = await api.createParty(
-        shopId: widget.shopId,
-        name: name,
-        typeCode: widget.typeCode,
-        phone: phone.isEmpty ? null : phone,
-      );
-      // Optional opening balance — direction depends on type.
-      if (widget.allowOpeningBalance && opening != null) {
-        final direction = widget.typeCode == 'supplier' ? 'O' : 'I';
-        await api.postOpeningPartyBalance(
-          shopId: widget.shopId,
+      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    } catch (_) {}
+
+    Future<void> writeMirror() async {
+      if (localRepo == null) return;
+      try {
+        await localRepo.applyOptimisticPartyCreate(
           partyId: partyId,
-          amount: opening,
-          direction: direction,
+          shopId: widget.shopId,
+          name: name,
+          phone: phoneOrNull,
+          typeCode: widget.typeCode,
+          receivable: receivable,
+          payable: payable,
         );
+      } catch (e, st) {
+        // A mirror-write failure must not sink the create; the next
+        // parties-sync brings the row in anyway.
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'dukan party',
+          context: ErrorDescription('optimistic party create mirror'),
+        ));
       }
-      // Mirror the new party locally so it shows in the people list + pickers
-      // immediately; the next parties-sync replaces it with the server row.
-      if (localRepo != null) {
-        try {
-          await localRepo.applyOptimisticPartyCreate(
-            partyId: partyId,
-            shopId: widget.shopId,
-            name: name,
-            phone: phone.isEmpty ? null : phone,
-            typeCode: widget.typeCode,
-            receivable: widget.typeCode == 'customer' ? (opening ?? 0) : 0,
-            payable: widget.typeCode == 'supplier' ? (opening ?? 0) : 0,
-          );
-        } catch (e, st) {
-          FlutterError.reportError(FlutterErrorDetails(
-            exception: e,
-            stack: st,
-            library: 'dukan party',
-            context: ErrorDescription('optimistic party create mirror'),
-          ));
-        }
-      }
+    }
+
+    void popResult() {
       if (!mounted) return;
       Navigator.of(context).pop(
         PartySearchResult(
           id: partyId,
           name: name,
-          phone: phone.isEmpty ? null : phone,
+          phone: phoneOrNull,
           typeCode: widget.typeCode,
-          receivable: widget.typeCode == 'customer'
-              ? (opening?.toDouble() ?? 0)
-              : 0,
-          payable: widget.typeCode == 'supplier'
-              ? (opening?.toDouble() ?? 0)
-              : 0,
+          receivable: receivable.toDouble(),
+          payable: payable.toDouble(),
         ),
       );
+    }
+
+    try {
+      await api.createParty(
+        shopId: widget.shopId,
+        name: name,
+        typeCode: widget.typeCode,
+        phone: phoneOrNull,
+        partyId: partyId,
+        clientOpId: partyOpId,
+      );
+      if (postBalance) {
+        await api.postOpeningPartyBalance(
+          shopId: widget.shopId,
+          partyId: partyId,
+          amount: opening,
+          direction: direction,
+          clientOpId: balanceOpId,
+        );
+      }
+      // Mirror the new party locally so it shows in the people list +
+      // pickers immediately; the next parties-sync replaces it.
+      await writeMirror();
+      popResult();
     } on PostgrestException catch (error, stackTrace) {
+      // Structured server reject — surface it, write nothing (the create
+      // never landed, so there's nothing to roll back).
       _handleFailure(error, stackTrace, l.partyNewSaveFailedMessage);
     } catch (error, stackTrace) {
-      _handleFailure(error, stackTrace, l.partyNewSaveFailedMessage);
+      // Transient (offline / network). With a local mirror, save
+      // optimistically and queue the create for background upload. The
+      // client-minted id keeps a retried drain idempotent, and FIFO drain
+      // order posts the party before any sale that references it. In
+      // thin-client mode there's no queue, so surface the failure.
+      if (localRepo == null) {
+        _handleFailure(error, stackTrace, l.partyNewSaveFailedMessage);
+      } else {
+        await writeMirror();
+        await queue.enqueue(PendingPost(
+          id: generateClientOpId('post'),
+          clientOpId: partyOpId,
+          shopId: widget.shopId,
+          originalActorUserId: actorId,
+          rpc: 'create_party',
+          params: buildCreatePartyParams(
+            partyId: partyId,
+            name: name,
+            typeCode: widget.typeCode,
+            phone: phoneOrNull,
+          ),
+          queuedAt: DateTime.now(),
+        ));
+        if (postBalance) {
+          await queue.enqueue(PendingPost(
+            id: generateClientOpId('post'),
+            clientOpId: balanceOpId,
+            shopId: widget.shopId,
+            originalActorUserId: actorId,
+            rpc: 'post_opening_party_balance',
+            params: buildPostOpeningPartyBalanceParams(
+              partyId: partyId,
+              amount: opening,
+              direction: direction,
+            ),
+            queuedAt: DateTime.now(),
+          ));
+        }
+        popResult();
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

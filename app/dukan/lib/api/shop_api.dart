@@ -760,11 +760,16 @@ class ShopApi {
   /// Cashier-accessible (operational data, not setup). Pickers call this
   /// from their + NEW {CUSTOMER,SUPPLIER} affordances; the new party is
   /// auto-selected on success.
+  /// [partyId] / [clientOpId] enable the offline path (0093): the caller
+  /// mints the party UUID so the create can be queued and drained later,
+  /// idempotently. Null (online/legacy) → the server generates the id.
   Future<String> createParty({
     required String shopId,
     required String name,
     required String typeCode,
     String? phone,
+    String? partyId,
+    String? clientOpId,
   }) async {
     final result = await _client.rpc(
       'create_party',
@@ -773,6 +778,8 @@ class ShopApi {
         'p_name': name,
         'p_phone': phone,
         'p_type_code': typeCode,
+        'p_party_id': partyId,
+        'p_client_op_id': clientOpId,
       },
     );
     return result as String;

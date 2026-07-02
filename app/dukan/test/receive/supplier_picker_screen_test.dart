@@ -103,7 +103,7 @@ void main() {
       String? capturedType;
       api.onCreateParty = (shopId, name, phone, typeCode) async {
         capturedType = typeCode;
-        return 'new-supplier-456';
+        return 'ignored-server-id';
       };
 
       await pumpPicker(tester);
@@ -122,8 +122,10 @@ void main() {
 
       expect(capturedType, 'supplier');
       // Auto-selected: receive controller now has Hassan, Receive screen
-      // is the active route.
-      expect(receive.supplier?.id, 'new-supplier-456');
+      // is the active route. The supplier carries the client-minted id
+      // (0093) — the same one sent to create_party — not the server's.
+      expect(receive.supplier?.id, isNotEmpty);
+      expect(receive.supplier?.id, api.createPartyCalls.last.partyId);
       expect(receive.supplier?.name, 'Hassan');
     },
   );

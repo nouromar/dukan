@@ -1583,6 +1583,54 @@ begin
 end;
 $$;
 
+-- §12a create_party offline path (0093): client-supplied id + client_op_id,
+-- idempotent on replay. The device mints the party UUID so the create can be
+-- queued and drained later; a retried drain must not duplicate the party.
+do $$
+declare
+  v_shop_id uuid;
+  v_cli_id  uuid := '00000000-0000-4000-8000-0000000000aa'::uuid;
+  v_op      text := 'op-party-offline-1';
+  v_r1      uuid;
+  v_r2      uuid;
+  v_cnt     integer;
+begin
+  select shop_id into v_shop_id from test_ids;
+
+  -- Client-supplied id is honoured and echoed back.
+  v_r1 := public.create_party(v_shop_id, 'Offline Customer', null, 'customer', v_cli_id, v_op);
+  if v_r1 <> v_cli_id then
+    raise exception 'create_party did not honour client-supplied id (got %, want %)', v_r1, v_cli_id;
+  end if;
+  if not exists (select 1 from public.party where id = v_cli_id and shop_id = v_shop_id) then
+    raise exception 'create_party did not persist the client-supplied party';
+  end if;
+
+  -- Idempotent replay: same id + same client_op_id → same return, one row.
+  v_r2 := public.create_party(v_shop_id, 'Offline Customer', null, 'customer', v_cli_id, v_op);
+  if v_r2 <> v_cli_id then
+    raise exception 'create_party replay returned a different id';
+  end if;
+  select count(*) into v_cnt from public.party where id = v_cli_id;
+  if v_cnt <> 1 then
+    raise exception 'create_party replay duplicated the party (count=%)', v_cnt;
+  end if;
+
+  -- on-conflict guard: same id, DIFFERENT client_op_id, still no duplicate.
+  perform public.create_party(v_shop_id, 'Offline Customer', null, 'customer', v_cli_id, 'op-party-offline-2');
+  select count(*) into v_cnt from public.party where id = v_cli_id;
+  if v_cnt <> 1 then
+    raise exception 'create_party on-conflict(id) failed (count=%)', v_cnt;
+  end if;
+
+  -- Legacy path unchanged: null id still generates a server id.
+  v_r1 := public.create_party(v_shop_id, 'Legacy Customer', null, 'customer');
+  if v_r1 is null then
+    raise exception 'create_party legacy (null id) returned null';
+  end if;
+end;
+$$;
+
 -- §12b search_parties recency ranking (0077). Recency is computed on-read as
 -- max(txn.occurred_at) per party — no aggregate table. Seed two posted txns
 -- (the LOW-debt customer more recent) as superuser, verify p_rank_by='recency'

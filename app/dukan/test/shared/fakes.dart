@@ -521,8 +521,14 @@ class FakeShopApi implements ShopApi {
     String typeCode,
   )?
   onCreateParty;
-  final List<({String name, String? phone, String typeCode})> createPartyCalls =
-      [];
+  final List<
+      ({
+        String name,
+        String? phone,
+        String typeCode,
+        String? partyId,
+        String? clientOpId,
+      })> createPartyCalls = [];
   Future<List<UnitOption>> Function()? onListUnits;
   Future<String> Function(
     String shopId,
@@ -989,12 +995,21 @@ class FakeShopApi implements ShopApi {
     required String name,
     required String typeCode,
     String? phone,
+    String? partyId,
+    String? clientOpId,
   }) async {
-    createPartyCalls.add((name: name, phone: phone, typeCode: typeCode));
+    createPartyCalls.add((
+      name: name,
+      phone: phone,
+      typeCode: typeCode,
+      partyId: partyId,
+      clientOpId: clientOpId,
+    ));
     if (onCreateParty != null) {
       return onCreateParty!(shopId, name, phone, typeCode);
     }
-    return 'fake-party-${name.hashCode}';
+    // Mimic the server (0093): honour the client-supplied id when present.
+    return partyId ?? 'fake-party-${name.hashCode}';
   }
 
   Future<void> Function(
