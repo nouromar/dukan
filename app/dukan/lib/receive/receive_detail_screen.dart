@@ -317,15 +317,15 @@ class _ReceiveDetailBody extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (_canVoid(context))
-            // Destructive secondary action: red text, right-aligned,
-            // no fill. Mirrors the sale-detail layout so cashiers see
-            // the same pattern across both history surfaces.
+            // Destructive secondary action: muted grey text, right-aligned,
+            // no fill. Mirrors the sale-detail layout (also low-key now) so
+            // cashiers see the same pattern across both history surfaces.
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: voiding ? null : onVoid,
                 style: TextButton.styleFrom(
-                  foregroundColor: theme.colorScheme.error,
+                  foregroundColor: theme.colorScheme.onSurfaceVariant,
                 ),
                 child: voiding
                     ? const SizedBox(

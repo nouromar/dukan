@@ -635,6 +635,7 @@
   "receiveLinesClearConfirmYes": "CLEAR",
   "receiveLinesClearConfirmNo": "CANCEL",
   "receiveSaveButton": "SAVE",
+  "saleSavedToast": "Sale saved",
   "receiveSavedToast": "Receive saved (on credit)",
   "receivePostFailedMessage": "Could not save the receive. Check your internet and try again.",
   "receiveNeedSupplierMessage": "Pick a supplier before saving.",

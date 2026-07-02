@@ -967,6 +967,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, en.saleSaveButton));
       await tester.pumpAndSettle();
+      // Let the "Sale saved" toast's display timer fire — this path has no
+      // receipt sheet / pop to keep pumping past it, so pumpAndSettle
+      // returns while it's idle and the timer would otherwise leak.
+      await tester.pump(const Duration(seconds: 2));
 
       // Cart stayed cleared (the queue owns the work now).
       expect(cart.itemCount, 0);

@@ -522,12 +522,48 @@ class _AddPackagingBodyState extends State<_AddPackagingBody> {
     );
   }
 
+  /// The custom entry is an ACTION (it opens an inline form), not another
+  /// value to pick — so it's styled deliberately unlike the suggestion
+  /// chips: primary-coloured outline + text, a leading "+", and a trailing
+  /// chevron that flips to expand_less while the form is open. Reads as
+  /// "go here", not "one of the options".
   Widget _customChip(AppLocalizations l) {
-    return _ChoiceTile(
-      label: l.addPackagingCustomEntry,
-      icon: Icons.tune,
-      selected: _customMode,
-      onTap: _saving ? null : _onPickCustom,
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+    return Material(
+      color: _customMode
+          ? theme.colorScheme.primaryContainer
+          : theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: color, width: 1.5),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: _saving ? null : _onPickCustom,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add, size: 18, color: color),
+              const SizedBox(width: 6),
+              Text(
+                l.addPackagingCustomEntry,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Icon(
+                _customMode ? Icons.expand_less : Icons.chevron_right,
+                size: 18,
+                color: color,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -625,13 +661,11 @@ class _BaseUnitChip extends StatelessWidget {
 class _ChoiceTile extends StatelessWidget {
   const _ChoiceTile({
     required this.label,
-    this.icon,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
-  final IconData? icon;
   final bool selected;
   final VoidCallback? onTap;
 
@@ -659,18 +693,9 @@ class _ChoiceTile extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 18, color: fg),
-                const SizedBox(width: 8),
-              ],
-              Text(
-                label,
-                style: theme.textTheme.bodyMedium?.copyWith(color: fg),
-              ),
-            ],
+          child: Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(color: fg),
           ),
         ),
       ),

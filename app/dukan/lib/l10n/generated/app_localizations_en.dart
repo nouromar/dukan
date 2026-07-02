@@ -1633,6 +1633,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveSaveButton => 'SAVE';
 
   @override
+  String get saleSavedToast => 'Sale saved';
+
+  @override
   String get receiveSavedToast => 'Receive saved (on credit)';
 
   @override

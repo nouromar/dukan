@@ -683,14 +683,15 @@ class _SaleReceiptBody extends StatelessWidget {
             ),
           if (_canVoid(context)) ...[
             const SizedBox(height: 4),
-            // Destructive secondary action: red text, right-aligned,
-            // no fill. Findable but not the screen's primary CTA.
+            // Destructive secondary action: muted grey text, right-aligned,
+            // no fill. Deliberately low-key — findable but far from the
+            // screen's primary CTA. The confirm dialog carries the warning.
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: voiding ? null : onVoid,
                 style: TextButton.styleFrom(
-                  foregroundColor: theme.colorScheme.error,
+                  foregroundColor: theme.colorScheme.onSurfaceVariant,
                 ),
                 child: voiding
                     ? const SizedBox(

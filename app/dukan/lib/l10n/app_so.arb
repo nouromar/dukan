@@ -622,6 +622,7 @@
   "receiveLinesClearConfirmYes": "TIRTIR",
   "receiveLinesClearConfirmNo": "JOOJI",
   "receiveSaveButton": "KAYDI",
+  "saleSavedToast": "Iibka waa la kaydiyay",
   "receiveSavedToast": "Alaab dejin waa la kaydiyay (deyn)",
   "receivePostFailedMessage": "Alaab dejinta lama kaydin karin. Hubi internetka oo isku day mar kale.",
   "receiveNeedSupplierMessage": "Dooro alaab keene ka hor inta aadan kaydin.",

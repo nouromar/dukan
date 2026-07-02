@@ -219,6 +219,9 @@ void main() {
 
       await tester.tap(find.text(en.receiveSaveButton));
       await tester.pumpAndSettle();
+      // Let the "saved" confirmation toast's display timer fire so it
+      // doesn't leak past the test (into the next file).
+      await tester.pump(const Duration(seconds: 2));
 
       expect(captured, isNotNull);
       final lines = captured!['lines'] as List<ReceiveLinePayload>;
@@ -340,6 +343,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text(en.receiveSaveButton));
       await tester.pumpAndSettle();
+      // Let the "saved" confirmation toast's display timer fire so it
+      // doesn't leak past the test (into the next file).
+      await tester.pump(const Duration(seconds: 2));
 
       // post_receive received the KG packaging shop_item_unit_id, not BAG.
       final lines = captured!['lines'] as List<ReceiveLinePayload>;

@@ -770,6 +770,9 @@ class _SaleScreenState extends State<SaleScreen> {
     });
     Timing.mark('cart.cleared');
     if (mounted) Timing.endFlow(context);
+    // Instant, noticeable confirmation — covers the offline/queued case
+    // (no receipt sheet) and reassures before any network round-trip.
+    if (mounted) showHappyToast(context, l.saleSavedToast);
 
     await _postSaleAndAfter(
       api: api,
@@ -1129,11 +1132,8 @@ class _SaleScreenState extends State<SaleScreen> {
           children: [
             Column(
               children: [
-                if (cart.isBackdated)
-                  BackdateBanner(
-                    date: cart.workingDate!,
-                    onClear: () => cart.setWorkingDate(null),
-                  ),
+                // Backdating is signalled by the highlighted date chip in the
+                // app bar; a separate banner just eats vertical space.
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
                   child: TextField(

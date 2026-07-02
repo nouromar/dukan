@@ -777,9 +777,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     setState(() => _linesExpanded = false);
     Timing.mark('lines.cleared');
     Timing.endFlow(context);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l.receiveSavedToast)));
+    showHappyToast(context, l.receiveSavedToast);
 
     try {
       await api.postReceive(
@@ -919,9 +917,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         _linesExpanded = false;
         _saving = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l.receiveSavedToast)));
+      showHappyToast(context, l.receiveSavedToast);
       Navigator.of(context).maybePop();
     } catch (error, stackTrace) {
       _reportError(error, stackTrace, 'post_receive (useLocalDb=false)');
@@ -997,11 +993,8 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            if (controller.isBackdated)
-              BackdateBanner(
-                date: controller.workingDate!,
-                onClear: () => controller.setWorkingDate(null),
-              ),
+            // Backdating is signalled by the highlighted date chip in the
+            // app bar; a separate banner just eats vertical space.
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
               child: TextField(

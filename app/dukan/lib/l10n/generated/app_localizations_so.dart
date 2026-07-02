@@ -1642,6 +1642,9 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveSaveButton => 'KAYDI';
 
   @override
+  String get saleSavedToast => 'Iibka waa la kaydiyay';
+
+  @override
   String get receiveSavedToast => 'Alaab dejin waa la kaydiyay (deyn)';
 
   @override

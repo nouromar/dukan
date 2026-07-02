@@ -2838,6 +2838,12 @@ abstract class AppLocalizations {
   /// **'SAVE'**
   String get receiveSaveButton;
 
+  /// No description provided for @saleSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale saved'**
+  String get saleSavedToast;
+
   /// No description provided for @receiveSavedToast.
   ///
   /// In en, this message translates to:
