@@ -327,6 +327,88 @@ void main() {
     });
   });
 
+  group('listUnpaidInvoices includeOptimistic', () {
+    test('surfaces a just-saved debt sale before it syncs; cash sale excluded',
+        () async {
+      // Optimistic debt sale (server_updated_at == 0, paid < total).
+      await repo.writeOptimisticTransaction(
+        clientOpId: 'op-debt',
+        shopId: shopId,
+        typeCode: 'sale',
+        occurredAtMs: 2000,
+        total: 26.5,
+        partyId: 'c-1',
+        payload: {'party_name': 'Ali', 'paid_amount': 0},
+      );
+      // Optimistic cash sale to the same customer — fully paid, must NOT
+      // appear as an open invoice.
+      await repo.writeOptimisticTransaction(
+        clientOpId: 'op-cash',
+        shopId: shopId,
+        typeCode: 'sale',
+        occurredAtMs: 2100,
+        total: 10,
+        partyId: 'c-1',
+        payload: {'party_name': 'Ali', 'paid_amount': 10},
+      );
+
+      // Default path (allocation) never sees the optimistic rows.
+      final synced = await repo.listUnpaidInvoices(
+        shopId: shopId,
+        partyId: 'c-1',
+        direction: 'I',
+      );
+      expect(synced, isEmpty);
+
+      // Party-page path surfaces only the open (debt) invoice.
+      final withOptimistic = await repo.listUnpaidInvoices(
+        shopId: shopId,
+        partyId: 'c-1',
+        direction: 'I',
+        includeOptimistic: true,
+      );
+      expect(withOptimistic, hasLength(1));
+      expect(withOptimistic.single.transactionId, 'op-debt');
+      expect(withOptimistic.single.remaining, 26.5);
+    });
+
+    test('combines synced invoices with optimistic ones, oldest first',
+        () async {
+      await repo.applyUnpaidInvoicesPayload({
+        'unpaid_invoices': [
+          {
+            'shop_id': shopId,
+            'party_id': 'c-1',
+            'direction': 'I',
+            'txn_id': 'synced-1',
+            'occurred_at_ms': 1000,
+            'original_amount': 5.0,
+            'already_paid': 0.0,
+            'remaining': 5.0,
+            'document_id': null,
+            'server_updated_at_ms': 1,
+          },
+        ],
+      });
+      await repo.writeOptimisticTransaction(
+        clientOpId: 'op-2',
+        shopId: shopId,
+        typeCode: 'sale',
+        occurredAtMs: 3000,
+        total: 8,
+        partyId: 'c-1',
+        payload: {'paid_amount': 0},
+      );
+      final list = await repo.listUnpaidInvoices(
+        shopId: shopId,
+        partyId: 'c-1',
+        direction: 'I',
+        includeOptimistic: true,
+      );
+      expect(list.map((i) => i.transactionId), ['synced-1', 'op-2']);
+    });
+  });
+
   group('hasAnyData', () {
     test('flips from false to true after the first applyItemsPayload',
         () async {

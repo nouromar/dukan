@@ -115,6 +115,10 @@ class _PartyDetailScreenState extends State<PartyDetailScreen> {
             shopId: widget.shop.id,
             partyId: widget.partyId,
             direction: direction,
+            // Show a just-made debt sale's open invoice instantly, in step
+            // with the sales list (which already reflects the optimistic
+            // row). Reconciles to the synced invoice on the next sync.
+            includeOptimistic: true,
           );
           // The "edited" chip is server-only audit metadata; best-effort
           // and simply absent while offline.

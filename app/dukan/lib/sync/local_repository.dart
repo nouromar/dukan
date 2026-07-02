@@ -1232,10 +1232,18 @@ class LocalRepository {
   /// shape (`List<UnpaidInvoice>` ordered oldest-first by
   /// occurred_at). The Payment allocation sheet branches on
   /// `useLocalDb(context)` to call either this or the live RPC.
+  ///
+  /// [includeOptimistic] appends not-yet-synced debt invoices derived
+  /// from optimistic `local_transaction` rows (server_updated_at == 0) so
+  /// the party page's open-invoices list appears as fast as its sales
+  /// list. Left OFF for the payment-allocation path — those rows carry a
+  /// placeholder txn_id (= client_op_id) with no server record to allocate
+  /// against yet.
   Future<List<UnpaidInvoice>> listUnpaidInvoices({
     required String shopId,
     required String partyId,
     required String direction,
+    bool includeOptimistic = false,
   }) async {
     final db = await _db;
     final rows = await db.query(
@@ -1244,7 +1252,7 @@ class LocalRepository {
       whereArgs: [shopId, partyId, direction],
       orderBy: 'occurred_at_ms ASC, txn_id ASC',
     );
-    return rows
+    final invoices = rows
         .map((r) => UnpaidInvoice(
               transactionId: r['txn_id'] as String,
               occurredAt: DateTime.fromMillisecondsSinceEpoch(
@@ -1255,7 +1263,40 @@ class LocalRepository {
               remaining: (r['remaining'] as num).toDouble(),
               documentId: r['document_id'] as String?,
             ))
-        .toList(growable: false);
+        .toList();
+    if (!includeOptimistic) return invoices;
+
+    // A just-saved credit sale/receive lands in local_transaction
+    // (server_updated_at == 0) before the server round-trip populates
+    // local_unpaid_invoice. Surface its open portion so the party page
+    // updates instantly. These vanish the moment the sale syncs — the
+    // optimistic txn is deleted and the real invoice row arrives — so no
+    // double-count. Customer (direction 'I') → sale; supplier ('O') →
+    // receive.
+    final typeCode = direction == 'O' ? 'receive' : 'sale';
+    final optimisticRows = await db.query(
+      'local_transaction',
+      where: 'shop_id = ? AND party_id = ? AND type_code = ? '
+          'AND server_updated_at = 0 AND is_voided = 0',
+      whereArgs: [shopId, partyId, typeCode],
+    );
+    for (final r in optimisticRows) {
+      final t = LocalTransaction._fromRow(r);
+      final total = t.total.toDouble();
+      final paid = (t.payload['paid_amount'] as num?)?.toDouble() ?? total;
+      final remaining = total - paid;
+      if (remaining <= 0) continue; // fully-paid (cash) — not an open invoice
+      invoices.add(UnpaidInvoice(
+        transactionId: t.txnId,
+        occurredAt: DateTime.fromMillisecondsSinceEpoch(t.occurredAtMs),
+        originalAmount: total,
+        alreadyPaid: paid,
+        remaining: remaining,
+        documentId: null,
+      ));
+    }
+    invoices.sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
+    return invoices;
   }
 
   /// #392: assembles a [PartyDetail] entirely from the local mirror so the
