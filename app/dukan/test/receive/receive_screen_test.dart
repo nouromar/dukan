@@ -203,6 +203,54 @@ void main() {
   );
 
   testWidgets(
+    'lines drawer: expand icon toggles normal <-> full review, no overflow',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          shopItemId: 'si-1',
+          itemId: 'i1',
+          defaultShopItemUnitId: 'siu-bag',
+          displayName: 'Bariis',
+          baseUnitCode: 'kg',
+          baseUnitLabel: 'Kg',
+          defaultUnitCode: 'bag',
+          defaultUnitLabel: 'Bag',
+          defaultUnitConversionToBase: 25,
+          packagingLabel: '25 Kg Bag',
+          defaultUnitLastCost: 24,
+        ),
+      ];
+
+      await pumpReceive(tester);
+      await tester.pumpAndSettle();
+      // Add a line: tap tile (total pre-fills), then ADD LINE.
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.receiveAddLineButton));
+      await tester.pumpAndSettle();
+
+      // Lines drawer expands to normal → expand-to-full icon offered.
+      expect(find.byIcon(Icons.unfold_more), findsOneWidget);
+      expect(find.byIcon(Icons.unfold_less), findsNothing);
+
+      // Full review — icon flips; no RenderFlex overflow; SAVE reachable.
+      await tester.tap(find.byIcon(Icons.unfold_more));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byIcon(Icons.unfold_less), findsOneWidget);
+      expect(
+        find.widgetWithText(FilledButton, en.receiveSaveButton),
+        findsOneWidget,
+      );
+
+      // Shrink back to normal.
+      await tester.tap(find.byIcon(Icons.unfold_less));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.unfold_more), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'changing qty auto-scales the seeded total until it is hand-edited;'
     ' the derived per-packaging caption recomputes',
     (tester) async {

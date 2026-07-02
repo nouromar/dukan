@@ -1504,6 +1504,12 @@ class AppLocalizationsSo extends AppLocalizations {
   String get cartClearAllButton => 'Tirtir';
 
   @override
+  String get drawerExpandTooltip => 'Muuji dhammaan';
+
+  @override
+  String get drawerShrinkTooltip => 'Yaree';
+
+  @override
   String cartClearConfirmTitle(num count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

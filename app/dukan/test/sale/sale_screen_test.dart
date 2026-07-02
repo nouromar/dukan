@@ -470,6 +470,47 @@ void main() {
     expect(removeBtn.constraints?.minHeight, greaterThanOrEqualTo(48));
   });
 
+  testWidgets(
+    'cart drawer: expand icon toggles normal <-> full review, no overflow',
+    (tester) async {
+    api.onSearchItems = (_, _, _, _, _, _) async => [
+      fakeActivatedItem(
+        shopItemId: 'si-rice',
+        itemId: 'item-rice',
+        defaultShopItemUnitId: 'siu-rice',
+        displayName: 'Bariis Basmati',
+        defaultUnitSalePrice: 1.5,
+      ),
+    ];
+
+    await pumpSale(tester);
+    await tester.pumpAndSettle();
+    // Add an item → cart auto-expands to normal (25% cap).
+    await tester.tap(find.text('Bariis Basmati'));
+    await tester.pumpAndSettle();
+
+    // Normal: an expand-to-full icon is offered; no shrink icon yet.
+    expect(find.byIcon(Icons.unfold_more), findsOneWidget);
+    expect(find.byIcon(Icons.unfold_less), findsNothing);
+
+    // Expand to full review — icon flips to shrink; no RenderFlex overflow.
+    await tester.tap(find.byIcon(Icons.unfold_more));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.unfold_less), findsOneWidget);
+    expect(find.byIcon(Icons.unfold_more), findsNothing);
+    // SAVE still reachable in full mode.
+    expect(
+      find.widgetWithText(FilledButton, en.saleSaveButton),
+      findsOneWidget,
+    );
+
+    // Shrink back to normal.
+    await tester.tap(find.byIcon(Icons.unfold_less));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.unfold_more), findsOneWidget);
+  });
+
   testWidgets('SAVE button stays visible even with many cart lines', (
     tester,
   ) async {

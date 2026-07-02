@@ -50,6 +50,7 @@ import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
 import 'package:dukan/shared/dismiss_keyboard.dart';
+import 'package:dukan/shared/expandable_line_list.dart';
 import 'package:dukan/shared/item_grid.dart';
 import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/client_op_id.dart';
@@ -91,6 +92,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   String? _bonoDocumentId;
   BonoImagePicker? _picker;
   bool _linesExpanded = false;
+  // Full/review mode: grow the bono-lines drawer to fill the screen so a long
+  // bono can be reviewed. Reset whenever the drawer collapses.
+  bool _linesFull = false;
   // The activated item the cashier is composing a line for. `shopItemId`
   // is guaranteed non-null (we run ensureShopItem before flipping the
   // form on, even for unactivated catalog rows). Carries the default
@@ -580,7 +584,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   void _onSearchFocusChanged() {
     if (!mounted) return;
     setState(() {
-      if (_searchFocus.hasFocus) _linesExpanded = false;
+      if (_searchFocus.hasFocus) {
+        _linesExpanded = false;
+        _linesFull = false;
+      }
     });
   }
 
@@ -622,7 +629,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   void _onToggleLinesExpand() {
     final controller = context.read<ReceiveController>();
     if (controller.isEmpty) return;
-    setState(() => _linesExpanded = !_linesExpanded);
+    setState(() {
+      _linesExpanded = !_linesExpanded;
+      if (!_linesExpanded) _linesFull = false; // collapsing exits full
+    });
+  }
+
+  void _toggleLinesFull() {
+    setState(() => _linesFull = !_linesFull);
   }
 
   Future<void> _save() async {
@@ -953,6 +967,23 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final l = tr(context);
     final controller = context.watch<ReceiveController>();
     final supplier = controller.supplier;
+    // Full/review drawer: grow the lines strip to fill the screen (grid + line
+    // form hidden) so a long bono can be reviewed. Only when open with lines.
+    final linesFull = _linesFull && _linesExpanded && controller.isNotEmpty;
+    final linesStrip = _ReceiveLinesStrip(
+      shop: widget.shop,
+      lines: controller.lines,
+      lineCount: controller.lineCount,
+      bonoTotal: controller.bonoTotal,
+      expanded: _linesExpanded,
+      full: linesFull,
+      saving: _saving,
+      onToggleExpand: _onToggleLinesExpand,
+      onToggleFull: _toggleLinesFull,
+      onRemoveLine: _onRemoveLine,
+      onClearAll: _onConfirmClearLines,
+      onSave: _save,
+    );
     return Scaffold(
       appBar: dukanAppBar(
         context,
@@ -1043,103 +1074,103 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 code: _unknownScan!,
                 onDismiss: () => setState(() => _unknownScan = null),
               ),
-            Expanded(
-              child: FutureBuilder<List<ItemSearchResult>>(
-                future: _resultsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          l.receiveLoadFailedMessage,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    );
-                  }
-                  final results = snapshot.data ?? const <ItemSearchResult>[];
-                  // Append a synthetic "+ Add new item" row when the
-                  // cashier has typed >= 3 chars — same affordance as
-                  // Sale. The tile is rendered with full-width by
-                  // straddling all three grid columns visually (we just
-                  // render it in the grid; consistent footprint).
-                  final showAddNew = _activeQuery.length >= 3;
-                  if (results.isEmpty && !showAddNew) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          _activeQuery.isEmpty
-                              ? l.receiveEmptyMessage
-                              : l.saleSearchEmptyMessage(_activeQuery),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    );
-                  }
-                  // Promote +Add new above the grid so partial matches
-                  // never hide the "this isn't here, add it" escape hatch.
-                  return Column(
-                    children: [
-                      if (showAddNew)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-                          child: _AddNewItemBanner(
-                            query: _activeQuery,
-                            onTap: _saving
-                                ? null
-                                : () => _onAddNewItem(_activeQuery),
+            if (!linesFull)
+              Expanded(
+                child: FutureBuilder<List<ItemSearchResult>>(
+                  future: _resultsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            l.receiveLoadFailedMessage,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyLarge,
                           ),
                         ),
-                      Expanded(
-                        child: GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
-                          // Dragging the grid dismisses the keyboard so it
-                          // reclaims the space the numpad ate. Matches Sale.
-                          keyboardDismissBehavior:
-                              ScrollViewKeyboardDismissBehavior.onDrag,
-                          // Responsive density shared with Sale — ~110dp tiles
-                          // that grow with the font scale, columns adapting to
-                          // width (2 → 3+ on wider phones).
-                          gridDelegate: itemGridDelegate(context),
-                          itemCount: results.length,
-                          itemBuilder: (context, i) {
-                            final item = results[i];
-                            final selectedShopItemId =
-                                _selectedItem?.shopItemId;
-                            final isSelected =
-                                selectedShopItemId != null &&
-                                item.shopItemId == selectedShopItemId;
-                            final isActivating =
-                                _activatingItemId != null &&
-                                item.itemId == _activatingItemId;
-                            return _ReceiveItemTile(
-                              shop: widget.shop,
-                              item: item,
-                              selected: isSelected,
-                              activating: isActivating,
-                              onTap: (_saving || _activatingItemId != null)
-                                  ? null
-                                  : () => _onTapTile(item),
-                            );
-                          },
+                      );
+                    }
+                    final results = snapshot.data ?? const <ItemSearchResult>[];
+                    // Append a synthetic "+ Add new item" row when the
+                    // cashier has typed >= 3 chars — same affordance as
+                    // Sale. The tile is rendered with full-width by
+                    // straddling all three grid columns visually (we just
+                    // render it in the grid; consistent footprint).
+                    final showAddNew = _activeQuery.length >= 3;
+                    if (results.isEmpty && !showAddNew) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            _activeQuery.isEmpty
+                                ? l.receiveEmptyMessage
+                                : l.saleSearchEmptyMessage(_activeQuery),
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
                         ),
-                      ),
-                    ],
-                  );
-                },
+                      );
+                    }
+                    // Promote +Add new above the grid so partial matches
+                    // never hide the "this isn't here, add it" escape hatch.
+                    return Column(
+                      children: [
+                        if (showAddNew)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                            child: _AddNewItemBanner(
+                              query: _activeQuery,
+                              onTap: _saving
+                                  ? null
+                                  : () => _onAddNewItem(_activeQuery),
+                            ),
+                          ),
+                        Expanded(
+                          child: GridView.builder(
+                            padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                            // Dragging the grid dismisses the keyboard so it
+                            // reclaims the space the numpad ate. Matches Sale.
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            // Responsive density shared with Sale — ~110dp tiles
+                            // that grow with the font scale, columns adapting to
+                            // width (2 → 3+ on wider phones).
+                            gridDelegate: itemGridDelegate(context),
+                            itemCount: results.length,
+                            itemBuilder: (context, i) {
+                              final item = results[i];
+                              final selectedShopItemId =
+                                  _selectedItem?.shopItemId;
+                              final isSelected =
+                                  selectedShopItemId != null &&
+                                  item.shopItemId == selectedShopItemId;
+                              final isActivating =
+                                  _activatingItemId != null &&
+                                  item.itemId == _activatingItemId;
+                              return _ReceiveItemTile(
+                                shop: widget.shop,
+                                item: item,
+                                selected: isSelected,
+                                activating: isActivating,
+                                onTap: (_saving || _activatingItemId != null)
+                                    ? null
+                                    : () => _onTapTile(item),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
-            // Hidden while the search field is focused so the results grid
-            // keeps the full height above the keyboard — otherwise the form
-            // + keyboard cover the grid (poor usability while searching).
-            if (_selectedItem != null && !_searchFocus.hasFocus)
+            // Hidden while the search field is focused (keyboard) or in full
+            // review mode so the results grid / review list keep the space.
+            if (!linesFull && _selectedItem != null && !_searchFocus.hasFocus)
               _LineEntryForm(
                 key: ValueKey(_selectedItem!.shopItemId),
                 shop: widget.shop,
@@ -1148,18 +1179,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 onAddLine: _onAddLine,
                 onCancel: () => setState(() => _selectedItem = null),
               ),
-            _ReceiveLinesStrip(
-              shop: widget.shop,
-              lines: controller.lines,
-              lineCount: controller.lineCount,
-              bonoTotal: controller.bonoTotal,
-              expanded: _linesExpanded,
-              saving: _saving,
-              onToggleExpand: _onToggleLinesExpand,
-              onRemoveLine: _onRemoveLine,
-              onClearAll: _onConfirmClearLines,
-              onSave: _save,
-            ),
+            if (linesFull) Expanded(child: linesStrip) else linesStrip,
           ],
         ),
       ),
@@ -1401,9 +1421,11 @@ class _LineEntryFormState extends State<_LineEntryForm> {
   // can route through `switchLinePackaging` if it was swapped.
   late String _shopItemUnitId;
   late String _packagingLabel;
+
   /// Per-unit cost used to auto-fill the line total as the quantity
   /// changes. Refreshed when the packaging is swapped.
   late num _seedPerUnit;
+
   /// True once the cashier hand-edits the total field. After that we
   /// stop auto-scaling it from qty so their bono figure is preserved.
   bool _totalEdited = false;
@@ -1437,8 +1459,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
         : '';
     if (_totalController.text != next) {
       _totalController.text = next;
-      _totalController.selection =
-          TextSelection.collapsed(offset: next.length);
+      _totalController.selection = TextSelection.collapsed(offset: next.length);
     }
   }
 
@@ -1587,8 +1608,7 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                                 Flexible(
                                   child: Text(
                                     _packagingLabel,
-                                    style: theme.textTheme.bodyMedium
-                                        ?.copyWith(
+                                    style: theme.textTheme.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.w700,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -1659,8 +1679,9 @@ class _LineEntryFormState extends State<_LineEntryForm> {
                     // auto-scaling it — the cashier's bono figure wins.
                     onChanged: (_) => _totalEdited = true,
                     decoration: InputDecoration(
-                      labelText:
-                          l.receiveLineTotalLabel(widget.shop.currencySymbol),
+                      labelText: l.receiveLineTotalLabel(
+                        widget.shop.currencySymbol,
+                      ),
                       isDense: true,
                     ),
                   ),
@@ -1705,8 +1726,10 @@ class _ReceiveLinesStrip extends StatelessWidget {
     required this.lineCount,
     required this.bonoTotal,
     required this.expanded,
+    required this.full,
     required this.saving,
     required this.onToggleExpand,
+    required this.onToggleFull,
     required this.onRemoveLine,
     required this.onClearAll,
     required this.onSave,
@@ -1717,8 +1740,10 @@ class _ReceiveLinesStrip extends StatelessWidget {
   final int lineCount;
   final double bonoTotal;
   final bool expanded;
+  final bool full;
   final bool saving;
   final VoidCallback onToggleExpand;
+  final VoidCallback onToggleFull;
   final void Function(String key) onRemoveLine;
   final VoidCallback onClearAll;
   final VoidCallback onSave;
@@ -1731,6 +1756,8 @@ class _ReceiveLinesStrip extends StatelessWidget {
     final maxListHeight = MediaQuery.of(context).size.height * 0.25;
     final entries = lines.entries.toList(growable: false);
     final showExpanded = expanded && canExpand;
+    // Full/review mode only applies once open with lines.
+    final full = this.full && canExpand;
     // Compact SAVE in the collapsed peek row; full-width when expanded.
     FilledButton saveButton() => FilledButton(
       onPressed: canSave ? onSave : null,
@@ -1742,6 +1769,70 @@ class _ReceiveLinesStrip extends StatelessWidget {
             )
           : Text(l.receiveSaveButton),
     );
+
+    // Shared line list — capped at 25% in normal, Expanded in full; overflow
+    // cue taps grow to full.
+    Widget lineList() => ExpandableLineList(
+      fill: full,
+      maxHeight: maxListHeight,
+      itemCount: entries.length,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, i) => _ReceiveLineTile(
+        shop: shop,
+        line: entries[i].value,
+        enabled: !saving,
+        onRemove: () => onRemoveLine(entries[i].key),
+      ),
+      onExpandRequested: full ? null : onToggleFull,
+    );
+
+    final summaryRow = Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: canExpand ? onToggleExpand : null,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    canExpand
+                        ? (showExpanded
+                              ? Icons.keyboard_arrow_down
+                              : Icons.keyboard_arrow_up)
+                        : Icons.inventory_2_outlined,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l.receiveLinesSummary(
+                        lineCount,
+                        formatMoney(bonoTotal, shop),
+                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (showExpanded)
+          TextButton(
+            onPressed: saving ? null : onClearAll,
+            child: Text(l.receiveLinesClearAllButton),
+          ),
+        if (showExpanded)
+          IconButton(
+            tooltip: full ? l.drawerShrinkTooltip : l.drawerExpandTooltip,
+            icon: Icon(full ? Icons.unfold_less : Icons.unfold_more),
+            onPressed: onToggleFull,
+          ),
+        if (!showExpanded) ...[const SizedBox(width: 8), saveButton()],
+      ],
+    );
+
     return Material(
       elevation: 8,
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -1750,126 +1841,40 @@ class _ReceiveLinesStrip extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: canExpand ? onToggleExpand : null,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        children: [
-                          Icon(
-                            canExpand
-                                ? (showExpanded
-                                      ? Icons.keyboard_arrow_down
-                                      : Icons.keyboard_arrow_up)
-                                : Icons.inventory_2_outlined,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              l.receiveLinesSummary(
-                                lineCount,
-                                formatMoney(bonoTotal, shop),
+        child: full
+            ? Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  summaryRow,
+                  lineList(),
+                  const SizedBox(height: 10),
+                  SizedBox(width: double.infinity, child: saveButton()),
+                ],
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  summaryRow,
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 150),
+                    curve: Curves.easeOut,
+                    alignment: Alignment.topCenter,
+                    child: showExpanded
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              lineList(),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: saveButton(),
                               ),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
                   ),
-                ),
-                if (showExpanded)
-                  TextButton(
-                    onPressed: saving ? null : onClearAll,
-                    child: Text(l.receiveLinesClearAllButton),
-                  ),
-                // Peek: SAVE rides in the summary row to save a button row.
-                if (!showExpanded) ...[const SizedBox(width: 8), saveButton()],
-              ],
-            ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 150),
-              curve: Curves.easeOut,
-              alignment: Alignment.topCenter,
-              child: showExpanded
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ConstrainedBox(
-                          constraints: BoxConstraints(maxHeight: maxListHeight),
-                          child: _ReceiveLineList(
-                            shop: shop,
-                            entries: entries,
-                            saving: saving,
-                            onRemoveLine: onRemoveLine,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(width: double.infinity, child: saveButton()),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ReceiveLineList extends StatefulWidget {
-  const _ReceiveLineList({
-    required this.shop,
-    required this.entries,
-    required this.saving,
-    required this.onRemoveLine,
-  });
-
-  final ShopSummary shop;
-  final List<MapEntry<String, ReceiveLine>> entries;
-  final bool saving;
-  final void Function(String key) onRemoveLine;
-
-  @override
-  State<_ReceiveLineList> createState() => _ReceiveLineListState();
-}
-
-class _ReceiveLineListState extends State<_ReceiveLineList> {
-  final _scrollController = ScrollController();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scrollbar(
-      controller: _scrollController,
-      child: ListView.separated(
-        controller: _scrollController,
-        primary: false,
-        shrinkWrap: true,
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        itemCount: widget.entries.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (context, i) {
-          final entry = widget.entries[i];
-          return _ReceiveLineTile(
-            shop: widget.shop,
-            line: entry.value,
-            enabled: !widget.saving,
-            onRemove: () => widget.onRemoveLine(entry.key),
-          );
-        },
+                ],
+              ),
       ),
     );
   }

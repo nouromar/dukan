@@ -37,6 +37,7 @@ import 'package:dukan/shared/low_stock.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/quantity_format.dart';
 import 'package:dukan/shared/dismiss_keyboard.dart';
+import 'package:dukan/shared/expandable_line_list.dart';
 import 'package:dukan/shared/item_grid.dart';
 import 'package:dukan/shared/working_date.dart';
 import 'package:dukan/shared/typography.dart';
@@ -60,6 +61,9 @@ class _SaleScreenState extends State<SaleScreen> {
   bool _saving = false;
   bool _activating = false;
   bool _cartExpanded = false;
+  // Full/review mode: when open, grow the cart drawer to fill the screen so a
+  // long cart can be reviewed. Reset whenever the drawer collapses.
+  bool _cartFull = false;
   String? _locale;
   String? _unknownScan;
   late final HidScanListener _hidListener;
@@ -239,7 +243,10 @@ class _SaleScreenState extends State<SaleScreen> {
   /// hidden behind the expanded cart strip and the keyboard.
   void _onSearchFocusChanged() {
     if (_searchFocus.hasFocus && _cartExpanded && mounted) {
-      setState(() => _cartExpanded = false);
+      setState(() {
+        _cartExpanded = false;
+        _cartFull = false;
+      });
     }
   }
 
@@ -559,7 +566,14 @@ class _SaleScreenState extends State<SaleScreen> {
   void _toggleCartExpanded() {
     final cart = context.read<CartController>();
     if (cart.isEmpty) return;
-    setState(() => _cartExpanded = !_cartExpanded);
+    setState(() {
+      _cartExpanded = !_cartExpanded;
+      if (!_cartExpanded) _cartFull = false; // collapsing exits full
+    });
+  }
+
+  void _toggleCartFull() {
+    setState(() => _cartFull = !_cartFull);
   }
 
   Future<void> _confirmClearAll() async {
@@ -1105,6 +1119,28 @@ class _SaleScreenState extends State<SaleScreen> {
         .map((e) => _CartLineEntry(key: e.key, line: e.value))
         .toList(growable: false);
     final interactionsLocked = _saving || _activating;
+    // Full/review drawer: grow the cart strip to fill the screen (grid hidden)
+    // so a long cart can be reviewed. Only meaningful when open with lines.
+    final cartFull = _cartFull && _cartExpanded && cart.isNotEmpty;
+    final cartStrip = _SaleCartStrip(
+      shop: widget.shop,
+      lines: lines,
+      total: cart.total,
+      itemCount: cart.itemCount,
+      debt: cart.debt,
+      customer: cart.customer,
+      saving: _saving,
+      expanded: _cartExpanded,
+      full: cartFull,
+      onToggleExpand: _toggleCartExpanded,
+      onToggleFull: _toggleCartFull,
+      onRemoveLine: _removeLine,
+      onLongPressLine: _onLongPressCartLine,
+      onClearAll: _confirmClearAll,
+      onModeChanged: _toggleDebt,
+      onPickCustomer: _pickCustomer,
+      onSave: _save,
+    );
     return Scaffold(
       appBar: dukanAppBar(
         context,
@@ -1166,48 +1202,39 @@ class _SaleScreenState extends State<SaleScreen> {
                     onCreate: _onCreateFromUnknown,
                     onDismiss: () => setState(() => _unknownScan = null),
                   ),
-                Expanded(
-                  child: FutureBuilder<List<ItemSearchResult>>(
-                    future: _resultsFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState != ConnectionState.done) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              l.saleLoadFailedMessage,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyLarge,
+                // Full/review mode: the cart strip takes the Expanded slot and
+                // the results grid is hidden (search field stays to return to
+                // picking). Otherwise the grid is Expanded and the strip is a
+                // min-size child below it.
+                if (!cartFull)
+                  Expanded(
+                    child: FutureBuilder<List<ItemSearchResult>>(
+                      future: _resultsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Text(
+                                l.saleLoadFailedMessage,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
                             ),
-                          ),
-                        );
-                      }
-                      final results =
-                          snapshot.data ?? const <ItemSearchResult>[];
-                      return _buildResultsArea(context, results);
-                    },
+                          );
+                        }
+                        final results =
+                            snapshot.data ?? const <ItemSearchResult>[];
+                        return _buildResultsArea(context, results);
+                      },
+                    ),
                   ),
-                ),
-                _SaleCartStrip(
-                  shop: widget.shop,
-                  lines: lines,
-                  total: cart.total,
-                  itemCount: cart.itemCount,
-                  debt: cart.debt,
-                  customer: cart.customer,
-                  saving: _saving,
-                  expanded: _cartExpanded,
-                  onToggleExpand: _toggleCartExpanded,
-                  onRemoveLine: _removeLine,
-                  onLongPressLine: _onLongPressCartLine,
-                  onClearAll: _confirmClearAll,
-                  onModeChanged: _toggleDebt,
-                  onPickCustomer: _pickCustomer,
-                  onSave: _save,
-                ),
+                if (cartFull) Expanded(child: cartStrip) else cartStrip,
               ],
             ),
             if (_activating)
@@ -1459,7 +1486,9 @@ class _SaleCartStrip extends StatelessWidget {
     required this.customer,
     required this.saving,
     required this.expanded,
+    required this.full,
     required this.onToggleExpand,
+    required this.onToggleFull,
     required this.onRemoveLine,
     required this.onLongPressLine,
     required this.onClearAll,
@@ -1476,7 +1505,9 @@ class _SaleCartStrip extends StatelessWidget {
   final PartySearchResult? customer;
   final bool saving;
   final bool expanded;
+  final bool full;
   final VoidCallback onToggleExpand;
+  final VoidCallback onToggleFull;
   final void Function(String key) onRemoveLine;
   final void Function(_CartLineEntry entry) onLongPressLine;
   final VoidCallback onClearAll;
@@ -1492,11 +1523,11 @@ class _SaleCartStrip extends StatelessWidget {
     final maxListHeight = MediaQuery.of(context).size.height * 0.25;
     // Peek (collapsed) = summary + SAVE only, so the item grid keeps the screen
     // while searching. The line list + Lacag/Deyn + customer live in the
-    // expanded section. Force-expand when a debt sale still needs a customer,
-    // since the picker is only reachable there.
+    // expanded section. Force-expand when a debt sale still needs a customer.
     final showExpanded = (expanded && canExpand) || (debt && customer == null);
-    // One SAVE, two homes: a compact button in the collapsed peek row, and
-    // full-width at the bottom when expanded.
+    // Full/review mode only applies once open with lines.
+    final full = this.full && canExpand;
+
     FilledButton saveButton() => FilledButton(
       onPressed: canSave ? onSave : null,
       child: saving
@@ -1508,6 +1539,125 @@ class _SaleCartStrip extends StatelessWidget {
           : Text(l.saleSaveButton),
     );
 
+    // Shared line list — capped at 25% in normal, Expanded in full; overflow
+    // cue taps grow to full.
+    Widget lineList() => ExpandableLineList(
+      fill: full,
+      maxHeight: maxListHeight,
+      itemCount: lines.length,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, i) => _CartLineTile(
+        shop: shop,
+        entry: lines[i],
+        enabled: !saving,
+        onRemove: () => onRemoveLine(lines[i].key),
+        onLongPress: () => onLongPressLine(lines[i]),
+      ),
+      onExpandRequested: full ? null : onToggleFull,
+    );
+
+    // Lacag/Deyn toggle + customer + full-width SAVE, below the list.
+    Widget trailingControls() => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<bool>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: false,
+                label: Text(l.saleCash),
+                icon: const Icon(Icons.payments),
+              ),
+              ButtonSegment(
+                value: true,
+                label: Text(l.saleDebt),
+                icon: const Icon(Icons.person),
+              ),
+            ],
+            selected: {debt},
+            onSelectionChanged: saving
+                ? null
+                : (set) => onModeChanged(set.first),
+          ),
+        ),
+        if (debt) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: customer == null
+                ? OutlinedButton.icon(
+                    onPressed: saving ? null : onPickCustomer,
+                    icon: const Icon(Icons.person_search),
+                    label: Text(l.salePickCustomerButton),
+                  )
+                : InputChip(
+                    avatar: const Icon(Icons.person),
+                    label: Text(
+                      l.saleCustomerChip(
+                        customer!.name,
+                        formatMoney(customer!.receivable, shop),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onPressed: saving ? null : onPickCustomer,
+                  ),
+          ),
+        ],
+        const SizedBox(height: 10),
+        SizedBox(width: double.infinity, child: saveButton()),
+      ],
+    );
+
+    // Summary header: tap the row to expand/collapse; a distinct expand/shrink
+    // icon toggles normal ↔ full; Clear-all + compact peek SAVE ride here too.
+    final summaryRow = Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: canExpand ? onToggleExpand : null,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    canExpand
+                        ? (showExpanded
+                              ? Icons.keyboard_arrow_down
+                              : Icons.keyboard_arrow_up)
+                        : Icons.shopping_cart_outlined,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l.saleCartSummary(itemCount, formatMoney(total, shop)),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (showExpanded && canExpand)
+          TextButton(
+            onPressed: saving ? null : onClearAll,
+            child: Text(l.cartClearAllButton),
+          ),
+        if (showExpanded && canExpand)
+          IconButton(
+            tooltip: full ? l.drawerShrinkTooltip : l.drawerExpandTooltip,
+            icon: Icon(full ? Icons.unfold_less : Icons.unfold_more),
+            onPressed: onToggleFull,
+          ),
+        if (!showExpanded) ...[const SizedBox(width: 8), saveButton()],
+      ],
+    );
+
     return Material(
       elevation: 8,
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -1516,187 +1666,33 @@ class _SaleCartStrip extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Summary header: tap to expand, plus the Clear-all button
-            // when the cart has items AND the drawer is open (so the
-            // shopkeeper sees the items before being offered the wipe).
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: canExpand ? onToggleExpand : null,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        children: [
-                          Icon(
-                            canExpand
-                                ? (showExpanded
-                                      ? Icons.keyboard_arrow_down
-                                      : Icons.keyboard_arrow_up)
-                                : Icons.shopping_cart_outlined,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              l.saleCartSummary(
-                                itemCount,
-                                formatMoney(total, shop),
-                              ),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (showExpanded && canExpand)
-                  TextButton(
-                    onPressed: saving ? null : onClearAll,
-                    child: Text(l.cartClearAllButton),
-                  ),
-                // Peek: SAVE rides in the summary row so the collapsed cart is a
-                // single line, leaving the grid the most room while searching.
-                if (!showExpanded) ...[const SizedBox(width: 8), saveButton()],
-              ],
-            ),
-            // Expanded-only: line list + Lacag/Deyn + customer. The collapsed
-            // peek hides these so the item grid keeps the screen while
-            // searching; SAVE stays below in both states.
-            AnimatedSize(
-              duration: const Duration(milliseconds: 150),
-              curve: Curves.easeOut,
-              alignment: Alignment.topCenter,
-              child: showExpanded
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (canExpand)
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: maxListHeight,
-                            ),
-                            child: _CartLineList(
-                              shop: shop,
-                              lines: lines,
-                              saving: saving,
-                              onRemoveLine: onRemoveLine,
-                              onLongPressLine: onLongPressLine,
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: SegmentedButton<bool>(
-                            showSelectedIcon: false,
-                            segments: [
-                              ButtonSegment(
-                                value: false,
-                                label: Text(l.saleCash),
-                                icon: const Icon(Icons.payments),
-                              ),
-                              ButtonSegment(
-                                value: true,
-                                label: Text(l.saleDebt),
-                                icon: const Icon(Icons.person),
-                              ),
+        // Full mode fills the parent's Expanded (list is Expanded inside a
+        // max Column); normal/peek is a min Column with an AnimatedSize.
+        child: full
+            ? Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [summaryRow, lineList(), trailingControls()],
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  summaryRow,
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 150),
+                    curve: Curves.easeOut,
+                    alignment: Alignment.topCenter,
+                    child: showExpanded
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (canExpand) lineList(),
+                              trailingControls(),
                             ],
-                            selected: {debt},
-                            onSelectionChanged: saving
-                                ? null
-                                : (set) => onModeChanged(set.first),
-                          ),
-                        ),
-                        if (debt) ...[
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            child: customer == null
-                                ? OutlinedButton.icon(
-                                    onPressed: saving ? null : onPickCustomer,
-                                    icon: const Icon(Icons.person_search),
-                                    label: Text(l.salePickCustomerButton),
-                                  )
-                                : InputChip(
-                                    avatar: const Icon(Icons.person),
-                                    label: Text(
-                                      l.saleCustomerChip(
-                                        customer!.name,
-                                        formatMoney(customer!.receivable, shop),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    onPressed: saving ? null : onPickCustomer,
-                                  ),
-                          ),
-                        ],
-                        const SizedBox(height: 10),
-                        SizedBox(width: double.infinity, child: saveButton()),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Owns its own ScrollController so the Scrollbar doesn't pick up the
-// PrimaryScrollController already in use by the favorites grid above
-// (Scrollbar asserts on multiple ScrollPositions per controller).
-class _CartLineList extends StatefulWidget {
-  const _CartLineList({
-    required this.shop,
-    required this.lines,
-    required this.saving,
-    required this.onRemoveLine,
-    required this.onLongPressLine,
-  });
-
-  final ShopSummary shop;
-  final List<_CartLineEntry> lines;
-  final bool saving;
-  final void Function(String key) onRemoveLine;
-  final void Function(_CartLineEntry entry) onLongPressLine;
-
-  @override
-  State<_CartLineList> createState() => _CartLineListState();
-}
-
-class _CartLineListState extends State<_CartLineList> {
-  final _scrollController = ScrollController();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scrollbar(
-      controller: _scrollController,
-      child: ListView.separated(
-        controller: _scrollController,
-        primary: false,
-        shrinkWrap: true,
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        itemCount: widget.lines.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (context, i) => _CartLineTile(
-          shop: widget.shop,
-          entry: widget.lines[i],
-          enabled: !widget.saving,
-          onRemove: () => widget.onRemoveLine(widget.lines[i].key),
-          onLongPress: () => widget.onLongPressLine(widget.lines[i]),
-        ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
       ),
     );
   }

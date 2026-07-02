@@ -2646,6 +2646,18 @@ abstract class AppLocalizations {
   /// **'Clear'**
   String get cartClearAllButton;
 
+  /// No description provided for @drawerExpandTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all lines'**
+  String get drawerExpandTooltip;
+
+  /// No description provided for @drawerShrinkTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Shrink'**
+  String get drawerShrinkTooltip;
+
   /// No description provided for @cartClearConfirmTitle.
   ///
   /// In en, this message translates to:

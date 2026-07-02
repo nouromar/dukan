@@ -1495,6 +1495,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cartClearAllButton => 'Clear';
 
   @override
+  String get drawerExpandTooltip => 'Show all lines';
+
+  @override
+  String get drawerShrinkTooltip => 'Shrink';
+
+  @override
   String cartClearConfirmTitle(num count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

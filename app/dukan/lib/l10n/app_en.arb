@@ -593,6 +593,8 @@
   "cartLineSubtotal": "{quantity} × {unitPrice} = {subtotal}",
   "cartRemoveLineTooltip": "Remove {name}",
   "cartClearAllButton": "Clear",
+  "drawerExpandTooltip": "Show all lines",
+  "drawerShrinkTooltip": "Shrink",
   "cartClearConfirmTitle": "Clear {count, plural, =1{1 item} other{{count} items}} from cart?",
   "cartClearConfirmBody": "This won't undo any saved sale.",
   "cartClearConfirmYes": "CLEAR",
