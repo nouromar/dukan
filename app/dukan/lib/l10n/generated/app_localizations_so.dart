@@ -30,10 +30,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get payment => 'Lacag bixin';
 
   @override
-  String get paymentInLabel => 'Lacag Timid';
+  String get paymentInLabel => 'Lacag Qabasho';
 
   @override
-  String get paymentOutLabel => 'Lacag Baxday';
+  String get paymentOutLabel => 'Lacag Bixin';
 
   @override
   String get paymentDetailSettledHeader => 'Waxa loo bixiyay';
