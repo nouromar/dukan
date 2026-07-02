@@ -178,11 +178,64 @@ void main() {
     expect(failed, ['a']);
     expect(terminal.pendingCount, 0,
         reason: 'failed-permanent rows leave the pending list');
+    expect(terminal.failedCount, 1,
+        reason: 'stranded posts are counted so the pill can surface them');
     final stillPending = await dao.load();
     expect(stillPending, isEmpty);
     final inTerminal = await dao.loadFailedPermanent();
     expect(inTerminal.map((p) => p.id), ['a']);
     terminal.dispose();
+  });
+
+  test('start() reloads failedCount from a prior session', () async {
+    // Simulate a post that gave up in an earlier run.
+    await dao.insert(_post('old'));
+    await dao.markFailedPermanent('old');
+    final reloaded = OfflineQueueController(
+      dao: dao,
+      executor: (post) async => executed.add(post.id),
+      backoff: (_) => Duration.zero,
+      clock: () => DateTime.utc(2026, 6, 12, 12, 0, 0),
+    );
+    await reloaded.start();
+    expect(reloaded.failedCount, 1,
+        reason: 'stranded posts must stay visible across app restarts');
+    reloaded.dispose();
+  });
+
+  test('retryFailed(): resets stranded posts to pending and drains them',
+      () async {
+    var failNext = true;
+    final retryable = OfflineQueueController(
+      dao: dao,
+      executor: (post) async {
+        if (failNext) throw StateError('offline');
+        executed.add(post.id);
+      },
+      backoff: (_) => Duration.zero,
+      clock: () => DateTime.utc(2026, 6, 12, 12, 0, 0),
+      maxAttempts: 2,
+    );
+    await retryable.start();
+    await retryable.enqueue(_post('s1'));
+    for (var i = 0; i < 30; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+      if (retryable.failedCount > 0) break;
+    }
+    expect(retryable.failedCount, 1);
+    expect(executed, isEmpty);
+
+    // Connectivity is back — cashier taps "retry".
+    failNext = false;
+    await retryable.retryFailed();
+    for (var i = 0; i < 30; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+      if (retryable.failedCount == 0 && retryable.pendingCount == 0) break;
+    }
+    expect(executed, ['s1'], reason: 'the once-stranded post finally posts');
+    expect(retryable.failedCount, 0);
+    expect(await dao.loadFailedPermanent(), isEmpty);
+    retryable.dispose();
   });
 
   test(

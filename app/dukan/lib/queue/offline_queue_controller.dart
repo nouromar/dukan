@@ -150,6 +150,18 @@ class OfflineQueueController extends ChangeNotifier {
 
   int get pendingCount => _pending.length;
 
+  /// Count of posts that exhausted their retries and are now in the
+  /// terminal `failed_permanent` state — i.e. sales/receives that were
+  /// written locally but never reached the server. These are NOT in
+  /// [_pending] (load() filters to state='pending'), so the queue
+  /// would otherwise fall silent while unposted data sits stranded on
+  /// the device. Surfaced by the status pill so the cashier can retry
+  /// before the data is lost (e.g. on reinstall). Refreshed on
+  /// [start], on each failed-permanent transition, and after
+  /// [retryFailed].
+  int _failedCount = 0;
+  int get failedCount => _failedCount;
+
   bool get isDraining => _draining;
 
   /// Idempotent — second call is a no-op. Loads the persisted queue
@@ -158,10 +170,34 @@ class OfflineQueueController extends ChangeNotifier {
     if (_started) return;
     _started = true;
     _pending = await dao.load();
+    _failedCount = await dao.countFailedPermanent();
     notifyListeners();
     if (_pending.isNotEmpty) {
       _scheduleDrain(immediate: true);
     }
+  }
+
+  /// Reset every `failed_permanent` post back to `pending` and drain
+  /// immediately. Wired to the status pill's "N not uploaded — tap to
+  /// retry" affordance: the manual escape hatch for posts that gave up
+  /// after [_maxAttempts] (e.g. a long auth-token outage). Idempotent
+  /// when there's nothing to retry.
+  Future<void> retryFailed() async {
+    final failed = await dao.loadFailedPermanent();
+    if (failed.isEmpty) {
+      if (_failedCount != 0) {
+        _failedCount = 0;
+        notifyListeners();
+      }
+      return;
+    }
+    for (final p in failed) {
+      await dao.resetToPending(p.id);
+    }
+    _pending = await dao.load();
+    _failedCount = await dao.countFailedPermanent();
+    notifyListeners();
+    await drainNow();
   }
 
   /// Append a new pending post and trigger an immediate drain. Use
@@ -288,6 +324,7 @@ class OfflineQueueController extends ChangeNotifier {
           if (attempts >= _maxAttempts) {
             await dao.markFailedPermanent(head.id);
             _pending = _pending.sublist(1);
+            _failedCount += 1;
             // #374: clear projection so stock reverts to pre-post
             // value. Cashier can manually retry from the Failed
             // posts screen if they want to try again.
