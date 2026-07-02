@@ -101,5 +101,30 @@ void main() {
         '-3kg',
       );
     });
+
+    test('spelled-out base unit keeps a space ("143 piece"), abbrev does not',
+        () {
+      // "piece" is a word → space; matches the readable "143 piece".
+      expect(
+        formatCompoundStock(stock: 143, baseLabel: 'piece'),
+        '143 piece',
+      );
+      // Abbreviated units stay glued.
+      expect(formatCompoundStock(stock: 40, baseLabel: 'kg'), '40kg');
+      expect(formatCompoundStock(stock: 2, baseLabel: 'L'), '2L');
+    });
+
+    test('word base unit spaces inside the packaging size too', () {
+      // Box of 12 pieces, 30 in stock → "2 Box(12 piece) + 6 piece".
+      expect(
+        formatCompoundStock(
+          stock: 30,
+          baseLabel: 'piece',
+          packagingLabel: '12 Box',
+          conversion: 12,
+        ),
+        '2 Box(12 piece) + 6 piece',
+      );
+    });
   });
 }

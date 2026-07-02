@@ -28,18 +28,22 @@ String formatCompoundStock({
   String? packagingLabel,
   num? conversion,
 }) {
+  // Attach an abbreviated unit to the number ("40kg", "50g", "2l") but keep a
+  // space before a spelled-out unit ("143 piece", "2 bag", "1 litre").
+  final sep = _unitAttaches(baseLabel) ? '' : ' ';
+
   // Negative balance bypasses compound math — "−1 Bag + 22 Kg" is
   // mathematically right but bewildering to shopkeepers. Show the
   // raw base value so the sign is unambiguous.
   if (stock < 0) {
-    return '${_pretty(stock)}$baseLabel';
+    return '${_pretty(stock)}$sep$baseLabel';
   }
 
   final pkg = packagingLabel;
   final conv = conversion;
   // No packaging info, or packaging == base (conversion 1) → base only.
   if (pkg == null || conv == null || conv <= 1) {
-    return '${_pretty(stock)}$baseLabel';
+    return '${_pretty(stock)}$sep$baseLabel';
   }
 
   final whole = (stock / conv).floor();
@@ -47,7 +51,7 @@ String formatCompoundStock({
 
   if (whole == 0) {
     // Less than one packaging — show the partial in base.
-    return '${_pretty(stock)}$baseLabel';
+    return '${_pretty(stock)}$sep$baseLabel';
   }
   // Use the bare packaging noun so the count doesn't collide with a
   // number-prefixed label ("9 50 Sack" → "9 Sack"), then annotate it with
@@ -55,11 +59,11 @@ String formatCompoundStock({
   // big a sack is (a 50-kg sack vs a 25-kg sack). Compact (no spaces around
   // the size) to save room on the tile.
   final noun = _countNoun(pkg, conv, baseLabel);
-  final sized = '$noun(${_pretty(conv)}$baseLabel)';
+  final sized = '$noun(${_pretty(conv)}$sep$baseLabel)';
   if (remainder == 0) {
     return '${_pretty(whole)} $sized';
   }
-  return '${_pretty(whole)} $sized + ${_pretty(remainder)}$baseLabel';
+  return '${_pretty(whole)} $sized + ${_pretty(remainder)}$sep$baseLabel';
 }
 
 /// Strip a leading "{conversion} " and optional "{baseLabel} " prefix from a
@@ -76,6 +80,19 @@ String _countNoun(String packagingLabel, num conversion, String baseLabel) {
   }
   return s.isEmpty ? packagingLabel : s;
 }
+
+/// Measurement units that read best glued to the number ("40kg", "50g",
+/// "2l"). Anything not here — spelled-out packagings like bag / piece /
+/// litre / sack — keeps a space ("143 piece"). Matched case-insensitively.
+const Set<String> _abbreviatedUnits = {
+  'kg', 'g', 'mg', 't', // mass
+  'l', 'ml', 'cl', 'dl', 'kl', // volume
+  'm', 'cm', 'mm', 'km', // length
+  'oz', 'lb', // imperial mass
+};
+
+bool _unitAttaches(String label) =>
+    _abbreviatedUnits.contains(label.trim().toLowerCase());
 
 /// Drop trailing zeros from a numeric stock value so 25.000 reads "25"
 /// and 0.500 reads "0.5". Negatives keep their sign.
