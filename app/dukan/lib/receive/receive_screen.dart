@@ -1244,8 +1244,19 @@ class _ReceiveItemTile extends StatelessWidget {
     final costText = item.defaultUnitLastCost == null
         ? tr(context).lineEditorTilePriceMissing
         : formatMoney(item.defaultUnitLastCost!, shop);
+    // Bare packaging noun ("Carton", not "12 Bottle Carton") so the unit
+    // line stays short and the cost beside it isn't truncated.
+    final conv = item.defaultUnitConversionToBase;
     final packaging =
-        item.packagingLabel ?? item.defaultUnitLabel ?? item.baseUnitLabel;
+        (item.defaultUnitLabel != null && conv != null && conv > 1)
+            ? packagingCountNoun(
+                packagingLabel: item.defaultUnitLabel!,
+                conversion: conv,
+                baseLabel: item.baseUnitLabel,
+              )
+            : (item.packagingLabel ??
+                item.defaultUnitLabel ??
+                item.baseUnitLabel);
     final level = stockLevel(
       currentStock: item.currentStock,
       reorderThreshold: item.reorderThreshold,
@@ -1257,6 +1268,7 @@ class _ReceiveItemTile extends StatelessWidget {
             baseLabel: item.baseUnitLabel,
             packagingLabel: item.defaultUnitLabel,
             conversion: item.defaultUnitConversionToBase,
+            compact: true,
           );
     return Card(
       color: selected ? theme.colorScheme.primaryContainer : Colors.white,

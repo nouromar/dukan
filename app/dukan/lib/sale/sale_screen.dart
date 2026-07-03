@@ -1375,7 +1375,17 @@ class _SaleItemTile extends StatelessWidget {
     // "25 kg bag" packaging tells the cashier exactly what they're
     // tapping); fall back to the base unit otherwise so single-pack
     // items still show "kg · $20".
-    final unitLabel = item.packagingLabel ?? item.baseUnitLabel;
+    // Bare packaging noun ("Carton", not "12 Bottle Carton") so the tile's
+    // unit line stays short and the price beside it isn't truncated.
+    final conv = item.defaultUnitConversionToBase;
+    final unitLabel =
+        (item.defaultUnitLabel != null && conv != null && conv > 1)
+            ? packagingCountNoun(
+                packagingLabel: item.defaultUnitLabel!,
+                conversion: conv,
+                baseLabel: item.baseUnitLabel,
+              )
+            : (item.packagingLabel ?? item.baseUnitLabel);
     final level = stockLevel(
       currentStock: item.currentStock,
       reorderThreshold: item.reorderThreshold,
@@ -1387,6 +1397,7 @@ class _SaleItemTile extends StatelessWidget {
             baseLabel: item.baseUnitLabel,
             packagingLabel: item.defaultUnitLabel,
             conversion: item.defaultUnitConversionToBase,
+            compact: true,
           );
     return Card(
       color: Colors.white,

@@ -114,6 +114,42 @@ void main() {
       expect(formatCompoundStock(stock: 2, baseLabel: 'L'), '2L');
     });
 
+    test('compact mode drops the size annotation + remainder (grid tiles)', () {
+      // 498 kg, sack = 50 kg → "9 Sack" (not "9 Sack(50kg) + 48kg").
+      expect(
+        formatCompoundStock(
+          stock: 498,
+          baseLabel: 'kg',
+          packagingLabel: '50 Sack',
+          conversion: 50,
+          compact: true,
+        ),
+        '9 Sack',
+      );
+      // Less than one packaging still falls back to base.
+      expect(
+        formatCompoundStock(
+          stock: 22,
+          baseLabel: 'kg',
+          packagingLabel: '25 Kg Bag',
+          conversion: 25,
+          compact: true,
+        ),
+        '22kg',
+      );
+    });
+
+    test('packagingCountNoun strips the size prefix', () {
+      expect(
+        packagingCountNoun(
+          packagingLabel: '12 Bottle Carton',
+          conversion: 12,
+          baseLabel: 'bottle',
+        ),
+        'Carton',
+      );
+    });
+
     test('word base unit spaces inside the packaging size too', () {
       // Box of 12 pieces, 30 in stock → "2 Box(12 piece) + 6 piece".
       expect(

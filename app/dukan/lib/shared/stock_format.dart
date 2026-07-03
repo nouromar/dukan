@@ -27,6 +27,7 @@ String formatCompoundStock({
   required String baseLabel,
   String? packagingLabel,
   num? conversion,
+  bool compact = false,
 }) {
   // Attach an abbreviated unit to the number ("40kg", "50g", "2l") but keep a
   // space before a spelled-out unit ("143 piece", "2 bag", "1 litre").
@@ -59,12 +60,29 @@ String formatCompoundStock({
   // big a sack is (a 50-kg sack vs a 25-kg sack). Compact (no spaces around
   // the size) to save room on the tile.
   final noun = _countNoun(pkg, conv, baseLabel);
+  // Compact (grid tiles): just the whole packaging count — no size
+  // annotation, no base remainder — so "45 Carton" instead of the full
+  // "45 Carton(12 bottle) + 9 bottle". Keeps a small tile readable.
+  if (compact) {
+    return '${_pretty(whole)} $noun';
+  }
   final sized = '$noun(${_pretty(conv)}$sep$baseLabel)';
   if (remainder == 0) {
     return '${_pretty(whole)} $sized';
   }
   return '${_pretty(whole)} $sized + ${_pretty(remainder)}$sep$baseLabel';
 }
+
+/// The bare packaging noun for a label ("12 Bottle Carton" → "Carton"),
+/// stripping any "{conversion} " / "{baseLabel} " size prefix. Used to
+/// keep the grid-tile unit line short. Falls back to the label when it
+/// has no strippable prefix.
+String packagingCountNoun({
+  required String packagingLabel,
+  required num conversion,
+  required String baseLabel,
+}) =>
+    _countNoun(packagingLabel, conversion, baseLabel);
 
 /// Strip a leading "{conversion} " and optional "{baseLabel} " prefix from a
 /// packaging label so the count line reads "9 Sack" — not "9 50 Sack" or
