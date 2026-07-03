@@ -456,21 +456,25 @@ class _PaymentBody extends StatelessWidget {
         ],
         ..._settledSection(context, l, theme, header, isIn),
         if (canVoid) ...[
-          const SizedBox(height: 24),
-          OutlinedButton(
-            onPressed: voiding ? null : onVoid,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
-              foregroundColor: theme.colorScheme.error,
-              side: BorderSide(color: theme.colorScheme.error),
+          const SizedBox(height: 8),
+          // Destructive secondary action: muted grey text, right-aligned,
+          // no fill. Deliberately low-key — findable but far from a primary
+          // CTA. The confirm dialog carries the warning. Mirrors sale/receive.
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: voiding ? null : onVoid,
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.onSurfaceVariant,
+              ),
+              child: voiding
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(l.paymentDetailVoidButton),
             ),
-            child: voiding
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(l.paymentDetailVoidButton),
           ),
         ] else if (windowPassed) ...[
           const SizedBox(height: 24),

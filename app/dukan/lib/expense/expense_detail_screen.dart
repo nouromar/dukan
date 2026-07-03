@@ -50,6 +50,9 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
   }
 
   Future<ExpenseSummary> _load() async {
+    // Read the provider up front (before any await) so the network fallback
+    // doesn't touch `context` across an async gap.
+    final api = context.read<ShopApi>();
     // Offline-first (mirrors sale/receive/payment detail): read from the
     // local mirror so the screen opens in airplane mode.
     if (useLocalDb(context)) {
@@ -58,7 +61,6 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
       if (local != null) return local;
       // Not in the mirror — fall through to the network as a last resort.
     }
-    final api = context.read<ShopApi>();
     final expense = await api.getExpense(
       shopId: widget.shop.id,
       txnId: widget.txnId,
@@ -257,20 +259,24 @@ class _Body extends StatelessWidget {
           ],
           const Spacer(),
           if (canVoid)
-            OutlinedButton(
-              onPressed: voiding ? null : onVoid,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                foregroundColor: theme.colorScheme.error,
-                side: BorderSide(color: theme.colorScheme.error),
+            // Destructive secondary action: muted grey text, right-aligned,
+            // no fill. Deliberately low-key — findable but far from a primary
+            // CTA. The confirm dialog carries the warning. Mirrors sale/receive.
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: voiding ? null : onVoid,
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onSurfaceVariant,
+                ),
+                child: voiding
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(l.expenseDetailVoidButton),
               ),
-              child: voiding
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(l.expenseDetailVoidButton),
             ),
         ],
       ),
