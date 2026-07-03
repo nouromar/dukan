@@ -1796,7 +1796,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get addPackagingSuggestionsHeader => 'Xirmooyin la isticmaalo';
 
   @override
-  String get addPackagingCustomEntry => '+ Xirmo gaar ah';
+  String get addPackagingCustomEntry => 'Xirmo gaar ah';
 
   @override
   String get addPackagingLessCommonHeader => 'Kuwo aan caadi ahayn';

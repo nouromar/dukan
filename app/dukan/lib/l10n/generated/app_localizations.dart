@@ -3105,7 +3105,7 @@ abstract class AppLocalizations {
   /// No description provided for @addPackagingCustomEntry.
   ///
   /// In en, this message translates to:
-  /// **'+ Custom packaging'**
+  /// **'Custom packaging'**
   String get addPackagingCustomEntry;
 
   /// No description provided for @addPackagingLessCommonHeader.

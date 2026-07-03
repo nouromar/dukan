@@ -1531,7 +1531,7 @@ class _SaleCartStrip extends StatelessWidget {
     final l = tr(context);
     final canSave = itemCount > 0 && (!debt || customer != null) && !saving;
     final canExpand = lines.isNotEmpty;
-    final maxListHeight = MediaQuery.of(context).size.height * 0.25;
+    final maxListHeight = MediaQuery.of(context).size.height * 0.20;
     // Peek (collapsed) = summary + SAVE only, so the item grid keeps the screen
     // while searching. The line list + Lacag/Deyn + customer live in the
     // expanded section. Force-expand when a debt sale still needs a customer.

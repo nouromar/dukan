@@ -703,7 +703,7 @@
   "addPackagingFailedMessage": "Could not add the packaging. Try again.",
   "addPackagingHeaderBaseUnit": "Base unit · {unit}",
   "addPackagingSuggestionsHeader": "Common packagings",
-  "addPackagingCustomEntry": "+ Custom packaging",
+  "addPackagingCustomEntry": "Custom packaging",
   "addPackagingLessCommonHeader": "Less common",
   "packagingConversionPreview": "1 {unit} holds {qty} {base}",
   "@packagingConversionPreview": {

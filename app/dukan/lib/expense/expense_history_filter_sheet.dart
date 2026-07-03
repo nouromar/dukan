@@ -18,8 +18,10 @@ class ExpenseHistoryFilters {
     this.categoryName,
   });
 
+  // Default to All (like sales / receives / payments). Expenses are
+  // infrequent, so a "today" default almost always shows an empty page.
   factory ExpenseHistoryFilters.initial() =>
-      ExpenseHistoryFilters(dateRange: DateRange.today());
+      const ExpenseHistoryFilters(dateRange: DateRange.all);
 
   final DateRange dateRange;
   final String? categoryId;

@@ -64,9 +64,12 @@ void main() {
     expect(find.text(en.expenseHistoryEmptyMessage), findsOneWidget);
   });
 
-  testWidgets('default scope is Today — subtitle reflects it', (tester) async {
+  testWidgets('default scope is All time — subtitle reflects it',
+      (tester) async {
+    // Expenses are infrequent, so the default is All (like sales /
+    // receives / payments) — a "today" default would usually be empty.
     api.onListExpenses = (_, _, _) async => const [];
     await pump(tester);
-    expect(find.text(en.dateRangeToday), findsOneWidget);
+    expect(find.text(en.dateRangeAll), findsOneWidget);
   });
 }

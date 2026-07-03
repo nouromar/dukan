@@ -1782,7 +1782,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addPackagingSuggestionsHeader => 'Common packagings';
 
   @override
-  String get addPackagingCustomEntry => '+ Custom packaging';
+  String get addPackagingCustomEntry => 'Custom packaging';
 
   @override
   String get addPackagingLessCommonHeader => 'Less common';

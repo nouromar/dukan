@@ -1753,7 +1753,7 @@ class _ReceiveLinesStrip extends StatelessWidget {
     final l = tr(context);
     final canSave = lineCount > 0 && !saving;
     final canExpand = lineCount > 0;
-    final maxListHeight = MediaQuery.of(context).size.height * 0.25;
+    final maxListHeight = MediaQuery.of(context).size.height * 0.20;
     final entries = lines.entries.toList(growable: false);
     final showExpanded = expanded && canExpand;
     // Full/review mode only applies once open with lines.

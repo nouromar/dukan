@@ -1,7 +1,7 @@
 // Scrollable line list shared by the Sale cart and Receive bono strips, with
 // two size modes and an overflow cue.
 //
-//   * `fill: false` (normal) — the list is capped at [maxHeight] (25% of the
+//   * `fill: false` (normal) — the list is capped at [maxHeight] (20% of the
 //     screen) and shrink-wraps to its content up to that cap.
 //   * `fill: true` (full/review) — the list is `Expanded`, filling the drawer;
 //     it must be placed as a child of a Flex (Column) whose parent gives it a

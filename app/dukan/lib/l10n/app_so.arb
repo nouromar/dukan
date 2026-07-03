@@ -690,7 +690,7 @@
   "addPackagingFailedMessage": "Xirmada luguma dari karin. Isku day mar kale.",
   "addPackagingHeaderBaseUnit": "Halbeeg aasaasi · {unit}",
   "addPackagingSuggestionsHeader": "Xirmooyin la isticmaalo",
-  "addPackagingCustomEntry": "+ Xirmo gaar ah",
+  "addPackagingCustomEntry": "Xirmo gaar ah",
   "addPackagingLessCommonHeader": "Kuwo aan caadi ahayn",
   "packagingConversionPreview": "1 {unit} waxay qaaddaa {qty} {base}",
   "@packagingConversionPreview": {
