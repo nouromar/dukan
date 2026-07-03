@@ -14,9 +14,12 @@
 
 import 'package:flutter/widgets.dart';
 
-/// Baseline tile height (dp) at text-scale 1.0. Matches the previous fixed
-/// `mainAxisExtent: 110`.
-const double _kBaseTileExtent = 110;
+/// Baseline tile height (dp) at text-scale 1.0. Trimmed from the original 110
+/// once the tile `Card`s dropped their default 4dp margin (see the grid tiles),
+/// which handed ~8dp back to content — so 96dp still clears the 2-line-name
+/// worst case while reclaiming vertical space (denser favourites list, less
+/// scrolling on the 5-item sale).
+const double _kBaseTileExtent = 96;
 
 /// Target max tile width (dp). At this cap a ~360dp-wide phone yields 2
 /// columns and a ~600dp-wide one yields 3, without any per-screen branching.
@@ -32,7 +35,7 @@ SliverGridDelegate itemGridDelegate(BuildContext context) {
   return SliverGridDelegateWithMaxCrossAxisExtent(
     maxCrossAxisExtent: _kMaxTileWidth,
     crossAxisSpacing: 8,
-    mainAxisSpacing: 8,
+    mainAxisSpacing: 6,
     mainAxisExtent: _kBaseTileExtent * scale,
   );
 }

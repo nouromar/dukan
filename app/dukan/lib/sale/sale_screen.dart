@@ -1400,6 +1400,9 @@ class _SaleItemTile extends StatelessWidget {
             compact: true,
           );
     return Card(
+      // No Card margin — the grid delegate owns the gutter, so the tile's full
+      // cell goes to content (lets _kBaseTileExtent stay tight without clipping).
+      margin: EdgeInsets.zero,
       color: Colors.white,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -1469,6 +1472,7 @@ class _AddNewItemTile extends StatelessWidget {
     final l = tr(context);
     final theme = Theme.of(context);
     return Card(
+      margin: EdgeInsets.zero,
       color: theme.colorScheme.surfaceContainerHighest,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),

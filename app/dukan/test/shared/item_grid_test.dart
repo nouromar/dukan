@@ -29,7 +29,7 @@ void main() {
     // Column count derives from width via maxCrossAxisExtent (2 on a narrow
     // phone, 3+ on a wider one) rather than a hard-coded 2.
     expect(m.maxCrossAxisExtent, 190);
-    expect(m.mainAxisExtent, 110); // baseline tile height at 1.0 scale
+    expect(m.mainAxisExtent, 96); // baseline tile height at 1.0 scale
   });
 
   testWidgets('tile height grows with the OS font scale, clamped at 1.6x',
@@ -40,6 +40,6 @@ void main() {
         as SliverGridDelegateWithMaxCrossAxisExtent;
     expect(big.mainAxisExtent, greaterThan(base.mainAxisExtent!));
     // A huge accessibility font is clamped so tiles don't fill the screen.
-    expect(big.mainAxisExtent, closeTo(110 * 1.6, 0.01));
+    expect(big.mainAxisExtent, closeTo(96 * 1.6, 0.01));
   });
 }
