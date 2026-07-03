@@ -1420,7 +1420,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saleVoidErrorPartiallyPaid =>
-      'The customer has already paid part of this debt, so the sale can\'t be voided. Record a refund instead.';
+      'The customer has already paid part of this debt. Undo that payment first (in Money In), then void the sale.';
 
   @override
   String get receiveHistoryTitle => 'Receives';
@@ -1499,7 +1499,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get receiveVoidBlockedPaidMessage =>
-      'You\'ve already paid part of this bono, so it can\'t be voided. Record a refund instead.';
+      'You\'ve already paid part of this bono. Undo that payment first (in Money Out), then void it.';
 
   @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {

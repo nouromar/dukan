@@ -2524,7 +2524,7 @@ abstract class AppLocalizations {
   /// No description provided for @saleVoidErrorPartiallyPaid.
   ///
   /// In en, this message translates to:
-  /// **'The customer has already paid part of this debt, so the sale can\'t be voided. Record a refund instead.'**
+  /// **'The customer has already paid part of this debt. Undo that payment first (in Money In), then void the sale.'**
   String get saleVoidErrorPartiallyPaid;
 
   /// No description provided for @receiveHistoryTitle.
@@ -2655,7 +2655,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveVoidBlockedPaidMessage.
   ///
   /// In en, this message translates to:
-  /// **'You\'ve already paid part of this bono, so it can\'t be voided. Record a refund instead.'**
+  /// **'You\'ve already paid part of this bono. Undo that payment first (in Money Out), then void it.'**
   String get receiveVoidBlockedPaidMessage;
 
   /// No description provided for @cartLineSubtotal.
