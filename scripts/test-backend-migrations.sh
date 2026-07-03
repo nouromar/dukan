@@ -1606,6 +1606,71 @@ begin
 end;
 $$;
 
+-- =====================================================================
+-- §10a post_expense with a client-minted txn id (offline-void support, 0097)
+-- =====================================================================
+-- Mirrors the tier-2 create-with-client-id assertions (§12a): a client-supplied
+-- UUID is honoured + persisted, replay is idempotent, and — the whole point —
+-- the client UUID can be voided (the old client_op_id-string placeholder failed
+-- void_expense with 22P02). Placed AFTER §10's daily-profit assertion so the
+-- extra expense rows don't perturb that shop's expense_total check; still in the
+-- §5 owner JWT context.
+do $$
+declare
+  v_shop_id uuid;
+  v_cat_id  uuid;
+  v_cli_id  uuid := '00000000-0000-4000-8000-00000000e001'::uuid;
+  v_r       uuid;
+  v_cnt     int;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_cat_id from public.expense_category
+    where shop_id = v_shop_id and code = 'rent' limit 1;
+
+  -- (a) client-supplied id honoured + persisted.
+  v_r := public.post_expense(
+    v_shop_id, v_cat_id, 7, 'cash', null,
+    'op-exp-cli-1', null, 'client-id expense', v_cli_id);
+  if v_r <> v_cli_id then
+    raise exception '0097: post_expense did not honour client txn id (got %)', v_r;
+  end if;
+  if not exists (select 1 from public.txn where shop_id = v_shop_id and id = v_cli_id) then
+    raise exception '0097: client-id expense not persisted';
+  end if;
+
+  -- (b) idempotent replay (same op + same id) -> same id, no duplicate.
+  v_r := public.post_expense(
+    v_shop_id, v_cat_id, 7, 'cash', null,
+    'op-exp-cli-1', null, 'client-id expense', v_cli_id);
+  if v_r <> v_cli_id then
+    raise exception '0097: replay returned a different id (%)', v_r;
+  end if;
+  select count(*) into v_cnt from public.txn where shop_id = v_shop_id and id = v_cli_id;
+  if v_cnt <> 1 then
+    raise exception '0097: replay duplicated the expense (count=%)', v_cnt;
+  end if;
+
+  -- (c) THE GOAL: a client-minted UUID can be voided (22P02 with a placeholder).
+  perform public.void_expense(v_shop_id, v_cli_id, 'op-void-exp-cli-1', 'undo offline expense');
+  if not exists (
+    select 1 from public.txn
+    where shop_id = v_shop_id and reverses_transaction_id = v_cli_id
+  ) then
+    raise exception '0097: void_expense did not reverse the client-id expense';
+  end if;
+
+  -- (d) legacy path (null client id) still mints a server id.
+  v_r := public.post_expense(
+    v_shop_id, v_cat_id, 3, 'cash', null,
+    'op-exp-legacy-1', null, 'legacy expense');
+  if v_r is null or v_r = v_cli_id then
+    raise exception '0097: legacy null-id post_expense misbehaved (got %)', v_r;
+  end if;
+
+  raise notice '10a: post_expense client-id + void round-trip passed';
+end;
+$$;
+
 -- §11 (learning suggestions) removed: the per-transaction learning triggers
 -- that produced 'learned' shop_suggestion rows were dropped in 0078 — the
 -- learning aggregates had no readers, and recents/etc. are computed on-read.

@@ -641,6 +641,11 @@ class FakeShopApi implements ShopApi {
     String? notes,
   )?
   onPostExpense;
+
+  /// Records the client-minted `txnId` passed to each postExpense call
+  /// (the onPostExpense callback keeps its original arg list, so existing
+  /// tests compile unchanged).
+  final List<String?> postExpenseTxnIds = <String?>[];
   Future<List<ReferenceOption>> Function()? onListLanguages;
   Future<List<ReferenceOption>> Function()? onListCurrencies;
   Future<void> Function(
@@ -1382,8 +1387,10 @@ class FakeShopApi implements ShopApi {
     required String clientOpId,
     String? notes,
     DateTime? occurredAt,
+    String? txnId,
   }) async {
     lastOccurredAt = occurredAt;
+    postExpenseTxnIds.add(txnId);
     if (onPostExpense != null) {
       return onPostExpense!(
         shopId,

@@ -122,6 +122,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     final categoryId = category.id;
     final amount = controller.amount;
     final clientOpId = generateClientOpId('expense');
+    // Client-minted txn UUID: the optimistic mirror, the direct post, and the
+    // queued post all reuse it so the row keeps one stable id across sync —
+    // which lets an offline expense be voided before it reaches the server.
+    final txnId = generateUuidV4();
     final rawNotes = _notesController.text.trim();
     final notes = rawNotes.isEmpty ? null : rawNotes;
     // Backdating (#5): captured once so the background post + optimistic write
@@ -138,6 +142,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         categoryId: categoryId,
         amount: amount,
         clientOpId: clientOpId,
+        txnId: txnId,
         notes: notes,
         occurredAt: occurredAt,
         failureMessage: l.expensePostFailedMessage,
@@ -160,6 +165,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     try {
       await context.read<LocalRepository>().writeOptimisticTransaction(
         clientOpId: clientOpId,
+        txnId: txnId,
         shopId: widget.shop.id,
         typeCode: 'expense',
         occurredAtMs: (occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
@@ -203,6 +209,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         categoryId: categoryId,
         amount: amount,
         clientOpId: clientOpId,
+        txnId: txnId,
         notes: notes,
         occurredAt: occurredAt,
         messenger: messenger,
@@ -221,6 +228,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     required String categoryId,
     required num amount,
     required String clientOpId,
+    required String txnId,
     required String? notes,
     required DateTime? occurredAt,
     required String failureMessage,
@@ -235,6 +243,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         clientOpId: clientOpId,
         notes: notes,
         occurredAt: occurredAt,
+        txnId: txnId,
       );
       if (!mounted) return;
       controller.clearAll();
@@ -266,6 +275,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     required String categoryId,
     required num amount,
     required String clientOpId,
+    required String txnId,
     required String? notes,
     required DateTime? occurredAt,
     required ScaffoldMessengerState messenger,
@@ -280,6 +290,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         clientOpId: clientOpId,
         notes: notes,
         occurredAt: occurredAt,
+        txnId: txnId,
       );
     } on PostgrestException catch (error, stackTrace) {
       // Server-side reject — retry won't help. Toast.
@@ -314,6 +325,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           paymentMethodCode: 'cash',
           notes: notes,
           occurredAt: occurredAt,
+          txnId: txnId,
         ),
         queuedAt: DateTime.now(),
       );

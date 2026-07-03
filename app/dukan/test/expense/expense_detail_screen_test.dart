@@ -83,6 +83,16 @@ void main() {
     expect(find.text(en.voidNotSyncedHint), findsOneWidget);
   });
 
+  testWidgets('backdated expense (UUID id, but outside the window) hides VOID',
+      (tester) async {
+    // With a client-minted UUID id the sync gate passes, so the void window —
+    // measured from the (backdated) postedAt — is the only thing gating VOID.
+    api.onGetExpense =
+        (_, _) async => expense(posted: DateTime(2020, 1, 1));
+    await pump(tester);
+    expect(find.text(en.expenseDetailVoidButton), findsNothing);
+  });
+
   testWidgets('cashier without expense.void sees no VOID', (tester) async {
     auth = FakeAuthController(capabilities: Capabilities.forTesting(const []));
     api.onGetExpense = (_, _) async => expense();

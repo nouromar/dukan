@@ -7,6 +7,7 @@ import 'package:dukan/expense/expense_screen.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/storage/app_database.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
 
@@ -213,6 +214,12 @@ void main() {
       expect(post.shopId, shop.id);
       expect(post.params['expense_category_id'], 'c1');
       expect(post.params['amount'], 120);
+      // The queued post carries a client-minted UUID txn id (not the
+      // client_op_id placeholder) so an offline expense can be voided before
+      // it syncs — the whole point of migration 0097.
+      final txnId = post.params['txn_id'] as String?;
+      expect(txnId, isNotNull);
+      expect(isServerAssignedId(txnId!), isTrue);
     },
   );
 }

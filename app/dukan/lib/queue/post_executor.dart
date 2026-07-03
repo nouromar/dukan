@@ -142,6 +142,7 @@ class PostExecutor {
       clientOpId: post.clientOpId,
       notes: p['notes'] as String?,
       occurredAt: _occurredAt(p),
+      txnId: p['txn_id'] as String?,
     );
   }
 
@@ -509,6 +510,9 @@ Map<String, dynamic> buildPostExpenseParams({
   required String paymentMethodCode,
   String? notes,
   DateTime? occurredAt,
+  // Client-minted txn UUID so the queued post reuses the same id the optimistic
+  // mirror wrote — enabling offline void of a not-yet-synced expense.
+  String? txnId,
 }) =>
     <String, dynamic>{
       'expense_category_id': expenseCategoryId,
@@ -516,6 +520,7 @@ Map<String, dynamic> buildPostExpenseParams({
       'payment_method_code': paymentMethodCode,
       if (notes != null) 'notes': notes,
       if (occurredAt != null) 'occurred_at': occurredAt.toUtc().toIso8601String(),
+      if (txnId != null) 'txn_id': txnId,
     };
 
 Map<String, dynamic> buildPostInventoryAdjustmentParams({

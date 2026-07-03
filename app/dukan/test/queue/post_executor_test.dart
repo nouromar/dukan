@@ -157,11 +157,15 @@ void main() {
         amount: 200,
         paymentMethodCode: 'cash',
         notes: 'July rent',
+        txnId: 'exp-uuid-1',
       ),
     ));
     expect(capturedClientOp, 'op-1');
     expect(capturedCategory, 'cat-rent');
     expect(capturedAmount, 200);
+    // The client-minted txn id round-trips through the builder + dispatch so
+    // the queued post reuses the optimistic mirror's id (offline-void support).
+    expect(api.postExpenseTxnIds.last, 'exp-uuid-1');
   });
 
   test('void_sale dispatches txn + refund + clientOpId', () async {

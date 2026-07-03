@@ -1111,6 +1111,8 @@ class ShopApi {
     required String clientOpId,
     String? notes,
     DateTime? occurredAt,
+    // Client-minted txn UUID (offline-void support); null → server mints it.
+    String? txnId,
   }) async {
     final result = await _client.rpc(
       'post_expense',
@@ -1123,6 +1125,7 @@ class ShopApi {
         'p_notes': notes,
         if (occurredAt != null)
           'p_occurred_at': occurredAt.toUtc().toIso8601String(),
+        if (txnId != null) 'p_txn_id': txnId,
       },
     );
     return result as String;

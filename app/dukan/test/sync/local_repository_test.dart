@@ -454,6 +454,29 @@ void main() {
     expect(await repo.getExpenseDetailLocal('nope'), isNull);
   });
 
+  test('writeOptimisticTransaction keys the row by the client txnId, not the '
+      'client_op_id (0097 offline-void support)', () async {
+    const txnId = '00000000-0000-4000-8000-00000000e001';
+    const opId = 'expense-1783095528341-3366287978';
+    await repo.writeOptimisticTransaction(
+      clientOpId: opId,
+      txnId: txnId,
+      shopId: shopId,
+      typeCode: 'expense',
+      occurredAtMs: 1000,
+      total: 12,
+      payload: const {'category_id': 'c1', 'category_name': 'Rent'},
+    );
+    // The mirror row is addressable by the UUID (what a later void will use),
+    // and NOT by the client_op_id placeholder.
+    final byUuid = await repo.getTransaction(txnId);
+    expect(byUuid, isNotNull);
+    expect(byUuid!.clientOpId, opId);
+    expect(await repo.getTransaction(opId), isNull);
+    // And the expense detail reads back under the UUID.
+    expect((await repo.getExpenseDetailLocal(txnId))!.txnId, txnId);
+  });
+
   test('lowStockLocal: at/below threshold, or below 1 when no threshold',
       () async {
     await repo.applyItemsPayload({

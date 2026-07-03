@@ -2159,6 +2159,10 @@ class LocalRepository {
     required num total,
     String? partyId,
     required Map<String, dynamic> payload,
+    // The client-minted UUID the post RPC will use as the real txn id
+    // (offline-void support). Null → fall back to the client_op_id placeholder
+    // (legacy behaviour for flows not yet minting a UUID).
+    String? txnId,
   }) async {
     final db = await _db;
     final enriched = <String, dynamic>{
@@ -2169,7 +2173,7 @@ class LocalRepository {
     await db.insert(
       'local_transaction',
       {
-        'txn_id': clientOpId,
+        'txn_id': txnId ?? clientOpId,
         'shop_id': shopId,
         'type_code': typeCode,
         'occurred_at': occurredAtMs,
