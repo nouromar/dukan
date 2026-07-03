@@ -422,6 +422,41 @@ class LocalRepository {
     return rows.map(LocalShopItem._fromRow).toList(growable: false);
   }
 
+  /// Low-stock rows computed straight from the mirror (offline Low-stock
+  /// report). Matches the server rule: low = at/below the reorder threshold,
+  /// or below 1 when no threshold is set. current_stock already reflects
+  /// optimistic sale/receive bumps. base_unit_code doubles as the label
+  /// locally (we don't mirror unit labels — same as the other local reads).
+  /// Most-below-threshold first.
+  Future<List<LowStockRow>> lowStockLocal(String shopId) async {
+    final rows = await (await _db).rawQuery(
+      '''
+      SELECT shop_item_id, display_name, current_stock,
+             reorder_threshold, base_unit_code
+        FROM local_shop_item
+       WHERE shop_id = ?
+         AND is_active = 1
+         AND (
+              (reorder_threshold IS NOT NULL AND current_stock <= reorder_threshold)
+           OR (reorder_threshold IS NULL AND current_stock < 1)
+         )
+       ORDER BY (current_stock - COALESCE(reorder_threshold, 1)) ASC,
+                display_name COLLATE NOCASE ASC
+      ''',
+      [shopId],
+    );
+    return rows
+        .map((r) => LowStockRow(
+              shopItemId: r['shop_item_id'] as String,
+              displayName: r['display_name'] as String,
+              currentStock: (r['current_stock'] as num).toDouble(),
+              reorderThreshold: (r['reorder_threshold'] as num?)?.toDouble(),
+              baseUnitCode: r['base_unit_code'] as String,
+              baseUnitLabel: r['base_unit_code'] as String,
+            ))
+        .toList(growable: false);
+  }
+
   /// All active parties for [shopId] filtered to [typeCode]. Used by
   /// the People screen + the lookup pickers when offline_mode = full.
   Future<List<LocalParty>> allActiveParties(

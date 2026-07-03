@@ -412,6 +412,28 @@ void main() {
     expect(await repo.getExpenseDetailLocal('nope'), isNull);
   });
 
+  test('lowStockLocal: at/below threshold, or below 1 when no threshold',
+      () async {
+    await repo.applyItemsPayload({
+      'items': [
+        {..._item('si-1', 'Rice', stock: 2), 'reorder_threshold': 5}, // low
+        {..._item('si-2', 'Sugar', stock: 10), 'reorder_threshold': 5}, // ok
+        _item('si-3', 'Salt', stock: 0.5), // no threshold, <1 → low
+        _item('si-4', 'Oil', stock: 3), // no threshold, >=1 → ok
+        {..._item('si-5', 'Tea', stock: 1), 'reorder_threshold': 1}, // low (==)
+      ],
+      'units': [],
+      'aliases': [],
+      'barcodes': [],
+    });
+
+    final low = await repo.lowStockLocal('shop-1');
+    // Most-below-threshold first: si-1 (-3), si-3 (-0.5), si-5 (0).
+    expect(low.map((r) => r.shopItemId), ['si-1', 'si-3', 'si-5']);
+    expect(low.first.currentStock, 2);
+    expect(low.first.baseUnitLabel, 'kg'); // base_unit_code as the label
+  });
+
   test('applyOptimisticVoid flags the local txn as voided', () async {
     await repo.applyTransactionsPayload({
       'transactions': [_txn('s-void', 'sale', occurredMs: 1000, total: 12)],

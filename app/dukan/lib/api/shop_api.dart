@@ -1764,20 +1764,41 @@ class ShopApi {
     return units;
   }
 
-  Future<List<ReferenceOption>> listLanguages() async {
+  // Currency + language reference lists are static; cache per session
+  // (like listUnits) so the Settings form can still open offline once
+  // they've been fetched at least once this session.
+  List<ReferenceOption>? _languagesCache;
+  Future<List<ReferenceOption>>? _languagesFuture;
+  List<ReferenceOption>? _currenciesCache;
+  Future<List<ReferenceOption>>? _currenciesFuture;
+
+  Future<List<ReferenceOption>> listLanguages() {
+    if (_languagesCache != null) return Future.value(_languagesCache);
+    return _languagesFuture ??= _fetchLanguages();
+  }
+
+  Future<List<ReferenceOption>> _fetchLanguages() async {
     final rows = await _client
         .from('language')
         .select('code, name')
         .eq('is_active', true)
         .order('name');
-    return rows
+    final list = rows
         .map<ReferenceOption>(
           (row) => ReferenceOption.fromJson(Map<String, dynamic>.from(row)),
         )
         .toList(growable: false);
+    _languagesCache = list;
+    _languagesFuture = null;
+    return list;
   }
 
-  Future<List<ReferenceOption>> listCurrencies() async {
+  Future<List<ReferenceOption>> listCurrencies() {
+    if (_currenciesCache != null) return Future.value(_currenciesCache);
+    return _currenciesFuture ??= _fetchCurrencies();
+  }
+
+  Future<List<ReferenceOption>> _fetchCurrencies() async {
     final rows = await _client
         .from('currency')
         // name → ReferenceOption.label so the setup picker reads
@@ -1785,11 +1806,14 @@ class ShopApi {
         .select('code, name, symbol, decimals')
         .eq('is_active', true)
         .order('code');
-    return rows
+    final list = rows
         .map<ReferenceOption>(
           (row) => ReferenceOption.fromJson(Map<String, dynamic>.from(row)),
         )
         .toList(growable: false);
+    _currenciesCache = list;
+    _currenciesFuture = null;
+    return list;
   }
 
   Future<void> updateShopDefaults({

@@ -10,6 +10,8 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/products/shop_item_detail_screen.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/stock_format.dart';
@@ -45,6 +47,11 @@ class _LowStockScreenState extends State<LowStockScreen> {
   }
 
   Future<List<LowStockRow>> _load() {
+    // Offline-first: compute from the local mirror (current_stock +
+    // reorder_threshold are mirrored) so the report opens in airplane mode.
+    if (useLocalDb(context)) {
+      return context.read<LocalRepository>().lowStockLocal(widget.shop.id);
+    }
     return context
         .read<ShopApi>()
         .listLowStock(shopId: widget.shop.id, locale: _locale ?? 'en');

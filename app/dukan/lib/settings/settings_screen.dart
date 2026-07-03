@@ -40,6 +40,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             currencies: results[0],
             languages: results[1],
           ),
+        )
+        // Offline (reference lists uncached this session): still open the
+        // form with the shop's current currency + language as the only
+        // options, so name / timezone stay editable. Currency is locked
+        // after the first sale anyway, and changing it needs a connection.
+        .catchError(
+          (Object _, StackTrace __) => _SettingsReferenceData(
+            currencies: [
+              ReferenceOption(code: _currencyCode, label: _currencyCode),
+            ],
+            languages: [
+              ReferenceOption(code: _languageCode, label: _languageCode),
+            ],
+          ),
         );
   }
 
