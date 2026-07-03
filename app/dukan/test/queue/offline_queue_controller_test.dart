@@ -2,6 +2,7 @@
 // stubbed backoff/clock so timing is deterministic and we don't
 // wait for real delays in the test.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dukan/api/types.dart';
@@ -125,32 +126,35 @@ void main() {
     expect(controller.pendingCount, 0);
   });
 
-  test('size cap: enqueue past max drops the oldest pending', () async {
+  test('over the soft cap: keeps every post (never drops) + warns once',
+      () async {
+    final warnings = <String>[];
+    final prev = FlutterError.onError;
+    FlutterError.onError = (d) => warnings.add(d.exception.toString());
+    addTearDown(() => FlutterError.onError = prev);
+
     final tiny = OfflineQueueController(
       dao: dao,
-      executor: (post) async {
-        if (shouldFail.contains(post.id)) {
-          throw StateError('network down for ${post.id}');
-        }
-        executed.add(post.id);
-      },
-      backoff: (_) => Duration.zero,
+      // Never drains, so posts pile up past the soft cap.
+      executor: (_) async => throw StateError('offline'),
+      backoff: (_) => const Duration(days: 1),
       clock: () => DateTime.utc(2026, 6, 12, 12, 0, 0),
-      maxPending: 2,
+      maxPending: 2, // soft cap
     );
-    final dropped = <String>[];
-    tiny.addDroppedListener((p) => dropped.add(p.id));
-    shouldFail.addAll(['a', 'b', 'c']);
     await tiny.start();
     await tiny.enqueue(_post('a',
         queuedAt: DateTime.utc(2026, 6, 12, 12, 0, 0)));
     await tiny.enqueue(_post('b',
         queuedAt: DateTime.utc(2026, 6, 12, 12, 1, 0)));
-    // Third enqueue with cap=2 must drop the oldest ('a').
     await tiny.enqueue(_post('c',
         queuedAt: DateTime.utc(2026, 6, 12, 12, 2, 0)));
-    expect(dropped, ['a']);
-    expect(tiny.pending.map((p) => p.id), ['b', 'c']);
+    // Nothing is dropped — a queued sale is never deleted to save space.
+    expect(tiny.pending.map((p) => p.id), ['a', 'b', 'c']);
+    // Crossing the soft cap warned exactly once (for observability).
+    expect(
+      warnings.where((w) => w.contains('offline queue is large')),
+      hasLength(1),
+    );
     tiny.dispose();
   });
 
@@ -288,12 +292,15 @@ void main() {
     retryable.dispose();
   });
 
-  test(
-      '#365: maxPending sourced from ConfigResolver when no explicit override',
+  test('#365: soft cap sourced from ConfigResolver; still never drops',
       () async {
-    // No explicit `maxPending:` — the controller should read the
-    // resolver-backed value. We override the org layer to 2 so the
-    // cap fires after 2 enqueues.
+    final warnings = <String>[];
+    final prev = FlutterError.onError;
+    FlutterError.onError = (d) => warnings.add(d.exception.toString());
+    addTearDown(() => FlutterError.onError = prev);
+
+    // No explicit `maxPending:` — the controller reads the resolver-backed
+    // value. Override to 2 so the soft-cap warning fires after 2 enqueues.
     final db = await openTestDatabase();
     final fakeApi = FakeShopApi()
       ..platformConfigEntries = const [
@@ -313,18 +320,15 @@ void main() {
       clock: () => DateTime.utc(2026, 6, 12, 12, 0, 0),
       configResolver: resolver,
     );
-    final dropped = <PendingPost>[];
-    c.addDroppedListener(dropped.add);
     await c.start();
     await c.enqueue(_post('a'));
     await c.enqueue(_post('b'));
-    expect(c.pendingCount, 2);
-    // Third enqueue exceeds the resolver-fed cap of 2 → oldest
-    // (`a`) is dropped before insert.
     await c.enqueue(_post('c'));
-    expect(c.pendingCount, 2);
-    expect(c.pending.map((p) => p.id), ['b', 'c']);
-    expect(dropped.map((p) => p.id), ['a']);
+    // The resolver-fed soft cap (2) drives the warning — proving it was
+    // read (not the 10k default) — but NOTHING is dropped.
+    expect(c.pendingCount, 3);
+    expect(c.pending.map((p) => p.id), ['a', 'b', 'c']);
+    expect(warnings.where((w) => w.contains('soft cap 2')), isNotEmpty);
     c.dispose();
   });
 

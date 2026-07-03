@@ -36,11 +36,6 @@ import 'package:dukan/sync/use_local_db.dart';
 
 typedef PostExecutorFn = Future<void> Function(PendingPost post);
 
-/// Fires when a `pending` post is dropped to make room for a new
-/// enqueue (size cap reached). The UI subscribes to this to show
-/// the one-time "Some old unsynced data was dropped" toast.
-typedef DroppedListener = void Function(PendingPost dropped);
-
 /// Fires when a post transitions to the terminal `failed_permanent`
 /// state after exhausting [kQueueMaxAttempts] drain attempts.
 typedef FailedPermanentListener = void Function(PendingPost failed);
@@ -136,6 +131,9 @@ class OfflineQueueController extends ChangeNotifier {
   bool _draining = false;
   bool _started = false;
   bool _disposed = false;
+  // Latches when the queue crosses the soft cap so we warn once, not on
+  // every enqueue; cleared when the queue drains back below the cap.
+  bool _softCapWarned = false;
 
   /// Wall-clock time of the last successful drain attempt — i.e. the
   /// most recent moment we definitely had network connectivity. The
@@ -145,17 +143,11 @@ class OfflineQueueController extends ChangeNotifier {
   DateTime? _lastDrainSuccessAt;
   DateTime? get lastDrainSuccessAt => _lastDrainSuccessAt;
 
-  /// Listeners notified when posts are dropped (size cap) or
-  /// promoted to failed_permanent. UI surfaces wire these to toasts
-  /// / badges. Multiple listeners supported so different screens
-  /// can react independently.
-  final List<DroppedListener> _droppedListeners = <DroppedListener>[];
+  /// Listeners notified when a post is parked (server-rejected →
+  /// failed_permanent). UI surfaces wire these to badges. Multiple
+  /// listeners supported so different screens can react independently.
   final List<FailedPermanentListener> _failedListeners =
       <FailedPermanentListener>[];
-
-  void addDroppedListener(DroppedListener l) => _droppedListeners.add(l);
-  void removeDroppedListener(DroppedListener l) =>
-      _droppedListeners.remove(l);
 
   void addFailedPermanentListener(FailedPermanentListener l) =>
       _failedListeners.add(l);
@@ -219,31 +211,26 @@ class OfflineQueueController extends ChangeNotifier {
   /// for posts whose immediate attempt failed (the caller has already
   /// observed the failure and is queuing for background retry).
   ///
-  /// Enforces the size cap [_maxPending]: if already at cap, drops
-  /// the oldest pending post first, logs the dropped payload to
-  /// Sentry, and fires registered [DroppedListener]s so UI can show
-  /// the cashier a one-time warning.
+  /// NEVER drops an existing post to make room. Queued posts are durable
+  /// and tiny (~1 KB) — dropping one would lose a sale, which the
+  /// north-star forbids. [_maxPending] is only a SOFT threshold: crossing
+  /// it logs a one-time Sentry warning (something is stopping the queue
+  /// from draining) but keeps every post.
   Future<void> enqueue(PendingPost post) async {
-    if (_pending.length >= _maxPending) {
-      final dropped = await dao.dropOldestPending();
-      if (dropped != null) {
-        _pending = _pending.where((p) => p.id != dropped.id).toList();
-        FlutterError.reportError(FlutterErrorDetails(
-          exception: StateError(
-            'queue size cap ($_maxPending) reached — dropped oldest '
-            'pending post ${dropped.id} (rpc=${dropped.rpc}, '
-            'shop=${dropped.shopId}, queued_at=${dropped.queuedAt})',
-          ),
-          library: 'dukan queue',
-          context: ErrorDescription('OfflineQueueController.enqueue'),
-        ));
-        for (final l in _droppedListeners) {
-          l(dropped);
-        }
-      }
-    }
     await dao.insert(post);
     _pending = [..._pending, post];
+    if (_pending.length >= _maxPending && !_softCapWarned) {
+      _softCapWarned = true;
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: StateError(
+          'offline queue is large (${_pending.length} pending, soft cap '
+          '$_maxPending) — NOT dropping any post; investigate why it is '
+          'not draining (shop=${post.shopId})',
+        ),
+        library: 'dukan queue',
+        context: ErrorDescription('OfflineQueueController.enqueue soft cap'),
+      ));
+    }
     notifyListeners();
     _scheduleDrain(immediate: true);
   }
@@ -310,6 +297,10 @@ class OfflineQueueController extends ChangeNotifier {
           await dao.remove(head.id);
           _pending = _pending.sublist(1);
           _lastDrainSuccessAt = _clock();
+          // Back below the soft cap → re-arm the one-time warning.
+          if (_softCapWarned && _pending.length < _maxPending) {
+            _softCapWarned = false;
+          }
           // #374: server now owns the canonical stock after this
           // post succeeded; the local projection is no longer
           // needed (delta sync / realtime will deliver the real

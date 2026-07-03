@@ -4,16 +4,18 @@
 // (defaults → org → shop → device). Keeping them in one file means
 // the Phase 3 migration is a single search/replace.
 
-/// Maximum number of `pending`-state posts the queue will hold.
-/// On overflow, the oldest pending post is dropped (with a Sentry
-/// log + one-time toast to the cashier).
-const int kQueueMaxPending = 200;
+/// SOFT threshold on the number of `pending`-state posts. The queue
+/// NEVER drops a durable post to save space (queued posts are ~1 KB
+/// each; even thousands are trivial on-device, and a dropped post is a
+/// lost sale). Crossing this threshold only logs a one-time Sentry
+/// warning for observability — "why isn't the queue draining?" — it does
+/// not evict anything. Configurable per shop via `queue_max_pending`.
+const int kQueueMaxPending = 10000;
 
-/// Number of failed drain attempts before a post is moved to the
-/// terminal `failed_permanent` state. The drain loop stops retrying
-/// once a post hits this; the user can manually retry from the
-/// Storage & sync screen (Phase 4) which resets the state to
-/// `pending`.
+/// DEPRECATED — no longer used. The queue is never-expiring: transient
+/// failures retry forever and only a genuine server reject parks a post
+/// (see OfflineQueueController). Kept so the `queue_max_attempts` config
+/// key resolves; remove once that key is retired.
 const int kQueueMaxAttempts = 50;
 
 /// Total budget for the cache_entry table in megabytes. On every
