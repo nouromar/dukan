@@ -547,7 +547,10 @@ class _ShopItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = tr(context);
     final theme = Theme.of(context);
-    final low = isLowStock(currentStock: row.currentStock);
+    final level = stockLevel(
+      currentStock: row.currentStock,
+      reorderThreshold: row.reorderThreshold,
+    );
     final stockText = formatCompoundStock(
       stock: row.currentStock,
       baseLabel: row.baseUnitLabel,
@@ -601,17 +604,19 @@ class _ShopItemTile extends StatelessWidget {
             Text(
               stockText,
               style: theme.textTheme.titleMedium?.copyWith(
-                color: low ? theme.colorScheme.error : null,
-                fontWeight: low ? FontWeight.w800 : FontWeight.w500,
+                color: stockLevelColor(context, level),
+                fontWeight: level == StockLevel.healthy
+                    ? FontWeight.w500
+                    : FontWeight.w800,
               ),
             ),
-            if (low)
+            if (level != StockLevel.healthy)
               Padding(
                 padding: const EdgeInsetsDirectional.only(start: 4),
                 child: Icon(
                   Icons.warning_amber_outlined,
                   size: 18,
-                  color: theme.colorScheme.error,
+                  color: stockLevelColor(context, level),
                 ),
               ),
           ],

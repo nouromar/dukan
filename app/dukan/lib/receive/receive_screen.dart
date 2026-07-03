@@ -1246,7 +1246,10 @@ class _ReceiveItemTile extends StatelessWidget {
         : formatMoney(item.defaultUnitLastCost!, shop);
     final packaging =
         item.packagingLabel ?? item.defaultUnitLabel ?? item.baseUnitLabel;
-    final low = isLowStock(currentStock: item.currentStock);
+    final level = stockLevel(
+      currentStock: item.currentStock,
+      reorderThreshold: item.reorderThreshold,
+    );
     final stockText = item.currentStock == null
         ? null
         : formatCompoundStock(
@@ -1297,12 +1300,10 @@ class _ReceiveItemTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13 * kFontScale,
-                        fontWeight: low ? FontWeight.w700 : FontWeight.w400,
-                        color: low
-                            ? theme.colorScheme.error
-                            : theme.colorScheme.onSurface.withValues(
-                                alpha: 0.85,
-                              ),
+                        fontWeight: level == StockLevel.healthy
+                            ? FontWeight.w400
+                            : FontWeight.w700,
+                        color: stockLevelColor(context, level),
                       ),
                     ),
                   ],

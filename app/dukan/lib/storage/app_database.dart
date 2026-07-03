@@ -12,6 +12,7 @@
 // which opens the real path once and reuses the connection.
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -49,6 +50,24 @@ class AppDatabase {
   /// Underlying connection. Prefer the DAO classes (`PendingPostDao`,
   /// `CacheDao`, `DeviceConfigDao`) over reaching into this directly.
   Database get db => _db;
+
+  /// Real on-device size of the SQLite database — the whole footprint
+  /// (mirror tables + queue + caches), including the -wal side file.
+  /// 0 for in-memory test databases or if the file can't be stat'd.
+  Future<int> fileBytes() async {
+    try {
+      final path = _db.path;
+      if (path.isEmpty || path == ':memory:') return 0;
+      final main = File(path);
+      if (!await main.exists()) return 0;
+      var total = await main.length();
+      final wal = File('$path-wal');
+      if (await wal.exists()) total += await wal.length();
+      return total;
+    } catch (_) {
+      return 0;
+    }
+  }
 
   static AppDatabase? _instance;
   static Future<AppDatabase>? _opening;

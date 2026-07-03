@@ -23,6 +23,7 @@ import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/history_date.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/storage/app_database.dart';
 import 'package:dukan/storage/cache_dao.dart';
 import 'package:dukan/storage/failed_posts_screen.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
@@ -46,6 +47,7 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
   int _failedCount = 0;
   int _pendingBytes = 0;
   int _cacheBytes = 0;
+  int _dbBytes = 0;
   int _cacheEntries = 0;
   bool _refreshing = false;
   bool _syncing = false;
@@ -68,10 +70,12 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
     if (_refreshing) return;
     _refreshing = true;
     try {
+      final db = await AppDatabase.instance();
       final results = await Future.wait<dynamic>([
         _pendingDao.countFailedPermanent(),
         _pendingDao.totalBytes(),
         _cacheDao.stats(),
+        db.fileBytes(),
       ]);
       if (!mounted) return;
       setState(() {
@@ -81,6 +85,7 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
             results[2] as ({int totalBytes, int entryCount});
         _cacheBytes = cacheStats.totalBytes;
         _cacheEntries = cacheStats.entryCount;
+        _dbBytes = results[3] as int;
       });
     } finally {
       _refreshing = false;
@@ -308,12 +313,6 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
     return DateTime.now().difference(last) < const Duration(seconds: 60);
   }
 
-  int _budgetBytes() {
-    final r = _resolver;
-    if (r == null) return 100 * 1024 * 1024;
-    return r.resolve(ConfigKeys.cacheBudgetMb) * 1024 * 1024;
-  }
-
   bool _wifiOnly() {
     final r = _resolver;
     if (r == null) return false;
@@ -330,8 +329,6 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
     final pending = _queue.pendingCount;
     final connected = _isConnected();
     final last = _queue.lastDrainSuccessAt;
-    final totalBytes = _pendingBytes + _cacheBytes;
-    final budget = _budgetBytes();
 
     return Scaffold(
       appBar: AppBar(title: Text(l.storageSyncTitle)),
@@ -417,29 +414,11 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
             const SizedBox(height: 24),
 
             // ---- Storage usage ------------------------------------------
+            // The real on-device footprint = the whole SQLite file (mirror
+            // tables + queue + caches), not just the queue + cache estimate.
             _LabelValueRow(
               label: l.storageSyncStorageUsedLabel,
-              value: '${_formatBytes(totalBytes)} / ${_formatBytes(budget)}',
-            ),
-            const SizedBox(height: 4),
-            // Static usage bar (not LinearProgressIndicator) so
-            // widget tests don't hang on its perpetual ticker.
-            // pumpAndSettle on M3 LinearProgressIndicator never
-            // returns under fake-async; FractionallySizedBox is a
-            // single layout pass with the same visual.
-            ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: Container(
-                height: 4,
-                color: theme.colorScheme.surfaceContainerHighest,
-                alignment: Alignment.centerLeft,
-                child: FractionallySizedBox(
-                  widthFactor: budget == 0
-                      ? 0
-                      : (totalBytes / budget).clamp(0.0, 1.0),
-                  child: Container(color: theme.colorScheme.primary),
-                ),
-              ),
+              value: _formatBytes(_dbBytes),
             ),
             const SizedBox(height: 8),
             _BreakdownRow(

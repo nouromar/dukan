@@ -814,7 +814,10 @@ class _DetailBody extends StatelessWidget {
         orElse: () => units.first,
       ),
     );
-    final low = isLowStock(currentStock: header.currentStock);
+    final level = stockLevel(
+      currentStock: header.currentStock,
+      reorderThreshold: header.reorderThreshold,
+    );
     final stockText = formatCompoundStock(
       stock: header.currentStock,
       baseLabel: header.baseUnitLabel,
@@ -883,7 +886,7 @@ class _DetailBody extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: low ? theme.colorScheme.error : null,
+                      color: stockLevelColor(context, level),
                     ),
                   ),
                 ),
