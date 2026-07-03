@@ -36,7 +36,7 @@ void main() {
     await tester.pumpWidget(_host(_list(count: 10, maxHeight: 120)));
     await tester.pump(); // let the post-frame overflow re-check + setState run
     await tester.pump();
-    expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_double_arrow_down), findsOneWidget);
   });
 
   testWidgets('no overflow cue when everything fits the cap', (tester) async {
@@ -44,7 +44,7 @@ void main() {
     await tester.pumpWidget(_host(_list(count: 1, maxHeight: 120)));
     await tester.pump();
     await tester.pump();
-    expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+    expect(find.byIcon(Icons.keyboard_double_arrow_down), findsNothing);
   });
 
   testWidgets('tapping the cue fires onExpandRequested (grow to full)', (
@@ -56,7 +56,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
+    await tester.tap(find.byIcon(Icons.keyboard_double_arrow_down));
     expect(expanded, isTrue);
   });
 

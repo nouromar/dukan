@@ -138,9 +138,11 @@ class _OverflowCue extends StatelessWidget {
         ),
       ),
       child: Icon(
-        Icons.keyboard_arrow_down,
-        size: 20,
-        color: scheme.onSurfaceVariant,
+        // Heavier double-chevron at full strength so the "more below"
+        // cue reads clearly, not as a faint hairline.
+        Icons.keyboard_double_arrow_down,
+        size: 24,
+        color: scheme.onSurface,
       ),
     );
     if (onTap == null) return IgnorePointer(child: cue);

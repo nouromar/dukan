@@ -1676,7 +1676,11 @@ class _SaleCartStrip extends StatelessWidget {
         if (showExpanded && canExpand)
           IconButton(
             tooltip: full ? l.drawerShrinkTooltip : l.drawerExpandTooltip,
-            icon: Icon(full ? Icons.unfold_less : Icons.unfold_more),
+            icon: Icon(
+              full ? Icons.unfold_less : Icons.unfold_more,
+              size: 28,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             onPressed: onToggleFull,
           ),
         if (!showExpanded) ...[const SizedBox(width: 8), saveButton()],
