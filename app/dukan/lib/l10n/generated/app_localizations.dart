@@ -158,11 +158,29 @@ abstract class AppLocalizations {
   /// **'Paid for'**
   String get paymentDetailSettledHeader;
 
-  /// No description provided for @paymentDetailNoAllocations.
+  /// No description provided for @paymentFromSaleHeader.
   ///
   /// In en, this message translates to:
-  /// **'This payment isn\'t linked to a sale or receive yet.'**
-  String get paymentDetailNoAllocations;
+  /// **'From a cash sale'**
+  String get paymentFromSaleHeader;
+
+  /// No description provided for @paymentFromReceiveHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'From a stock receive'**
+  String get paymentFromReceiveHeader;
+
+  /// No description provided for @paymentEffectIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowered {name}\'s debt by {amount}.'**
+  String paymentEffectIn(String name, String amount);
+
+  /// No description provided for @paymentEffectOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduced what you owe {name} by {amount}.'**
+  String paymentEffectOut(String name, String amount);
 
   /// No description provided for @paymentDetailLoadFailedMessage.
   ///

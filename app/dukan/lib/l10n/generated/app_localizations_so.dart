@@ -39,8 +39,20 @@ class AppLocalizationsSo extends AppLocalizations {
   String get paymentDetailSettledHeader => 'Waxa loo bixiyay';
 
   @override
-  String get paymentDetailNoAllocations =>
-      'Lacagtan weli lama xirin iib ama qaadasho.';
+  String get paymentFromSaleHeader => 'Ka yimid iib cash ah';
+
+  @override
+  String get paymentFromReceiveHeader => 'Ka yimid alaab keenid';
+
+  @override
+  String paymentEffectIn(String name, String amount) {
+    return 'Deynta uu $name ku leeyahay waxaa laga dhimay $amount.';
+  }
+
+  @override
+  String paymentEffectOut(String name, String amount) {
+    return 'Deynta aad $name ku leedahay waxaa laga dhimay $amount.';
+  }
 
   @override
   String get paymentDetailLoadFailedMessage =>

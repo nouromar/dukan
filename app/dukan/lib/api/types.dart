@@ -18,6 +18,7 @@ class ShopSummary {
     this.currencyDecimals = 2,
     this.scannerSettings = ScannerSettings.defaults,
     this.voidSettings = VoidSettings.defaults,
+    this.hideSettlementLegs = true,
   });
 
   /// Pass the currency symbols map (code → symbol) and decimals map
@@ -52,6 +53,7 @@ class ShopSummary {
           : DateTime.parse(dismissedRaw),
       scannerSettings: scanner,
       voidSettings: voidS,
+      hideSettlementLegs: json['hide_settlement_legs'] as bool? ?? true,
     );
   }
 
@@ -85,6 +87,13 @@ class ShopSummary {
   /// Per-shop, per-type void windows (days). Defaults match migration 0085.
   /// Used to pre-gate the VOID button; the void_* RPCs re-enforce server-side.
   final VoidSettings voidSettings;
+
+  /// When true (default), the till-cash legs of walk-in cash sales
+  /// (`is_settlement_leg`, migration 0087) are hidden from the Money In /
+  /// payment history list — they're an accounting artifact of the sale, not a
+  /// standalone payment. Support/admin can flip it off per shop (migration
+  /// 0096); the server's list_payments honours the same flag.
+  final bool hideSettlementLegs;
 
   bool get isReady => setupStatus == 'ready';
   bool get isTemplateApplied =>
@@ -346,6 +355,7 @@ class PaymentDetail {
     this.isVoided = false,
     this.isRefund = false,
     this.isSettlementLeg = false,
+    this.clientOpId,
   });
 
   factory PaymentDetail.fromJson(Map<String, dynamic> json) => PaymentDetail(
@@ -391,6 +401,11 @@ class PaymentDetail {
 
   /// Cash taken at the till during a sale/receive — void the txn instead.
   final bool isSettlementLeg;
+
+  /// The payment's client_op_id when read from the local mirror. For a
+  /// settlement leg (`<base>:payment`) it lets the detail resolve and link to
+  /// the originating sale. Null on the server (get_payment) read path.
+  final String? clientOpId;
 }
 
 /// Aggregate returned by `get_today_summary` — drives the Home/dashboard
@@ -730,6 +745,7 @@ class PaymentSummary {
     this.paymentMethodCode,
     this.notes,
     this.isRefund = false,
+    this.isSettlementLeg = false,
   });
 
   factory PaymentSummary.fromJson(Map<String, dynamic> json) => PaymentSummary(
@@ -743,6 +759,7 @@ class PaymentSummary {
     paymentMethodCode: json['payment_method_code'] as String?,
     notes: json['notes'] as String?,
     isRefund: json['is_refund'] as bool? ?? false,
+    isSettlementLeg: json['is_settlement_leg'] as bool? ?? false,
   );
 
   final String paymentId;
@@ -757,6 +774,10 @@ class PaymentSummary {
   final String? paymentMethodCode;
   final String? notes;
   final bool isRefund;
+
+  /// The till-cash leg of a walk-in cash sale (migration 0087). Hidden from
+  /// this list by default; see [ShopSummary.hideSettlementLegs].
+  final bool isSettlementLeg;
 }
 
 /// Row returned by `list_expenses`. Mirrors the SaleSummary / ReceiveSummary

@@ -60,7 +60,12 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         partyId: _filters.partyId,
         direction: _filters.direction.toCode(),
       );
-      return rows.map(repo.toPaymentSummary).toList(growable: false);
+      // Hide walk-in cash-sale legs by default (the server's list_payments
+      // does the same for the online path). Show-mode keeps them.
+      return rows
+          .map(repo.toPaymentSummary)
+          .where((p) => !widget.shop.hideSettlementLegs || !p.isSettlementLeg)
+          .toList(growable: false);
     }
     return context.read<ShopApi>().listPayments(
       shopId: widget.shop.id,

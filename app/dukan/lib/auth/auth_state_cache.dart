@@ -128,6 +128,7 @@ class AuthStateCache {
       'timezone': shop.timezone,
       'onboarding_dismissed_at':
           shop.onboardingDismissedAt?.toIso8601String(),
+      'hide_settlement_legs': shop.hideSettlementLegs,
       'scanner_settings': <String, dynamic>{
         'rearm_ms': shop.scannerSettings.rearmMs,
         'hid_max_inter_key_gap_ms':

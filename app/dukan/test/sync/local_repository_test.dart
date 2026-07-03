@@ -390,6 +390,48 @@ void main() {
     expect(await repo.getPaymentDetailLocal('nope'), isNull);
   });
 
+  test('settlement leg is flagged locally and links back to its sale',
+      () async {
+    await repo.applyTransactionsPayload({
+      'transactions': [
+        // A walk-in cash sale (base op id).
+        {..._txn('sale-1', 'sale', occurredMs: 1000, total: 10),
+          'client_op_id': 'op-xyz'},
+        // Its till-cash leg: party-less, client_op_id = <base>:payment.
+        {..._txn('leg-1', 'payment', occurredMs: 1000, total: 10),
+          'direction': 'I', 'client_op_id': 'op-xyz:payment'},
+        // A normal debt-settlement payment (no :payment suffix).
+        {..._txn('pay-2', 'payment', occurredMs: 2000, total: 25),
+          'party_id': 'party-9', 'direction': 'I', 'party_name': 'Axmed',
+          'client_op_id': 'op-abc'},
+      ],
+    });
+
+    // Detail read derives the flag + carries the client_op_id.
+    final leg = await repo.getPaymentDetailLocal('leg-1');
+    expect(leg!.isSettlementLeg, isTrue);
+    expect(leg.clientOpId, 'op-xyz:payment');
+    final normal = await repo.getPaymentDetailLocal('pay-2');
+    expect(normal!.isSettlementLeg, isFalse);
+
+    // The leg resolves back to its originating sale; a non-leg op → null.
+    expect(await repo.settlementLegSourceTxnId('op-xyz:payment'), 'sale-1');
+    expect(await repo.settlementLegSourceTxnId('op-abc'), isNull);
+
+    // toPaymentSummary mirrors the flag off client_op_id.
+    final summaries = (await repo.historyPayments(shopId: shopId))
+        .map(repo.toPaymentSummary)
+        .toList();
+    expect(
+      summaries.firstWhere((s) => s.paymentId == 'leg-1').isSettlementLeg,
+      isTrue,
+    );
+    expect(
+      summaries.firstWhere((s) => s.paymentId == 'pay-2').isSettlementLeg,
+      isFalse,
+    );
+  });
+
   test('getExpenseDetailLocal reads an expense from the mirror (offline)',
       () async {
     await repo.applyTransactionsPayload({

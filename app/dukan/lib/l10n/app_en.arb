@@ -10,7 +10,22 @@
   "paymentInLabel": "Money In",
   "paymentOutLabel": "Money Out",
   "paymentDetailSettledHeader": "Paid for",
-  "paymentDetailNoAllocations": "This payment isn't linked to a sale or receive yet.",
+  "paymentFromSaleHeader": "From a cash sale",
+  "paymentFromReceiveHeader": "From a stock receive",
+  "paymentEffectIn": "Lowered {name}'s debt by {amount}.",
+  "@paymentEffectIn": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
+  "paymentEffectOut": "Reduced what you owe {name} by {amount}.",
+  "@paymentEffectOut": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
   "paymentDetailLoadFailedMessage": "Couldn't load this payment.",
   "expense": "Expense",
   "cash": "CASH",

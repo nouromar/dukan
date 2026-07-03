@@ -2268,6 +2268,7 @@ ShopSummary fakeShop({
   String defaultLanguageCode = 'so',
   String timezone = 'Africa/Mogadishu',
   DateTime? onboardingDismissedAt,
+  bool hideSettlementLegs = true,
 }) => ShopSummary(
   id: id,
   name: name,
@@ -2280,6 +2281,7 @@ ShopSummary fakeShop({
   // screen pass `onboardingDismissedAt: null` explicitly.
   onboardingDismissedAt:
       onboardingDismissedAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+  hideSettlementLegs: hideSettlementLegs,
 );
 
 TemplateOption fakeTemplate({

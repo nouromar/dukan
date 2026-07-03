@@ -1070,6 +1070,30 @@ begin
     raise exception 'payment did not reduce receivable';
   end if;
 
+  -- 0096: the walk-in cash sale (line above, party NULL, paid cash) recorded
+  -- its till cash as a settlement leg (client_op_id '<op>:payment'). It must be
+  -- HIDDEN from list_payments by default, while Asha's real debt-settlement
+  -- payment still shows. Flipping the per-shop flag reveals it (flagged).
+  if exists (
+    select 1 from public.list_payments(v_shop_id) where is_settlement_leg
+  ) then
+    raise exception '0096: settlement leg leaked into list_payments (default hide)';
+  end if;
+  if not exists (
+    select 1 from public.list_payments(v_shop_id) where party_id = v_customer_id
+  ) then
+    raise exception '0096: real debt payment missing from list_payments';
+  end if;
+  update public.shop set hide_settlement_legs = false where id = v_shop_id;
+  if not exists (
+    select 1 from public.list_payments(v_shop_id)
+    where party_id is null and is_settlement_leg
+  ) then
+    raise exception '0096: settlement leg not shown when hide flag is off';
+  end if;
+  -- Restore the default so later sections/reports are unaffected.
+  update public.shop set hide_settlement_legs = true where id = v_shop_id;
+
   -- Overpayment rejected.
   v_failed := false;
   begin

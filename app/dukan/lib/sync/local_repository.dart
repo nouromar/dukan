@@ -977,7 +977,16 @@ class LocalRepository {
         paymentMethodCode: t.payload['payment_method_code'] as String?,
         notes: t.payload['notes'] as String?,
         isRefund: t.payload['is_refund'] as bool? ?? false,
+        // A walk-in cash sale's till-cash leg is stamped `<op>:payment` by
+        // post_sale (0087). The server column isn't mirrored, so derive it
+        // from the client_op_id the mirror already carries.
+        isSettlementLeg: _isSettlementLegOp(t.clientOpId),
       );
+
+  /// True when a mirrored payment row is the till-cash leg of a sale/receive
+  /// (post_sale/post_receive stamp it `<base>:payment`, migration 0087).
+  static bool _isSettlementLegOp(String? clientOpId) =>
+      clientOpId != null && clientOpId.endsWith(':payment');
 
   /// Optimistically flag a local transaction as voided so the receipt +
   /// history show "voided" immediately, before the queued void_sale drains
@@ -1015,7 +1024,33 @@ class LocalRepository {
       notes: t.payload['notes'] as String?,
       isVoided: t.isVoided,
       isRefund: t.payload['is_refund'] as bool? ?? false,
+      // Populate the settlement-leg flag (the online get_payment sets it too)
+      // so the detail screen hides the standalone VOID on a sale's cash leg.
+      isSettlementLeg: _isSettlementLegOp(t.clientOpId),
+      clientOpId: t.clientOpId,
     );
+  }
+
+  /// The originating sale/receive txn_id for a settlement leg, resolved locally
+  /// from its `<base>:payment` client_op_id (the sale shares `<base>`). Null
+  /// when the leg has no client_op_id or the sale isn't in the mirror.
+  Future<String?> settlementLegSourceTxnId(String? legClientOpId) async {
+    if (legClientOpId == null || !legClientOpId.endsWith(':payment')) {
+      return null;
+    }
+    final base = legClientOpId.substring(
+      0,
+      legClientOpId.length - ':payment'.length,
+    );
+    final db = await _db;
+    final rows = await db.query(
+      'local_transaction',
+      columns: ['txn_id'],
+      where: "client_op_id = ? AND type_code IN ('sale','receive')",
+      whereArgs: [base],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : rows.first['txn_id'] as String;
   }
 
   /// Read a single expense's detail from the local mirror (offline-first,

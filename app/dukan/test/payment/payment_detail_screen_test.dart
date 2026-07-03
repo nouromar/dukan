@@ -80,7 +80,8 @@ void main() {
     expect(find.text('\$20.00'), findsOneWidget); // settled sale amount
   });
 
-  testWidgets('payment with no allocations shows the not-linked line', (
+  testWidgets('party payment with no loaded allocations shows the plain '
+      'effect line (never the old "not linked" jargon)', (
     tester,
   ) async {
     api.onGetPayment = (_, _) async => payment(direction: 'O', party: 'Hassan');
@@ -89,7 +90,11 @@ void main() {
     await pump(tester);
 
     expect(find.text(en.paymentOutLabel), findsOneWidget);
-    expect(find.text(en.paymentDetailNoAllocations), findsOneWidget);
+    // Money Out → "Reduced what you owe Hassan by $50.00."
+    expect(
+      find.text(en.paymentEffectOut('Hassan', '\$50.00')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('tapping a settled sale opens its sale detail', (tester) async {
@@ -152,11 +157,15 @@ void main() {
       expect(find.text(en.paymentDetailVoidButton), findsNothing);
     });
 
-    testWidgets('at-till settlement leg shows no VOID', (tester) async {
+    testWidgets('at-till settlement leg shows no VOID + "From a cash sale"',
+        (tester) async {
       api.onGetPayment = (_, _) async => payment(isSettlementLeg: true);
       api.onListPaymentAllocations = (_, _) async => const [];
       await pump(tester);
       expect(find.text(en.paymentDetailVoidButton), findsNothing);
+      // Inbound leg → framed as the cash from a sale, not a "Paid for" list.
+      expect(find.text(en.paymentFromSaleHeader), findsOneWidget);
+      expect(find.text(en.paymentDetailSettledHeader), findsNothing);
     });
 
     testWidgets('already voided shows banner + no VOID', (tester) async {

@@ -39,8 +39,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentDetailSettledHeader => 'Paid for';
 
   @override
-  String get paymentDetailNoAllocations =>
-      'This payment isn\'t linked to a sale or receive yet.';
+  String get paymentFromSaleHeader => 'From a cash sale';
+
+  @override
+  String get paymentFromReceiveHeader => 'From a stock receive';
+
+  @override
+  String paymentEffectIn(String name, String amount) {
+    return 'Lowered $name\'s debt by $amount.';
+  }
+
+  @override
+  String paymentEffectOut(String name, String amount) {
+    return 'Reduced what you owe $name by $amount.';
+  }
 
   @override
   String get paymentDetailLoadFailedMessage => 'Couldn\'t load this payment.';
