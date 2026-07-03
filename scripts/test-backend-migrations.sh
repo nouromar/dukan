@@ -1671,6 +1671,68 @@ begin
 end;
 $$;
 
+-- =====================================================================
+-- §10b post_payment with a client-minted payment id (offline-void support, 0098)
+-- =====================================================================
+-- Net-zero on Asha's receivable (every payment is voided) so §13's void_sale
+-- partial-paid guard and later balances are unperturbed. Same §5 owner context.
+do $$
+declare
+  v_shop_id uuid;
+  v_cust_id uuid;
+  v_cli_id  uuid := '00000000-0000-4000-8000-00000000e002'::uuid;
+  v_r       uuid;
+  v_cnt     int;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_cust_id from public.party
+    where shop_id = v_shop_id and name = 'Asha Customer';
+
+  -- (a) client-supplied payment id honoured + persisted.
+  v_r := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 0.20, 'cash',
+    'op-pay-cli-1', null, null, null, null, v_cli_id);
+  if v_r <> v_cli_id then
+    raise exception '0098: post_payment did not honour client payment id (got %)', v_r;
+  end if;
+  if not exists (select 1 from public.payment where shop_id = v_shop_id and id = v_cli_id) then
+    raise exception '0098: client-id payment not persisted';
+  end if;
+
+  -- (b) idempotent replay -> same id, no duplicate.
+  v_r := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 0.20, 'cash',
+    'op-pay-cli-1', null, null, null, null, v_cli_id);
+  if v_r <> v_cli_id then
+    raise exception '0098: replay returned a different payment id (%)', v_r;
+  end if;
+  select count(*) into v_cnt from public.payment where shop_id = v_shop_id and id = v_cli_id;
+  if v_cnt <> 1 then
+    raise exception '0098: replay duplicated the payment (count=%)', v_cnt;
+  end if;
+
+  -- (c) THE GOAL: void the client-minted payment id (22P02 with a placeholder);
+  --     also restores Asha's receivable.
+  perform public.void_payment(v_shop_id, v_cli_id, 'op-void-pay-cli-1', 'undo offline payment');
+  if not exists (
+    select 1 from public.payment where shop_id = v_shop_id and reverses_payment_id = v_cli_id
+  ) then
+    raise exception '0098: void_payment did not reverse the client-id payment';
+  end if;
+
+  -- (d) legacy path (null id) still mints a server id; void it to stay net-zero.
+  v_r := public.post_payment(
+    v_shop_id, v_cust_id, 'I', 0.20, 'cash',
+    'op-pay-legacy-1', null, null, null, null, null);
+  if v_r is null or v_r = v_cli_id then
+    raise exception '0098: legacy null-id post_payment misbehaved (got %)', v_r;
+  end if;
+  perform public.void_payment(v_shop_id, v_r, 'op-void-pay-legacy-1', 'undo legacy payment');
+
+  raise notice '10b: post_payment client-id + void round-trip passed';
+end;
+$$;
+
 -- §11 (learning suggestions) removed: the per-transaction learning triggers
 -- that produced 'learned' shop_suggestion rows were dropped in 0078 — the
 -- learning aggregates had no readers, and recents/etc. are computed on-read.

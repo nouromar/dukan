@@ -109,6 +109,7 @@ void main() {
         direction: 'I',
         amount: 50,
         paymentMethodCode: 'cash',
+        paymentId: 'pay-uuid-1',
         allocations: const [
           PaymentAllocationInput(transactionId: 'txn-1', amount: 30),
           PaymentAllocationInput(transactionId: 'txn-2', amount: 20),
@@ -120,6 +121,8 @@ void main() {
     expect(capturedAllocs!.length, 2);
     expect(capturedAllocs![0].transactionId, 'txn-1');
     expect(capturedAllocs![0].amount, 30);
+    // The client-minted payment id round-trips through builder + dispatch.
+    expect(api.postPaymentTxnIds.last, 'pay-uuid-1');
   });
 
   test('post_payment without allocations passes null', () async {

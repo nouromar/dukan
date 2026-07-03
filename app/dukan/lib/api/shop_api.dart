@@ -1481,6 +1481,8 @@ class ShopApi {
     String? notes,
     List<PaymentAllocationInput>? allocations,
     DateTime? occurredAt,
+    // Client-minted payment UUID (offline-void support); null → server mints it.
+    String? paymentId,
   }) async {
     final result = await _client.rpc(
       'post_payment',
@@ -1492,6 +1494,7 @@ class ShopApi {
         'p_payment_method_code': paymentMethodCode,
         'p_client_op_id': clientOpId,
         'p_notes': notes,
+        if (paymentId != null) 'p_payment_id': paymentId,
         if (occurredAt != null)
           'p_occurred_at': occurredAt.toUtc().toIso8601String(),
         if (allocations != null && allocations.isNotEmpty)

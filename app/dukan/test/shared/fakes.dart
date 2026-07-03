@@ -572,6 +572,9 @@ class FakeShopApi implements ShopApi {
     List<PaymentAllocationInput>? allocations,
   )?
   onPostPayment;
+
+  /// Records the client-minted `paymentId` passed to each postPayment call.
+  final List<String?> postPaymentTxnIds = <String?>[];
   Future<List<UnpaidInvoice>> Function(
     String shopId,
     String partyId,
@@ -1599,8 +1602,10 @@ class FakeShopApi implements ShopApi {
     String? notes,
     List<PaymentAllocationInput>? allocations,
     DateTime? occurredAt,
+    String? paymentId,
   }) async {
     lastOccurredAt = occurredAt;
+    postPaymentTxnIds.add(paymentId);
     if (onPostPayment != null) {
       return onPostPayment!(
         shopId,

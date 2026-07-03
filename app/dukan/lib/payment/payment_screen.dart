@@ -152,6 +152,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final direction = controller.type.direction;
     final allocations = controller.allocations;
     final clientOpId = generateClientOpId('payment');
+    // Client-minted payment UUID shared by the optimistic mirror, the direct
+    // post, and the queued post — a stable id so an offline payment can be
+    // voided before it syncs (post_payment returns/keys on the payment id).
+    final paymentId = generateUuidV4();
     final failureMessage = l.paymentPostFailedMessage;
     final rawNotes = _notesController.text.trim();
     final notes = rawNotes.isEmpty ? null : rawNotes;
@@ -170,6 +174,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         direction: direction,
         amount: amount,
         clientOpId: clientOpId,
+        paymentId: paymentId,
         allocations: allocations,
         notes: notes,
         occurredAt: occurredAt,
@@ -196,6 +201,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     try {
       await repo.writeOptimisticTransaction(
         clientOpId: clientOpId,
+        txnId: paymentId,
         shopId: widget.shop.id,
         typeCode: 'payment',
         occurredAtMs: (occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
@@ -263,6 +269,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         direction: direction,
         amount: amount,
         clientOpId: clientOpId,
+        paymentId: paymentId,
         allocations: allocations,
         notes: notes,
         occurredAt: occurredAt,
@@ -282,6 +289,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     required String direction,
     required num amount,
     required String clientOpId,
+    required String paymentId,
     required List<PaymentAllocationInput>? allocations,
     required String? notes,
     required DateTime? occurredAt,
@@ -299,6 +307,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         allocations: allocations,
         notes: notes,
         occurredAt: occurredAt,
+        paymentId: paymentId,
       );
       if (!mounted) return;
       controller.clearAll();
@@ -331,6 +340,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     required String direction,
     required num amount,
     required String clientOpId,
+    required String paymentId,
     required List<PaymentAllocationInput>? allocations,
     required String? notes,
     required DateTime? occurredAt,
@@ -348,6 +358,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         allocations: allocations,
         notes: notes,
         occurredAt: occurredAt,
+        paymentId: paymentId,
       );
     } on PostgrestException catch (error, stackTrace) {
       // Server-side reject — retry won't help. Surface a toast; the
@@ -387,6 +398,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           notes: notes,
           occurredAt: occurredAt,
           allocations: allocations,
+          paymentId: paymentId,
         ),
         queuedAt: DateTime.now(),
       );

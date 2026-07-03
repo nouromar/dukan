@@ -129,6 +129,7 @@ class PostExecutor {
       notes: p['notes'] as String?,
       allocations: allocations,
       occurredAt: _occurredAt(p),
+      paymentId: p['payment_id'] as String?,
     );
   }
 
@@ -487,6 +488,8 @@ Map<String, dynamic> buildPostPaymentParams({
   String? notes,
   List<PaymentAllocationInput>? allocations,
   DateTime? occurredAt,
+  // Client-minted payment UUID (offline-void support).
+  String? paymentId,
 }) =>
     <String, dynamic>{
       'party_id': partyId,
@@ -494,6 +497,7 @@ Map<String, dynamic> buildPostPaymentParams({
       'amount': amount,
       'payment_method_code': paymentMethodCode,
       if (notes != null) 'notes': notes,
+      if (paymentId != null) 'payment_id': paymentId,
       if (occurredAt != null) 'occurred_at': occurredAt.toUtc().toIso8601String(),
       if (allocations != null && allocations.isNotEmpty)
         'allocations': allocations
