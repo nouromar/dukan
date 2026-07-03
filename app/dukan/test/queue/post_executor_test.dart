@@ -86,6 +86,7 @@ void main() {
         ],
         paidAmount: 0,
         documentId: 'doc-bono-1',
+        txnId: 'recv-uuid-1',
       ),
     ));
     expect(capturedClientOp, 'op-1');
@@ -94,6 +95,8 @@ void main() {
     expect(capturedLines!.single.shopItemUnitId, 'unit-bag');
     expect(capturedLines!.single.quantity, 3);
     expect(capturedLines!.single.lineTotal, 150);
+    // The client-minted txn id round-trips through builder + dispatch.
+    expect(api.postReceiveTxnIds.last, 'recv-uuid-1');
   });
 
   test('post_payment dispatches with reconstructed allocations',

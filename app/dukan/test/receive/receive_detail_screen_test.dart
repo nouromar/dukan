@@ -10,7 +10,7 @@ import '../shared/fakes.dart';
 import '../shared/wrap.dart';
 
 ReceiveSummary _header({
-  String txnId = 'rcv-1',
+  String txnId = '00000000-0000-4000-8000-0000000000d1',
   String partyName = 'Hodan Beverages',
   double total = 100,
   bool voided = false,
@@ -49,7 +49,7 @@ void main() {
     en = lookupAppLocalizations(const Locale('en'));
   });
 
-  Future<void> pumpDetail(WidgetTester tester, {String txnId = 'rcv-1'}) async {
+  Future<void> pumpDetail(WidgetTester tester, {String txnId = '00000000-0000-4000-8000-0000000000d1'}) async {
     await tester.pumpWidget(
       wrapWithApp(
         ReceiveDetailScreen(shop: shop, txnId: txnId),
@@ -168,7 +168,7 @@ void main() {
                     final result = await Navigator.of(context).push<bool>(
                       MaterialPageRoute(
                         builder: (_) =>
-                            ReceiveDetailScreen(shop: shop, txnId: 'rcv-1'),
+                            ReceiveDetailScreen(shop: shop, txnId: '00000000-0000-4000-8000-0000000000d1'),
                       ),
                     );
                     poppedWith = result;
@@ -198,7 +198,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(capturedTxnId, 'rcv-1');
+      expect(capturedTxnId, '00000000-0000-4000-8000-0000000000d1');
       expect(poppedWith, isTrue);
     },
   );
@@ -239,4 +239,42 @@ void main() {
       );
     },
   );
+
+  ReceiveSummary offlineReceive({required DateTime occurredAt}) => ReceiveSummary(
+        txnId: '00000000-0000-4000-8000-0000000000d1',
+        occurredAt: occurredAt,
+        postedAt: null, // not yet synced (serverUpdatedAtMs == 0)
+        partyId: 'p-1',
+        partyName: 'Hodan Beverages',
+        totalAmount: 100,
+        paidAmount: 0,
+        paymentMethodCode: null,
+        isVoided: false,
+        reversalTxnId: null,
+        voidedAt: null,
+      );
+
+  testWidgets('unsynced offline receive (UUID id, no postedAt) still shows '
+      'VOID within the window (0100 gate switch)', (tester) async {
+    api.onGetReceive =
+        (_, _) async => offlineReceive(occurredAt: DateTime.now());
+    await pumpDetail(tester);
+    await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(TextButton, en.receiveDetailVoidButton),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('backdated unsynced receive (outside window) hides VOID',
+      (tester) async {
+    api.onGetReceive =
+        (_, _) async => offlineReceive(occurredAt: DateTime(2020, 1, 1));
+    await pumpDetail(tester);
+    await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(TextButton, en.receiveDetailVoidButton),
+      findsNothing,
+    );
+  });
 }

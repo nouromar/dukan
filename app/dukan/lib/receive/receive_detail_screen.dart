@@ -21,6 +21,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/void_action.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
@@ -241,9 +242,14 @@ class _ReceiveDetailBody extends StatelessWidget {
   /// button only to hit the backend's owner-only check.
   bool _canVoid(BuildContext context) {
     if (bundle.header.isVoided) return false;
-    final posted = bundle.header.postedAt;
-    if (posted == null) return false;
-    if (DateTime.now().difference(posted) >= shop.voidSettings.receiveWindow) {
+    // An offline-created receive the server hasn't seen yet carries a
+    // client_op_id placeholder id (not a UUID); voiding it would send that
+    // non-UUID to void_receive (22P02). Since 0100 an offline receive is minted
+    // with a client UUID, so gate on the id shape (like Sale) and measure the
+    // window from postedAt, falling back to occurredAt for a not-yet-synced row.
+    if (!isServerAssignedId(bundle.header.txnId)) return false;
+    final windowRef = bundle.header.postedAt ?? bundle.header.occurredAt;
+    if (DateTime.now().difference(windowRef) >= shop.voidSettings.receiveWindow) {
       return false;
     }
     return context.watch<AuthController>().capabilities.canVoidReceive;

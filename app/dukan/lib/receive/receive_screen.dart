@@ -657,6 +657,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final api = context.read<ShopApi>();
     final snapshot = controller.snapshot();
     final clientOpId = generateClientOpId('receive');
+    // Client-minted txn UUID shared by the optimistic mirror, the direct post,
+    // and the queued post — a stable id so an offline receive can be voided
+    // before it syncs. The cash-paid settlement leg stays server-minted.
+    final txnId = generateUuidV4();
     // Backdating (#5): captured once so the background post + optimistic write
     // agree. null = today.
     final occurredAt = controller.workingDate;
@@ -692,6 +696,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         snapshot: snapshot,
         lines: lines,
         clientOpId: clientOpId,
+        txnId: txnId,
         occurredAt: occurredAt,
       );
       return;
@@ -724,6 +729,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           .toList();
       await localRepoForOptimistic.writeOptimisticTransaction(
         clientOpId: clientOpId,
+        txnId: txnId,
         shopId: widget.shop.id,
         typeCode: 'receive',
         occurredAtMs: (occurredAt ?? DateTime.now()).millisecondsSinceEpoch,
@@ -814,6 +820,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         documentId: _bonoDocumentId,
         clientOpId: clientOpId,
         occurredAt: occurredAt,
+        txnId: txnId,
       );
 
       if (mounted) {
@@ -878,6 +885,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           paidAmount: 0,
           documentId: _bonoDocumentId,
           occurredAt: occurredAt,
+          txnId: txnId,
         ),
         queuedAt: DateTime.now(),
       );
@@ -921,6 +929,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     required ReceiveSnapshot snapshot,
     required List<ReceiveLinePayload> lines,
     required String clientOpId,
+    required String txnId,
     required DateTime? occurredAt,
   }) async {
     try {
@@ -933,6 +942,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         documentId: _bonoDocumentId,
         clientOpId: clientOpId,
         occurredAt: occurredAt,
+        txnId: txnId,
       );
       if (!mounted) return;
       controller.clearAll();

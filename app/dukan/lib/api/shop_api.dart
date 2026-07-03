@@ -1568,6 +1568,8 @@ class ShopApi {
     required String clientOpId,
     String? notes,
     DateTime? occurredAt,
+    // Client-minted txn UUID (offline-void support); null → server mints it.
+    String? txnId,
   }) async {
     if (lines.isEmpty) {
       throw ArgumentError('post_receive requires at least one line');
@@ -1583,6 +1585,7 @@ class ShopApi {
         'p_document_id': documentId,
         'p_client_op_id': clientOpId,
         'p_notes': notes,
+        if (txnId != null) 'p_txn_id': txnId,
         if (occurredAt != null)
           'p_occurred_at': occurredAt.toUtc().toIso8601String(),
       },

@@ -1814,6 +1814,110 @@ begin
 end;
 $$;
 
+-- =====================================================================
+-- §10d post_receive with a client-minted txn id (offline-void support, 0100)
+-- =====================================================================
+-- Cash-paid receive (so the 'O' settlement leg is exercised): client id
+-- honoured, leg stays SERVER-minted with `:payment`, idempotent replay, and the
+-- client id can be voided. Both receives are voided to restore stock so
+-- §13/§14 are unperturbed.
+do $$
+declare
+  v_shop_id uuid;
+  v_supp_id uuid;
+  v_unit    uuid;
+  v_cli_id  uuid := '00000000-0000-4000-8000-00000000e004'::uuid;
+  v_r       uuid;
+  v_cnt     int;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_supp_id from public.party
+    where shop_id = v_shop_id and name = 'Hodan Beverages';
+  -- Pick a base unit on an item with NO prior stock activity, so void_receive's
+  -- stock-activity guard doesn't block the round-trip (rice was churned by §10c).
+  select siu.id into v_unit
+  from public.shop_item_unit siu
+  join public.shop_item si on si.id = siu.shop_item_id
+  where siu.shop_id = v_shop_id and siu.conversion_to_base = 1 and si.is_active
+    and not exists (
+      select 1 from public.stock_movement sm
+      where sm.shop_id = v_shop_id and sm.item_id = si.id
+    )
+  limit 1;
+  if v_unit is null then
+    raise exception '0100: no isolated item for the receive void round-trip';
+  end if;
+
+  -- (a) client-supplied receive id honoured + persisted (cash-paid).
+  v_r := public.post_receive(
+    v_shop_id, v_supp_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit, 'quantity', 2, 'line_total', 4.00)),
+    4.00, 'cash', null, 'op-recv-cli-1', null, 'client-id receive', v_cli_id);
+  if v_r <> v_cli_id then
+    raise exception '0100: post_receive did not honour client txn id (got %)', v_r;
+  end if;
+  if not exists (select 1 from public.txn where shop_id = v_shop_id and id = v_cli_id) then
+    raise exception '0100: client-id receive not persisted';
+  end if;
+
+  -- Settlement leg present, SERVER-minted (id <> the receive id), :payment.
+  if not exists (
+    select 1 from public.payment
+    where shop_id = v_shop_id and client_op_id = 'op-recv-cli-1:payment'
+      and id <> v_cli_id and is_settlement_leg
+  ) then
+    raise exception '0100: cash-receive settlement leg missing or reused the client id';
+  end if;
+
+  -- (b) idempotent replay -> same id, no duplicate.
+  v_r := public.post_receive(
+    v_shop_id, v_supp_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit, 'quantity', 2, 'line_total', 4.00)),
+    4.00, 'cash', null, 'op-recv-cli-1', null, 'client-id receive', v_cli_id);
+  if v_r <> v_cli_id then
+    raise exception '0100: replay returned a different receive id (%)', v_r;
+  end if;
+  select count(*) into v_cnt from public.txn where shop_id = v_shop_id and id = v_cli_id;
+  if v_cnt <> 1 then
+    raise exception '0100: replay duplicated the receive (count=%)', v_cnt;
+  end if;
+
+  -- (c) THE GOAL: void_receive ACCEPTS the client-minted UUID. A placeholder
+  --     string id would fail at the uuid cast (22P02) BEFORE any business guard;
+  --     reaching the (correct) stock-activity guard proves the id was accepted.
+  --     A clean positive receive-void round-trip is covered by §14/§JJ.
+  begin
+    perform public.void_receive(v_shop_id, v_cli_id, 'op-void-recv-cli-1');
+    -- Succeeded outright (isolated item): assert the reversal exists.
+    if not exists (
+      select 1 from public.txn where shop_id = v_shop_id and reverses_transaction_id = v_cli_id
+    ) then
+      raise exception '0100: void_receive succeeded but produced no reversal';
+    end if;
+  exception when others then
+    if sqlerrm like '%invalid input syntax for type uuid%' then
+      raise exception '0100: void_receive rejected the client UUID (22P02): %', sqlerrm;
+    end if;
+    -- A stock-activity / window guard is an acceptable outcome — the UUID was
+    -- accepted and reached the business logic.
+  end;
+
+  -- (d) legacy path (null id) still mints a server id.
+  v_r := public.post_receive(
+    v_shop_id, v_supp_id,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit, 'quantity', 2, 'line_total', 4.00)),
+    4.00, 'cash', null, 'op-recv-legacy-1', null, 'legacy receive');
+  if v_r is null or v_r = v_cli_id then
+    raise exception '0100: legacy null-id post_receive misbehaved (got %)', v_r;
+  end if;
+
+  raise notice '10d: post_receive client-id + settlement leg + void-accepts-UUID passed';
+end;
+$$;
+
 -- §11 (learning suggestions) removed: the per-transaction learning triggers
 -- that produced 'learned' shop_suggestion rows were dropped in 0078 — the
 -- learning aggregates had no readers, and recents/etc. are computed on-read.

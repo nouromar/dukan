@@ -564,6 +564,9 @@ class FakeShopApi implements ShopApi {
     String? notes,
   )?
   onPostReceive;
+
+  /// Records the client-minted `txnId` passed to each postReceive call.
+  final List<String?> postReceiveTxnIds = <String?>[];
   Future<String> Function(
     String shopId,
     String partyId,
@@ -1660,8 +1663,10 @@ class FakeShopApi implements ShopApi {
     required String clientOpId,
     String? notes,
     DateTime? occurredAt,
+    String? txnId,
   }) async {
     lastOccurredAt = occurredAt;
+    postReceiveTxnIds.add(txnId);
     if (onPostReceive != null) {
       return onPostReceive!(
         shopId,
