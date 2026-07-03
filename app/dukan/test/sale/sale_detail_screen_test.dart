@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/capabilities.dart';
@@ -359,5 +360,29 @@ void main() {
 
     expect(capturedTxnId, 'sale-1');
     expect(poppedWith, isTrue);
+  });
+
+  testWidgets('void blocked by the partial-paid guard shows the refund hint, '
+      'not the generic "try again"', (tester) async {
+    api.onGetSale = (_, _) async =>
+        _header(partyName: 'yussuf', total: 30.5, paid: 0);
+    api.onGetSaleLines = (_, _) async => const [];
+    api.onVoidSale = (_, _, _, _) async => throw const PostgrestException(
+          message: 'Customer has paid down some of this sale; void blocked. '
+              'Record a refund payment instead.',
+        );
+
+    await pumpDetail(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, en.saleDetailVoidButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, en.saleVoidConfirmYes));
+    await tester.pumpAndSettle();
+
+    // The reject is also reported to FlutterError (telemetry); consume it so
+    // the widget test doesn't treat the handled business error as a failure.
+    expect(tester.takeException(), isA<PostgrestException>());
+    expect(find.text(en.saleVoidErrorPartiallyPaid), findsOneWidget);
+    expect(find.text(en.saleVoidFailedMessage), findsNothing);
   });
 }

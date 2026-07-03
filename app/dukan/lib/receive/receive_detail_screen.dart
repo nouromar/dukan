@@ -155,12 +155,20 @@ class _ReceiveDetailScreenState extends State<ReceiveDetailScreen> {
       ),
     );
     if (!mounted) return;
-    // Map the server's stock-activity guard to the friendly Somali/EN
-    // line so the cashier knows what to do instead. Any other error
-    // (network, timing window) falls back to the generic message.
-    final message = error.toString().contains('stock activity')
-        ? l.receiveVoidBlockedStockMessage
-        : l.receiveVoidFailedMessage;
+    // Map the server's business-rule guards to friendly Somali/EN lines so
+    // the cashier knows what to do instead. Any other error (network, timing
+    // window) falls back to the generic message.
+    final raw = error.toString();
+    final String message;
+    if (raw.contains('stock activity')) {
+      message = l.receiveVoidBlockedStockMessage;
+    } else if (raw.contains('paid down')) {
+      // Partial-paid payable guard (0085): the shop already paid part of this
+      // bono, so a full reversal would drive the supplier balance negative.
+      message = l.receiveVoidBlockedPaidMessage;
+    } else {
+      message = l.receiveVoidFailedMessage;
+    }
     showError(context, message);
   }
 

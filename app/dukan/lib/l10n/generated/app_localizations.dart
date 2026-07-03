@@ -2521,6 +2521,12 @@ abstract class AppLocalizations {
   /// **'Sale not found. Pull to refresh and try again.'**
   String get saleVoidErrorNotFound;
 
+  /// No description provided for @saleVoidErrorPartiallyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer has already paid part of this debt, so the sale can\'t be voided. Record a refund instead.'**
+  String get saleVoidErrorPartiallyPaid;
+
   /// No description provided for @receiveHistoryTitle.
   ///
   /// In en, this message translates to:
@@ -2645,6 +2651,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Some items from this receive have already moved. Void blocked.'**
   String get receiveVoidBlockedStockMessage;
+
+  /// No description provided for @receiveVoidBlockedPaidMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve already paid part of this bono, so it can\'t be voided. Record a refund instead.'**
+  String get receiveVoidBlockedPaidMessage;
 
   /// No description provided for @cartLineSubtotal.
   ///

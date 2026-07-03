@@ -1427,6 +1427,10 @@ class AppLocalizationsSo extends AppLocalizations {
       'Iibka lama helin. Cusboonaysii oo isku day mar kale.';
 
   @override
+  String get saleVoidErrorPartiallyPaid =>
+      'Macmiilku qayb ka mid ah deyntan hore ayuu u bixiyay, markaa iibka lama tirtiri karo. Halkii, ka diiwaangeli soo-celin.';
+
+  @override
   String get receiveHistoryTitle => 'Alaab Keenida';
 
   @override
@@ -1501,6 +1505,10 @@ class AppLocalizationsSo extends AppLocalizations {
   @override
   String get receiveVoidBlockedStockMessage =>
       'Alaabaha alaab dejintan qaarkood mar hore wuu dhaqaaqay. Tirtiridda waa la diiday.';
+
+  @override
+  String get receiveVoidBlockedPaidMessage =>
+      'Qayb ka mid ah bono-gan hore ayaad u bixisay, markaa lama tirtiri karo. Halkii, ka diiwaangeli soo-celin.';
 
   @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {

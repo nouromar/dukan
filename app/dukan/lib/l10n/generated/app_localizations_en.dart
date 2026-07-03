@@ -1419,6 +1419,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sale not found. Pull to refresh and try again.';
 
   @override
+  String get saleVoidErrorPartiallyPaid =>
+      'The customer has already paid part of this debt, so the sale can\'t be voided. Record a refund instead.';
+
+  @override
   String get receiveHistoryTitle => 'Receives';
 
   @override
@@ -1492,6 +1496,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get receiveVoidBlockedStockMessage =>
       'Some items from this receive have already moved. Void blocked.';
+
+  @override
+  String get receiveVoidBlockedPaidMessage =>
+      'You\'ve already paid part of this bono, so it can\'t be voided. Record a refund instead.';
 
   @override
   String cartLineSubtotal(Object quantity, Object subtotal, Object unitPrice) {

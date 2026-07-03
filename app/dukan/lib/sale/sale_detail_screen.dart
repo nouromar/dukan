@@ -465,6 +465,12 @@ class _SaleReceiptViewState extends State<SaleReceiptView> {
           msg.contains('only voids sale transactions')) {
         return l.saleVoidErrorNotFound;
       }
+      // Partial-paid receivable guard (0085): the customer paid part of this
+      // debt, so a full reversal would drive their balance negative. Not
+      // transient — tell them to refund instead of implying "try again".
+      if (msg.contains('paid down')) {
+        return l.saleVoidErrorPartiallyPaid;
+      }
     }
     return l.saleVoidFailedMessage;
   }
