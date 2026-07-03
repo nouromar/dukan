@@ -27,7 +27,7 @@ void main() {
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(
       wrapWithApp(
-        PaymentDetailScreen(shop: shop, paymentId: 'pay-1'),
+        PaymentDetailScreen(shop: shop, paymentId: '00000000-0000-4000-8000-0000000000a1'),
         authController: auth,
         shopApi: api,
       ),
@@ -44,7 +44,7 @@ void main() {
     bool isSettlementLeg = false,
   }) =>
       PaymentDetail(
-        paymentId: 'pay-1',
+        paymentId: '00000000-0000-4000-8000-0000000000a1',
         occurredAt: DateTime(2026, 6, 12),
         createdAt: createdAt ?? DateTime.now(),
         partyId: party == null ? null : 'p-1',
@@ -139,7 +139,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text(en.paymentVoidConfirmYes));
       await tester.pumpAndSettle();
-      expect(api.voidPaymentCalls, contains('pay-1'));
+      expect(api.voidPaymentCalls, contains('00000000-0000-4000-8000-0000000000a1'));
     });
 
     testWidgets('cashier without payment.void sees no VOID', (tester) async {

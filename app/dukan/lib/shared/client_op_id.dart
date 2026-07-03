@@ -16,6 +16,20 @@ String generateClientOpId(String prefix) {
   return '$prefix-$ts-$r';
 }
 
+final _uuidPattern = RegExp(
+  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-'
+  r'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+);
+
+/// True when [id] is a UUID — i.e. a real server-assigned transaction id,
+/// not the `{prefix}-{millis}-{rand}` client_op_id we use as the optimistic
+/// placeholder for an offline-posted transaction the server hasn't seen yet.
+///
+/// Used to gate the VOID affordance: an offline-created transaction can't be
+/// voided until it syncs (its placeholder id is neither a UUID nor the id the
+/// server will eventually mint — passing it to a void RPC fails 22P02).
+bool isServerAssignedId(String id) => _uuidPattern.hasMatch(id);
+
 /// A random v4 UUID, for client-generated row ids that the backend
 /// stores in a `uuid` column (e.g. an offline-created category id that
 /// must match the server row on sync). Self-contained so we don't pull

@@ -63,6 +63,10 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
   /// the server guards in void_payment (the server re-enforces regardless).
   bool _canVoid(BuildContext context, PaymentDetail h) {
     if (h.isVoided || h.isRefund || h.isSettlementLeg) return false;
+    // An offline-created payment the server hasn't seen yet carries a
+    // client_op_id placeholder id (not a UUID). Voiding it would send that
+    // non-UUID to void_payment (22P02). Hide VOID until it syncs.
+    if (!isServerAssignedId(h.paymentId)) return false;
     if (DateTime.now().difference(h.createdAt) >=
         widget.shop.voidSettings.paymentWindow) {
       return false;
@@ -474,6 +478,17 @@ class _PaymentBody extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(l.paymentDetailVoidButton),
+            ),
+          ),
+        ] else if (!isServerAssignedId(header.paymentId)) ...[
+          const SizedBox(height: 24),
+          Center(
+            child: Text(
+              l.voidNotSyncedHint,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ] else if (windowPassed) ...[

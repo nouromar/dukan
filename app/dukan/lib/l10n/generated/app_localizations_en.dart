@@ -1322,6 +1322,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentVoidWindowPassedHint => 'Void window passed';
 
   @override
+  String get voidNotSyncedHint =>
+      'Not saved online yet — you can undo it once your phone is back online.';
+
+  @override
   String saleDetailLineSubtotal(
     Object quantity,
     Object subtotal,
@@ -2426,7 +2430,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get storageSyncResyncDoneToast => 'Re-downloaded all data';
 
   @override
-  String get storageSyncResyncFailedToast => 'Couldn\'t re-download';
+  String get storageSyncResyncFailedToast =>
+      'Couldn\'t re-download. Please try again.';
+
+  @override
+  String get storageSyncOfflineMessage =>
+      'You\'re offline. Connect to the internet to sync.';
 
   @override
   String get storageSyncCacheClearedToast => 'Cache cleared';

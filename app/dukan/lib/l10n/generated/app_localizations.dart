@@ -2354,6 +2354,12 @@ abstract class AppLocalizations {
   /// **'Void window passed'**
   String get paymentVoidWindowPassedHint;
 
+  /// No description provided for @voidNotSyncedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Not saved online yet — you can undo it once your phone is back online.'**
+  String get voidNotSyncedHint;
+
   /// No description provided for @saleDetailLineSubtotal.
   ///
   /// In en, this message translates to:
@@ -4047,8 +4053,14 @@ abstract class AppLocalizations {
   /// No description provided for @storageSyncResyncFailedToast.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t re-download'**
+  /// **'Couldn\'t re-download. Please try again.'**
   String get storageSyncResyncFailedToast;
+
+  /// No description provided for @storageSyncOfflineMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Connect to the internet to sync.'**
+  String get storageSyncOfflineMessage;
 
   /// No description provided for @storageSyncCacheClearedToast.
   ///

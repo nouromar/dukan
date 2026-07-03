@@ -190,7 +190,12 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      showError(context, '${l.storageSyncResyncFailedToast}\n$error');
+      showError(
+        context,
+        _isOfflineError(error)
+            ? l.storageSyncOfflineMessage
+            : l.storageSyncResyncFailedToast,
+      );
     } finally {
       if (mounted) setState(() => _syncing = false);
       await _refresh();
@@ -289,7 +294,12 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      showError(context, '${l.storageSyncResetFailedToast}\n$error');
+      showError(
+        context,
+        _isOfflineError(error)
+            ? l.storageSyncOfflineMessage
+            : l.storageSyncResetFailedToast,
+      );
     } finally {
       if (mounted) setState(() => _syncing = false);
       await _refresh();
@@ -311,6 +321,18 @@ class _StorageSyncScreenState extends State<StorageSyncScreen> {
     final last = _queue.lastDrainSuccessAt;
     if (last == null) return false;
     return DateTime.now().difference(last) < const Duration(seconds: 60);
+  }
+
+  /// A sync/re-download failure caused by no connectivity (DNS/socket), so we
+  /// show a plain "you're offline" line instead of dumping the raw
+  /// ClientException/SocketException at the shopkeeper.
+  static bool _isOfflineError(Object error) {
+    final s = error.toString();
+    return s.contains('SocketException') ||
+        s.contains('Failed host lookup') ||
+        s.contains('ClientException') ||
+        s.contains('Connection closed') ||
+        s.contains('Network is unreachable');
   }
 
   bool _wifiOnly() {

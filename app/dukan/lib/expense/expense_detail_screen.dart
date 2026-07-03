@@ -74,6 +74,11 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
 
   bool _canVoid(BuildContext context, ExpenseSummary e) {
     if (e.isVoided) return false;
+    // An offline-created expense the server hasn't seen yet carries a
+    // client_op_id placeholder id (not a UUID). Voiding it would send that
+    // non-UUID to void_expense (22P02) and reference a row the server will
+    // mint under a different id. Hide VOID until it syncs (mirrors Sale).
+    if (!isServerAssignedId(e.txnId)) return false;
     if (DateTime.now().difference(e.postedAt) >=
         widget.shop.voidSettings.expenseWindow) {
       return false;
@@ -276,6 +281,17 @@ class _Body extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text(l.expenseDetailVoidButton),
+              ),
+            )
+          else if (!expense.isVoided && !isServerAssignedId(expense.txnId))
+            // Created offline, not yet synced — explain why VOID is absent.
+            Center(
+              child: Text(
+                l.voidNotSyncedHint,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
         ],

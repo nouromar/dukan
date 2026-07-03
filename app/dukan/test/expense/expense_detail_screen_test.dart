@@ -24,9 +24,15 @@ void main() {
     en = lookupAppLocalizations(const Locale('en'));
   });
 
-  ExpenseSummary expense({bool voided = false, DateTime? posted}) =>
+  const syncedId = '00000000-0000-4000-8000-0000000000e1';
+
+  ExpenseSummary expense({
+    bool voided = false,
+    DateTime? posted,
+    String txnId = syncedId,
+  }) =>
       ExpenseSummary(
-        txnId: 'exp-1',
+        txnId: txnId,
         occurredAt: DateTime(2026, 6, 20),
         postedAt: posted ?? DateTime.now(),
         amount: 12,
@@ -37,10 +43,10 @@ void main() {
         isVoided: voided,
       );
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(WidgetTester tester, {String txnId = syncedId}) async {
     await tester.pumpWidget(
       wrapWithApp(
-        ExpenseDetailScreen(shop: shop, txnId: 'exp-1'),
+        ExpenseDetailScreen(shop: shop, txnId: txnId),
         authController: auth,
         shopApi: api,
       ),
@@ -63,7 +69,18 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(en.expenseVoidConfirmYes));
     await tester.pumpAndSettle();
-    expect(api.voidExpenseCalls, contains('exp-1'));
+    expect(api.voidExpenseCalls, contains('00000000-0000-4000-8000-0000000000e1'));
+  });
+
+  testWidgets('offline-created (unsynced) expense hides VOID + shows the '
+      'sync hint (no non-UUID id sent to void_expense)', (tester) async {
+    // A client_op_id placeholder id — what an offline post_expense mirrors
+    // before the server assigns a real UUID.
+    const localId = 'expense-1783095528341-3366287978';
+    api.onGetExpense = (_, _) async => expense(txnId: localId);
+    await pump(tester, txnId: localId);
+    expect(find.text(en.expenseDetailVoidButton), findsNothing);
+    expect(find.text(en.voidNotSyncedHint), findsOneWidget);
   });
 
   testWidgets('cashier without expense.void sees no VOID', (tester) async {

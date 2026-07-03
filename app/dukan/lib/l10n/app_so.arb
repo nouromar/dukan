@@ -532,6 +532,7 @@
   "paymentVoidedHeader": "La tirtiray",
   "paymentVoidFailedMessage": "Lama tirtiri karin lacagtan.",
   "paymentVoidWindowPassedHint": "Wakhtigii tirtiridda wuu dhammaaday",
+  "voidNotSyncedHint": "Weli lama kaydin onlaynka — waad ka noqon kartaa marka taleefankaagu shabakadda ku soo laabto.",
   "saleDetailLineSubtotal": "{quantity} {unit} × {unitPrice} = {subtotal}",
   "saleDetailTotalLabel": "Wadar",
   "saleDetailCashLabel": "Kaash",
@@ -1060,7 +1061,8 @@
   "storageSyncResyncConfirmBody": "Waxaa la soo dejinayaa nuqul cusub oo ka kooban alaab, macaamiil, iyo wax iibinta dhowaan. Iibyada aad kaydisay ma taabankaro.",
   "storageSyncResyncConfirmAction": "DIB U SOO DEJI",
   "storageSyncResyncDoneToast": "Xogta oo dhan dib ayaa loo soo dejiyay",
-  "storageSyncResyncFailedToast": "Lama soo dejin karin",
+  "storageSyncResyncFailedToast": "Lama soo dejin karin. Fadlan isku day mar kale.",
+  "storageSyncOfflineMessage": "Waad offline tahay. Ku xir internetka si aad u sync-gareyso.",
   "storageSyncCacheClearedToast": "Kaydka waa la tirtiray",
   "storageSyncSyncedToast": "{count, plural, =0{Horeyba u cusub} =1{1 la diray} other{{count} la diray}}",
   "@storageSyncSyncedToast": {

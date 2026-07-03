@@ -1328,6 +1328,10 @@ class AppLocalizationsSo extends AppLocalizations {
       'Wakhtigii tirtiridda wuu dhammaaday';
 
   @override
+  String get voidNotSyncedHint =>
+      'Weli lama kaydin onlaynka — waad ka noqon kartaa marka taleefankaagu shabakadda ku soo laabto.';
+
+  @override
   String saleDetailLineSubtotal(
     Object quantity,
     Object subtotal,
@@ -2442,7 +2446,12 @@ class AppLocalizationsSo extends AppLocalizations {
       'Xogta oo dhan dib ayaa loo soo dejiyay';
 
   @override
-  String get storageSyncResyncFailedToast => 'Lama soo dejin karin';
+  String get storageSyncResyncFailedToast =>
+      'Lama soo dejin karin. Fadlan isku day mar kale.';
+
+  @override
+  String get storageSyncOfflineMessage =>
+      'Waad offline tahay. Ku xir internetka si aad u sync-gareyso.';
 
   @override
   String get storageSyncCacheClearedToast => 'Kaydka waa la tirtiray';
