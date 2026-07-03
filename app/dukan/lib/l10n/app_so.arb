@@ -391,7 +391,7 @@
   "settingsCurrencyLockedMessage": "Lacagta lama beddeli karo marka dukaanku diiwaangeliyo wax ganacsi. La xiriir taageerada si aad u beddesho.",
   "productsTitle": "Alaab",
   "productsSearchHint": "Ku Raadi Soomaali ama Ingiriis",
-  "productsNewItemButton": "Alaab CUSUB",
+  "productsNewItemButton": "ALAAB CUSUB",
   "productsEmptyMessage": "Alaabo maleh. Kudar hadda liiska guud.",
   "productsSearchEmptyMessage": "Wax la mid ah “{query}” maleh.",
   "productsLoadFailedMessage": "Alaabo lama soo dejin karin. Hubi internetka oo isku day mar kale.",
@@ -638,7 +638,7 @@
   "addNewItemSheetTitle": "Ku dar alaab cusub",
   "addNewItemNameLabel": "Magaca",
   "addNewItemUnitChooseHint": "Dooro",
-  "addNewItemCategoryLabel": "Nooca (ikhtiyaari)",
+  "addNewItemCategoryLabel": "Qaybta (ikhtiyaari)",
   "addNewItemCancelButton": "JOOJI",
   "addNewItemAddToSaleButton": "KU DAR IIBKA",
   "addNewItemAddToReceiveButton": "KU DAR DEJINTA",
@@ -721,7 +721,7 @@
   "shopItemDetailAliasesHeader": "Magacyo kale",
   "shopItemEditorNameLabel": "Magaca",
   "shopItemEditorBaseUnitLabel": "Halbeeg aasaasi",
-  "shopItemEditorCategoryLabel": "Nooca",
+  "shopItemEditorCategoryLabel": "Qaybta",
   "shopItemEditorReorderThresholdLabel": "Digniin marka ay yaraato",
   "shopItemEditorReorderThresholdHelper": "{unit} ku qor. Ka tag bannaan haddii aadan rabin digniin.",
   "@shopItemEditorReorderThresholdHelper": {
@@ -732,7 +732,7 @@
     }
   },
   "shopItemEditorScanIdentifyButton": "Sken",
-  "shopItemEditorBarcodeNoMatchToast": "Koodhka {code} weli kuma jiro cataloga. Buuxi qaybaha kale, ka dibna KAYDI.",
+  "shopItemEditorBarcodeNoMatchToast": "Koodhka {code} weli kuma jiro Liiska Guud. Buuxi qaybaha kale, ka dibna KAYDI.",
   "@shopItemEditorBarcodeNoMatchToast": {
     "placeholders": {
       "code": {
@@ -740,7 +740,7 @@
       }
     }
   },
-  "shopItemEditorPrefillBanner": "Waxaan ka helay '{name}' cataloga — fiiri oo wax ka beddel haddii uu jiro waxa kala duwan.",
+  "shopItemEditorPrefillBanner": "Waxaan ka helay '{name}' Liiska Guud — fiiri oo wax ka beddel haddii uu jiro waxa kala duwan.",
   "@shopItemEditorPrefillBanner": {
     "placeholders": {
       "name": {
@@ -749,7 +749,7 @@
     }
   },
   "shopItemEditorSuggestionInShop": "Horey ayuu dukaankaaga ugu jiray — taabo si aad u furto",
-  "shopItemEditorSuggestionInCatalog": "Catalog guud — taabo si aad u isticmaasho",
+  "shopItemEditorSuggestionInCatalog": "Liiska Guud — taabo si aad u isticmaasho",
   "shopItemEditorSessionCounter": "{count, plural, one {1 la daray} other {# la daray}}",
   "@shopItemEditorSessionCounter": {
     "placeholders": {
@@ -767,7 +767,7 @@
   "packagingEditorEditTitle": "Bedel xirmada",
   "packagingEditorSaveButton": "KAYDI",
   "packagingEditorMissingUnitMessage": "Dooro nooca xirmada (tusaale: bac, sanduuq).",
-  "packagingEditorMissingConversionMessage": "Imisa unug aasaasi ah ayaa ku jira xirmadan? Geli tiro ka weyn 0.",
+  "packagingEditorMissingConversionMessage": "Imisa halbeeg aasaasi ah ayaa ku jira xirmadan? Geli tiro ka weyn 0.",
   "packagingEditorCostLabel": "Qiimaha {unit}",
   "@packagingEditorCostLabel": {
     "placeholders": {
@@ -853,7 +853,7 @@
   "shopItemEditorAddPackagingButton": "Ku dar xirmo",
   "shopItemEditorBaseBadge": "ASAAS",
   "shopItemEditorPackagingMissingMessage": "Buuxi ugu yaraan hal qaybsasho (qiime, qarash, kayd, ama barcode).",
-  "shopItemEditorScanBarcodeButton": "Sken barcode",
+  "shopItemEditorScanBarcodeButton": "Sken barcode (ikhtiyaari)",
   "shopItemEditorRescanBarcodeButton": "Mar kale sken",
   "shopItemEditorRemoveBarcodeTooltip": "Saar barcode-ka",
   "shopItemEditorBarcodeBoundLabel": "Barcode {code}",

@@ -942,7 +942,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get productsSearchHint => 'Ku Raadi Soomaali ama Ingiriis';
 
   @override
-  String get productsNewItemButton => 'Alaab CUSUB';
+  String get productsNewItemButton => 'ALAAB CUSUB';
 
   @override
   String get productsEmptyMessage => 'Alaabo maleh. Kudar hadda liiska guud.';
@@ -1696,7 +1696,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get addNewItemUnitChooseHint => 'Dooro';
 
   @override
-  String get addNewItemCategoryLabel => 'Nooca (ikhtiyaari)';
+  String get addNewItemCategoryLabel => 'Qaybta (ikhtiyaari)';
 
   @override
   String get addNewItemCancelButton => 'JOOJI';
@@ -1837,7 +1837,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get shopItemEditorBaseUnitLabel => 'Halbeeg aasaasi';
 
   @override
-  String get shopItemEditorCategoryLabel => 'Nooca';
+  String get shopItemEditorCategoryLabel => 'Qaybta';
 
   @override
   String get shopItemEditorReorderThresholdLabel => 'Digniin marka ay yaraato';
@@ -1852,12 +1852,12 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String shopItemEditorBarcodeNoMatchToast(String code) {
-    return 'Koodhka $code weli kuma jiro cataloga. Buuxi qaybaha kale, ka dibna KAYDI.';
+    return 'Koodhka $code weli kuma jiro Liiska Guud. Buuxi qaybaha kale, ka dibna KAYDI.';
   }
 
   @override
   String shopItemEditorPrefillBanner(String name) {
-    return 'Waxaan ka helay \'$name\' cataloga — fiiri oo wax ka beddel haddii uu jiro waxa kala duwan.';
+    return 'Waxaan ka helay \'$name\' Liiska Guud — fiiri oo wax ka beddel haddii uu jiro waxa kala duwan.';
   }
 
   @override
@@ -1866,7 +1866,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get shopItemEditorSuggestionInCatalog =>
-      'Catalog guud — taabo si aad u isticmaasho';
+      'Liiska Guud — taabo si aad u isticmaasho';
 
   @override
   String shopItemEditorSessionCounter(int count) {
@@ -1918,7 +1918,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get packagingEditorMissingConversionMessage =>
-      'Imisa unug aasaasi ah ayaa ku jira xirmadan? Geli tiro ka weyn 0.';
+      'Imisa halbeeg aasaasi ah ayaa ku jira xirmadan? Geli tiro ka weyn 0.';
 
   @override
   String packagingEditorCostLabel(String unit) {
@@ -2037,7 +2037,7 @@ class AppLocalizationsSo extends AppLocalizations {
       'Buuxi ugu yaraan hal qaybsasho (qiime, qarash, kayd, ama barcode).';
 
   @override
-  String get shopItemEditorScanBarcodeButton => 'Sken barcode';
+  String get shopItemEditorScanBarcodeButton => 'Sken barcode (ikhtiyaari)';
 
   @override
   String get shopItemEditorRescanBarcodeButton => 'Mar kale sken';
