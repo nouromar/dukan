@@ -1733,6 +1733,87 @@ begin
 end;
 $$;
 
+-- =====================================================================
+-- §10c post_sale with a client-minted txn id (offline-void support, 0099)
+-- =====================================================================
+-- Cash sale (so the settlement leg is exercised): the client txn id is
+-- honoured, the leg stays SERVER-minted with the `:payment` suffix (must NOT
+-- reuse the sale's id), replay is idempotent, and the client id can be voided.
+-- Both sales are voided to restore stock so §13/§14 are unperturbed.
+do $$
+declare
+  v_shop_id uuid;
+  v_unit    uuid;
+  v_cli_id  uuid := '00000000-0000-4000-8000-00000000e003'::uuid;
+  v_r       uuid;
+  v_cnt     int;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select siu.id into v_unit
+  from public.shop_item_unit siu
+  join public.shop_item si on si.id = siu.shop_item_id
+  where siu.shop_id = v_shop_id and siu.conversion_to_base = 1 and si.is_active
+  limit 1;
+
+  -- (a) client-supplied sale id honoured + persisted (cash walk-in sale).
+  v_r := public.post_sale(
+    v_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit, 'quantity', 1, 'unit_price', 1.00)),
+    1.00, 'cash', null, 'op-sale-cli-1', null, 'client-id sale', v_cli_id);
+  if v_r <> v_cli_id then
+    raise exception '0099: post_sale did not honour client txn id (got %)', v_r;
+  end if;
+  if not exists (select 1 from public.txn where shop_id = v_shop_id and id = v_cli_id) then
+    raise exception '0099: client-id sale not persisted';
+  end if;
+
+  -- Settlement leg present, SERVER-minted (id <> the sale id), :payment suffix.
+  if not exists (
+    select 1 from public.payment
+    where shop_id = v_shop_id and client_op_id = 'op-sale-cli-1:payment'
+      and id <> v_cli_id and is_settlement_leg
+  ) then
+    raise exception '0099: cash-sale settlement leg missing or reused the client id';
+  end if;
+
+  -- (b) idempotent replay -> same id, no duplicate.
+  v_r := public.post_sale(
+    v_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit, 'quantity', 1, 'unit_price', 1.00)),
+    1.00, 'cash', null, 'op-sale-cli-1', null, 'client-id sale', v_cli_id);
+  if v_r <> v_cli_id then
+    raise exception '0099: replay returned a different sale id (%)', v_r;
+  end if;
+  select count(*) into v_cnt from public.txn where shop_id = v_shop_id and id = v_cli_id;
+  if v_cnt <> 1 then
+    raise exception '0099: replay duplicated the sale (count=%)', v_cnt;
+  end if;
+
+  -- (c) THE GOAL: void the client-minted sale id (restores stock).
+  perform public.void_sale(v_shop_id, v_cli_id, 'op-void-sale-cli-1');
+  if not exists (
+    select 1 from public.txn where shop_id = v_shop_id and reverses_transaction_id = v_cli_id
+  ) then
+    raise exception '0099: void_sale did not reverse the client-id sale';
+  end if;
+
+  -- (d) legacy path (null id) still mints a server id; void it to restore stock.
+  v_r := public.post_sale(
+    v_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit, 'quantity', 1, 'unit_price', 1.00)),
+    1.00, 'cash', null, 'op-sale-legacy-1', null, 'legacy sale');
+  if v_r is null or v_r = v_cli_id then
+    raise exception '0099: legacy null-id post_sale misbehaved (got %)', v_r;
+  end if;
+  perform public.void_sale(v_shop_id, v_r, 'op-void-sale-legacy-1');
+
+  raise notice '10c: post_sale client-id + settlement leg + void round-trip passed';
+end;
+$$;
+
 -- §11 (learning suggestions) removed: the per-transaction learning triggers
 -- that produced 'learned' shop_suggestion rows were dropped in 0078 — the
 -- learning aggregates had no readers, and recents/etc. are computed on-read.

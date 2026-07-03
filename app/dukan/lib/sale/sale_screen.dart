@@ -662,6 +662,10 @@ class _SaleScreenState extends State<SaleScreen> {
       }
     }
     final clientOpId = generateClientOpId('sale');
+    // Client-minted txn UUID shared by the optimistic mirror, the direct post,
+    // and the queued post — a stable id so an offline sale can be voided before
+    // it syncs. The cash-at-till settlement leg stays server-minted.
+    final txnId = generateUuidV4();
 
     // #383: useLocalDb=false → direct-await path. No optimistic
     // cart clear, no queue, no projection. Cart stays on screen
@@ -679,6 +683,7 @@ class _SaleScreenState extends State<SaleScreen> {
         lines: lines,
         priceWriteBacks: priceWriteBacks,
         clientOpId: clientOpId,
+        clientTxnId: txnId,
       );
       return;
     }
@@ -696,6 +701,7 @@ class _SaleScreenState extends State<SaleScreen> {
       try {
         await localRepoForOptimistic.writeOptimisticTransaction(
           clientOpId: clientOpId,
+          txnId: txnId,
           shopId: widget.shop.id,
           typeCode: 'sale',
           occurredAtMs:
@@ -799,6 +805,7 @@ class _SaleScreenState extends State<SaleScreen> {
       lines: lines,
       priceWriteBacks: priceWriteBacks,
       clientOpId: clientOpId,
+      clientTxnId: txnId,
     );
   }
 
@@ -816,6 +823,7 @@ class _SaleScreenState extends State<SaleScreen> {
     required List<SaleLine> lines,
     required List<({String shopItemUnitId, num salePrice})> priceWriteBacks,
     required String clientOpId,
+    required String clientTxnId,
   }) async {
     setState(() => _saving = true);
     String txnId;
@@ -828,6 +836,7 @@ class _SaleScreenState extends State<SaleScreen> {
         paymentMethodCode: cashSale ? 'cash' : null,
         clientOpId: clientOpId,
         occurredAt: snapshot.occurredAt,
+        txnId: clientTxnId,
       );
     } catch (error, stackTrace) {
       FlutterError.reportError(
@@ -917,6 +926,7 @@ class _SaleScreenState extends State<SaleScreen> {
     required List<SaleLine> lines,
     required List<({String shopItemUnitId, num salePrice})> priceWriteBacks,
     required String clientOpId,
+    required String clientTxnId,
   }) async {
     // Captured before the post so the reject/queue paths can touch the mirror
     // even if the context unmounts.
@@ -967,6 +977,7 @@ class _SaleScreenState extends State<SaleScreen> {
         paymentMethodCode: cashSale ? 'cash' : null,
         clientOpId: clientOpId,
         occurredAt: snapshot.occurredAt,
+        txnId: clientTxnId,
       );
     } on PostgrestException catch (error, stackTrace) {
       // 4xx-style server reject — won't succeed on retry. Revert the optimistic
@@ -1041,6 +1052,7 @@ class _SaleScreenState extends State<SaleScreen> {
           partyId: partyId,
           paymentMethodCode: cashSale ? 'cash' : null,
           occurredAt: snapshot.occurredAt,
+          txnId: clientTxnId,
         ),
         queuedAt: DateTime.now(),
       );
@@ -1052,9 +1064,10 @@ class _SaleScreenState extends State<SaleScreen> {
       final queue = context.read<OfflineQueueController>();
       await queue.enqueue(post);
       // Open the receipt just like an online sale — the optimistic
-      // local_transaction shares the sale's clientOpId as its id, and the
-      // cart fallback renders it regardless. DONE + Share work offline.
-      await openReceipt(clientOpId);
+      // local_transaction now shares the sale's client-minted UUID as its id
+      // (0099), and the cart fallback renders it regardless. DONE + Share
+      // work offline.
+      await openReceipt(clientTxnId);
       return;
     }
 

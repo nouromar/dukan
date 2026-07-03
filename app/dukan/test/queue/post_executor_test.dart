@@ -49,6 +49,7 @@ void main() {
         paidAmount: 10,
         partyId: null,
         paymentMethodCode: 'cash',
+        txnId: 'sale-uuid-1',
       ),
     ));
     expect(capturedClientOp, 'op-1');
@@ -56,6 +57,8 @@ void main() {
     expect(capturedLines!.single.shopItemUnitId, 'unit-a');
     expect(capturedLines!.single.quantity, 2);
     expect(capturedLines!.single.unitPrice, 5);
+    // The client-minted txn id round-trips through builder + dispatch.
+    expect(api.postSaleTxnIds.last, 'sale-uuid-1');
   });
 
   test('post_receive dispatches with reconstructed lines + bono docId',

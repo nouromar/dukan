@@ -79,6 +79,7 @@ class PostExecutor {
       paymentMethodCode: p['payment_method_code'] as String?,
       clientOpId: post.clientOpId,
       occurredAt: _occurredAt(p),
+      txnId: p['txn_id'] as String?,
     );
   }
 
@@ -440,6 +441,8 @@ Map<String, dynamic> buildPostSaleParams({
   String? partyId,
   String? paymentMethodCode,
   DateTime? occurredAt,
+  // Client-minted txn UUID (offline-void support).
+  String? txnId,
 }) =>
     <String, dynamic>{
       'lines': lines
@@ -452,6 +455,7 @@ Map<String, dynamic> buildPostSaleParams({
       'paid_amount': paidAmount,
       if (partyId != null) 'party_id': partyId,
       if (paymentMethodCode != null) 'payment_method_code': paymentMethodCode,
+      if (txnId != null) 'txn_id': txnId,
       if (occurredAt != null) 'occurred_at': occurredAt.toUtc().toIso8601String(),
     };
 

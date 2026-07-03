@@ -589,9 +589,15 @@ class _SaleReceiptBody extends StatelessWidget {
   bool _canVoid(BuildContext context) {
     if (!showVoidAffordance) return false;
     if (bundle.header.isVoided) return false;
-    final posted = bundle.header.postedAt;
-    if (posted == null) return false;
-    if (DateTime.now().difference(posted) >= shop.voidSettings.saleWindow) {
+    // An offline-created sale the server hasn't seen yet carries a client_op_id
+    // placeholder id (not a UUID); voiding it would send that non-UUID to
+    // void_sale (22P02). Since 0099 an offline sale is minted with a client
+    // UUID, so gate on the id shape (like Expense/Payment) rather than
+    // postedAt==null — and measure the window from postedAt, falling back to
+    // occurredAt for a not-yet-synced row (which has no server posted_at).
+    if (!isServerAssignedId(bundle.header.txnId)) return false;
+    final windowRef = bundle.header.postedAt ?? bundle.header.occurredAt;
+    if (DateTime.now().difference(windowRef) >= shop.voidSettings.saleWindow) {
       return false;
     }
     // Capability gate — cashier role lacks sales.void. The receipt

@@ -11,7 +11,7 @@ import '../shared/fakes.dart';
 import '../shared/wrap.dart';
 
 SaleSummary _header({
-  String txnId = 'sale-1',
+  String txnId = '00000000-0000-4000-8000-0000000000f1',
   String? partyName,
   double total = 12.5,
   double paid = 0,
@@ -51,7 +51,7 @@ void main() {
     en = lookupAppLocalizations(const Locale('en'));
   });
 
-  Future<void> pumpDetail(WidgetTester tester, {String txnId = 'sale-1'}) async {
+  Future<void> pumpDetail(WidgetTester tester, {String txnId = '00000000-0000-4000-8000-0000000000f1'}) async {
     await tester.pumpWidget(
       wrapWithApp(
         SaleDetailScreen(shop: shop, txnId: txnId),
@@ -332,7 +332,7 @@ void main() {
                   final result = await Navigator.of(context).push<bool>(
                     MaterialPageRoute(
                       builder: (_) =>
-                          SaleDetailScreen(shop: shop, txnId: 'sale-1'),
+                          SaleDetailScreen(shop: shop, txnId: '00000000-0000-4000-8000-0000000000f1'),
                     ),
                   );
                   poppedWith = result;
@@ -358,7 +358,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, en.saleVoidConfirmYes));
     await tester.pumpAndSettle();
 
-    expect(capturedTxnId, 'sale-1');
+    expect(capturedTxnId, '00000000-0000-4000-8000-0000000000f1');
     expect(poppedWith, isTrue);
   });
 
@@ -384,5 +384,46 @@ void main() {
     expect(tester.takeException(), isA<PostgrestException>());
     expect(find.text(en.saleVoidErrorPartiallyPaid), findsOneWidget);
     expect(find.text(en.saleVoidFailedMessage), findsNothing);
+  });
+
+  SaleSummary offlineSale({required DateTime occurredAt}) => SaleSummary(
+        txnId: '00000000-0000-4000-8000-0000000000f1',
+        occurredAt: occurredAt,
+        postedAt: null, // not yet synced (serverUpdatedAtMs == 0)
+        partyId: 'p-1',
+        partyName: 'Ahmed',
+        totalAmount: 12.5,
+        paidAmount: 0,
+        paymentMethodCode: null,
+        isVoided: false,
+        reversalTxnId: null,
+        voidedAt: null,
+      );
+
+  testWidgets('unsynced offline sale (UUID id, no postedAt) still shows VOID '
+      'within the window (0099 gate switch)', (tester) async {
+    // Previously gated out by postedAt==null; now the client UUID makes it
+    // voidable offline, with the window measured from occurredAt.
+    api.onGetSale = (_, _) async => offlineSale(occurredAt: DateTime.now());
+    api.onGetSaleLines = (_, _) async => const [];
+    await pumpDetail(tester);
+    await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(TextButton, en.saleDetailVoidButton),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('backdated unsynced sale (outside the window) hides VOID',
+      (tester) async {
+    api.onGetSale =
+        (_, _) async => offlineSale(occurredAt: DateTime(2020, 1, 1));
+    api.onGetSaleLines = (_, _) async => const [];
+    await pumpDetail(tester);
+    await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(TextButton, en.saleDetailVoidButton),
+      findsNothing,
+    );
   });
 }
