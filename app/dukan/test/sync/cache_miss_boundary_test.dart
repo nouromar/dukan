@@ -147,6 +147,44 @@ void main() {
     expect(find.text('child-body'), findsNothing);
   });
 
+  testWidgets(
+      'full + no local data BUT first sync completed → pass-through '
+      '(new empty shop is not trapped behind the wall)', (tester) async {
+    // Regression for the new-user "connect to internet" wall: a brand-new
+    // empty shop has no local rows, but once the first full sync has landed
+    // (hasInitialSync=true) the boundary must render the child, not the wall.
+    final engine = _SyncedEngine(
+      shopApi: api,
+      localRepository: repo,
+      pendingPostDao: postDao,
+    );
+    final queue = OfflineQueueController(
+      dao: postDao,
+      executor: (_) async {},
+      backoff: (_) => Duration.zero,
+    );
+    addTearDown(() {
+      engine.dispose();
+      queue.dispose();
+    });
+
+    await tester.pumpWidget(harness(
+      engine: engine,
+      queue: queue,
+      useLocalDb: true,
+      child: const Scaffold(body: Text('child-body')),
+    ));
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pump();
+    await tester.pump();
+    // Empty shop + first sync completed → pass through; no wall, no spinner.
+    expect(find.text('child-body'), findsOneWidget);
+    expect(find.byIcon(Icons.cloud_off_outlined), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
   // State B (healthy sync, pass-through) is implicitly covered: when
   // hasAnyData=true and engine.lastSyncedAt/realtimeDisconnectedAt
   // are healthy, _detectIssue returns null and the Stack collapses
@@ -164,6 +202,20 @@ void main() {
   // beyond reproducing the same model state. We rely on manual
   // smoke testing (see iPhone test plan in #375) to verify the
   // banner copy + tap-to-retry interaction end-to-end.
+}
+
+/// A SyncEngine whose first full sync has already completed (even if the shop
+/// has no rows). Lets us assert the boundary passes through for a synced-empty
+/// shop without driving the real (ticker-hazardous) auto-sync path.
+class _SyncedEngine extends SyncEngine {
+  _SyncedEngine({
+    required super.shopApi,
+    required super.localRepository,
+    required super.pendingPostDao,
+  });
+
+  @override
+  bool get hasInitialSync => true;
 }
 
 class _FixedConfigResolver extends ConfigResolver {

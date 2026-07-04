@@ -180,7 +180,19 @@ class _CacheMissBoundaryState extends State<CacheMissBoundary> {
           return widget.child;
         }
         final hasLocal = snapshot.data ?? true;
-        if (!hasLocal) {
+        // A brand-new EMPTY shop legitimately has no local rows, but once the
+        // first full sync has COMPLETED (even with an empty result) we must
+        // stop showing the "connect to load your data" wall — otherwise a new
+        // user who is online and synced is trapped behind it forever. Gate
+        // State A on "the first sync hasn't landed yet", not merely "no rows".
+        // Watch the engine so the wall clears the instant hasInitialSync flips.
+        bool initialSynced = false;
+        try {
+          initialSynced = context.watch<SyncEngine>().hasInitialSync;
+        } catch (_) {
+          initialSynced = false;
+        }
+        if (!hasLocal && !initialSynced) {
           // #377: auto-trigger the first sync the first time we
           // land on State A. The previous "wait for user tap"
           // design made a normal first launch look like an error
