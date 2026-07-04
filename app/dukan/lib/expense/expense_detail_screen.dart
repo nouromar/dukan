@@ -78,7 +78,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
     // client_op_id placeholder id (not a UUID). Voiding it would send that
     // non-UUID to void_expense (22P02) and reference a row the server will
     // mint under a different id. Hide VOID until it syncs (mirrors Sale).
-    if (!isServerAssignedId(e.txnId)) return false;
+    if (!isStableTxnId(e.txnId)) return false;
     if (DateTime.now().difference(e.postedAt) >=
         widget.shop.voidSettings.expenseWindow) {
       return false;
@@ -283,7 +283,7 @@ class _Body extends StatelessWidget {
                     : Text(l.expenseDetailVoidButton),
               ),
             )
-          else if (!expense.isVoided && !isServerAssignedId(expense.txnId))
+          else if (!expense.isVoided && !isStableTxnId(expense.txnId))
             // Created offline, not yet synced — explain why VOID is absent.
             Center(
               child: Text(

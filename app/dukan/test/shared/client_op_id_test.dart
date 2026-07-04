@@ -5,7 +5,7 @@ import 'package:dukan/shared/client_op_id.dart';
 void main() {
   test('generateUuidV4 is recognised as a server-assigned id', () {
     for (var i = 0; i < 50; i++) {
-      expect(isServerAssignedId(generateUuidV4()), isTrue);
+      expect(isStableTxnId(generateUuidV4()), isTrue);
     }
   });
 
@@ -15,23 +15,23 @@ void main() {
     for (final prefix in const ['sale', 'receive', 'payment', 'expense']) {
       final opId = generateClientOpId(prefix);
       expect(opId, contains('$prefix-'));
-      expect(isServerAssignedId(opId), isFalse);
+      expect(isStableTxnId(opId), isFalse);
     }
     // The exact value from the field report.
     expect(
-      isServerAssignedId('expense-1783095528341-3366287978'),
+      isStableTxnId('expense-1783095528341-3366287978'),
       isFalse,
     );
   });
 
   test('malformed / near-UUID strings are rejected', () {
-    expect(isServerAssignedId(''), isFalse);
-    expect(isServerAssignedId('not-a-uuid'), isFalse);
+    expect(isStableTxnId(''), isFalse);
+    expect(isStableTxnId('not-a-uuid'), isFalse);
     // Wrong segment lengths.
-    expect(isServerAssignedId('0000-0000-0000-0000-000000000000'), isFalse);
+    expect(isStableTxnId('0000-0000-0000-0000-000000000000'), isFalse);
     // Non-hex char.
     expect(
-      isServerAssignedId('zzzzzzzz-0000-4000-8000-000000000000'),
+      isStableTxnId('zzzzzzzz-0000-4000-8000-000000000000'),
       isFalse,
     );
   });

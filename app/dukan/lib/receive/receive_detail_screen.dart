@@ -247,7 +247,7 @@ class _ReceiveDetailBody extends StatelessWidget {
     // non-UUID to void_receive (22P02). Since 0100 an offline receive is minted
     // with a client UUID, so gate on the id shape (like Sale) and measure the
     // window from postedAt, falling back to occurredAt for a not-yet-synced row.
-    if (!isServerAssignedId(bundle.header.txnId)) return false;
+    if (!isStableTxnId(bundle.header.txnId)) return false;
     final windowRef = bundle.header.postedAt ?? bundle.header.occurredAt;
     if (DateTime.now().difference(windowRef) >= shop.voidSettings.receiveWindow) {
       return false;

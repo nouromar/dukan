@@ -595,7 +595,7 @@ class _SaleReceiptBody extends StatelessWidget {
     // UUID, so gate on the id shape (like Expense/Payment) rather than
     // postedAt==null — and measure the window from postedAt, falling back to
     // occurredAt for a not-yet-synced row (which has no server posted_at).
-    if (!isServerAssignedId(bundle.header.txnId)) return false;
+    if (!isStableTxnId(bundle.header.txnId)) return false;
     final windowRef = bundle.header.postedAt ?? bundle.header.occurredAt;
     if (DateTime.now().difference(windowRef) >= shop.voidSettings.saleWindow) {
       return false;

@@ -21,14 +21,17 @@ final _uuidPattern = RegExp(
   r'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
 );
 
-/// True when [id] is a UUID — i.e. a real server-assigned transaction id,
-/// not the `{prefix}-{millis}-{rand}` client_op_id we use as the optimistic
-/// placeholder for an offline-posted transaction the server hasn't seen yet.
+/// True when [id] is a **stable UUID** — i.e. a real transaction id (minted by
+/// the client up front since 0097-0100, or by the server), NOT the
+/// `{prefix}-{millis}-{rand}` client_op_id we used as the optimistic placeholder
+/// before those migrations.
 ///
-/// Used to gate the VOID affordance: an offline-created transaction can't be
-/// voided until it syncs (its placeholder id is neither a UUID nor the id the
-/// server will eventually mint — passing it to a void RPC fails 22P02).
-bool isServerAssignedId(String id) => _uuidPattern.hasMatch(id);
+/// Used to gate the VOID affordance. A stable UUID is safe to void (the queue
+/// drains the create then the void, both on that id). A legacy placeholder id
+/// isn't — passing it to a void RPC fails 22P02 — so VOID stays hidden until
+/// that row syncs and is replaced by the server row (a UUID). Post-rollover
+/// (all placeholder rows synced away) this is purely defensive.
+bool isStableTxnId(String id) => _uuidPattern.hasMatch(id);
 
 /// A random v4 UUID, for client-generated row ids that the backend
 /// stores in a `uuid` column (e.g. an offline-created category id that

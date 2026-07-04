@@ -219,7 +219,7 @@ void main() {
       // it syncs — the whole point of migration 0097.
       final txnId = post.params['txn_id'] as String?;
       expect(txnId, isNotNull);
-      expect(isServerAssignedId(txnId!), isTrue);
+      expect(isStableTxnId(txnId!), isTrue);
     },
   );
 }
