@@ -1578,11 +1578,15 @@ class LocalRepository {
   /// for the queue drain → server insert → realtime → delta-sync
   /// round-trip. The row carries:
   ///
-  /// * `txn_id`   = [clientOpId] as a placeholder (we don't know
-  ///                the server-assigned UUID yet);
-  /// * `client_op_id` = same, so `applyTransactionsPayload` can
-  ///                    dedupe-and-replace when the server row
-  ///                    arrives;
+  /// * `txn_id`   = the client-minted [txnId] UUID (migrations 0097-0100),
+  ///                so the row keeps ONE stable id across sync and can be
+  ///                voided offline before it reaches the server. Falls back
+  ///                to [clientOpId] only when a caller omits [txnId] (legacy
+  ///                path / pre-0097 rows);
+  /// * `client_op_id` = the separate idempotency key, so
+  ///                    `applyTransactionsPayload` can dedupe-and-replace
+  ///                    when the server row arrives (keyed on client_op_id,
+  ///                    independent of the txn_id format);
   /// * `server_updated_at` = 0, signalling "not yet synced from
   ///                          server". `LocalTransaction
   ///                          .isOptimistic` returns true for
