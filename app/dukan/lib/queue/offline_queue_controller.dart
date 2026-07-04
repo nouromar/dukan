@@ -49,6 +49,7 @@ class OfflineQueueController extends ChangeNotifier {
     this.isAuthError,
     this.refreshSession,
     this.isPermanentError,
+    this.canDrainShop,
     Duration Function(int attempts)? backoff,
     DateTime Function()? clock,
     int? maxPending,
@@ -87,6 +88,17 @@ class OfflineQueueController extends ChangeNotifier {
   /// the server's new value (success). Optional — set to null in
   /// `light` offline mode where projections don't exist.
   final Future<void> Function(String pendingPostId)? onProjectionCleanup;
+
+  /// Gate: may a queued post for [shopId] drain under the CURRENTLY signed-in
+  /// user? When wired (production, from AuthController's shop list), a post
+  /// whose shop the current user can't access is HELD — skipped, not attempted
+  /// — so if user A queues work offline then user B signs in on the same
+  /// device, A's posts wait for A to return instead of failing permanently
+  /// under B's session (which would strand A's sales in B's Failed posts).
+  /// Fail-open: returns true when the current user's shop set is unknown/empty
+  /// (transient bootstrap window) so a legitimate post is never held forever.
+  /// Null (unit tests / not wired) → every post is drainable.
+  final bool Function(String shopId)? canDrainShop;
 
   /// Optional — when wired, the controller reads `queueMaxPending` /
   /// `queueMaxAttempts` / `queueRetry*` from the hierarchical config
@@ -288,14 +300,20 @@ class OfflineQueueController extends ChangeNotifier {
     _draining = true;
     notifyListeners();
     try {
-      // Process head-to-tail; stop on first failure so we don't
-      // beat on a broken connection.
-      while (_pending.isNotEmpty) {
-        final head = _pending.first;
+      // Process first-drainable → tail; stop on first failure so we don't
+      // beat on a broken connection. Posts whose shop the current user can't
+      // access (canDrainShop == false) are SKIPPED, not attempted — they stay
+      // pending for their own user to drain, instead of failing under this
+      // session (cross-account safety).
+      while (!_disposed) {
+        final idx = _pending
+            .indexWhere((p) => canDrainShop?.call(p.shopId) ?? true);
+        if (idx == -1) break; // nothing drainable (empty, or all held)
+        final head = _pending[idx];
         try {
           await executor(head);
           await dao.remove(head.id);
-          _pending = _pending.sublist(1);
+          _pending = List<PendingPost>.of(_pending)..removeAt(idx);
           _lastDrainSuccessAt = _clock();
           // Back below the soft cap → re-arm the one-time warning.
           if (_softCapWarned && _pending.length < _maxPending) {
@@ -331,10 +349,9 @@ class OfflineQueueController extends ChangeNotifier {
               lastAttemptAt: now,
               lastError: 'auth: $error',
             );
-            _pending = [
-              head.copyWith(lastAttemptAt: now, lastError: 'auth: $error'),
-              ..._pending.sublist(1),
-            ];
+            _pending = List<PendingPost>.of(_pending)
+              ..[idx] =
+                  head.copyWith(lastAttemptAt: now, lastError: 'auth: $error');
             if (_disposed) return;
             notifyListeners();
             break;
@@ -358,7 +375,7 @@ class OfflineQueueController extends ChangeNotifier {
           // Rare: most rejects are caught inline and never queue.
           if (isPermanentError?.call(error) ?? false) {
             await dao.markFailedPermanent(head.id);
-            _pending = _pending.sublist(1);
+            _pending = List<PendingPost>.of(_pending)..removeAt(idx);
             _failedCount += 1;
             // #374: clear projection so on-screen stock reverts.
             await _safeCleanupProjection(head.id);
@@ -374,10 +391,10 @@ class OfflineQueueController extends ChangeNotifier {
             continue;
           }
           // (3) Transient (network / timeout / offline / unknown): keep
-          // the post at the head and retry FOREVER. The queue never
+          // the post in place and retry FOREVER. The queue never
           // expires; a reconnect (drainNow) or the backoff timer will
           // re-attempt it.
-          _pending = [updated, ..._pending.sublist(1)];
+          _pending = List<PendingPost>.of(_pending)..[idx] = updated;
           if (_disposed) return;
           notifyListeners();
           break;

@@ -16,10 +16,11 @@ import 'package:dukan/storage/pending_post_dao.dart';
 import '../shared/fakes.dart';
 import '../shared/test_database.dart';
 
-PendingPost _post(String id, {DateTime? queuedAt}) => PendingPost(
+PendingPost _post(String id, {DateTime? queuedAt, String shopId = 'shop-1'}) =>
+    PendingPost(
       id: id,
       clientOpId: 'op-$id',
-      shopId: 'shop-1',
+      shopId: shopId,
       originalActorUserId: 'user-1',
       rpc: 'post_sale',
       params: const <String, dynamic>{},
@@ -69,6 +70,34 @@ void main() {
     await controller.start();
     expect(controller.pendingCount, greaterThanOrEqualTo(0));
     expect(notified, greaterThan(0));
+  });
+
+  test('holds posts for a shop the current user cannot access, drains its own '
+      '(cross-account safety)', () async {
+    final drained = <String>[];
+    final scoped = OfflineQueueController(
+      dao: dao,
+      executor: (post) async => drained.add(post.id),
+      backoff: (_) => Duration.zero,
+      clock: () => DateTime.utc(2026, 6, 12, 12, 0, 0),
+      // Current user can access shop-A only.
+      canDrainShop: (shopId) => shopId == 'shop-A',
+    );
+    addTearDown(scoped.dispose);
+    await dao.insert(_post('mine', shopId: 'shop-A'));
+    await dao.insert(_post('theirs', shopId: 'shop-B'));
+    await scoped.start();
+    for (var i = 0; i < 16; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+    }
+    // My shop's post drained; the other user's post was NOT attempted and
+    // stays pending (not failed) for its own user to drain later.
+    expect(drained, contains('mine'));
+    expect(drained, isNot(contains('theirs')));
+    final remaining = (await dao.load()).map((p) => p.id);
+    expect(remaining, contains('theirs'));
+    final failed = (await dao.loadFailedPermanent()).map((p) => p.id);
+    expect(failed, isNot(contains('theirs')));
   });
 
   test('enqueue persists + drains on success', () async {

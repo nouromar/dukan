@@ -137,6 +137,16 @@ class _AuthBootstrapState extends State<AuthBootstrap>
         await widget.supabaseClient.auth.refreshSession();
       },
       isPermanentError: _isQueuePermanentError,
+      // Cross-account safety: only drain a post for a shop the CURRENTLY
+      // signed-in user can access. If user A queues work offline then logs
+      // out and user B signs in on the same device, A's posts are HELD (not
+      // attempted under B, where they'd fail RLS and park in B's Failed
+      // posts) until A returns. Fail-open while the shop list is still
+      // loading (empty) so a legitimate post is never held forever.
+      canDrainShop: (shopId) {
+        final shops = _authController.shops;
+        return shops.isEmpty || shops.any((s) => s.id == shopId);
+      },
     );
     // Log a parked (server-rejected) post — the one non-retryable case.
     // Kept as a listener so the controller stays log-free / test-quiet.
