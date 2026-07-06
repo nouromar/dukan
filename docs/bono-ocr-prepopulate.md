@@ -4,9 +4,11 @@
 >
 > - `docs/mobile-app.md` § 7 — the Receive flow this design enhances.
 > - `docs/ux.md` — the speed contract and binding interaction rules.
-> - `docs/architecture.md` § OCR pipeline — high-level placement.
+> - `docs/architecture.md` § OCR pipeline — **superseded by this doc.** That section describes the older Google Cloud Vision + heuristic-parser approach; this design uses an LLM (Claude Haiku 4.5 multimodal, forced tool-use) instead — see § 5.
 > - `docs/backend-schema.md` § documents/OCR — the `document` / `ocr_job` / `ocr_correction` tables.
-> - `docs/templates-and-learning.md` — the `ocr-mappings.json` pack each template seeds with.
+> - `docs/templates-and-learning.md` — note: the `ocr-mappings.json` template pack described there is **not shipped** (the grocery template was removed). Supplier-specific mapping is learned at runtime via `supplier_item_alias` (§ 6.1 / § 7), not seeded from a template pack.
+>
+> **Status:** this is the *robust + scalable-by-config* revision. The pipeline scales to thousands of bonos/month out of the box and to tens of thousands by configuration + Anthropic-tier changes only (§ 6a) — no re-architecture.
 
 ---
 
@@ -46,27 +48,29 @@ Pinned upfront so scope creep gets caught:
 
 ## 3. Current state (honest accounting)
 
-This is what exists today (as of `0053`):
+This is what exists today (as of migration head `0100`):
 
 | Layer | Status |
 |---|---|
-| Mobile bono capture (camera/gallery) | ✓ shipped — `lib/shared/bono_image_picker.dart` |
-| Mobile upload to Storage | ✓ shipped — `ShopApi.uploadBonoImage()` |
-| `create_bono_document` RPC | ✓ shipped — migration `0034` |
-| Receive screen attaches `document_id` | ✓ shipped — `receive_screen.dart:462` |
-| `document` table with `ocr_result jsonb` | ✓ shipped — migration `0008` |
-| `ocr_status` reference table | ✓ shipped — migration `0008` |
-| `ocr_job` queue table with attempts/locking | ✓ shipped — migration `0008` |
+| Mobile bono capture (camera/gallery, OCR-tuned compression) | ✓ shipped — `lib/shared/bono_image_picker.dart` (maxWidth 1600, q70) |
+| Mobile upload to Storage + client-minted document UUID | ✓ shipped — `ShopApi.uploadBonoImage()` (`shop_api.dart:~1880`) |
+| `create_bono_document` RPC | ⚠ shipped but **inert** — migration `0034` inserts the `document` with `ocr_status='pending'` and **does NOT enqueue an `ocr_job`**, so a bono is captured/stored/linked and then nothing happens; `ocr_status` sits `pending` forever |
+| Receive screen attaches `document_id` → `post_receive` | ✓ shipped — `receive_screen.dart` (`_onAttachBono` ~`:473`, upload `:507`, threaded at `:820/:886/:942`) |
+| `document` table with `ocr_result jsonb` + `ocr_status_id` | ✓ shipped — migration `0008` |
+| `ocr_status` reference table (`pending/processing/success/failed/manual`) | ✓ shipped — migrations `0002` + `0008` |
+| `ocr_job` queue table (attempts / `locked_at` / `last_error` / status index) | ✓ shipped — migration `0008` (built, but **nothing writes to it yet**) |
 | `ocr_correction` for learning | ✓ shipped — migration `0008` |
-| Template `ocr-mappings.json` seed | ✓ shipped — `templates/grocery/` |
-| **Edge function calling Vision API** | ✗ **missing** |
-| **Job dispatcher (trigger / cron)** | ✗ **missing** |
+| Storage bucket `shop-documents` + RLS + path-shape constraint | ✓ shipped — migration `0015` |
+| ~~Template `ocr-mappings.json` seed~~ | ✗ **removed** — grocery is no longer a shop starter (harness fixture only, see `templates/README.md`); no `ocr-mappings.json` exists |
+| **Edge function calling the AI** | ✗ **missing** — `supabase/functions/` does not exist; zero AI/OCR code in the repo |
+| **Job dispatcher (trigger + poller)** | ✗ **missing** |
 | **Result → suggested-line RPC** | ✗ **missing** |
-| **Supplier-specific learning table** | ✗ **missing** |
+| **Supplier-specific learning table** (`supplier_item_alias`) | ✗ **missing** |
+| **Config knobs + secrets wiring for the AI key** | ✗ **missing** (`platform_config` exists — `0067` — but holds no OCR keys/tunables yet) |
 | **Mobile prepopulate UX** | ✗ **missing** |
 | **Backend harness coverage** | ✗ **missing** |
 
-The schema is set up well. Everything from the network call upward is unbuilt.
+The schema + capture are set up well. **Everything from the AI call up is unbuilt**, and the shipped `create_bono_document` doesn't yet enqueue a job. New migrations land at `0101+`.
 
 ---
 
@@ -95,14 +99,21 @@ Cashier taps "📸 Bono"
 [Storage] PUT shop-documents/{shop_id}/documents/{doc_id}/image.jpg
         │
         ▼
-[Backend] create_bono_document RPC
-        │  • Inserts document row
-        │  • Inserts ocr_job row (status='queued')
+[Backend] create_bono_document RPC + after-insert trigger on `document`
+        │  • Inserts document row (ocr_status='pending')
+        │  • Trigger enqueues ocr_job (status='queued')
+        │  • Trigger fires a BEST-EFFORT pg_net kick to the edge fn (fast path)
         │  • Returns doc_id immediately (mobile not blocked)
         ▼
-[Edge Function] ocr-bono — invoked via:
-        │  - pg_net call from create_bono_document trigger (preferred), or
-        │  - Supabase Realtime → mobile triggers Edge via REST (fallback)
+[Dispatch] two layers — see § 6.5 + § "Scalability by configuration":
+        │  - FAST PATH: the trigger's pg_net kick (low latency, common case)
+        │  - BACKBONE: a pg_cron poller (~10s) claims a bounded batch of
+        │    'queued' jobs under a lease (SKIP LOCKED), reclaims stale
+        │    'processing' jobs, enforces rate + daily-cost budgets, and
+        │    invokes ocr-bono. If the fast-path kick ever fails, the poller
+        │    catches the job — nothing is stranded, and bursts get absorbed.
+        ▼
+[Edge Function] ocr-bono
         │
         │ 1. Loads document row + shop context (name, top items,
         │    known supplier names) — passed into the prompt for priming.
@@ -200,16 +211,17 @@ The function:
    - The 20 most-recent supplier `party.name`.
 5. Calls **Anthropic Messages API** with multimodal input (image + text) and `tool_choice` forcing a single `record_bono` tool call. The model is pinned to `claude-haiku-4-5-20251001`.
 6. Validates the returned JSON against `BONO_SCHEMA` (defensive second-pass; `tool_choice` constrains the model but we never trust a single layer).
-7. UPSERTS `document.ocr_result` and `ocr_job.status = 'success'`.
-8. On any exception or schema-validation failure, sets `ocr_job.status = 'failed'`, increments attempts, stores `last_error`. After 3 failures the job is dead — mobile never sees a suggestion, cashier enters manually.
+7. **Hallucination guard (baked in, not optional):** if `bono_total` is present and `abs(sum(line_total) − bono_total) / bono_total > 0.10` (threshold `ocr_hallucination_tolerance`, config), stamp a `result_warning` on `ocr_result` and downgrade EVERY line to `low` confidence — the classic "invented line pads the sum" shape can't slip through pre-checked. `unparseable_sections` gives the model a sanctioned place to dump uncertainty instead of fabricating.
+8. UPSERTS `document.ocr_result` and `ocr_job.status = 'success'`.
+9. On any exception or schema-validation failure, sets `ocr_job.status = 'failed'`, increments attempts, stores `last_error`. After `ocr_max_attempts` (config, default 3) the job is dead-lettered — the owner sees "OCR unavailable, enter manually"; the cashier is never blocked.
 
 **Why an LLM with tool_choice, not Vision + custom parser?** See § 5. Tool-use forces the model to call exactly one function with arguments matching `BONO_SCHEMA` — no free-form prose, no markdown JSON-in-code-fence parsing, no drift.
 
 **Why Claude Haiku 4.5 specifically?**
 - Cheapest tier with full vision support — 200K context window is plenty for bono context + image.
-- ~$0.004 per bono at our prompt size (vs $0.012 for Sonnet 4.6, $0.020 for Opus 4.8).
+- ~$0.004 per bono at our prompt size (vs $0.012 for Sonnet 5, $0.020 for Opus 4.8).
 - Receipt-style documents are well within its accuracy band; upgrade tier only if pilot data shows accuracy gaps.
-- Pinning to a specific snapshot (`claude-haiku-4-5-20251001`) guarantees deterministic behavior across deployments — see § 15 open question on regression-test corpus.
+- Pinning to a specific snapshot (`claude-haiku-4-5-20251001`) guarantees deterministic behavior across deployments — see § 15.2 (regression corpus). Model swaps go through the `ocr_model` config knob (§ 6a), not a code change.
 
 **Prompt shape (illustrative, final wording set during #261):**
 
@@ -359,7 +371,40 @@ create trigger enqueue_ocr_job_after_bono_insert
   for each row execute function public._enqueue_ocr_for_bono();
 ```
 
-`app.ocr_edge_url` and `app.service_role_key` are stored as Supabase secrets, read at runtime.
+`app.ocr_edge_url` and `app.service_role_key` are stored as Supabase secrets, read at runtime. The `pg_net` call is **best-effort / fire-and-forget** — it is the low-latency fast path only. Correctness does NOT depend on it: if it fails (network, edge cold-start, transient), the job simply stays `queued` and the poller (§6.6) picks it up on its next tick. Never `raise` on a failed kick — the `document` insert must always succeed.
+
+### 6.6 Dispatcher — `pg_cron` poller (reliability + scale backbone)
+
+A scheduled job (`pg_cron`, every `ocr_poller_interval_s` — default 10 s) is the authoritative drainer. Each tick, in one SECURITY DEFINER function:
+
+1. **Reclaim** stale leases: `update ocr_job set status='queued' where status='processing' and locked_at < now() - (lease interval)` — a crashed/timed-out worker's job returns to the pool.
+2. **Budget check**: read the config knobs (§ Scalability); if the global daily cost cap or global in-flight ceiling is already hit, do nothing this tick (backpressure). Otherwise compute the remaining batch budget = `min(ocr_poller_batch_size, ocr_max_concurrent_global − in_flight)`.
+3. **Claim** up to the batch budget: `... where status='queued' [and not exceeding ocr_max_per_shop_per_min per shop] order by created_at for update skip lock limit N` → set `status='processing', locked_at=now(), attempts=attempts+1`, returning the ids. `SKIP LOCKED` means many poller ticks / workers never fight over the same row.
+4. **Invoke** `ocr-bono` per claimed job via `pg_net` (or one fan-out call). The edge fn does the AI call and writes the result; it does NOT need to re-claim (the poller already leased it).
+
+This gives **natural backpressure** (the poller only pulls what the budget allows, so a burst of thousands of uploads queues cleanly instead of hammering Anthropic), **no stranded jobs** (every `queued`/stale-`processing` row is eventually claimed), and **idempotency** (`ocr_job.document_id` unique + status compare-and-set + re-runnable UPSERT). `pgmq` (Supabase's queue extension) was considered but the shipped `ocr_job` table already has the attempts/lease/status-index columns we need — reuse it, less churn.
+
+---
+
+## 6a. Scalability by configuration
+
+**Design contract:** the initial build handles **thousands of bonos/month**; growing to tens of thousands is a **configuration + provisioning** change, never a re-architecture. There is no code or schema change on the scaling path — the `ocr_job` queue + stateless edge worker scale horizontally, gated only by tunables and the Anthropic org tier.
+
+All knobs live in `platform_config` (migration `0067`, `get_platform_config_for_shop` / `set_platform_config`), with a platform default plus optional per-org / per-shop override, read at runtime by the poller + edge fn (no redeploy to change):
+
+| Knob | Purpose |
+|---|---|
+| `ocr_poller_interval_s` (10) | poller tick rate |
+| `ocr_poller_batch_size` (25) | jobs claimed per tick — the primary throughput dial |
+| `ocr_max_concurrent_global` (50) | global in-flight ceiling — protects the Anthropic org rate limit |
+| `ocr_max_per_shop_per_min` (10) | per-shop fairness + abuse guard |
+| `ocr_job_lease_seconds` (60) | stale-`processing` reclaim window |
+| `ocr_max_attempts` (3) | dead-letter after N tries |
+| `ocr_backoff_seconds` (`[1,4,12]`) | retry spacing on transient Anthropic errors |
+| `ocr_daily_cost_cap_usd` (global + per-shop) | circuit breaker: over budget → jobs stay `queued`, banner never appears, **manual entry is unaffected** |
+| `ocr_model` (`claude-haiku-4-5`) + `ocr_model_max_tokens` | model swap by config (see § 5 / § 11) |
+
+**How you scale:** raise `ocr_poller_batch_size` / `ocr_max_concurrent_global`, provision a higher **Anthropic usage tier** (the true RPM/TPM ceiling — an ops lever, not code), and move up the **Supabase plan** for edge-function concurrency + DB headroom. The queue absorbs bursts; the poller meters them to the budget. Nothing above the config layer changes.
 
 ---
 
@@ -500,7 +545,11 @@ The learned-supplier case is the headline. The cold-start case is still slower t
 - **`suggest_receive_lines_from_bono` RPC:** ≤ 250 ms (uses indexed `supplier_item_alias` lookup; bounded by line count ≤ 50).
 - **`confirm_bono_suggestion` RPC:** ≤ 100 ms (single insert + upsert).
 - **Mobile polling:** if Realtime fails, poll once at 3 s after upload, then every 3 s up to 30 s. After 30 s the cashier sees no banner — manual entry continues. (Realtime is preferred; polling is the fallback.)
-- **Anthropic API timeout:** edge function sets a 25 s hard timeout on the upstream call; rejected → retry. Anthropic's 503/529 (overload) responses also trigger retry with exponential backoff (1 s, 4 s, 12 s).
+- **Anthropic API timeout:** edge function sets a 25 s hard timeout on the upstream call; rejected → retry. Anthropic's 429/503/529 (rate-limit / overload) responses also trigger retry with exponential backoff (`ocr_backoff_seconds`, default 1 s / 4 s / 12 s).
+
+### 10.1 Observability
+
+A read-only view `v_ocr_job_stats` (shop-scoped via RLS, aggregate-only for platform staff) exposes, over a rolling window: job counts by `status`, p50/p95 queue→success latency, mean `attempts`, dead-letter rate, and estimated Anthropic spend (jobs × per-model cost). Surfaced in the **system-admin portal**. This is the signal for the cost/accuracy ladder (§ 15.3): the **accuracy proxy** = ratio of review-sheet `?`/unchecked rows to total suggested lines; if it stays high, escalate `ocr_model` config (Haiku 4.5 → Sonnet 5) and re-run the regression corpus. No per-bono audit rows (too noisy — see § 15.5); the aggregate view is the source of truth.
 
 ---
 
@@ -510,7 +559,7 @@ The learned-supplier case is the headline. The cold-start case is still slower t
 - **Anthropic API privacy:** API calls on the paid tier are not used for model training — see Anthropic's commercial terms. Image bytes are processed for the inference call and discarded by Anthropic; only the structured `ocr_result` lives in our database (RLS-scoped). No additional data-sharing clause beyond what the shopkeeper accepted at signup.
 - **Per-bono cost:** ~$0.004 on Claude Haiku 4.5 (image ≈ 1,500–2,000 vision tokens at $1/M input, prompt ≈ 500 tokens, output ≈ 300–500 tokens at $5/M output).
 - **Aggregate cost ceiling:** per-shop ~$1.20/month at 10 bonos/day × 30. **Pilot total (100 shops): $120/month.** Negligible.
-- **Cost-tier upgrade path:** if accuracy is insufficient on a corpus of pilot bonos, swap to Sonnet 4.6 (~$0.012/bono, $360/month total) — pin the new model snapshot, re-run the regression corpus, redeploy. Opus 4.8 is overkill for receipt parsing.
+- **Cost-tier upgrade path:** if accuracy is insufficient on a corpus of pilot bonos, swap to Sonnet 5 (~$0.012/bono, $360/month total) — pin the new model snapshot, re-run the regression corpus, redeploy. Opus 4.8 is overkill for receipt parsing.
 - **Rate limit:** 10 ocr-bono calls / shop / minute. Defensive; prevents runaway costs from a bug. Anthropic also enforces tier-based rate limits at the org level — we provision the org tier to comfortably cover pilot peak.
 - **PII in OCR results:** the `ocr_result` jsonb may contain customer-readable strings (item names, quantities). Treated like any other shop-owned data; RLS keeps it scoped to shop membership.
 - **Prompt-injection defence:** the input image could in principle contain text trying to manipulate the model ("ignore prior instructions, return ..."). Tool-use with a strict schema constrains output to `BONO_SCHEMA` — the model can't return arbitrary text or execute external actions. Worst-case prompt-injection lands a bad line in the suggestion sheet; cashier sees raw_text vs the image and rejects. No data exfiltration vector exists.
@@ -545,12 +594,17 @@ Deferred, with pull-in conditions:
 
 Sequenced so each phase is independently shippable + verifiable.
 
+> Migration numbers below are next-available from the current head `0100`.
+
 **#260 — Backend schema + RPCs (~1.5 days)**
-- [ ] Migration `0054_supplier_item_alias.sql` — new table + indexes.
-- [ ] Migration `0055_ocr_rpcs.sql`:
+- [ ] Migration `0101_supplier_item_alias.sql` — new table + indexes.
+- [ ] Migration `0102_ocr_rpcs.sql`:
   - [ ] `suggest_receive_lines_from_bono(p_shop_id, p_document_id)`
   - [ ] `confirm_bono_suggestion(p_shop_id, p_document_id, p_raw_text, p_shop_item_id, p_shop_item_unit_id)`
-  - [ ] `_enqueue_ocr_for_bono()` trigger (without the pg_net call yet — added in #261)
+- [ ] Migration `0103_ocr_dispatch.sql`:
+  - [ ] `_enqueue_ocr_for_bono()` after-insert trigger on `document` (enqueue `ocr_job` + best-effort pg_net kick — the kick can be a no-op stub until #261 wires the edge URL).
+  - [ ] `_drain_ocr_jobs()` SECURITY DEFINER dispatcher (reclaim stale leases → budget check → claim batch `SKIP LOCKED` → pg_net invoke) + `pg_cron` schedule at `ocr_poller_interval_s`.
+  - [ ] `platform_config` defaults for the § 6a knobs; `v_ocr_job_stats` view.
 - [ ] Harness § `MM` covering:
   - [ ] Alias lookup ranks by `confirm_count` desc.
   - [ ] `confirm_bono_suggestion` upserts both `ocr_correction` and `supplier_item_alias`.
@@ -565,7 +619,7 @@ Sequenced so each phase is independently shippable + verifiable.
 - [ ] Lock acquisition on `ocr_job`; status transitions; retry semantics with exponential backoff (1 s / 4 s / 12 s).
 - [ ] `ANTHROPIC_API_KEY` stored as a Supabase secret; model snapshot pinned to `claude-haiku-4-5-20251001`.
 - [ ] Local invocation test (curl + a sample bono image).
-- [ ] Wire pg_net call from the `0054` trigger; configure `app.ocr_edge_url` secret.
+- [ ] Wire the pg_net kick from the `0103` trigger + `_drain_ocr_jobs()` poller; configure `app.ocr_edge_url` secret; enable `pg_net` + `pg_cron` on the target project.
 - [ ] Smoke deploy to staging; measure end-to-end latency.
 - [ ] **Build regression corpus:** 10–15 representative bono images (printed-clean, printed-skewed, handwritten-clean, handwritten-messy, mixed-script). Stored in a test-only Storage path. Edge function has a `?test=corpus` mode that runs all of them and dumps results — used to validate any model upgrade.
 
@@ -590,13 +644,15 @@ Sequenced so each phase is independently shippable + verifiable.
 
 ---
 
-## 15. Open questions
+## 15. Resolved decisions
 
-To resolve before #260 lands:
+The open questions from the original draft are now resolved (this is the robust + scalable-by-config design):
 
-1. **Trigger vs job-poller for OCR dispatch.** Current design uses pg_net from the insert trigger. Alternative: a scheduled Edge function polling `ocr_job where status='queued'` every 10 s. Trigger is lower latency; poller is simpler ops. Lean trigger; confirm pg_net is enabled on the target project.
-2. **Model snapshot pinning + regression corpus.** Pin `claude-haiku-4-5-20251001` (or the equivalent dated snapshot in use at deploy time). Build the 10–15-image regression corpus during #261. Any model upgrade (Haiku → Sonnet, or a newer Haiku snapshot) MUST pass the corpus before being deployed. Where does the corpus live — repo (fixture images, public-ish content) or a private Storage path?
-3. **Cost-tier ladder.** Start on Haiku 4.5. If pilot shopkeepers report wrong-line surfaces > 10 % of the time, escalate to Sonnet 4.6. What's the metric we'll watch? Proposal: ratio of suggestion-sheet `?` rows + cashier-unchecked rows, surfaced to system admin portal in v1.x.
-4. **Currency in the prompt.** Pass `shop.currency_code` as context; tell the model "expected currency is X — interpret bare numbers in that currency." For SLSH-currency shops with very-large totals (no cents), the model handles native; verify with a real Hargeisa bono.
-5. **Audit log emission.** Should each `confirm_bono_suggestion` write an `audit_log` row? Tilt no — too noisy. Aggregate counts in admin portal instead.
-6. **Hallucination metric.** Build a "model invented this line" detector: compare reported line_total against the OCR'd bono_total; if sum-of-line-totals differs from bono_total by > 10 %, flag the whole result as low-confidence and downgrade ALL suggestions to `?`. Catches the worst hallucination shape (invented lines pad the sum).
+1. **Dispatch → hybrid.** Trigger's best-effort pg_net kick (fast path) **plus** a `pg_cron` poller with lease/reclaim as the reliability + scale backbone (§ 6.5 / § 6.6). No stranded jobs; bursts absorbed by the queue. Requires `pg_net` + `pg_cron` enabled on the project (both available on Supabase hosted).
+2. **Model + regression corpus.** Default `claude-haiku-4-5` (pin the dated snapshot at deploy), swappable via the `ocr_model` config knob. Escalation tier is **Sonnet 5** (`claude-sonnet-5`); Opus 4.8 is overkill for receipts. Corpus = 10–15 representative bono images (printed-clean / printed-skewed / handwritten-clean / handwritten-messy / mixed-script) at a **private Storage test path** (not the repo — real bonos are shop PII), run via the edge fn's `?test=corpus` mode. Any `ocr_model` change MUST pass the corpus first.
+3. **Cost/accuracy ladder metric.** `v_ocr_job_stats` (§ 10.1) + the review-sheet `?`/unchecked-row ratio as the accuracy proxy. High ratio → bump `ocr_model` to Sonnet 5 (config) and re-run the corpus.
+4. **Currency in the prompt.** Pass `shop.currency_code`; instruct the model to interpret bare numbers in that currency. SLSH (0-decimal, large totals) handled natively; verify with a real Hargeisa bono during #261.
+5. **Audit emission.** No per-`confirm_bono_suggestion` audit row (too noisy). Aggregate in `v_ocr_job_stats` + the admin portal.
+6. **Hallucination guard.** Baked into the edge fn (§ 6.2 step 7): `abs(sum(line_total) − bono_total)/bono_total > 0.10` → `result_warning` + downgrade all lines to `low`. Only ☑-and-APPLIED lines write `supplier_item_alias`, so a hallucinated line self-corrects on cashier review.
+
+**Still genuinely open (confirm before #261):** the Anthropic **org usage tier** to provision for pilot peak (the true throughput ceiling — an ops decision), and the `platform_config` starting values for the § 6a knobs.
