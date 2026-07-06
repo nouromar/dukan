@@ -8021,6 +8021,144 @@ reset role;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 
+-- =====================================================================
+-- §OO Bono OCR dispatch — enqueue trigger + poller (0103)
+-- =====================================================================
+-- Runs as superuser (reset role): direct document inserts still fire the
+-- AFTER INSERT trigger, and direct ocr_job manipulation + _drain_ocr_jobs()
+-- (revoked from app roles) are superuser-only. net/cron are guarded no-ops here.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+reset role;
+do $$
+declare
+  v_shop    uuid;
+  v_bono    uuid;
+  v_recpt   uuid;
+  v_status  uuid;
+  v_owner   uuid := '00000000-0000-0000-0000-000000000001';
+  v_cnt     integer;
+  v_claimed integer;
+  v_st      text;
+  v_att     integer;
+  -- distinct document ids (each drives its own storage_path)
+  d_enq1  uuid := '00000000-0000-4000-8000-00000000e101';
+  d_recpt uuid := '00000000-0000-4000-8000-00000000e102';
+  d_off   uuid := '00000000-0000-4000-8000-00000000e103';
+  d_recl  uuid := '00000000-0000-4000-8000-00000000e201';
+  d_dead  uuid := '00000000-0000-4000-8000-00000000e202';
+  d_b1    uuid := '00000000-0000-4000-8000-00000000e211';
+  d_b2    uuid := '00000000-0000-4000-8000-00000000e212';
+  d_s1    uuid := '00000000-0000-4000-8000-00000000e221';
+  d_s2    uuid := '00000000-0000-4000-8000-00000000e222';
+  d_g1    uuid := '00000000-0000-4000-8000-00000000e231';
+  d_g2    uuid := '00000000-0000-4000-8000-00000000e232';
+begin
+  select shop_id into v_shop from test_ids;
+  select id into v_bono   from public.document_type where code = 'bono';
+  select id into v_recpt  from public.document_type where code = 'sale_receipt';
+  select id into v_status from public.ocr_status where code = 'pending';
+
+  -- Known dispatch config, feature ON at the platform default.
+  delete from public.platform_config where org_id is null and key in (
+    'ocr_enabled','ocr_poller_batch_size','ocr_max_concurrent_global',
+    'ocr_max_per_shop_per_min','ocr_job_lease_seconds','ocr_max_attempts');
+  insert into public.platform_config (org_id, key, value) values
+    (null, 'ocr_enabled',                'true'::jsonb),
+    (null, 'ocr_poller_batch_size',      '25'::jsonb),
+    (null, 'ocr_max_concurrent_global',  '50'::jsonb),
+    (null, 'ocr_max_per_shop_per_min',   '10'::jsonb),
+    (null, 'ocr_job_lease_seconds',      '60'::jsonb),
+    (null, 'ocr_max_attempts',           '3'::jsonb);
+
+  -- (a) bono document insert → exactly one queued job (fast-path trigger).
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by)
+  values (d_enq1, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_enq1::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  select count(*) into v_cnt from public.ocr_job where document_id = d_enq1 and status = 'queued';
+  if v_cnt <> 1 then raise exception '0103: bono insert did not enqueue exactly one job (%)', v_cnt; end if;
+
+  -- (b) non-bono document → no job.
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by)
+  values (d_recpt, v_shop, v_recpt, 'shop-documents', v_shop::text || '/documents/' || d_recpt::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  if exists (select 1 from public.ocr_job where document_id = d_recpt) then
+    raise exception '0103: non-bono document enqueued a job';
+  end if;
+
+  -- (c) feature flag off → bono insert does NOT enqueue (dark launch).
+  update public.platform_config set value = 'false'::jsonb where org_id is null and key = 'ocr_enabled';
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by)
+  values (d_off, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_off::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  if exists (select 1 from public.ocr_job where document_id = d_off) then
+    raise exception '0103: enqueue ignored ocr_enabled=false';
+  end if;
+  update public.platform_config set value = 'true'::jsonb where org_id is null and key = 'ocr_enabled';
+
+  -- ---- poller (_drain_ocr_jobs) scenarios; park all live jobs between each ----
+
+  -- (d) reclaim a stale lease, then re-claim it (attempts increments).
+  update public.ocr_job set status = 'success', locked_at = null where status in ('queued','processing');
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by)
+  values (d_recl, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_recl::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  update public.ocr_job set status = 'processing', attempts = 0,
+         locked_at = now() - make_interval(secs => 3600)
+   where document_id = d_recl;
+  v_claimed := public._drain_ocr_jobs();
+  select status, attempts into v_st, v_att from public.ocr_job where document_id = d_recl;
+  if v_st <> 'processing' or v_att <> 1 then
+    raise exception '0103: stale lease not reclaimed+reclaimed (% %)', v_st, v_att;
+  end if;
+
+  -- (e) dead-letter a job at max attempts (never re-claimed).
+  update public.ocr_job set status = 'success', locked_at = null where status in ('queued','processing');
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by)
+  values (d_dead, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_dead::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  update public.ocr_job set status = 'queued', attempts = 3, locked_at = null where document_id = d_dead;
+  perform public._drain_ocr_jobs();
+  select status, attempts into v_st, v_att from public.ocr_job where document_id = d_dead;
+  if v_st <> 'failed' or v_att <> 3 then
+    raise exception '0103: exhausted job not dead-lettered (% %)', v_st, v_att;
+  end if;
+
+  -- (f) batch cap: batch_size=1 → only one of two queued jobs is claimed.
+  update public.ocr_job set status = 'success', locked_at = null where status in ('queued','processing');
+  update public.platform_config set value = '1'::jsonb where org_id is null and key = 'ocr_poller_batch_size';
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by) values
+    (d_b1, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_b1::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner),
+    (d_b2, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_b2::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  v_claimed := public._drain_ocr_jobs();
+  if v_claimed <> 1 then raise exception '0103: batch cap claimed % (want 1)', v_claimed; end if;
+  select count(*) into v_cnt from public.ocr_job where document_id in (d_b1, d_b2) and status = 'processing';
+  if v_cnt <> 1 then raise exception '0103: batch cap left % processing (want 1)', v_cnt; end if;
+  update public.platform_config set value = '25'::jsonb where org_id is null and key = 'ocr_poller_batch_size';
+
+  -- (g) per-shop cap: per_shop=1 (batch high) → only one of two same-shop jobs.
+  update public.ocr_job set status = 'success', locked_at = null where status in ('queued','processing');
+  update public.platform_config set value = '1'::jsonb where org_id is null and key = 'ocr_max_per_shop_per_min';
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by) values
+    (d_s1, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_s1::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner),
+    (d_s2, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_s2::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  v_claimed := public._drain_ocr_jobs();
+  if v_claimed <> 1 then raise exception '0103: per-shop cap claimed % (want 1)', v_claimed; end if;
+  select count(*) into v_cnt from public.ocr_job where document_id in (d_s1, d_s2) and status = 'queued';
+  if v_cnt <> 1 then raise exception '0103: per-shop cap left % queued (want 1)', v_cnt; end if;
+  update public.platform_config set value = '10'::jsonb where org_id is null and key = 'ocr_max_per_shop_per_min';
+
+  -- (h) global ceiling backpressure: in-flight already at the ceiling → claim 0.
+  update public.ocr_job set status = 'success', locked_at = null where status in ('queued','processing');
+  update public.platform_config set value = '1'::jsonb where org_id is null and key = 'ocr_max_concurrent_global';
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by) values
+    (d_g1, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_g1::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner),
+    (d_g2, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_g2::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  update public.ocr_job set status = 'processing', locked_at = now() where document_id = d_g1;  -- fresh lease (not stale)
+  v_claimed := public._drain_ocr_jobs();
+  if v_claimed <> 0 then raise exception '0103: global ceiling claimed % (want 0)', v_claimed; end if;
+  select status into v_st from public.ocr_job where document_id = d_g2;
+  if v_st <> 'queued' then raise exception '0103: global ceiling did not hold job (%)', v_st; end if;
+  update public.platform_config set value = '50'::jsonb where org_id is null and key = 'ocr_max_concurrent_global';
+
+  raise notice 'OO: bono OCR dispatch (enqueue + poller) tests passed';
+end;
+$$;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';
