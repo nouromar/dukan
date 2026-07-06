@@ -8276,6 +8276,39 @@ begin
 end;
 $$;
 
+-- =====================================================================
+-- §RR Bono OCR prompt context — ocr_bono_context (0105)
+-- =====================================================================
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+reset role;
+do $$
+declare
+  v_shop uuid;
+  v_ctx  jsonb;
+begin
+  select shop_id into v_shop from test_ids;
+  v_ctx := public.ocr_bono_context(v_shop, 'so');
+
+  if v_ctx -> 'shop_name' is null or (v_ctx ->> 'shop_name') = '' then
+    raise exception '0105: context missing shop_name';
+  end if;
+  if v_ctx -> 'currency_code' is null then
+    raise exception '0105: context missing currency_code';
+  end if;
+  if pg_catalog.jsonb_typeof(v_ctx -> 'top_items') <> 'array'
+     or pg_catalog.jsonb_typeof(v_ctx -> 'top_suppliers') <> 'array' then
+    raise exception '0105: top_items/top_suppliers not arrays';
+  end if;
+  -- Main Shop has the 'Hodan Beverages' supplier seeded in §5.
+  if not (v_ctx -> 'top_suppliers' @> '["Hodan Beverages"]'::jsonb) then
+    raise exception '0105: context did not surface the shop supplier (%)', v_ctx -> 'top_suppliers';
+  end if;
+
+  raise notice 'RR: bono OCR prompt context tests passed';
+end;
+$$;
+reset role;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';
