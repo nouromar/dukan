@@ -7876,6 +7876,151 @@ reset role;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
 reset role;
 
+-- =====================================================================
+-- §NN Bono OCR matching + learning (0101 / 0102)
+-- =====================================================================
+-- Runs as owner (…0001) on Main Shop. Seeds document.ocr_result directly (no
+-- AI) + a shop-wide alias, then asserts the matching tiers, the learning loop,
+-- normalization, cross-supplier isolation, and RLS-deny on direct alias insert.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id  uuid;
+  v_supplier uuid;
+  v_other    uuid;   -- a different party, for isolation
+  v_item     uuid;
+  v_unit     uuid;
+  v_doc      uuid := '00000000-0000-4000-8000-00000000d001'::uuid;
+  v_cnt      integer;
+  v_reason   text;
+  v_sug_item uuid;
+  v_sug_unit uuid;
+  v_conf     text;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_supplier from public.party where shop_id = v_shop_id and name = 'Hodan Beverages';
+  select id into v_other    from public.party where shop_id = v_shop_id and name = 'Asha Customer';
+  select si.id, siu.id into v_item, v_unit
+  from public.shop_item si
+  join public.shop_item_unit siu
+    on siu.shop_id = si.shop_id and siu.shop_item_id = si.id
+       and siu.conversion_to_base = 1 and siu.is_active
+  where si.shop_id = v_shop_id and si.is_active
+  limit 1;
+  if v_supplier is null or v_other is null or v_item is null or v_unit is null then
+    raise exception '0102: fixtures missing (supplier/other/item/unit)';
+  end if;
+
+  -- _norm_bono_text collapses case/punctuation/whitespace to one key.
+  if public._norm_bono_text('BSMTI 25KG') <> public._norm_bono_text('bsmti-25 kg') then
+    raise exception '0101: _norm_bono_text did not collapse variants';
+  end if;
+
+  -- Bono document + a seeded OCR result (no AI). Line 1 will become a
+  -- supplier-alias hit; line 2 a shop-wide fuzzy hit; line 3 no match.
+  perform public.create_bono_document(
+    v_shop_id, v_doc,
+    v_shop_id::text || '/documents/' || v_doc::text || '/image.jpg',
+    'image/jpeg', 1000);
+  update public.document set ocr_result = pg_catalog.jsonb_build_object(
+    'bono_total', 100,
+    'lines', pg_catalog.jsonb_build_array(
+      pg_catalog.jsonb_build_object('raw_text','BSMTI 25KG','quantity',4,'unit_price',20,'confidence',0.9),
+      pg_catalog.jsonb_build_object('raw_text','ZXCVBN WIDGT','quantity',2,'line_total',44,'confidence',0.8),
+      pg_catalog.jsonb_build_object('raw_text','ZZZQ NOMATCH XY','quantity',1,'confidence',0.2)
+    ))
+  where shop_id = v_shop_id and id = v_doc;
+
+  -- Seed a shop-wide alias with a distinctive token so line 2 resolves via the
+  -- trigram (med) layer to THIS item only (no collision with template aliases).
+  insert into public.shop_item_alias (shop_id, shop_item_id, alias_text, language_code, source)
+  values (v_shop_id, v_item, 'ZXCVBN WIDGET', 'so', 'manual')
+  on conflict do nothing;
+
+  -- (a) Before learning: line 1 has no supplier alias → not a supplier_alias hit.
+  select reason into v_reason from public.suggest_receive_lines_from_bono(v_shop_id, v_doc, v_supplier) where line_no = 1;
+  if v_reason = 'supplier_alias' then
+    raise exception '0102: line matched supplier_alias before any learning';
+  end if;
+
+  -- Learn line 1 for this supplier.
+  perform public.confirm_bono_suggestion(v_shop_id, v_doc, v_supplier, 'BSMTI 25KG', v_item, v_unit, 0.9);
+  select count(*) into v_cnt from public.supplier_item_alias
+    where shop_id = v_shop_id and supplier_party_id = v_supplier and shop_item_unit_id = v_unit;
+  if v_cnt <> 1 then raise exception '0102: confirm did not create exactly one alias (%)', v_cnt; end if;
+  if not exists (select 1 from public.ocr_correction where shop_id = v_shop_id and document_id = v_doc and raw_text = 'BSMTI 25KG') then
+    raise exception '0102: confirm did not write an ocr_correction row';
+  end if;
+
+  -- (b) Now line 1 → high / supplier_alias with the learned item+unit;
+  --     line 2 → med / shop_alias (fuzzy); line 3 → low / no_match.
+  select confidence, reason, suggested_shop_item_id, suggested_shop_item_unit_id
+    into v_conf, v_reason, v_sug_item, v_sug_unit
+  from public.suggest_receive_lines_from_bono(v_shop_id, v_doc, v_supplier) where line_no = 1;
+  if v_conf <> 'high' or v_reason <> 'supplier_alias' or v_sug_item <> v_item or v_sug_unit <> v_unit then
+    raise exception '0102: line 1 not a high supplier_alias hit (% % % %)', v_conf, v_reason, v_sug_item, v_sug_unit;
+  end if;
+  select confidence, reason, suggested_shop_item_id into v_conf, v_reason, v_sug_item
+  from public.suggest_receive_lines_from_bono(v_shop_id, v_doc, v_supplier) where line_no = 2;
+  if v_conf <> 'med' or v_reason <> 'shop_alias' or v_sug_item <> v_item then
+    raise exception '0102: line 2 not a med shop_alias hit (% % %)', v_conf, v_reason, v_sug_item;
+  end if;
+  select confidence, reason, suggested_shop_item_id into v_conf, v_reason, v_sug_item
+  from public.suggest_receive_lines_from_bono(v_shop_id, v_doc, v_supplier) where line_no = 3;
+  if v_conf <> 'low' or v_reason <> 'no_match' or v_sug_item is not null then
+    raise exception '0102: line 3 not a low no_match (% % %)', v_conf, v_reason, v_sug_item;
+  end if;
+
+  -- (c) Re-confirm with a NORMALIZED-equal variant → same row, confirm_count++.
+  perform public.confirm_bono_suggestion(v_shop_id, v_doc, v_supplier, 'bsmti-25 kg', v_item, v_unit, 0.9);
+  select confirm_count into v_cnt from public.supplier_item_alias
+    where shop_id = v_shop_id and supplier_party_id = v_supplier and shop_item_unit_id = v_unit;
+  if v_cnt <> 2 then raise exception '0102: normalized re-confirm did not increment (count=%)', v_cnt; end if;
+  select count(*) into v_cnt from public.supplier_item_alias
+    where shop_id = v_shop_id and supplier_party_id = v_supplier and shop_item_unit_id = v_unit;
+  if v_cnt <> 1 then raise exception '0102: normalized re-confirm duplicated the alias row (%)', v_cnt; end if;
+
+  -- (d) Cross-supplier isolation: a DIFFERENT party never sees this mapping.
+  select reason into v_reason from public.suggest_receive_lines_from_bono(v_shop_id, v_doc, v_other) where line_no = 1;
+  if v_reason = 'supplier_alias' then
+    raise exception '0102: supplier alias leaked to another party';
+  end if;
+
+  -- (e) Direct INSERT into supplier_item_alias is RLS/grant-denied (no writer
+  --     but the SECURITY DEFINER confirm RPC).
+  begin
+    insert into public.supplier_item_alias (shop_id, supplier_party_id, raw_text, shop_item_id, shop_item_unit_id)
+    values (v_shop_id, v_supplier, 'DIRECT', v_item, v_unit);
+    raise exception '0102: direct supplier_item_alias insert was allowed';
+  exception when insufficient_privilege or with_check_option_violation then null;
+  end;
+
+  raise notice 'NN: bono OCR matching + learning tests passed';
+end;
+$$;
+reset role;
+
+-- Unrelated user cannot read bono suggestions (auth_can_post_shop denies).
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000003';
+do $$
+declare v_shop_id uuid;
+begin
+  select shop_id into v_shop_id from test_ids;
+  begin
+    perform public.suggest_receive_lines_from_bono(v_shop_id, '00000000-0000-4000-8000-00000000d001'::uuid, v_shop_id);
+    raise exception '0102: unrelated user was allowed to read bono suggestions';
+  exception when raise_exception then null;
+  end;
+  raise notice 'NN: bono OCR unrelated-user deny passed';
+end;
+$$;
+reset role;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+reset role;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';
