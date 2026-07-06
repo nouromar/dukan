@@ -28,6 +28,7 @@ done
 docker exec -i "$CONTAINER_NAME" psql -U postgres -v ON_ERROR_STOP=1 -d postgres <<'SQL'
 create role anon nologin;
 create role authenticated nologin;
+create role service_role nologin;  -- Supabase provides this; edge-fn worker RPCs grant to it
 create schema auth;
 create schema storage;
 -- Mock auth.users mirrors the columns the migrations / tests actually
@@ -8156,6 +8157,122 @@ begin
   update public.platform_config set value = '50'::jsonb where org_id is null and key = 'ocr_max_concurrent_global';
 
   raise notice 'OO: bono OCR dispatch (enqueue + poller) tests passed';
+end;
+$$;
+
+-- =====================================================================
+-- §PP Bono OCR worker contract — _ocr_begin_job / _ocr_complete_job (0104)
+-- =====================================================================
+-- Superuser (reset role): the worker RPCs are granted to service_role; a
+-- superuser bypasses grants and can drive them directly to assert the lease
+-- semantics without a live edge function.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+reset role;
+do $$
+declare
+  v_shop   uuid;
+  v_bono   uuid;
+  v_status uuid;
+  v_owner  uuid := '00000000-0000-0000-0000-000000000001';
+  v_job    uuid;
+  v_tok    uuid;
+  v_tok2   uuid;
+  v_cnt    integer;
+  v_ok     boolean;
+  v_st     text;
+  v_att    integer;
+  d_w1 uuid := '00000000-0000-4000-8000-00000000f101';
+  d_w2 uuid := '00000000-0000-4000-8000-00000000f102';
+  d_w3 uuid := '00000000-0000-4000-8000-00000000f103';
+begin
+  select shop_id into v_shop from test_ids;
+  select id into v_bono   from public.document_type where code = 'bono';
+  select id into v_status from public.ocr_status   where code = 'pending';
+
+  -- Feature on + generous budgets (§OO may have left knobs perturbed).
+  delete from public.platform_config where org_id is null and key in (
+    'ocr_enabled','ocr_poller_batch_size','ocr_max_concurrent_global',
+    'ocr_max_per_shop_per_min','ocr_job_lease_seconds','ocr_max_attempts');
+  insert into public.platform_config (org_id, key, value) values
+    (null, 'ocr_enabled',               'true'::jsonb),
+    (null, 'ocr_max_concurrent_global', '50'::jsonb),
+    (null, 'ocr_max_per_shop_per_min',  '10'::jsonb),
+    (null, 'ocr_max_attempts',          '3'::jsonb);
+  update public.ocr_job set status = 'success', locked_at = null, lease_token = null where status in ('queued','processing');
+
+  -- Seed a queued job via the enqueue trigger.
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by)
+  values (d_w1, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_w1::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  select id into v_job from public.ocr_job where document_id = d_w1;
+
+  -- (a) begin_job claims a queued job: returns the doc + a fresh token.
+  select bj.lease_token into v_tok
+  from public._ocr_begin_job(v_job) bj;
+  if v_tok is null then raise exception '0104: begin_job did not claim a queued job'; end if;
+  select status, attempts into v_st, v_att from public.ocr_job where id = v_job;
+  if v_st <> 'processing' or v_att <> 1 then raise exception '0104: begin_job left job % att % (want processing 1)', v_st, v_att; end if;
+  if not exists (select 1 from public.document d join public.ocr_status s on s.id = d.ocr_status_id
+                 where d.id = d_w1 and s.code = 'processing') then
+    raise exception '0104: begin_job did not mark the document processing';
+  end if;
+
+  -- (b) begin_job is a no-op on a non-queued job (already processing).
+  select count(*) into v_cnt from public._ocr_begin_job(v_job) bj;
+  if v_cnt <> 0 then raise exception '0104: begin_job re-claimed a processing job (%)', v_cnt; end if;
+
+  -- (c) complete_job with the WRONG token is a no-op (stale worker).
+  v_ok := public._ocr_complete_job(v_job, pg_catalog.gen_random_uuid(), 'success',
+            '{"lines":[]}'::jsonb, null, false);
+  if v_ok then raise exception '0104: complete_job accepted a stale token'; end if;
+  if exists (select 1 from public.document where id = d_w1 and ocr_result is not null) then
+    raise exception '0104: stale complete wrote an ocr_result';
+  end if;
+
+  -- (d) complete_job with the CURRENT token writes the result + succeeds.
+  v_ok := public._ocr_complete_job(v_job, v_tok, 'success', '{"lines":[{"raw_text":"X"}]}'::jsonb, null, false);
+  if not v_ok then raise exception '0104: complete_job rejected the current lease holder'; end if;
+  select status into v_st from public.ocr_job where id = v_job;
+  if v_st <> 'success' then raise exception '0104: job not success after completion (%)', v_st; end if;
+  if not exists (select 1 from public.document d join public.ocr_status s on s.id = d.ocr_status_id
+                 where d.id = d_w1 and s.code = 'success' and d.ocr_result is not null) then
+    raise exception '0104: success completion did not persist ocr_result';
+  end if;
+
+  -- (e) retryable failure under the attempt cap requeues (lease cleared).
+  update public.ocr_job set status = 'success', locked_at = null, lease_token = null where status in ('queued','processing');
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by)
+  values (d_w2, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_w2::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  select id into v_job from public.ocr_job where document_id = d_w2;
+  select bj.lease_token into v_tok from public._ocr_begin_job(v_job) bj;   -- attempts -> 1
+  v_ok := public._ocr_complete_job(v_job, v_tok, 'failed', null, 'timeout', true);
+  select status, lease_token into v_st, v_tok2 from public.ocr_job where id = v_job;
+  if v_st <> 'queued' or v_tok2 is not null then
+    raise exception '0104: retryable failure did not requeue+clear lease (% %)', v_st, v_tok2;
+  end if;
+
+  -- (f) non-retryable failure dead-letters + marks the document failed.
+  select bj.lease_token into v_tok from public._ocr_begin_job(v_job) bj;   -- attempts -> 2
+  v_ok := public._ocr_complete_job(v_job, v_tok, 'failed', null, 'bad image', false);
+  select status into v_st from public.ocr_job where id = v_job;
+  if v_st <> 'failed' then raise exception '0104: non-retryable failure not dead-lettered (%)', v_st; end if;
+  if not exists (select 1 from public.document d join public.ocr_status s on s.id = d.ocr_status_id
+                 where d.id = d_w2 and s.code = 'failed') then
+    raise exception '0104: failed completion did not mark the document failed';
+  end if;
+
+  -- (g) begin_job respects the global in-flight ceiling.
+  update public.ocr_job set status = 'success', locked_at = null, lease_token = null where status in ('queued','processing');
+  update public.platform_config set value = '0'::jsonb where org_id is null and key = 'ocr_max_concurrent_global';
+  insert into public.document (id, shop_id, type_id, storage_bucket, storage_path, mime_type, size_bytes, ocr_status_id, uploaded_by)
+  values (d_w3, v_shop, v_bono, 'shop-documents', v_shop::text || '/documents/' || d_w3::text || '/image.jpg', 'image/jpeg', 1000, v_status, v_owner);
+  select id into v_job from public.ocr_job where document_id = d_w3;
+  select count(*) into v_cnt from public._ocr_begin_job(v_job) bj;
+  if v_cnt <> 0 then raise exception '0104: begin_job ignored the global ceiling (%)', v_cnt; end if;
+  select status into v_st from public.ocr_job where id = v_job;
+  if v_st <> 'queued' then raise exception '0104: over-budget job not left queued (%)', v_st; end if;
+  update public.platform_config set value = '50'::jsonb where org_id is null and key = 'ocr_max_concurrent_global';
+
+  raise notice 'PP: bono OCR worker contract (begin/complete) tests passed';
 end;
 $$;
 
