@@ -17,6 +17,52 @@
 -- (the 0050 pattern); the queue logic itself is plain SQL and fully tested.
 
 -- ---------------------------------------------------------------------------
+-- Reconcile platform_config drift before we insert platform-default rows.
+--
+-- Some environments applied an EARLIER 0067 whose primary key was the composite
+-- (org_id, key) — which forces org_id NOT NULL and makes a platform-wide default
+-- row (org_id IS NULL) impossible, breaking both the OCR knob defaults below AND
+-- get_platform_config's default resolution generally. The repo's 0067 was later
+-- edited to a surrogate `id` PK + nullable org_id, but 0067 was already recorded
+-- as applied there, so db push never re-ran it. Heal it forward here.
+--
+-- Idempotent: the whole block is a no-op where the PK is already on `id`
+-- (local / the disposable Docker harness), so this only mutates a drifted DB.
+do $$
+declare
+  v_pk_cols text;
+begin
+  select string_agg(a.attname, ',' order by k.ord)
+    into v_pk_cols
+  from pg_constraint c
+  cross join lateral unnest(c.conkey) with ordinality as k(attnum, ord)
+  join pg_attribute a on a.attrelid = c.conrelid and a.attnum = k.attnum
+  where c.conrelid = 'public.platform_config'::regclass and c.contype = 'p';
+
+  if v_pk_cols is distinct from 'id' then
+    raise notice 'platform_config: migrating PK % -> id (drift heal)', coalesce(v_pk_cols, '(none)');
+    -- 1. surrogate id, backfilled + defaulted (matches repo 0067 exactly).
+    alter table public.platform_config add column if not exists id uuid;
+    update public.platform_config set id = extensions.gen_random_uuid() where id is null;
+    alter table public.platform_config alter column id set not null;
+    alter table public.platform_config alter column id set default extensions.gen_random_uuid();
+    -- 2. swap the composite PK for a surrogate PK (same constraint name as repo).
+    alter table public.platform_config drop constraint platform_config_pkey;
+    alter table public.platform_config add constraint platform_config_pkey primary key (id);
+    -- 3. org_id becomes nullable so a NULL-org row is the platform-wide default.
+    alter table public.platform_config alter column org_id drop not null;
+    -- 4. restore the per-org uniqueness the composite PK used to provide.
+    create unique index if not exists platform_config_org_key_uq
+      on public.platform_config(org_id, key) where org_id is not null;
+  end if;
+end
+$$;
+
+-- The NULL-org default uniqueness (present on both shapes; ensure it exists).
+create unique index if not exists platform_config_default_uq
+  on public.platform_config(key) where org_id is null;
+
+-- ---------------------------------------------------------------------------
 -- _ocr_config — resolve a knob: per-org override → platform default row →
 -- hard-coded fallback. Internal (SECURITY DEFINER); callers extract the scalar
 -- with #>> '{}'.
