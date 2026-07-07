@@ -8,6 +8,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/receive/bono_suggestion_review_sheet.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
@@ -567,7 +568,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap the camera icon in the app bar → opens the source sheet.
-      await tester.tap(find.byIcon(Icons.photo_camera_outlined));
+      await tester.tap(find.widgetWithText(ActionChip, en.bonoChipLabel));
       await tester.pumpAndSettle();
       await tester.tap(find.text(en.bonoAttachCamera));
       await tester.pumpAndSettle();
@@ -679,7 +680,7 @@ void main() {
       ];
 
   Future<void> attachBono(WidgetTester tester) async {
-    await tester.tap(find.byIcon(Icons.photo_camera_outlined));
+    await tester.tap(find.widgetWithText(ActionChip, en.bonoChipLabel));
     await tester.pumpAndSettle();
     await tester.tap(find.text(en.bonoAttachCamera));
     await tester.pumpAndSettle();
@@ -764,13 +765,74 @@ void main() {
     expect(api.confirmBonoSuggestionCalls.single.shopItemUnitId, 'siu-2');
   });
 
+  testWidgets('bono action is a labeled "Bono" chip, not a bare camera icon', (
+    tester,
+  ) async {
+    api.onSearchItems = (_, _, _, _, _, _) async => [];
+    await pumpReceive(tester);
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ActionChip, en.bonoChipLabel), findsOneWidget);
+  });
+
+  testWidgets('empty-state bono hint: shows, opens attach, and dismisses', (
+    tester,
+  ) async {
+    api.onSearchItems = (_, _, _, _, _, _) async => [];
+    await pumpReceive(tester, bonoPicker: _FakePicker());
+    await tester.pumpAndSettle();
+
+    // Visible in the empty start state.
+    expect(find.byType(BonoHintBanner), findsOneWidget);
+    expect(find.text(en.bonoHintTitle), findsOneWidget);
+
+    // Tapping it opens the attach source sheet.
+    await tester.tap(find.text(en.bonoHintTitle));
+    await tester.pumpAndSettle();
+    expect(find.text(en.bonoAttachCamera), findsOneWidget);
+    // Close the sheet.
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pumpAndSettle();
+
+    // Dismiss hides it for the session.
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BonoHintBanner),
+        matching: find.byIcon(Icons.close),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(BonoHintBanner), findsNothing);
+  });
+
+  testWidgets('bono hint disappears once a line is entered', (tester) async {
+    api.onSearchItems = (_, _, _, _, _, _) async => [
+      fakeActivatedItem(
+        shopItemId: 'si-1',
+        itemId: 'i1',
+        defaultShopItemUnitId: 'siu-1',
+        displayName: 'Bariis',
+        defaultUnitLastCost: 4,
+      ),
+    ];
+    await pumpReceive(tester);
+    await tester.pumpAndSettle();
+    expect(find.byType(BonoHintBanner), findsOneWidget);
+
+    await tester.tap(find.text('Bariis'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.receiveAddLineButton));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BonoHintBanner), findsNothing);
+  });
+
   testWidgets('bono: no suggestions → no banner (inert)', (tester) async {
     api.onUploadBonoImage = (_, _, _, _) async => 'doc-1';
     api.onSuggestReceiveLinesFromBono = (_, _, _, _) async => const [];
 
     await pumpReceive(tester, bonoPicker: _FakePicker());
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.photo_camera_outlined));
+    await tester.tap(find.widgetWithText(ActionChip, en.bonoChipLabel));
     await tester.pumpAndSettle();
     await tester.tap(find.text(en.bonoAttachCamera));
     await tester.pumpAndSettle();

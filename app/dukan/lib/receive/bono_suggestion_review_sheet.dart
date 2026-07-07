@@ -15,6 +15,73 @@ import 'package:flutter/material.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/shared/l10n.dart';
 
+/// First-use teaching hint in the empty Receive state — advertises the photo
+/// shortcut ("snap the bono, we'll fill it in"). Tapping it opens the attach
+/// flow; dismiss hides it for the session.
+class BonoHintBanner extends StatelessWidget {
+  const BonoHintBanner({
+    super.key,
+    required this.onTap,
+    required this.onDismiss,
+  });
+
+  final VoidCallback onTap;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = tr(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: Material(
+        color: scheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Icon(Icons.document_scanner_outlined,
+                    color: scheme.onTertiaryContainer),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l.bonoHintTitle,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onTertiaryContainer,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        l.bonoHintSubtitle,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: scheme.onTertiaryContainer),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  color: scheme.onTertiaryContainer,
+                  onPressed: onDismiss,
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class BonoSuggestionBanner extends StatelessWidget {
   const BonoSuggestionBanner({
     super.key,

@@ -116,6 +116,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   // leaves the banner absent. See docs/bono-ocr-prepopulate.md.
   List<BonoSuggestion> _bonoSuggestions = const [];
   bool _bonoSuggestionsDismissed = false;
+  // First-use teaching hint in the empty state. Session-scoped (no persistence):
+  // it vanishes the moment a line is added or a bono attached, so an experienced
+  // cashier barely sees it, while a new one learns the photo shortcut exists.
+  bool _bonoHintDismissed = false;
   RealtimeWatcher? _bonoWatcher;
   Timer? _bonoPoll;
   int _bonoPollTicks = 0;
@@ -1137,25 +1141,51 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
             workingDate: controller.workingDate,
             onChanged: controller.setWorkingDate,
           ),
-          IconButton(
-            tooltip: _bonoDocumentId == null
-                ? l.bonoAttachTooltip
-                : l.bonoAttachedTooltip,
-            icon: _attachingBono
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(
-                    _bonoDocumentId == null
-                        ? Icons.photo_camera_outlined
-                        : Icons.check_circle,
-                    color: _bonoDocumentId == null
-                        ? null
-                        : Theme.of(context).colorScheme.primary,
+          // Labeled "Bono" chip (not a bare camera icon) so a first-time
+          // shopkeeper reads the purpose — "bono" is their own word for the
+          // supplier invoice. Fills + checks once a photo is attached.
+          Builder(
+            builder: (context) {
+              final scheme = Theme.of(context).colorScheme;
+              final attached = _bonoDocumentId != null;
+              return Padding(
+                padding: const EdgeInsetsDirectional.only(end: 4),
+                child: ActionChip(
+                  avatar: _attachingBono
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          attached
+                              ? Icons.check_circle
+                              : Icons.document_scanner_outlined,
+                          size: 18,
+                          color: attached
+                              ? scheme.onPrimaryContainer
+                              : scheme.onSurfaceVariant,
+                        ),
+                  label: Text(l.bonoChipLabel),
+                  labelStyle: TextStyle(
+                    color: attached
+                        ? scheme.onPrimaryContainer
+                        : scheme.onSurfaceVariant,
+                    fontWeight: attached ? FontWeight.w700 : FontWeight.w400,
                   ),
-            onPressed: _saving || _attachingBono ? null : _onAttachBono,
+                  backgroundColor:
+                      attached ? scheme.primaryContainer : Colors.transparent,
+                  side: attached
+                      ? BorderSide.none
+                      : BorderSide(color: scheme.outlineVariant),
+                  tooltip: attached
+                      ? l.bonoAttachedTooltip
+                      : l.bonoAttachTooltip,
+                  onPressed:
+                      _saving || _attachingBono ? null : _onAttachBono,
+                ),
+              );
+            },
           ),
           IconButton(
             tooltip: l.receiveHistoryTooltip,
@@ -1217,6 +1247,16 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
               _ReceiveUnknownScanPill(
                 code: _unknownScan!,
                 onDismiss: () => setState(() => _unknownScan = null),
+              ),
+            // First-use hint: only in the empty start state, and never
+            // alongside a real suggestion / attached bono.
+            if (_bonoDocumentId == null &&
+                _bonoSuggestions.isEmpty &&
+                controller.lines.isEmpty &&
+                !_bonoHintDismissed)
+              BonoHintBanner(
+                onTap: _onAttachBono,
+                onDismiss: () => setState(() => _bonoHintDismissed = true),
               ),
             // Appears only once real suggestions arrive — never a lingering
             // "loading" state, so it stays absent offline / when OCR fails.

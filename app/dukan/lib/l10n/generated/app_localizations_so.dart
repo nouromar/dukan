@@ -161,6 +161,24 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
+  String get bonoChipLabel => 'Bono';
+
+  @override
+  String get bonoHintTitle => 'Sawir bonoga';
+
+  @override
+  String get bonoHintSubtitle => 'Waan kuu akhrin doonaa alaabta';
+
+  @override
+  String get receiveDetailViewBonoButton => 'Eeg bonoga';
+
+  @override
+  String get receiveDetailViewBonoTitle => 'Bono';
+
+  @override
+  String get receiveDetailBonoUnavailable => 'Sawirka bonoga lama heli karo';
+
+  @override
   String get partyDetailTitle => 'Qof';
 
   @override

@@ -53,6 +53,12 @@
       "count": { "type": "int" }
     }
   },
+  "bonoChipLabel": "Bono",
+  "bonoHintTitle": "Sawir bonoga",
+  "bonoHintSubtitle": "Waan kuu akhrin doonaa alaabta",
+  "receiveDetailViewBonoButton": "Eeg bonoga",
+  "receiveDetailViewBonoTitle": "Bono",
+  "receiveDetailBonoUnavailable": "Sawirka bonoga lama heli karo",
   "partyDetailTitle": "Qof",
   "partyHideTooltip": "Qari",
   "partyHideConfirmTitle": "Ma qarinaysaa qofkan?",

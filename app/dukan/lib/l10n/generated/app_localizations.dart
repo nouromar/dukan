@@ -356,6 +356,42 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Added 1 line} other{Added {count} lines}}'**
   String bonoSuggestionsAppliedToast(int count);
 
+  /// No description provided for @bonoChipLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono'**
+  String get bonoChipLabel;
+
+  /// No description provided for @bonoHintTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo of the bono'**
+  String get bonoHintTitle;
+
+  /// No description provided for @bonoHintSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll read the items for you'**
+  String get bonoHintSubtitle;
+
+  /// No description provided for @receiveDetailViewBonoButton.
+  ///
+  /// In en, this message translates to:
+  /// **'View bono'**
+  String get receiveDetailViewBonoButton;
+
+  /// No description provided for @receiveDetailViewBonoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono'**
+  String get receiveDetailViewBonoTitle;
+
+  /// No description provided for @receiveDetailBonoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Bono photo unavailable'**
+  String get receiveDetailBonoUnavailable;
+
   /// No description provided for @partyDetailTitle.
   ///
   /// In en, this message translates to:

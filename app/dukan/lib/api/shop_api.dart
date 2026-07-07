@@ -731,6 +731,24 @@ class ShopApi {
     );
   }
 
+  /// Sign a short-lived read URL for a bono/document object in the
+  /// shop-documents bucket, so the receive detail can display the original
+  /// photo. RLS (storage_object_can_read) authorizes shop members. Returns
+  /// null on any failure (offline, object deleted) — the caller just hides
+  /// the viewer.
+  Future<String?> signBonoUrl(
+    String storagePath, {
+    int expiresSeconds = 300,
+  }) async {
+    try {
+      return await _client.storage
+          .from('shop-documents')
+          .createSignedUrl(storagePath, expiresSeconds);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Picker source for "How is it sold?" in the Add new item sheet.
   /// Returns base-unit candidates ranked by how many items in the
   /// given category use each as their base.

@@ -158,6 +158,24 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get bonoChipLabel => 'Bono';
+
+  @override
+  String get bonoHintTitle => 'Take a photo of the bono';
+
+  @override
+  String get bonoHintSubtitle => 'We\'ll read the items for you';
+
+  @override
+  String get receiveDetailViewBonoButton => 'View bono';
+
+  @override
+  String get receiveDetailViewBonoTitle => 'Bono';
+
+  @override
+  String get receiveDetailBonoUnavailable => 'Bono photo unavailable';
+
+  @override
   String get partyDetailTitle => 'Party';
 
   @override

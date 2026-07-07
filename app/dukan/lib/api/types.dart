@@ -883,6 +883,8 @@ class SaleSummary {
     required this.isVoided,
     required this.reversalTxnId,
     required this.voidedAt,
+    this.documentId,
+    this.documentPath,
   });
 
   factory SaleSummary.fromJson(Map<String, dynamic> json) => SaleSummary(
@@ -901,6 +903,9 @@ class SaleSummary {
     voidedAt: json['voided_at'] == null
         ? null
         : DateTime.parse(json['voided_at'] as String),
+    // Receive-only (get_receive, 0107): the attached bono photo. Absent on sales.
+    documentId: json['document_id'] as String?,
+    documentPath: json['document_path'] as String?,
   );
 
   final String txnId;
@@ -914,6 +919,10 @@ class SaleSummary {
   final bool isVoided;
   final String? reversalTxnId;
   final DateTime? voidedAt;
+
+  /// The attached bono photo, when this is a receive with one (get_receive).
+  final String? documentId;
+  final String? documentPath;
 
   bool get isDebt => (partyId != null) && (paidAmount < totalAmount);
 }

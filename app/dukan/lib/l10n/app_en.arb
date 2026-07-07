@@ -65,6 +65,12 @@
       "count": { "type": "int" }
     }
   },
+  "bonoChipLabel": "Bono",
+  "bonoHintTitle": "Take a photo of the bono",
+  "bonoHintSubtitle": "We'll read the items for you",
+  "receiveDetailViewBonoButton": "View bono",
+  "receiveDetailViewBonoTitle": "Bono",
+  "receiveDetailBonoUnavailable": "Bono photo unavailable",
   "partyDetailTitle": "Party",
   "partyHideTooltip": "Hide",
   "partyHideConfirmTitle": "Hide this contact?",

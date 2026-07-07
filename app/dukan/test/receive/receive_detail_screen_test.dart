@@ -15,6 +15,7 @@ ReceiveSummary _header({
   double total = 100,
   bool voided = false,
   DateTime? postedAt,
+  String? documentPath,
 }) {
   return ReceiveSummary(
     txnId: txnId,
@@ -28,6 +29,8 @@ ReceiveSummary _header({
     isVoided: voided,
     reversalTxnId: voided ? 'reversal-$txnId' : null,
     voidedAt: voided ? DateTime(2026, 6, 3, 10, 0) : null,
+    documentId: documentPath == null ? null : 'doc-$txnId',
+    documentPath: documentPath,
   );
 }
 
@@ -276,5 +279,45 @@ void main() {
       find.widgetWithText(TextButton, en.receiveDetailVoidButton),
       findsNothing,
     );
+  });
+
+  testWidgets('receive with an attached bono shows "View bono"', (tester) async {
+    api.onGetReceive =
+        (_, _) async => _header(documentPath: 'shop/documents/d1/image.jpg');
+    api.onGetReceiveLines = (_, _) async => const [];
+    await pumpDetail(tester);
+    await tester.pumpAndSettle();
+    expect(find.text(en.receiveDetailViewBonoButton), findsOneWidget);
+  });
+
+  testWidgets('receive without a bono hides "View bono"', (tester) async {
+    api.onGetReceive = (_, _) async => _header(); // documentPath null
+    api.onGetReceiveLines = (_, _) async => const [];
+    await pumpDetail(tester);
+    await tester.pumpAndSettle();
+    expect(find.text(en.receiveDetailViewBonoButton), findsNothing);
+  });
+
+  testWidgets('tapping "View bono" signs a URL for the stored path', (
+    tester,
+  ) async {
+    final signed = <String>[];
+    api.onGetReceive =
+        (_, _) async => _header(documentPath: 'shop/documents/d1/image.jpg');
+    api.onGetReceiveLines = (_, _) async => const [];
+    // Return null so no full-screen Image.network is pushed in the test; we
+    // just assert the sign call fired for the right path.
+    api.onSignBonoUrl = (path) async {
+      signed.add(path);
+      return null;
+    };
+
+    await pumpDetail(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.receiveDetailViewBonoButton));
+    await tester.pumpAndSettle();
+
+    expect(signed, ['shop/documents/d1/image.jpg']);
+    expect(find.text(en.receiveDetailBonoUnavailable), findsOneWidget);
   });
 }

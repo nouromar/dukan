@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/receive/bono_photo_view.dart';
 import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/void_action.dart';
@@ -292,6 +293,17 @@ class _ReceiveDetailBody extends StatelessWidget {
             l.receiveHistorySupplierLabel(supplierName),
             style: theme.textTheme.bodyLarge,
           ),
+          if (header.documentPath != null) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.receipt_long),
+                label: Text(l.receiveDetailViewBonoButton),
+                onPressed: () => _openBono(context, header.documentPath!),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           const Divider(),
           Expanded(
@@ -360,6 +372,26 @@ class _ReceiveDetailBody extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _openBono(BuildContext context, String path) async {
+    final api = context.read<ShopApi>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final l = tr(context);
+    final url = await api.signBonoUrl(path);
+    if (url == null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.receiveDetailBonoUnavailable)),
+      );
+      return;
+    }
+    await navigator.push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => BonoPhotoView(imageUrl: url),
       ),
     );
   }

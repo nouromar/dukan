@@ -1232,6 +1232,14 @@ class FakeShopApi implements ShopApi {
     ));
   }
 
+  Future<String?> Function(String storagePath)? onSignBonoUrl;
+
+  @override
+  Future<String?> signBonoUrl(String storagePath, {int expiresSeconds = 300}) async {
+    if (onSignBonoUrl != null) return onSignBonoUrl!(storagePath);
+    return 'https://example.test/signed/$storagePath';
+  }
+
   Future<TodaySummary> Function(String shopId, String? locale)?
   onGetTodaySummary;
 
