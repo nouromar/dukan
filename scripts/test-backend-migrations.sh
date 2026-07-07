@@ -707,19 +707,39 @@ begin
     raise exception 'document accepted invalid storage path';
   end if;
 
-  -- Storage policy: object without matching document is rejected on insert.
+  -- Storage policy (upload-first, 0106): a member may write the object BEFORE
+  -- the document row exists — the app uploads, THEN calls create_bono_document.
+  insert into storage.objects (bucket_id, name, owner)
+  values (
+    'shop-documents',
+    v_shop_id::text || '/documents/' || pg_catalog.gen_random_uuid()::text || '/image.jpg',
+    auth.uid()
+  );
+
+  -- Denied: a malformed path that does not parse to a shop.
+  v_failed := false;
+  begin
+    insert into storage.objects (bucket_id, name, owner)
+    values ('shop-documents', v_shop_id::text || '/bad/x/image.jpg', auth.uid());
+  exception when insufficient_privilege or check_violation then v_failed := true;
+  end;
+  if not v_failed then
+    raise exception 'storage policy allowed malformed path';
+  end if;
+
+  -- Denied: a valid path for a shop the caller is not a member of.
   v_failed := false;
   begin
     insert into storage.objects (bucket_id, name, owner)
     values (
       'shop-documents',
-      v_shop_id::text || '/documents/' || pg_catalog.gen_random_uuid()::text || '/image.jpg',
+      pg_catalog.gen_random_uuid()::text || '/documents/' || pg_catalog.gen_random_uuid()::text || '/image.jpg',
       auth.uid()
     );
   exception when insufficient_privilege or check_violation then v_failed := true;
   end;
   if not v_failed then
-    raise exception 'storage policy allowed orphan object';
+    raise exception 'storage policy allowed non-member shop';
   end if;
 
   -- Clients cannot delete storage objects directly.
