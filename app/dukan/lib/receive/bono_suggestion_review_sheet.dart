@@ -13,7 +13,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/api/types.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/money.dart';
 
 /// First-use teaching hint in the empty Receive state — advertises the photo
 /// shortcut ("snap the bono, we'll fill it in"). Tapping it opens the attach
@@ -144,9 +146,14 @@ class BonoSuggestionBanner extends StatelessWidget {
 }
 
 class BonoSuggestionReviewSheet extends StatefulWidget {
-  const BonoSuggestionReviewSheet({super.key, required this.suggestions});
+  const BonoSuggestionReviewSheet({
+    super.key,
+    required this.suggestions,
+    required this.shop,
+  });
 
   final List<BonoSuggestion> suggestions;
+  final ShopSummary shop;
 
   @override
   State<BonoSuggestionReviewSheet> createState() =>
@@ -258,26 +265,67 @@ class _BonoSuggestionReviewSheetState extends State<BonoSuggestionReviewSheet> {
                   setState(() => _checked[s.lineNo] = v ?? false),
               controlAffinity: ListTileControlAffinity.leading,
               title: Text(s.displayName ?? s.rawText),
-              subtitle: Text(_subtitle(s)),
+              subtitle: _subtitle(s),
+              secondary: _moneyColumn(s),
             )
           else
             ListTile(
               leading: const Icon(Icons.help_outline),
               title: Text(s.rawText),
-              subtitle: Text(_subtitle(s)),
+              subtitle: _subtitle(s),
+              trailing: _moneyColumn(s),
             ),
       ],
     );
   }
 
-  String _subtitle(BonoSuggestion s) {
-    final parts = <String>[];
-    final pkg = s.unitCode ?? '';
-    parts.add(pkg.isEmpty ? _fmt(s.quantity) : '${_fmt(s.quantity)} × $pkg');
-    if (s.lineTotal != null) parts.add(_fmt(s.lineTotal!));
-    // Show the raw bono text on matched rows so the cashier can verify.
-    if (s.displayName != null && s.rawText.isNotEmpty) parts.add('“${s.rawText}”');
-    return parts.join(' · ');
+  // Quantity line: big, plain "×<qty> <packaging>" so it's obvious how many
+  // units, plus the raw bono text on matched rows so the cashier can verify.
+  Widget _subtitle(BonoSuggestion s) {
+    final theme = Theme.of(context);
+    final pkg = s.unitCode;
+    final qty = '× ${_fmt(s.quantity)}${pkg != null && pkg.isNotEmpty ? ' $pkg' : ''}';
+    final matched = s.displayName != null && s.rawText.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          qty,
+          style: theme.textTheme.bodyMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        if (matched)
+          Text(
+            '“${s.rawText}”',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+      ],
+    );
+  }
+
+  // Line total, prominent + money-formatted; per-unit price muted below it.
+  Widget _moneyColumn(BonoSuggestion s) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (s.lineTotal != null)
+          Text(
+            formatMoney(s.lineTotal!, widget.shop),
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        if (s.unitPrice != null)
+          Text(
+            '@ ${formatMoney(s.unitPrice!, widget.shop)}',
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+      ],
+    );
   }
 
   String _fmt(double n) =>

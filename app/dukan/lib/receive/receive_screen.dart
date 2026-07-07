@@ -600,7 +600,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final selected = await showModalBottomSheet<List<BonoSuggestion>>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => BonoSuggestionReviewSheet(suggestions: _bonoSuggestions),
+      builder: (_) => BonoSuggestionReviewSheet(
+        suggestions: _bonoSuggestions,
+        shop: widget.shop,
+      ),
     );
     if (selected == null || selected.isEmpty || !mounted) return;
     final controller = context.read<ReceiveController>();
