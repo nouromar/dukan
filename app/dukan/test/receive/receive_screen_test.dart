@@ -765,6 +765,66 @@ void main() {
     expect(api.confirmBonoSuggestionCalls.single.shopItemUnitId, 'siu-2');
   });
 
+  testWidgets('bono: bind a "Not found" line → it becomes applyable + learns', (
+    tester,
+  ) async {
+    api.onUploadBonoImage = (_, _, _, _) async => 'doc-1';
+    api.onSuggestReceiveLinesFromBono = (_, _, _, _) async => [
+      BonoSuggestion.fromJson({
+        'line_no': 1,
+        'raw_text': 'MODEL X LAPTOP',
+        'suggested_shop_item_id': null,
+        'suggested_shop_item_unit_id': null,
+        'quantity': 10,
+        'line_total': 15000,
+        'confidence': 'low',
+        'reason': 'no_match',
+      }),
+    ];
+    // Only the bind picker (which seeds the raw text) surfaces the item — the
+    // receive screen's own empty-query search stays empty, so 'Laptop' is
+    // unambiguous.
+    api.onSearchItems = (_, query, _, _, _, _) async => query.contains('MODEL')
+        ? [
+            fakeActivatedItem(
+              shopItemId: 'si-9',
+              itemId: 'i9',
+              defaultShopItemUnitId: 'siu-9',
+              displayName: 'Laptop',
+              baseUnitLabel: 'Pc',
+              defaultUnitLabel: 'Piece',
+              packagingLabel: 'Piece',
+            ),
+          ]
+        : [];
+
+    await pumpReceive(tester, bonoPicker: _FakePicker());
+    await tester.pumpAndSettle();
+    await attachBono(tester);
+
+    await tester.tap(find.text(en.bonoSuggestionsReview));
+    await tester.pumpAndSettle();
+
+    // The unmatched line offers "Choose item" (not yet applyable).
+    expect(find.text(en.bonoBindChooseItem), findsOneWidget);
+    await tester.tap(find.text(en.bonoBindChooseItem));
+    await tester.pumpAndSettle(); // picker opens + initial search
+    await tester.tap(find.text('Laptop'));
+    await tester.pumpAndSettle(); // bind → picker pops → row checked
+
+    await tester.tap(
+      find.widgetWithText(FilledButton, en.bonoSuggestionsApply),
+    );
+    await tester.pumpAndSettle();
+
+    // Bound line added with the OCR qty, and the mapping is learned.
+    expect(receive.lines.containsKey('siu-9'), isTrue);
+    expect(receive.lines['siu-9']!.quantity, 10);
+    expect(api.confirmBonoSuggestionCalls, hasLength(1));
+    expect(api.confirmBonoSuggestionCalls.single.shopItemUnitId, 'siu-9');
+    expect(api.confirmBonoSuggestionCalls.single.rawText, 'MODEL X LAPTOP');
+  });
+
   testWidgets('bono action is a labeled "Bono" chip, not a bare camera icon', (
     tester,
   ) async {

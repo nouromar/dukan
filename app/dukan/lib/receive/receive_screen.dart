@@ -597,35 +597,34 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   // learning loop so the next bono from this supplier resolves the same text.
   Future<void> _reviewBonoSuggestions() async {
     final l = tr(context);
-    final selected = await showModalBottomSheet<List<BonoSuggestion>>(
+    final supplierId = context.read<ReceiveController>().supplier?.id;
+    final selected = await showModalBottomSheet<List<BonoApplyLine>>(
       context: context,
       isScrollControlled: true,
       builder: (_) => BonoSuggestionReviewSheet(
         suggestions: _bonoSuggestions,
         shop: widget.shop,
+        supplierPartyId: supplierId,
       ),
     );
     if (selected == null || selected.isEmpty || !mounted) return;
     final controller = context.read<ReceiveController>();
     final api = context.read<ShopApi>();
-    final supplierId = controller.supplier?.id;
     final docId = _bonoDocumentId;
     var added = 0;
-    for (final s in selected) {
-      final unitId = s.suggestedShopItemUnitId;
-      final itemId = s.suggestedShopItemId;
-      if (unitId == null || itemId == null) continue;
-      if (controller.lines.containsKey(unitId)) continue; // manual wins
+    for (final line in selected) {
+      if (controller.lines.containsKey(line.shopItemUnitId)) {
+        continue; // manual wins
+      }
       controller.addOrReplaceLine(
-        shopItemUnitId: unitId,
-        shopItemId: itemId,
-        itemId: s.itemId,
-        displayName: s.displayName ?? s.rawText,
-        packagingLabel: s.unitCode ?? s.baseUnitCode ?? '',
-        baseUnitLabel: s.baseUnitCode ?? '',
-        quantity: s.quantity,
-        lineTotal: s.lineTotal ??
-            (s.unitPrice != null ? s.unitPrice! * s.quantity : 0),
+        shopItemUnitId: line.shopItemUnitId,
+        shopItemId: line.shopItemId,
+        itemId: line.itemId,
+        displayName: line.displayName,
+        packagingLabel: line.packagingLabel,
+        baseUnitLabel: line.baseUnitLabel,
+        quantity: line.quantity,
+        lineTotal: line.lineTotal,
       );
       added += 1;
       if (supplierId != null && docId != null) {
@@ -635,10 +634,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 shopId: widget.shop.id,
                 documentId: docId,
                 supplierPartyId: supplierId,
-                rawText: s.rawText,
-                shopItemId: itemId,
-                shopItemUnitId: unitId,
-                confidence: s.confidence == 'high' ? 0.9 : 0.6,
+                rawText: line.rawText,
+                shopItemId: line.shopItemId,
+                shopItemUnitId: line.shopItemUnitId,
+                confidence: line.learnConfidence,
               )
               .catchError((_) {}),
         );

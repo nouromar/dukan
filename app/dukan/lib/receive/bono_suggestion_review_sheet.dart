@@ -14,8 +14,38 @@ import 'package:flutter/material.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/receive/bono_bind_item_sheet.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+
+/// A resolved bono line the screen should add to the receive + learn. Unifies
+/// pre-matched (high/med) suggestions and hand-bound "Not found" lines so the
+/// caller applies them the same way.
+class BonoApplyLine {
+  const BonoApplyLine({
+    required this.shopItemId,
+    required this.shopItemUnitId,
+    required this.itemId,
+    required this.displayName,
+    required this.packagingLabel,
+    required this.baseUnitLabel,
+    required this.quantity,
+    required this.lineTotal,
+    required this.rawText,
+    required this.learnConfidence,
+  });
+
+  final String shopItemId;
+  final String shopItemUnitId;
+  final String? itemId;
+  final String displayName;
+  final String packagingLabel;
+  final String baseUnitLabel;
+  final double quantity;
+  final double lineTotal;
+  final String rawText;
+  final double learnConfidence;
+}
 
 /// First-use teaching hint in the empty Receive state — advertises the photo
 /// shortcut ("snap the bono, we'll fill it in"). Tapping it opens the attach
@@ -150,10 +180,12 @@ class BonoSuggestionReviewSheet extends StatefulWidget {
     super.key,
     required this.suggestions,
     required this.shop,
+    this.supplierPartyId,
   });
 
   final List<BonoSuggestion> suggestions;
   final ShopSummary shop;
+  final String? supplierPartyId;
 
   @override
   State<BonoSuggestionReviewSheet> createState() =>
@@ -161,15 +193,70 @@ class BonoSuggestionReviewSheet extends StatefulWidget {
 }
 
 class _BonoSuggestionReviewSheetState extends State<BonoSuggestionReviewSheet> {
-  // keyed by line_no; only bound lines are checkable, pre-checked on.
+  // keyed by line_no; pre-matched lines start checked, hand-bound get checked
+  // when the cashier picks an item for them.
   late final Map<int, bool> _checked = {
     for (final s in widget.suggestions)
       if (s.isBound) s.lineNo: true,
   };
 
-  List<BonoSuggestion> get _selected => widget.suggestions
-      .where((s) => s.isBound && _checked[s.lineNo] == true)
-      .toList(growable: false);
+  // Hand-bindings the cashier chose for "Not found" lines (keyed by line_no).
+  final Map<int, BonoBindTarget> _bound = {};
+
+  double _lineTotal(BonoSuggestion s) =>
+      s.lineTotal ?? (s.unitPrice != null ? s.unitPrice! * s.quantity : 0);
+
+  // The checked lines to apply: pre-matched suggestions + hand-bound ones.
+  List<BonoApplyLine> _resolveSelected() {
+    final out = <BonoApplyLine>[];
+    for (final s in widget.suggestions) {
+      if (_checked[s.lineNo] != true) continue;
+      if (s.isBound) {
+        out.add(BonoApplyLine(
+          shopItemId: s.suggestedShopItemId!,
+          shopItemUnitId: s.suggestedShopItemUnitId!,
+          itemId: s.itemId,
+          displayName: s.displayName ?? s.rawText,
+          packagingLabel: s.unitCode ?? s.baseUnitCode ?? '',
+          baseUnitLabel: s.baseUnitCode ?? '',
+          quantity: s.quantity,
+          lineTotal: _lineTotal(s),
+          rawText: s.rawText,
+          learnConfidence: s.confidence == 'high' ? 0.9 : 0.6,
+        ));
+      } else {
+        final b = _bound[s.lineNo];
+        if (b == null) continue;
+        out.add(BonoApplyLine(
+          shopItemId: b.shopItemId,
+          shopItemUnitId: b.shopItemUnitId,
+          itemId: b.itemId,
+          displayName: b.displayName,
+          packagingLabel: b.packagingLabel,
+          baseUnitLabel: b.baseUnitLabel,
+          quantity: s.quantity,
+          lineTotal: _lineTotal(s),
+          rawText: s.rawText,
+          learnConfidence: 1, // explicit cashier binding
+        ));
+      }
+    }
+    return out;
+  }
+
+  Future<void> _bind(BonoSuggestion s) async {
+    final target = await showBonoBindItemPicker(
+      context,
+      shop: widget.shop,
+      supplierPartyId: widget.supplierPartyId,
+      initialQuery: s.rawText,
+    );
+    if (target == null || !mounted) return;
+    setState(() {
+      _bound[s.lineNo] = target;
+      _checked[s.lineNo] = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -216,8 +303,8 @@ class _BonoSuggestionReviewSheetState extends State<BonoSuggestionReviewSheet> {
                   _section(l.bonoSuggestionsLikelySection, med.toList(),
                       checkable: true),
                 if (low.isNotEmpty)
-                  _section(l.bonoSuggestionsUnmatchedSection, low.toList(),
-                      checkable: false),
+                  _unmatchedSection(l.bonoSuggestionsUnmatchedSection,
+                      low.toList()),
                 const SizedBox(height: 88),
               ],
             ),
@@ -230,9 +317,10 @@ class _BonoSuggestionReviewSheetState extends State<BonoSuggestionReviewSheet> {
                 width: double.infinity,
                 height: 52,
                 child: FilledButton(
-                  onPressed: _selected.isEmpty
+                  onPressed: _resolveSelected().isEmpty
                       ? null
-                      : () => Navigator.of(context).pop(_selected),
+                      : () =>
+                          Navigator.of(context).pop(_resolveSelected()),
                   child: Text(l.bonoSuggestionsApply),
                 ),
               ),
@@ -279,13 +367,72 @@ class _BonoSuggestionReviewSheetState extends State<BonoSuggestionReviewSheet> {
     );
   }
 
+  // "Not found" lines: a "Choose item" button binds each to a real item; once
+  // bound it renders as a checked row for the chosen item (raw text kept for
+  // reference).
+  Widget _unmatchedSection(String title, List<BonoSuggestion> items) {
+    final theme = Theme.of(context);
+    final l = tr(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Text(
+            title,
+            style: theme.textTheme.labelLarge
+                ?.copyWith(color: theme.colorScheme.primary),
+          ),
+        ),
+        for (final s in items)
+          if (_bound[s.lineNo] != null)
+            CheckboxListTile(
+              value: _checked[s.lineNo] ?? true,
+              onChanged: (v) =>
+                  setState(() => _checked[s.lineNo] = v ?? false),
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(_bound[s.lineNo]!.displayName),
+              subtitle: _subtitle(s),
+              secondary: _moneyColumn(s),
+            )
+          else
+            ListTile(
+              leading: const Icon(Icons.help_outline),
+              title: Text(s.rawText),
+              subtitle: _unboundSubtitle(s),
+              trailing: OutlinedButton(
+                onPressed: () => _bind(s),
+                child: Text(l.bonoBindChooseItem),
+              ),
+            ),
+      ],
+    );
+  }
+
+  // Unbound "Not found" row: qty + money inline (the trailing slot holds the
+  // "Choose item" button instead of the money column).
+  Widget _unboundSubtitle(BonoSuggestion s) {
+    final theme = Theme.of(context);
+    final pkg = s.unitCode;
+    final qty =
+        '× ${_fmt(s.quantity)}${pkg != null && pkg.isNotEmpty ? ' $pkg' : ''}';
+    final total = s.lineTotal != null
+        ? ' · ${formatMoney(s.lineTotal!, widget.shop)}'
+        : '';
+    return Text(
+      '$qty$total',
+      style:
+          theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+    );
+  }
+
   // Quantity line: big, plain "×<qty> <packaging>" so it's obvious how many
-  // units, plus the raw bono text on matched rows so the cashier can verify.
+  // units, plus the raw bono text (for matched + hand-bound rows) to verify.
   Widget _subtitle(BonoSuggestion s) {
     final theme = Theme.of(context);
     final pkg = s.unitCode;
     final qty = '× ${_fmt(s.quantity)}${pkg != null && pkg.isNotEmpty ? ' $pkg' : ''}';
-    final matched = s.displayName != null && s.rawText.isNotEmpty;
+    final matched = s.rawText.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

@@ -179,6 +179,21 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveDetailBonoUnavailable => 'Sawirka bonoga lama heli karo';
 
   @override
+  String get bonoBindChooseItem => 'Dooro alaab';
+
+  @override
+  String get bonoBindPickerTitle => 'Alaabtan waa kee?';
+
+  @override
+  String get bonoBindSearchHint => 'Raadi alaab';
+
+  @override
+  String get bonoBindAddNew => 'Ku dar alaab cusub';
+
+  @override
+  String get bonoBindEmpty => 'Lama helin — ku dar alaab cusub';
+
+  @override
   String get partyDetailTitle => 'Qof';
 
   @override

@@ -176,6 +176,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveDetailBonoUnavailable => 'Bono photo unavailable';
 
   @override
+  String get bonoBindChooseItem => 'Choose item';
+
+  @override
+  String get bonoBindPickerTitle => 'Which item is this?';
+
+  @override
+  String get bonoBindSearchHint => 'Search items';
+
+  @override
+  String get bonoBindAddNew => 'Add new item';
+
+  @override
+  String get bonoBindEmpty => 'No match — add it as a new item';
+
+  @override
   String get partyDetailTitle => 'Party';
 
   @override

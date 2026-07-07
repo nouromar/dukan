@@ -392,6 +392,36 @@ abstract class AppLocalizations {
   /// **'Bono photo unavailable'**
   String get receiveDetailBonoUnavailable;
 
+  /// No description provided for @bonoBindChooseItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose item'**
+  String get bonoBindChooseItem;
+
+  /// No description provided for @bonoBindPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Which item is this?'**
+  String get bonoBindPickerTitle;
+
+  /// No description provided for @bonoBindSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search items'**
+  String get bonoBindSearchHint;
+
+  /// No description provided for @bonoBindAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new item'**
+  String get bonoBindAddNew;
+
+  /// No description provided for @bonoBindEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No match — add it as a new item'**
+  String get bonoBindEmpty;
+
   /// No description provided for @partyDetailTitle.
   ///
   /// In en, this message translates to:
