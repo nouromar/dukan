@@ -34,6 +34,25 @@
   "bonoAttachGallery": "Sawir ka hor leh",
   "bonoAttachedToast": "Sawirka bonoga waa la raaciyay",
   "bonoAttachFailedMessage": "Bonoga lama raacin karin. Isku day mar kale.",
+  "bonoSuggestionsReading": "Bonoga waa la akhrinayaa…",
+  "bonoSuggestionsFound": "{count, plural, =1{1 sadar ayaa laga akhriyay bonoga} other{{count} sadar ayaa laga akhriyay bonoga}}",
+  "@bonoSuggestionsFound": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bonoSuggestionsReview": "Eeg",
+  "bonoSuggestionsTitle": "Bonoga",
+  "bonoSuggestionsMatchedSection": "La waafajiyay",
+  "bonoSuggestionsLikelySection": "U badan — hubi kuwan",
+  "bonoSuggestionsUnmatchedSection": "Lama helin — gacanta ku qor",
+  "bonoSuggestionsApply": "KU DAR SADARRO",
+  "bonoSuggestionsAppliedToast": "{count, plural, =1{1 sadar ayaa lagu daray} other{{count} sadar ayaa lagu daray}}",
+  "@bonoSuggestionsAppliedToast": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "partyDetailTitle": "Qof",
   "partyHideTooltip": "Qari",
   "partyHideConfirmTitle": "Ma qarinaysaa qofkan?",

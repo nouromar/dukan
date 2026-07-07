@@ -1176,6 +1176,62 @@ class FakeShopApi implements ShopApi {
     return 'fake-doc-id';
   }
 
+  Future<List<BonoSuggestion>> Function(
+    String shopId,
+    String documentId,
+    String supplierPartyId,
+    String? locale,
+  )?
+  onSuggestReceiveLinesFromBono;
+
+  @override
+  Future<List<BonoSuggestion>> suggestReceiveLinesFromBono({
+    required String shopId,
+    required String documentId,
+    required String supplierPartyId,
+    String? locale,
+  }) async {
+    if (onSuggestReceiveLinesFromBono != null) {
+      return onSuggestReceiveLinesFromBono!(
+        shopId,
+        documentId,
+        supplierPartyId,
+        locale,
+      );
+    }
+    return const [];
+  }
+
+  final List<
+    ({
+      String documentId,
+      String supplierPartyId,
+      String rawText,
+      String shopItemId,
+      String shopItemUnitId,
+    })
+  >
+  confirmBonoSuggestionCalls = [];
+
+  @override
+  Future<void> confirmBonoSuggestion({
+    required String shopId,
+    required String documentId,
+    required String supplierPartyId,
+    required String rawText,
+    required String shopItemId,
+    required String shopItemUnitId,
+    double? confidence,
+  }) async {
+    confirmBonoSuggestionCalls.add((
+      documentId: documentId,
+      supplierPartyId: supplierPartyId,
+      rawText: rawText,
+      shopItemId: shopItemId,
+      shopItemUnitId: shopItemUnitId,
+    ));
+  }
+
   Future<TodaySummary> Function(String shopId, String? locale)?
   onGetTodaySummary;
 

@@ -39,6 +39,8 @@ import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
+import 'package:dukan/receive/bono_suggestion_review_sheet.dart';
+import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/observability/timing.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
@@ -107,6 +109,16 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   String? _locale;
   String? _unknownScan;
   late final HidScanListener _hidListener;
+
+  // Bono OCR suggestions. Armed when a bono is attached; filled once the async
+  // OCR pipeline writes document.ocr_result (via realtime on the document row,
+  // with a poll fallback). Server-only + inert offline — any fetch error just
+  // leaves the banner absent. See docs/bono-ocr-prepopulate.md.
+  List<BonoSuggestion> _bonoSuggestions = const [];
+  bool _bonoSuggestionsDismissed = false;
+  RealtimeWatcher? _bonoWatcher;
+  Timer? _bonoPoll;
+  int _bonoPollTicks = 0;
 
   @override
   void initState() {
@@ -245,6 +257,8 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     _searchController.dispose();
     _searchFocus.dispose();
     _debounce?.cancel();
+    _bonoPoll?.cancel();
+    _bonoWatcher?.dispose();
     super.dispose();
   }
 
@@ -511,7 +525,8 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         fileExtension: picked.fileExtension,
       );
       if (!mounted) return;
-      setState(() => _bonoDocumentId = docId);
+      _armBonoSuggestions(docId);
+      setState(() {});
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l.bonoAttachedToast)));
@@ -521,6 +536,125 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     } finally {
       if (mounted) setState(() => _attachingBono = false);
     }
+  }
+
+  // Watch the document row for its OCR result, with a poll fallback. The
+  // suggest RPC returns empty until OCR writes document.ocr_result, so we
+  // re-fetch on each document-row change and, as a backstop, every 3s up to
+  // ~30s. Inert offline (RealtimeWatcher is null, fetches throw and are eaten).
+  void _armBonoSuggestions(String docId) {
+    _resetBonoState();
+    _bonoDocumentId = docId;
+    _bonoWatcher = RealtimeWatcher.tryCreate(
+      channelName: 'bono_ocr:$docId',
+      subscriptions: [
+        RealtimeSubscription(
+          table: 'document',
+          filter: realtimeEq('id', docId),
+        ),
+      ],
+      onChange: () => _fetchBonoSuggestions(docId),
+    );
+    _bonoPoll = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _bonoPollTicks += 1;
+      if (_bonoSuggestions.isNotEmpty || _bonoPollTicks > 10) {
+        timer.cancel();
+        return;
+      }
+      _fetchBonoSuggestions(docId);
+    });
+  }
+
+  Future<void> _fetchBonoSuggestions(String docId) async {
+    if (!mounted || _bonoDocumentId != docId) return;
+    final supplierId = context.read<ReceiveController>().supplier?.id;
+    if (supplierId == null) return;
+    final api = context.read<ShopApi>();
+    final locale = Localizations.localeOf(context).languageCode;
+    try {
+      final rows = await api.suggestReceiveLinesFromBono(
+        shopId: widget.shop.id,
+        documentId: docId,
+        supplierPartyId: supplierId,
+        locale: locale,
+      );
+      if (!mounted || _bonoDocumentId != docId || rows.isEmpty) return;
+      _bonoPoll?.cancel();
+      _bonoWatcher?.dispose();
+      _bonoWatcher = null;
+      setState(() => _bonoSuggestions = rows);
+    } catch (_) {
+      // Offline or OCR not ready — a later poll/realtime tick retries.
+    }
+  }
+
+  // Apply the cashier's chosen suggestions: merge each bound line into the
+  // receive (manual lines win — never clobber what they typed) and fire the
+  // learning loop so the next bono from this supplier resolves the same text.
+  Future<void> _reviewBonoSuggestions() async {
+    final l = tr(context);
+    final selected = await showModalBottomSheet<List<BonoSuggestion>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => BonoSuggestionReviewSheet(suggestions: _bonoSuggestions),
+    );
+    if (selected == null || selected.isEmpty || !mounted) return;
+    final controller = context.read<ReceiveController>();
+    final api = context.read<ShopApi>();
+    final supplierId = controller.supplier?.id;
+    final docId = _bonoDocumentId;
+    var added = 0;
+    for (final s in selected) {
+      final unitId = s.suggestedShopItemUnitId;
+      final itemId = s.suggestedShopItemId;
+      if (unitId == null || itemId == null) continue;
+      if (controller.lines.containsKey(unitId)) continue; // manual wins
+      controller.addOrReplaceLine(
+        shopItemUnitId: unitId,
+        shopItemId: itemId,
+        itemId: s.itemId,
+        displayName: s.displayName ?? s.rawText,
+        packagingLabel: s.unitCode ?? s.baseUnitCode ?? '',
+        baseUnitLabel: s.baseUnitCode ?? '',
+        quantity: s.quantity,
+        lineTotal: s.lineTotal ??
+            (s.unitPrice != null ? s.unitPrice! * s.quantity : 0),
+      );
+      added += 1;
+      if (supplierId != null && docId != null) {
+        unawaited(
+          api
+              .confirmBonoSuggestion(
+                shopId: widget.shop.id,
+                documentId: docId,
+                supplierPartyId: supplierId,
+                rawText: s.rawText,
+                shopItemId: itemId,
+                shopItemUnitId: unitId,
+                confidence: s.confidence == 'high' ? 0.9 : 0.6,
+              )
+              .catchError((_) {}),
+        );
+      }
+    }
+    if (!mounted) return;
+    setState(() => _bonoSuggestionsDismissed = true);
+    if (added > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.bonoSuggestionsAppliedToast(added))),
+      );
+    }
+  }
+
+  void _resetBonoState() {
+    _bonoPoll?.cancel();
+    _bonoPoll = null;
+    _bonoWatcher?.dispose();
+    _bonoWatcher = null;
+    _bonoPollTicks = 0;
+    _bonoDocumentId = null;
+    _bonoSuggestions = const [];
+    _bonoSuggestionsDismissed = false;
   }
 
   void _onChangeSupplier() {
@@ -825,7 +959,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
 
       if (mounted) {
         controller.clearAll();
-        setState(() => _bonoDocumentId = null);
+        setState(_resetBonoState);
         Navigator.of(context).maybePop();
       }
     } on PostgrestException catch (error, stackTrace) {
@@ -898,7 +1032,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       await queue.enqueue(post);
       if (mounted) {
         controller.clearAll();
-        setState(() => _bonoDocumentId = null);
+        setState(_resetBonoState);
         Navigator.of(context).maybePop();
       }
     } finally {
@@ -947,7 +1081,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       if (!mounted) return;
       controller.clearAll();
       setState(() {
-        _bonoDocumentId = null;
+        _resetBonoState();
         _linesExpanded = false;
         _saving = false;
       });
@@ -1083,6 +1217,16 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
               _ReceiveUnknownScanPill(
                 code: _unknownScan!,
                 onDismiss: () => setState(() => _unknownScan = null),
+              ),
+            // Appears only once real suggestions arrive — never a lingering
+            // "loading" state, so it stays absent offline / when OCR fails.
+            if (_bonoSuggestions.isNotEmpty && !_bonoSuggestionsDismissed)
+              BonoSuggestionBanner(
+                loading: false,
+                count: _bonoSuggestions.length,
+                onReview: _reviewBonoSuggestions,
+                onDismiss: () =>
+                    setState(() => _bonoSuggestionsDismissed = true),
               ),
             if (!linesFull)
               Expanded(

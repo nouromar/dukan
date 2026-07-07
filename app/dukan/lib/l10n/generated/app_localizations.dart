@@ -302,6 +302,60 @@ abstract class AppLocalizations {
   /// **'Could not attach the bono. Try again.'**
   String get bonoAttachFailedMessage;
 
+  /// No description provided for @bonoSuggestionsReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the bono…'**
+  String get bonoSuggestionsReading;
+
+  /// No description provided for @bonoSuggestionsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line read from the bono} other{{count} lines read from the bono}}'**
+  String bonoSuggestionsFound(int count);
+
+  /// No description provided for @bonoSuggestionsReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get bonoSuggestionsReview;
+
+  /// No description provided for @bonoSuggestionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'From the bono'**
+  String get bonoSuggestionsTitle;
+
+  /// No description provided for @bonoSuggestionsMatchedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched'**
+  String get bonoSuggestionsMatchedSection;
+
+  /// No description provided for @bonoSuggestionsLikelySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Likely — check these'**
+  String get bonoSuggestionsLikelySection;
+
+  /// No description provided for @bonoSuggestionsUnmatchedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Not found — add these by hand'**
+  String get bonoSuggestionsUnmatchedSection;
+
+  /// No description provided for @bonoSuggestionsApply.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD LINES'**
+  String get bonoSuggestionsApply;
+
+  /// No description provided for @bonoSuggestionsAppliedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Added 1 line} other{Added {count} lines}}'**
+  String bonoSuggestionsAppliedToast(int count);
+
   /// No description provided for @partyDetailTitle.
   ///
   /// In en, this message translates to:

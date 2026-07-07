@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'dart:typed_data';
 
+import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
@@ -654,6 +655,131 @@ void main() {
       expect(post.shopId, shop.id);
     },
   );
+
+  List<BonoSuggestion> threeSuggestions() => [
+        BonoSuggestion.fromJson({
+          'line_no': 1, 'raw_text': 'BSMTI 25', 'suggested_shop_item_id': 'si-1',
+          'suggested_shop_item_unit_id': 'siu-1', 'item_id': 'i1',
+          'display_name': 'Bariis', 'unit_code': 'bag25', 'base_unit_code': 'kg',
+          'conversion_to_base': 25, 'quantity': 4, 'unit_price': 20,
+          'line_total': 80, 'confidence': 'high', 'reason': 'supplier_alias',
+        }),
+        BonoSuggestion.fromJson({
+          'line_no': 2, 'raw_text': 'SUKKAR', 'suggested_shop_item_id': 'si-2',
+          'suggested_shop_item_unit_id': 'siu-2', 'item_id': 'i2',
+          'display_name': 'Sonkor', 'unit_code': 'bag50', 'base_unit_code': 'kg',
+          'conversion_to_base': 50, 'quantity': 1, 'unit_price': 30,
+          'line_total': 30, 'confidence': 'med', 'reason': 'shop_alias',
+        }),
+        BonoSuggestion.fromJson({
+          'line_no': 3, 'raw_text': 'ZZZ UNKNOWN', 'suggested_shop_item_id': null,
+          'suggested_shop_item_unit_id': null, 'quantity': 2,
+          'confidence': 'low', 'reason': 'no_match',
+        }),
+      ];
+
+  Future<void> attachBono(WidgetTester tester) async {
+    await tester.tap(find.byIcon(Icons.photo_camera_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.bonoAttachCamera));
+    await tester.pumpAndSettle();
+    // The poll fallback fires the first fetch at 3s (Realtime is inert in tests).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    'bono: attach → banner → review → APPLY merges bound lines + learns',
+    (tester) async {
+      api.onUploadBonoImage = (_, _, _, _) async => 'doc-1';
+      api.onSuggestReceiveLinesFromBono =
+          (_, _, _, _) async => threeSuggestions();
+
+      await pumpReceive(tester, bonoPicker: _FakePicker());
+      await tester.pumpAndSettle();
+      await attachBono(tester);
+
+      // Banner announces the 3 read lines.
+      expect(find.text(en.bonoSuggestionsFound(3)), findsOneWidget);
+
+      // Open the review sheet: 2 bound lines are checkboxes (pre-checked),
+      // the unmatched line is read-only.
+      await tester.tap(find.text(en.bonoSuggestionsReview));
+      await tester.pumpAndSettle();
+      expect(find.byType(CheckboxListTile), findsNWidgets(2));
+      expect(find.text(en.bonoSuggestionsUnmatchedSection), findsOneWidget);
+
+      // APPLY.
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.bonoSuggestionsApply),
+      );
+      await tester.pumpAndSettle();
+
+      // Both bound lines merged into the receive; learning fired once each.
+      expect(receive.lines.keys.toSet(), {'siu-1', 'siu-2'});
+      expect(api.confirmBonoSuggestionCalls, hasLength(2));
+      expect(
+        api.confirmBonoSuggestionCalls.map((c) => c.shopItemUnitId).toSet(),
+        {'siu-1', 'siu-2'},
+      );
+    },
+  );
+
+  testWidgets('bono: APPLY never overwrites a manually-entered line', (
+    tester,
+  ) async {
+    api.onUploadBonoImage = (_, _, _, _) async => 'doc-1';
+    api.onSuggestReceiveLinesFromBono =
+        (_, _, _, _) async => threeSuggestions();
+
+    // Cashier already typed a line for siu-1 before applying.
+    receive.addOrReplaceLine(
+      shopItemUnitId: 'siu-1',
+      shopItemId: 'si-1',
+      itemId: 'i1',
+      displayName: 'MANUAL RICE',
+      packagingLabel: 'bag',
+      baseUnitLabel: 'kg',
+      quantity: 9,
+      lineTotal: 999,
+    );
+
+    await pumpReceive(tester, bonoPicker: _FakePicker());
+    await tester.pumpAndSettle();
+    await attachBono(tester);
+
+    await tester.tap(find.text(en.bonoSuggestionsReview));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.widgetWithText(FilledButton, en.bonoSuggestionsApply),
+    );
+    await tester.pumpAndSettle();
+
+    // siu-1 keeps the manual values; only siu-2 was added; learning fired
+    // only for the line that was actually applied.
+    expect(receive.lines['siu-1']!.displayName, 'MANUAL RICE');
+    expect(receive.lines['siu-1']!.quantity, 9);
+    expect(receive.lines.containsKey('siu-2'), isTrue);
+    expect(api.confirmBonoSuggestionCalls, hasLength(1));
+    expect(api.confirmBonoSuggestionCalls.single.shopItemUnitId, 'siu-2');
+  });
+
+  testWidgets('bono: no suggestions → no banner (inert)', (tester) async {
+    api.onUploadBonoImage = (_, _, _, _) async => 'doc-1';
+    api.onSuggestReceiveLinesFromBono = (_, _, _, _) async => const [];
+
+    await pumpReceive(tester, bonoPicker: _FakePicker());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.photo_camera_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.bonoAttachCamera));
+    await tester.pumpAndSettle();
+    // Let the poll run to its 30s cap; it must self-cancel with no banner.
+    await tester.pump(const Duration(seconds: 33));
+    await tester.pumpAndSettle();
+
+    expect(find.text(en.bonoSuggestionsReview), findsNothing);
+  });
 }
 
 class _FakePicker implements BonoImagePicker {

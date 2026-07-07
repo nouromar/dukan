@@ -118,6 +118,49 @@ class AppLocalizationsSo extends AppLocalizations {
       'Bonoga lama raacin karin. Isku day mar kale.';
 
   @override
+  String get bonoSuggestionsReading => 'Bonoga waa la akhrinayaa…';
+
+  @override
+  String bonoSuggestionsFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sadar ayaa laga akhriyay bonoga',
+      one: '1 sadar ayaa laga akhriyay bonoga',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bonoSuggestionsReview => 'Eeg';
+
+  @override
+  String get bonoSuggestionsTitle => 'Bonoga';
+
+  @override
+  String get bonoSuggestionsMatchedSection => 'La waafajiyay';
+
+  @override
+  String get bonoSuggestionsLikelySection => 'U badan — hubi kuwan';
+
+  @override
+  String get bonoSuggestionsUnmatchedSection => 'Lama helin — gacanta ku qor';
+
+  @override
+  String get bonoSuggestionsApply => 'KU DAR SADARRO';
+
+  @override
+  String bonoSuggestionsAppliedToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sadar ayaa lagu daray',
+      one: '1 sadar ayaa lagu daray',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get partyDetailTitle => 'Qof';
 
   @override

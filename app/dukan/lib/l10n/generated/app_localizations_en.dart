@@ -115,6 +115,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bonoAttachFailedMessage => 'Could not attach the bono. Try again.';
 
   @override
+  String get bonoSuggestionsReading => 'Reading the bono…';
+
+  @override
+  String bonoSuggestionsFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines read from the bono',
+      one: '1 line read from the bono',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bonoSuggestionsReview => 'Review';
+
+  @override
+  String get bonoSuggestionsTitle => 'From the bono';
+
+  @override
+  String get bonoSuggestionsMatchedSection => 'Matched';
+
+  @override
+  String get bonoSuggestionsLikelySection => 'Likely — check these';
+
+  @override
+  String get bonoSuggestionsUnmatchedSection => 'Not found — add these by hand';
+
+  @override
+  String get bonoSuggestionsApply => 'ADD LINES';
+
+  @override
+  String bonoSuggestionsAppliedToast(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Added $count lines',
+      one: 'Added 1 line',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get partyDetailTitle => 'Party';
 
   @override

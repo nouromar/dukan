@@ -44,6 +44,67 @@ class PackagingSuggestion {
   final String source;
 }
 
+/// One line from `suggest_receive_lines_from_bono` — a single OCR'd bono
+/// line bound (or not) to a shop item + packaging. Drives the bono
+/// suggestion review sheet on Receive. [confidence] is `'high'` (supplier
+/// alias hit), `'med'` (fuzzy shop match), or `'low'` (no match — the
+/// cashier picks). [suggestedShopItemUnitId] is null on a `'low'` line.
+class BonoSuggestion {
+  const BonoSuggestion({
+    required this.lineNo,
+    required this.rawText,
+    required this.suggestedShopItemId,
+    required this.suggestedShopItemUnitId,
+    required this.itemId,
+    required this.displayName,
+    required this.unitCode,
+    required this.baseUnitCode,
+    required this.conversionToBase,
+    required this.quantity,
+    required this.unitPrice,
+    required this.lineTotal,
+    required this.confidence,
+    required this.reason,
+  });
+
+  factory BonoSuggestion.fromJson(Map<String, dynamic> json) => BonoSuggestion(
+        lineNo: json['line_no'] as int,
+        rawText: json['raw_text'] as String? ?? '',
+        suggestedShopItemId: json['suggested_shop_item_id'] as String?,
+        suggestedShopItemUnitId: json['suggested_shop_item_unit_id'] as String?,
+        itemId: json['item_id'] as String?,
+        displayName: json['display_name'] as String?,
+        unitCode: json['unit_code'] as String?,
+        baseUnitCode: json['base_unit_code'] as String?,
+        conversionToBase: (json['conversion_to_base'] as num?)?.toDouble(),
+        quantity: (json['quantity'] as num?)?.toDouble() ?? 1,
+        unitPrice: (json['unit_price'] as num?)?.toDouble(),
+        lineTotal: (json['line_total'] as num?)?.toDouble(),
+        confidence: json['confidence'] as String? ?? 'low',
+        reason: json['reason'] as String? ?? 'no_match',
+      );
+
+  final int lineNo;
+  final String rawText;
+  final String? suggestedShopItemId;
+  final String? suggestedShopItemUnitId;
+  final String? itemId;
+  final String? displayName;
+  final String? unitCode;
+  final String? baseUnitCode;
+  final double? conversionToBase;
+  final double quantity;
+  final double? unitPrice;
+  final double? lineTotal;
+  final String confidence; // 'high' | 'med' | 'low'
+  final String reason; // 'supplier_alias' | 'shop_alias' | 'no_match'
+
+  /// True when the line is bound to a concrete item + packaging (can be
+  /// applied directly). A `'low'`/no-match line needs the cashier to pick.
+  bool get isBound =>
+      suggestedShopItemId != null && suggestedShopItemUnitId != null;
+}
+
 /// One row from `find_similar_shop_items` — drives the same-shop
 /// dedup soft-warn dialog in the onboarding form. Returned rows are
 /// ranked by [similarity] (trigram, 0–1).
@@ -611,6 +672,63 @@ class ShopApi {
           (row) => PackagingSuggestion.fromJson(Map<String, dynamic>.from(row)),
         )
         .toList(growable: false);
+  }
+
+  /// Read the AI bono suggestions for an OCR'd document, bound to this
+  /// supplier's learned aliases + the shop catalog. Returns one entry per
+  /// bono line (ordered by `line_no`); empty until OCR has written a
+  /// result. Server-only (no local mirror) — the caller gates on
+  /// connectivity and simply gets `const []` back if there's nothing yet.
+  Future<List<BonoSuggestion>> suggestReceiveLinesFromBono({
+    required String shopId,
+    required String documentId,
+    required String supplierPartyId,
+    String? locale,
+  }) async {
+    final rows = await _client.rpc(
+      'suggest_receive_lines_from_bono',
+      params: {
+        'p_shop_id': shopId,
+        'p_document_id': documentId,
+        'p_supplier_party_id': supplierPartyId,
+        if (locale != null)
+          'p_locale': locale, // ignore: use_null_aware_elements
+      },
+    );
+    if (rows is! List) return const [];
+    return rows
+        .map<BonoSuggestion>(
+          (row) => BonoSuggestion.fromJson(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+  }
+
+  /// Record a cashier's acceptance of a bono line → item/packaging mapping.
+  /// Writes an `ocr_correction` audit row and upserts the supplier learned
+  /// alias (raising its confirm_count), so the next bono from this supplier
+  /// resolves the same text with high confidence. Fire-and-forget from the
+  /// APPLY handler — one call per applied suggestion.
+  Future<void> confirmBonoSuggestion({
+    required String shopId,
+    required String documentId,
+    required String supplierPartyId,
+    required String rawText,
+    required String shopItemId,
+    required String shopItemUnitId,
+    double? confidence,
+  }) async {
+    await _client.rpc(
+      'confirm_bono_suggestion',
+      params: {
+        'p_shop_id': shopId,
+        'p_document_id': documentId,
+        'p_supplier_party_id': supplierPartyId,
+        'p_raw_text': rawText,
+        'p_shop_item_id': shopItemId,
+        'p_shop_item_unit_id': shopItemUnitId,
+        'p_confidence': confidence,
+      },
+    );
   }
 
   /// Picker source for "How is it sold?" in the Add new item sheet.

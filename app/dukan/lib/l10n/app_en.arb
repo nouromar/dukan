@@ -46,6 +46,25 @@
   "bonoAttachGallery": "Choose from gallery",
   "bonoAttachedToast": "Bono photo attached",
   "bonoAttachFailedMessage": "Could not attach the bono. Try again.",
+  "bonoSuggestionsReading": "Reading the bono…",
+  "bonoSuggestionsFound": "{count, plural, =1{1 line read from the bono} other{{count} lines read from the bono}}",
+  "@bonoSuggestionsFound": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bonoSuggestionsReview": "Review",
+  "bonoSuggestionsTitle": "From the bono",
+  "bonoSuggestionsMatchedSection": "Matched",
+  "bonoSuggestionsLikelySection": "Likely — check these",
+  "bonoSuggestionsUnmatchedSection": "Not found — add these by hand",
+  "bonoSuggestionsApply": "ADD LINES",
+  "bonoSuggestionsAppliedToast": "{count, plural, =1{Added 1 line} other{Added {count} lines}}",
+  "@bonoSuggestionsAppliedToast": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "partyDetailTitle": "Party",
   "partyHideTooltip": "Hide",
   "partyHideConfirmTitle": "Hide this contact?",
