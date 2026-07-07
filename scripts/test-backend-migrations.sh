@@ -966,6 +966,22 @@ begin
     raise exception 'post_receive idempotency broken';
   end if;
 
+  -- get_receive surfaces the attached bono document (view-bono feature, 0030):
+  -- document_id + a non-null storage_path so the detail screen can sign a URL.
+  declare
+    v_gr_doc  uuid;
+    v_gr_path text;
+  begin
+    select document_id, document_path into v_gr_doc, v_gr_path
+    from public.get_receive(v_shop_id, v_receive_txn_id);
+    if v_gr_doc is distinct from v_receive_doc_id then
+      raise exception 'get_receive document_id % <> attached %', v_gr_doc, v_receive_doc_id;
+    end if;
+    if v_gr_path is null or pg_catalog.length(pg_catalog.btrim(v_gr_path)) = 0 then
+      raise exception 'get_receive did not return the document storage_path';
+    end if;
+  end;
+
   -- Stock projection: 10 kg opening + 4×25 kg = 110 kg.
   if (select current_stock from public.shop_item where id = v_rice_shop_item_id) <> 110 then
     raise exception 'receive did not roll stock to 110 kg';
