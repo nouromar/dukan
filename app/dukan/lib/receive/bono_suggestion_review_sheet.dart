@@ -352,14 +352,22 @@ class _BonoSuggestionReviewSheetState extends State<BonoSuggestionReviewSheet> {
               onChanged: (v) =>
                   setState(() => _checked[s.lineNo] = v ?? false),
               controlAffinity: ListTileControlAffinity.leading,
-              title: Text(s.displayName ?? s.rawText),
+              title: Text(
+                s.displayName ?? s.rawText,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: _subtitle(s),
               secondary: _moneyColumn(s),
             )
           else
             ListTile(
               leading: const Icon(Icons.help_outline),
-              title: Text(s.rawText),
+              title: Text(
+                s.rawText,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: _subtitle(s),
               trailing: _moneyColumn(s),
             ),
@@ -391,14 +399,22 @@ class _BonoSuggestionReviewSheetState extends State<BonoSuggestionReviewSheet> {
               onChanged: (v) =>
                   setState(() => _checked[s.lineNo] = v ?? false),
               controlAffinity: ListTileControlAffinity.leading,
-              title: Text(_bound[s.lineNo]!.displayName),
+              title: Text(
+                _bound[s.lineNo]!.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: _subtitle(s),
               secondary: _moneyColumn(s),
             )
           else
             ListTile(
               leading: const Icon(Icons.help_outline),
-              title: Text(s.rawText),
+              title: Text(
+                s.rawText,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: _unboundSubtitle(s),
               trailing: OutlinedButton(
                 onPressed: () => _bind(s),
@@ -444,6 +460,8 @@ class _BonoSuggestionReviewSheetState extends State<BonoSuggestionReviewSheet> {
         if (matched)
           Text(
             '“${s.rawText}”',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall
                 ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
