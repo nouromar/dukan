@@ -32,3 +32,13 @@ const Duration kSignOutDrainTimeout = Duration(seconds: 5);
 
 /// Convenience byte-count derived from [kCacheBudgetMb].
 const int kCacheBudgetBytes = kCacheBudgetMb * 1024 * 1024;
+
+/// Size budget for the on-device bono image cache (BonoImageCache). Once the
+/// cached bonos exceed this, LRU eviction drops the oldest ALREADY-UPLOADED
+/// entries (re-fetchable from Storage); not-yet-uploaded bonos are never
+/// evicted. ~50 MB ≈ 200 bonos at ~150–300 KB each. Override per shop via the
+/// `bono_cache_budget_mb` config key.
+const int kBonoCacheBudgetMb = 50;
+
+/// Convenience byte-count derived from [kBonoCacheBudgetMb].
+const int kBonoCacheBudgetBytes = kBonoCacheBudgetMb * 1024 * 1024;

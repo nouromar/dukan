@@ -122,7 +122,10 @@ class _AuthBootstrapState extends State<AuthBootstrap>
     );
     _cacheDao = CacheDao(database, configResolver: _configResolver);
     _localRepository = LocalRepository(database);
-    _bonoImageCache = BonoImageCache(database: database);
+    _bonoImageCache = BonoImageCache(
+      database: database,
+      maxBytes: _configResolver.resolve(ConfigKeys.bonoCacheBudgetMb) * 1024 * 1024,
+    );
     _offlineQueueController = OfflineQueueController(
       dao: _pendingPostDao,
       executor: PostExecutor(_shopApi, bonoCache: _bonoImageCache).execute,

@@ -101,6 +101,14 @@ class ConfigKeys {
     parse: _parseInt,
   );
 
+  /// Size budget (MB) for the on-device bono image cache. LRU-evicts the
+  /// oldest uploaded bonos over this; pending (un-uploaded) bonos are exempt.
+  static const ConfigKey<int> bonoCacheBudgetMb = ConfigKey<int>(
+    name: 'bono_cache_budget_mb',
+    defaultValue: kBonoCacheBudgetMb,
+    parse: _parseInt,
+  );
+
   static const ConfigKey<int> cacheTtlTodaySummaryS = ConfigKey<int>(
     name: 'cache_ttl_today_summary_s',
     defaultValue: 3600,

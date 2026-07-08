@@ -15,14 +15,12 @@ import 'dart:typed_data';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:dukan/storage/app_database.dart';
-
-/// ~50 MB ≈ 200 bonos at ~150–300 KB each.
-const int kBonoCacheMaxBytes = 50 * 1024 * 1024;
+import 'package:dukan/storage/storage_defaults.dart';
 
 class BonoImageCache {
   BonoImageCache({
     required Future<AppDatabase> database,
-    int maxBytes = kBonoCacheMaxBytes,
+    int maxBytes = kBonoCacheBudgetBytes,
     DateTime Function()? clock,
   })  : _database = database,
         _maxBytes = maxBytes,
