@@ -1,10 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/capabilities.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/receive/bono_image_cache.dart';
+import 'package:dukan/receive/bono_photo_view.dart';
 import 'package:dukan/receive/receive_detail_screen.dart';
+import 'package:dukan/storage/app_database.dart';
 
 import '../shared/fakes.dart';
 import '../shared/wrap.dart';
@@ -319,5 +324,42 @@ void main() {
 
     expect(signed, ['shop/documents/d1/image.jpg']);
     expect(find.text(en.receiveDetailBonoUnavailable), findsOneWidget);
+  });
+
+  testWidgets('View bono renders the local cache when present (no signed URL)', (
+    tester,
+  ) async {
+    const txnId = '00000000-0000-4000-8000-0000000000d1';
+    final cache = BonoImageCache(database: AppDatabase.instance());
+    await cache.put(
+      documentId: 'doc-$txnId',
+      shopId: 's',
+      ext: 'jpg',
+      bytes: Uint8List.fromList([1, 2, 3, 4]),
+    );
+    final signed = <String>[];
+    api.onGetReceive =
+        (_, _) async => _header(documentPath: 'shop/documents/d1/image.jpg');
+    api.onGetReceiveLines = (_, _) async => const [];
+    api.onSignBonoUrl = (path) async {
+      signed.add(path);
+      return null;
+    };
+
+    await tester.pumpWidget(
+      wrapWithApp(
+        ReceiveDetailScreen(shop: shop, txnId: txnId),
+        authController: auth,
+        shopApi: api,
+        bonoImageCache: cache,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.receiveDetailViewBonoButton));
+    await tester.pumpAndSettle();
+
+    // Cache hit → the signed URL is never requested and the viewer opens.
+    expect(signed, isEmpty);
+    expect(find.byType(BonoPhotoView), findsOneWidget);
   });
 }

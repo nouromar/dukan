@@ -6,6 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/receive/bono_image_cache.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/auth/login_screen.dart';
 import 'package:dukan/auth/sign_out_flow.dart';
@@ -74,6 +75,7 @@ class _AuthBootstrapState extends State<AuthBootstrap>
   late final PendingPostDao _pendingPostDao;
   late final CacheDao _cacheDao;
   late final LocalRepository _localRepository;
+  late final BonoImageCache _bonoImageCache;
   late final SyncEngine _syncEngine;
   late final RealtimeListener _realtimeListener;
   bool _hadSession = false;
@@ -120,9 +122,10 @@ class _AuthBootstrapState extends State<AuthBootstrap>
     );
     _cacheDao = CacheDao(database, configResolver: _configResolver);
     _localRepository = LocalRepository(database);
+    _bonoImageCache = BonoImageCache(database: database);
     _offlineQueueController = OfflineQueueController(
       dao: _pendingPostDao,
-      executor: PostExecutor(_shopApi).execute,
+      executor: PostExecutor(_shopApi, bonoCache: _bonoImageCache).execute,
       configResolver: _configResolver,
       // #374: clear projection rows when a queued post drains
       // successfully OR transitions to failed_permanent. The
@@ -151,6 +154,14 @@ class _AuthBootstrapState extends State<AuthBootstrap>
     // Log a parked (server-rejected) post — the one non-retryable case.
     // Kept as a listener so the controller stays log-free / test-quiet.
     _offlineQueueController.addFailedPermanentListener((post) {
+      // A parked bono upload never reached Storage and its receive will fail
+      // too — drop the local copy so it doesn't linger unevictable (uploaded=0).
+      if (post.rpc == 'upload_bono_image') {
+        final documentId = post.params['document_id'] as String?;
+        if (documentId != null) {
+          unawaited(_bonoImageCache.deleteFor(documentId));
+        }
+      }
       unawaited(CrashReporter.reportError(
         StateError('post parked — server rejected on retry'),
         StackTrace.current,
@@ -403,6 +414,7 @@ class _AuthBootstrapState extends State<AuthBootstrap>
         Provider<PendingPostDao>.value(value: _pendingPostDao),
         Provider<CacheDao>.value(value: _cacheDao),
         Provider<LocalRepository>.value(value: _localRepository),
+        Provider<BonoImageCache>.value(value: _bonoImageCache),
         ChangeNotifierProvider<SyncEngine>.value(value: _syncEngine),
       ],
       child: Builder(builder: widget.builder),

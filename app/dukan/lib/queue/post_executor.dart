@@ -10,13 +10,21 @@
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/receive/bono_image_cache.dart';
 
 class PostExecutor {
-  PostExecutor(this._api);
+  PostExecutor(this._api, {BonoImageCache? bonoCache}) : _bonoCache = bonoCache;
 
   final ShopApi _api;
+  final BonoImageCache? _bonoCache;
 
   Future<void> execute(PendingPost post) async {
+    // Deferred bono image upload (offline capture) — a Storage action, not an
+    // RPC post; no entity/audit. Reads the cached bytes and uploads them.
+    if (post.rpc == 'upload_bono_image') {
+      await _executeUploadBonoImage(post);
+      return;
+    }
     // Mutation RPCs (#390) — no entity-id to audit-stamp; return early
     // after dispatch. The server-side `mutation_idempotency` table from
     // 0074 makes a retry of the same `client_op_id` a safe no-op.
@@ -431,7 +439,46 @@ class PostExecutor {
         );
     }
   }
+
+  /// Drain a deferred bono upload: read the cached bytes and push them to
+  /// Storage + create the document row (idempotent). Keeps the local file
+  /// (marks it uploaded) so the bono stays viewable offline. If the cached
+  /// bytes are gone, treat as done rather than wedging the queue forever.
+  Future<void> _executeUploadBonoImage(PendingPost post) async {
+    final cache = _bonoCache;
+    if (cache == null) {
+      throw StateError('upload_bono_image queued without a BonoImageCache');
+    }
+    final p = post.params;
+    final documentId = p['document_id'] as String;
+    final bytes = await cache.bytesFor(documentId);
+    if (bytes == null) return;
+    await _api.uploadBonoImageAt(
+      shopId: post.shopId,
+      documentId: documentId,
+      storagePath: p['storage_path'] as String,
+      bytes: bytes,
+      mimeType: p['mime_type'] as String,
+    );
+    await cache.markUploaded(documentId);
+  }
 }
+
+/// Params for a deferred `upload_bono_image` queue item. The bytes are NOT
+/// carried here (the queue row is TEXT) — they live in the BonoImageCache,
+/// keyed by `document_id`.
+Map<String, dynamic> buildUploadBonoImageParams({
+  required String documentId,
+  required String storagePath,
+  required String mimeType,
+  required int sizeBytes,
+}) =>
+    <String, dynamic>{
+      'document_id': documentId,
+      'storage_path': storagePath,
+      'mime_type': mimeType,
+      'size_bytes': sizeBytes,
+    };
 
 /// Helper that builds the params map for a post_sale enqueue. Lives
 /// here so the screen call sites stay simple and the schema is

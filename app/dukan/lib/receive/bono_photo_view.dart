@@ -8,9 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:dukan/shared/l10n.dart';
 
 class BonoPhotoView extends StatelessWidget {
-  const BonoPhotoView({super.key, required this.imageUrl});
+  const BonoPhotoView({super.key, required this.imageProvider});
 
-  final String imageUrl;
+  /// A `FileImage` (offline cache) or `NetworkImage` (signed Storage URL).
+  final ImageProvider imageProvider;
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +27,8 @@ class BonoPhotoView extends StatelessWidget {
         child: InteractiveViewer(
           minScale: 1,
           maxScale: 5,
-          child: Image.network(
-            imageUrl,
+          child: Image(
+            image: imageProvider,
             fit: BoxFit.contain,
             loadingBuilder: (context, child, progress) => progress == null
                 ? child

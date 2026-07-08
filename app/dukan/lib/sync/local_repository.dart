@@ -960,6 +960,10 @@ class LocalRepository {
         voidedAt: t.payload['voided_at'] == null
             ? null
             : DateTime.tryParse(t.payload['voided_at'] as String),
+        // The attached bono (receives) — lets an offline detail show the cached
+        // photo. storage_path stays null on the mirror; View bono falls back to
+        // the local cache, keyed by document_id.
+        documentId: t.payload['document_id'] as String?,
       );
 
   /// LocalTransaction → ReceiveSummary (typedef for SaleSummary).

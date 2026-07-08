@@ -3,14 +3,18 @@
 // serialized payload. Phase 1 covered post_sale; Phase 5B (#367)
 // added post_receive / post_payment / post_expense.
 
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/queue/pending_post.dart';
 import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/receive/bono_image_cache.dart';
 
 import '../shared/fakes.dart';
+import '../shared/test_database.dart';
 
 PendingPost _post(String rpc, Map<String, dynamic> params) => PendingPost(
       id: 'id-1',
@@ -261,5 +265,48 @@ void main() {
     );
     await executor.execute(bare);
     expect(api.setAuditOriginalActorCalls, isEmpty);
+  });
+
+  test('upload_bono_image uploads the cached bytes then marks uploaded', () async {
+    final db = await openTestDatabase();
+    final cache = BonoImageCache(database: Future.value(db));
+    await cache.put(
+      documentId: 'doc-9',
+      shopId: 'shop-1',
+      ext: 'jpg',
+      bytes: Uint8List.fromList([1, 2, 3, 4]),
+    );
+    final exec = PostExecutor(api, bonoCache: cache);
+
+    await exec.execute(_post('upload_bono_image', {
+      'document_id': 'doc-9',
+      'storage_path': 'shop-1/documents/doc-9/image.jpg',
+      'mime_type': 'image/jpeg',
+      'size_bytes': 4,
+    }));
+
+    expect(api.uploadBonoImageAtCalls, hasLength(1));
+    final call = api.uploadBonoImageAtCalls.single;
+    expect(call.documentId, 'doc-9');
+    expect(call.storagePath, 'shop-1/documents/doc-9/image.jpg');
+    expect(call.sizeBytes, 4);
+    // Cached entry is now marked uploaded (kept, not deleted).
+    final row = (await db.db.query('local_bono',
+            where: 'document_id = ?', whereArgs: ['doc-9']))
+        .single;
+    expect(row['uploaded'], 1);
+  });
+
+  test('upload_bono_image with the cached bytes gone is a no-op', () async {
+    final db = await openTestDatabase();
+    final cache = BonoImageCache(database: Future.value(db));
+    final exec = PostExecutor(api, bonoCache: cache);
+    await exec.execute(_post('upload_bono_image', {
+      'document_id': 'gone',
+      'storage_path': 'p',
+      'mime_type': 'image/jpeg',
+      'size_bytes': 0,
+    }));
+    expect(api.uploadBonoImageAtCalls, isEmpty);
   });
 }

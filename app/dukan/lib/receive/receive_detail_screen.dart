@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/receive/bono_image_cache.dart';
 import 'package:dukan/receive/bono_photo_view.dart';
 import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/shared/client_op_id.dart';
@@ -293,14 +294,14 @@ class _ReceiveDetailBody extends StatelessWidget {
             l.receiveHistorySupplierLabel(supplierName),
             style: theme.textTheme.bodyLarge,
           ),
-          if (header.documentPath != null) ...[
+          if (header.documentId != null) ...[
             const SizedBox(height: 12),
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.receipt_long),
                 label: Text(l.receiveDetailViewBonoButton),
-                onPressed: () => _openBono(context, header.documentPath!),
+                onPressed: () => _openBono(context, header),
               ),
             ),
           ],
@@ -376,13 +377,25 @@ class _ReceiveDetailBody extends StatelessWidget {
     );
   }
 
-  Future<void> _openBono(BuildContext context, String path) async {
+  Future<void> _openBono(BuildContext context, ReceiveSummary header) async {
     final api = context.read<ShopApi>();
+    final cache = context.read<BonoImageCache>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final l = tr(context);
-    final url = await api.signBonoUrl(path);
-    if (url == null) {
+
+    // Prefer the local cache (offline-capable, instant); else sign a Storage URL.
+    ImageProvider? provider;
+    final cached = header.documentId == null
+        ? null
+        : await cache.bytesFor(header.documentId!);
+    if (cached != null) {
+      provider = MemoryImage(cached);
+    } else if (header.documentPath != null) {
+      final url = await api.signBonoUrl(header.documentPath!);
+      if (url != null) provider = NetworkImage(url);
+    }
+    if (provider == null) {
       messenger.showSnackBar(
         SnackBar(content: Text(l.receiveDetailBonoUnavailable)),
       );
@@ -391,7 +404,7 @@ class _ReceiveDetailBody extends StatelessWidget {
     await navigator.push(
       MaterialPageRoute<void>(
         fullscreenDialog: true,
-        builder: (_) => BonoPhotoView(imageUrl: url),
+        builder: (_) => BonoPhotoView(imageProvider: provider!),
       ),
     );
   }

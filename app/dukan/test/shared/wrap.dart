@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import 'package:dukan/api/shop_api.dart';
+import 'package:dukan/receive/bono_image_cache.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/config/config_resolver.dart';
 import 'package:dukan/expense/expense_controller.dart';
@@ -46,8 +47,13 @@ Widget wrapWithApp(
   OfflineQueueController? offlineQueueController,
   ConfigResolver? configResolver,
   LocalRepository? localRepository,
+  BonoImageCache? bonoImageCache,
   Locale locale = const Locale('en'),
 }) {
+  // A bono cache backed by the test in-memory DB so screens that read
+  // context.read<BonoImageCache>() (attach, View bono) work.
+  final bonoCache =
+      bonoImageCache ?? BonoImageCache(database: AppDatabase.instance());
   // Default no-op offline queue so the QueueStatusPill in app bars
   // can render even when a specific test doesn't care about queue
   // behaviour. Executor is a no-op (returns void) so any enqueued
@@ -117,6 +123,7 @@ Widget wrapWithApp(
             shopApi: (shopApi is FakeShopApi) ? shopApi : FakeShopApi(),
           ),
     ),
+    Provider<BonoImageCache>.value(value: bonoCache),
   ];
 
   return MultiProvider(

@@ -8,6 +8,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/receive/bono_image_cache.dart';
 import 'package:dukan/receive/bono_suggestion_review_sheet.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
@@ -543,8 +544,9 @@ void main() {
           defaultUnitLastCost: 4,
         ),
       ];
-      api.onUploadBonoImage = (shopId, bytes, mimeType, ext) async {
-        return 'doc-uploaded-123';
+      String? uploadedDocId;
+      api.onUploadBonoImageAt = (shopId, documentId, path, bytes, mime) async {
+        uploadedDocId = documentId;
       };
       String? capturedDocId;
       api.onPostReceive = (
@@ -589,8 +591,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // post_receive received the uploaded document_id.
-      expect(capturedDocId, 'doc-uploaded-123');
+      // post_receive received the same client-minted document_id we uploaded.
+      expect(uploadedDocId, isNotNull);
+      expect(capturedDocId, uploadedDocId);
     },
   );
 
@@ -692,7 +695,6 @@ void main() {
   testWidgets(
     'bono: attach → banner → review → APPLY merges bound lines + learns',
     (tester) async {
-      api.onUploadBonoImage = (_, _, _, _) async => 'doc-1';
       api.onSuggestReceiveLinesFromBono =
           (_, _, _, _) async => threeSuggestions();
 
@@ -729,7 +731,6 @@ void main() {
   testWidgets('bono: APPLY never overwrites a manually-entered line', (
     tester,
   ) async {
-    api.onUploadBonoImage = (_, _, _, _) async => 'doc-1';
     api.onSuggestReceiveLinesFromBono =
         (_, _, _, _) async => threeSuggestions();
 
@@ -768,7 +769,6 @@ void main() {
   testWidgets('bono: bind a "Not found" line → it becomes applyable + learns', (
     tester,
   ) async {
-    api.onUploadBonoImage = (_, _, _, _) async => 'doc-1';
     api.onSuggestReceiveLinesFromBono = (_, _, _, _) async => [
       BonoSuggestion.fromJson({
         'line_no': 1,
@@ -887,7 +887,6 @@ void main() {
   });
 
   testWidgets('bono: no suggestions → no banner (inert)', (tester) async {
-    api.onUploadBonoImage = (_, _, _, _) async => 'doc-1';
     api.onSuggestReceiveLinesFromBono = (_, _, _, _) async => const [];
 
     await pumpReceive(tester, bonoPicker: _FakePicker());
@@ -902,6 +901,63 @@ void main() {
 
     expect(find.text(en.bonoSuggestionsReview), findsNothing);
   });
+
+  testWidgets(
+    'bono attach offline: caches the bytes + queues an upload_bono_image',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _, _) async => const [];
+      api.onSuggestReceiveLinesFromBono = (_, _, _, _) async => const [];
+      // Offline: the bono upload fails transiently → deferred + cached.
+      api.onUploadBonoImageAt =
+          (_, _, _, _, _) async => throw Exception('offline');
+
+      final drained = <PendingPost>[];
+      final queue = OfflineQueueController(
+        dao: PendingPostDao(AppDatabase.instance()),
+        executor: (post) async => drained.add(post),
+        backoff: (_) => Duration.zero,
+      );
+      final cache = BonoImageCache(database: AppDatabase.instance());
+
+      await tester.pumpWidget(
+        wrapWithApp(
+          ReceiveScreen(shop: shop, bonoPicker: _FakePicker()),
+          authController: auth,
+          shopApi: api,
+          receiveController: receive,
+          offlineQueueController: queue,
+          bonoImageCache: cache,
+          // Queue drains only under the local-db path.
+          configResolver:
+              FakeConfigResolver(values: const {'use_local_db': true}),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Attach offline.
+      await tester.tap(find.widgetWithText(ActionChip, en.bonoChipLabel));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.bonoAttachCamera));
+      // Let the attach cache the bytes + enqueue + drain the upload. (Don't
+      // pumpAndSettle: it would spin on the just-armed suggestion poll timer.)
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // The attach reported the offline upload failure via FlutterError; consume
+      // it so it doesn't fail the test.
+      expect(tester.takeException(), isA<Exception>());
+
+      // Tear the screen down → dispose cancels the suggestion poll timer.
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+
+      // The upload was queued (with a client-minted document_id) and the bytes
+      // are cached under it — so the record survives + uploads on reconnect.
+      final upload = drained.firstWhere((p) => p.rpc == 'upload_bono_image');
+      final docId = upload.params['document_id'] as String?;
+      expect(docId, isNotNull);
+      expect(await cache.has(docId!), isTrue);
+    },
+  );
 }
 
 class _FakePicker implements BonoImagePicker {

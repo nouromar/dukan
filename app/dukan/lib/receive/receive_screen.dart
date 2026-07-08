@@ -39,6 +39,7 @@ import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
+import 'package:dukan/receive/bono_image_cache.dart';
 import 'package:dukan/receive/bono_suggestion_review_sheet.dart';
 import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/observability/timing.dart';
@@ -516,18 +517,63 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
 
     setState(() => _attachingBono = true);
     final picker = _picker ??= widget.bonoPicker ?? DefaultBonoImagePicker();
+    final api = context.read<ShopApi>();
+    final cache = context.read<BonoImageCache>();
+    final queue = context.read<OfflineQueueController>();
+    final shopId = widget.shop.id;
     try {
       final picked = source == _BonoSource.camera
           ? await picker.pickFromCamera()
           : await picker.pickFromGallery();
       if (picked == null || !mounted) return;
-      final api = context.read<ShopApi>();
-      final docId = await api.uploadBonoImage(
-        shopId: widget.shop.id,
+
+      // Client-mint the id + path (works offline) and cache the bytes locally so
+      // the record survives offline and View bono can show it offline. Then
+      // upload — directly when online, or via the queue on any failure. The
+      // queued upload drains ahead of the receive that references this id.
+      final docId = generateUuidV4();
+      final path = api.bonoStoragePath(shopId, docId, picked.fileExtension);
+      await cache.put(
+        documentId: docId,
+        shopId: shopId,
+        ext: picked.fileExtension,
         bytes: picked.bytes,
-        mimeType: picked.mimeType,
-        fileExtension: picked.fileExtension,
       );
+      try {
+        await api.uploadBonoImageAt(
+          shopId: shopId,
+          documentId: docId,
+          storagePath: path,
+          bytes: picked.bytes,
+          mimeType: picked.mimeType,
+        );
+        await cache.markUploaded(docId);
+      } catch (error, stackTrace) {
+        // Offline / transient — defer the upload; the cached bytes ride until
+        // the queue drains. The queue classifies permanent vs transient.
+        _reportError(error, stackTrace, 'upload bono (queuing for retry)');
+        String actorId = '';
+        try {
+          actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
+        } catch (_) {
+          actorId = '';
+        }
+        await queue.enqueue(PendingPost(
+          id: generateClientOpId('bono'),
+          clientOpId: generateClientOpId('bono'),
+          shopId: shopId,
+          originalActorUserId: actorId,
+          rpc: 'upload_bono_image',
+          params: buildUploadBonoImageParams(
+            documentId: docId,
+            storagePath: path,
+            mimeType: picked.mimeType,
+            sizeBytes: picked.bytes.length,
+          ),
+          queuedAt: DateTime.now(),
+        ));
+      }
+      unawaited(cache.evictToLimit());
       if (!mounted) return;
       _armBonoSuggestions(docId);
       setState(() {});
@@ -535,7 +581,8 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text(l.bonoAttachedToast)));
     } catch (error, stackTrace) {
-      _reportError(error, stackTrace, 'upload bono');
+      // Failed before we could cache/queue (e.g. the picker) — can't defer.
+      _reportError(error, stackTrace, 'attach bono');
       if (mounted) showError(context, l.bonoAttachFailedMessage);
     } finally {
       if (mounted) setState(() => _attachingBono = false);
@@ -880,6 +927,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           'payment_method_code': null,
           'paid_amount': 0,
           'lines_summary': linesSummary,
+          // Carry the bono link so an offline (mirror-loaded) receive detail can
+          // find + show the cached photo via View bono.
+          'document_id': _bonoDocumentId,
         },
       );
     } catch (e, st) {

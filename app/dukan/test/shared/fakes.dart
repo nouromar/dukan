@@ -1148,32 +1148,49 @@ class FakeShopApi implements ShopApi {
     return 'fake-txn-${clientOpId.hashCode}';
   }
 
-  Future<String> Function(
+  @override
+  String bonoStoragePath(
     String shopId,
+    String documentId,
+    String fileExtension,
+  ) => '$shopId/documents/$documentId/image.$fileExtension';
+
+  Future<void> Function(
+    String shopId,
+    String documentId,
+    String storagePath,
     Uint8List bytes,
     String mimeType,
-    String fileExtension,
   )?
-  onUploadBonoImage;
-  final List<({String shopId, int sizeBytes, String mimeType})>
-  uploadBonoImageCalls = [];
+  onUploadBonoImageAt;
+  final List<
+    ({String shopId, String documentId, String storagePath, int sizeBytes})
+  >
+  uploadBonoImageAtCalls = [];
 
   @override
-  Future<String> uploadBonoImage({
+  Future<void> uploadBonoImageAt({
     required String shopId,
+    required String documentId,
+    required String storagePath,
     required Uint8List bytes,
     required String mimeType,
-    required String fileExtension,
   }) async {
-    uploadBonoImageCalls.add((
+    uploadBonoImageAtCalls.add((
       shopId: shopId,
+      documentId: documentId,
+      storagePath: storagePath,
       sizeBytes: bytes.length,
-      mimeType: mimeType,
     ));
-    if (onUploadBonoImage != null) {
-      return onUploadBonoImage!(shopId, bytes, mimeType, fileExtension);
+    if (onUploadBonoImageAt != null) {
+      await onUploadBonoImageAt!(
+        shopId,
+        documentId,
+        storagePath,
+        bytes,
+        mimeType,
+      );
     }
-    return 'fake-doc-id';
   }
 
   Future<List<BonoSuggestion>> Function(

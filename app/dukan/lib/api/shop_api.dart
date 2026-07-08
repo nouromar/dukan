@@ -10,7 +10,6 @@ import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/types.dart';
-import 'package:dukan/shared/uuid.dart';
 
 /// Bundle returned by `getShopItem` — header + every packaging + every
 /// alias + every barcode in a single round trip. The RPC returns one
@@ -2009,40 +2008,40 @@ class ShopApi {
     );
   }
 
-  /// Uploads the picked bono bytes to the `shop-documents` bucket and
-  /// inserts a `document` row of type `bono`. Returns the new
-  /// document_id, which Receive SAVE then passes to `post_receive` as
-  /// `p_document_id`. Storage path is `{shop_id}/bono/{uuid}.{ext}`.
-  Future<String> uploadBonoImage({
+  /// The canonical bono storage path — fixed by the `document_storage_path_shape`
+  /// check in 0008: `{shop_id}/documents/{document_id}/image.{ext}`. The document
+  /// id is client-minted (before any I/O) so the path + the receive link can be
+  /// built offline.
+  String bonoStoragePath(String shopId, String documentId, String fileExtension) =>
+      '$shopId/documents/$documentId/image.$fileExtension';
+
+  /// Upload bono bytes to the `shop-documents` bucket and create its `document`
+  /// row, using a CALLER-minted id + path. Used by both the online attach and
+  /// the offline drain executor (from cached bytes). Idempotent — `upsert: true`
+  /// on Storage + `create_bono_document`'s `on conflict do nothing` (0108) — so a
+  /// retried queued upload is safe.
+  Future<void> uploadBonoImageAt({
     required String shopId,
+    required String documentId,
+    required String storagePath,
     required Uint8List bytes,
     required String mimeType,
-    required String fileExtension,
   }) async {
-    // Path shape is fixed by the `document_storage_path_shape` check
-    // in 0008: `{shop_id}/documents/{document_id}/image.{ext}`. We mint
-    // the document UUID client-side so the path can be built before
-    // upload, then pass that same id into the RPC.
-    final documentId = uuidV4();
-    final path = '$shopId/documents/$documentId/image.$fileExtension';
-    await _client.storage
-        .from('shop-documents')
-        .uploadBinary(
-          path,
+    await _client.storage.from('shop-documents').uploadBinary(
+          storagePath,
           bytes,
-          fileOptions: FileOptions(contentType: mimeType, upsert: false),
+          fileOptions: FileOptions(contentType: mimeType, upsert: true),
         );
-    final result = await _client.rpc(
+    await _client.rpc(
       'create_bono_document',
       params: {
         'p_shop_id': shopId,
         'p_document_id': documentId,
-        'p_storage_path': path,
+        'p_storage_path': storagePath,
         'p_mime_type': mimeType,
         'p_size_bytes': bytes.length,
       },
     );
-    return result as String;
   }
 
   /// Flip the per-screen default flags on a packaging row. Setting a
