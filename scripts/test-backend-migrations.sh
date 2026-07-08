@@ -3284,6 +3284,21 @@ begin
     raise exception 'V: document.type should be bono (got %)', v_type_code;
   end if;
 
+  -- Idempotent (0108): repeating the same id is a no-op, still returns it — so a
+  -- retried offline-queued bono upload can't dead-letter on a unique violation.
+  if public.create_bono_document(
+    v_shop_id,
+    v_supplied_id,
+    v_shop_id::text || '/documents/' || v_supplied_id::text || '/image.jpg',
+    'image/jpeg',
+    1024
+  ) <> v_supplied_id then
+    raise exception 'V: create_bono_document repeat should return the same id';
+  end if;
+  if (select count(*) from public.document where id = v_supplied_id) <> 1 then
+    raise exception 'V: create_bono_document repeat duplicated the document row';
+  end if;
+
   -- Bad mime is rejected.
   begin
     perform public.create_bono_document(
