@@ -2017,9 +2017,14 @@ class ShopApi {
 
   /// Upload bono bytes to the `shop-documents` bucket and create its `document`
   /// row, using a CALLER-minted id + path. Used by both the online attach and
-  /// the offline drain executor (from cached bytes). Idempotent — `upsert: true`
-  /// on Storage + `create_bono_document`'s `on conflict do nothing` (0108) — so a
-  /// retried queued upload is safe.
+  /// the offline drain executor (from cached bytes).
+  ///
+  /// Uses `upsert: false` deliberately: `upsert: true` makes Storage do an
+  /// existence check governed by the SELECT policy (`storage_object_can_read`),
+  /// which requires a matching `document` row — but that row is created AFTER
+  /// the upload, so the upsert is denied and the whole attach fails. Retry
+  /// safety instead comes from tolerating a duplicate object here + the
+  /// idempotent `create_bono_document` (`on conflict do nothing`, 0108).
   Future<void> uploadBonoImageAt({
     required String shopId,
     required String documentId,
@@ -2027,11 +2032,21 @@ class ShopApi {
     required Uint8List bytes,
     required String mimeType,
   }) async {
-    await _client.storage.from('shop-documents').uploadBinary(
-          storagePath,
-          bytes,
-          fileOptions: FileOptions(contentType: mimeType, upsert: true),
-        );
+    try {
+      await _client.storage.from('shop-documents').uploadBinary(
+            storagePath,
+            bytes,
+            fileOptions: FileOptions(contentType: mimeType, upsert: false),
+          );
+    } on StorageException catch (error) {
+      // Idempotent retry: a prior attempt already uploaded this exact path.
+      // Treat "already exists" as success and go create the document row.
+      final message = error.message.toLowerCase();
+      final duplicate = error.statusCode == '409' ||
+          message.contains('exist') ||
+          message.contains('duplicate');
+      if (!duplicate) rethrow;
+    }
     await _client.rpc(
       'create_bono_document',
       params: {
