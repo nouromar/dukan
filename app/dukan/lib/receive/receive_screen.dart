@@ -45,6 +45,7 @@ import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/observability/timing.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/pending_post.dart';
+import 'package:dukan/queue/queue_status_pill.dart';
 import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/multi_scan_sheet.dart';
@@ -1193,6 +1194,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
             workingDate: controller.workingDate,
             onChanged: controller.setWorkingDate,
           ),
+          const QueueStatusPill(),
           // Labeled "Bono" chip (not a bare camera icon) so a first-time
           // shopkeeper reads the purpose — "bono" is their own word for the
           // supplier invoice. Fills + checks once a photo is attached.
