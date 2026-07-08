@@ -528,31 +528,39 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           : await picker.pickFromGallery();
       if (picked == null || !mounted) return;
 
-      // Client-mint the id + path (works offline) and cache the bytes locally so
-      // the record survives offline and View bono can show it offline. Then
-      // upload — directly when online, or via the queue on any failure. The
-      // queued upload drains ahead of the receive that references this id.
+      // Client-minted id + path (works offline). Upload FIRST on the online
+      // path so the document exists + OCR starts immediately — don't block the
+      // banner on the local cache write. Cache only for offline: in the
+      // background after a successful upload, or synchronously before queueing
+      // when the upload fails (the deferred upload needs the bytes).
       final docId = generateUuidV4();
       final path = api.bonoStoragePath(shopId, docId, picked.fileExtension);
-      await cache.put(
-        documentId: docId,
-        shopId: shopId,
-        ext: picked.fileExtension,
-        bytes: picked.bytes,
-      );
+      final ext = picked.fileExtension;
+      final bytes = picked.bytes;
+      final mime = picked.mimeType;
       try {
         await api.uploadBonoImageAt(
           shopId: shopId,
           documentId: docId,
           storagePath: path,
-          bytes: picked.bytes,
-          mimeType: picked.mimeType,
+          bytes: bytes,
+          mimeType: mime,
         );
-        await cache.markUploaded(docId);
+        // Cache for offline viewing — off the critical path.
+        unawaited(() async {
+          try {
+            await cache.put(
+                documentId: docId, shopId: shopId, ext: ext, bytes: bytes);
+            await cache.markUploaded(docId);
+            await cache.evictToLimit();
+          } catch (_) {}
+        }());
       } catch (error, stackTrace) {
-        // Offline / transient — defer the upload; the cached bytes ride until
-        // the queue drains. The queue classifies permanent vs transient.
+        // Offline / transient — cache the bytes (the queued upload needs them)
+        // + defer the upload. The queue classifies permanent vs transient.
         _reportError(error, stackTrace, 'upload bono (queuing for retry)');
+        await cache.put(
+            documentId: docId, shopId: shopId, ext: ext, bytes: bytes);
         String actorId = '';
         try {
           actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
@@ -568,13 +576,13 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           params: buildUploadBonoImageParams(
             documentId: docId,
             storagePath: path,
-            mimeType: picked.mimeType,
-            sizeBytes: picked.bytes.length,
+            mimeType: mime,
+            sizeBytes: bytes.length,
           ),
           queuedAt: DateTime.now(),
         ));
+        unawaited(cache.evictToLimit());
       }
-      unawaited(cache.evictToLimit());
       if (!mounted) return;
       _armBonoSuggestions(docId);
       setState(() {});
