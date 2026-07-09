@@ -960,10 +960,12 @@ class LocalRepository {
         voidedAt: t.payload['voided_at'] == null
             ? null
             : DateTime.tryParse(t.payload['voided_at'] as String),
-        // The attached bono (receives) — lets an offline detail show the cached
-        // photo. storage_path stays null on the mirror; View bono falls back to
-        // the local cache, keyed by document_id.
+        // The attached bono (receives). document_id keys the local cache (offline
+        // + instant); document_path lets View bono sign a Storage URL when the
+        // cache is empty — e.g. after a reinstall, where the mirror is the only
+        // source. Both ride the sync payload (0110).
         documentId: t.payload['document_id'] as String?,
+        documentPath: t.payload['document_path'] as String?,
       );
 
   /// LocalTransaction → ReceiveSummary (typedef for SaleSummary).

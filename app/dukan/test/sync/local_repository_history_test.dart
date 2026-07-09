@@ -120,6 +120,26 @@ void main() {
       expect(s.postedAt, isNotNull);
     });
 
+    test('receive carries document_id + document_path (View bono after reinstall)',
+        () async {
+      await repo.applyTransactionsPayload({
+        'transactions': [
+          _txn('t-recv-bono', 'receive', occurredMs: 3000, total: 50,
+              partyId: 's', extra: {
+            'party_name': 'Supplier',
+            'document_id': 'doc-9',
+            'document_path': 'shop/documents/doc-9/image.jpg',
+          }),
+        ],
+      });
+      final t = await repo.getTransaction('t-recv-bono');
+      final s = repo.toReceiveSummary(t!);
+      expect(s.documentId, 'doc-9');
+      // Without document_path on the mirror, a reinstalled device (empty local
+      // cache) can't sign a Storage URL → "Bono photo unavailable".
+      expect(s.documentPath, 'shop/documents/doc-9/image.jpg');
+    });
+
     test('credit sale (paid_amount 0) reads as debt, not cash', () async {
       // Regression: a debt sale opened from the local mirror used to
       // render as a fully-paid CASH sale because the sync payload

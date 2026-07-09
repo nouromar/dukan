@@ -11,11 +11,14 @@
 -- which is how the "same bono twice → only the first is broken" repro surfaced).
 --
 -- Fix: re-create the function (copied from 0092, the current full definition)
--- with `document_id` added to both UNION branches — `t.document_id` for the
--- transaction rows, `null::uuid` for payments (payments have no bono). The client
--- already reads `payload['document_id']` (LocalRepository.toSaleSummary), so no
--- app change is needed. Apply with `supabase db push`; devices re-download once
--- so synced rows pick up the link.
+-- with `document_id` AND `document_path` added to both UNION branches —
+-- `t.document_id` + the joined `document.storage_path` for transaction rows,
+-- `null` for payments (payments have no bono). document_id keys the on-device
+-- cache; document_path lets "View bono" sign a Storage URL when the cache is
+-- empty (e.g. after a reinstall, where the synced mirror is the only source —
+-- without the path the button shows "Bono photo unavailable"). The client reads
+-- both from the payload (LocalRepository.toSaleSummary). Apply with
+-- `supabase db push`; devices re-download once so synced rows pick up the link.
 
 create or replace function public._build_transactions_payload(
   p_shop_id uuid,
@@ -52,6 +55,7 @@ begin
       null::text          as notes,
       false               as is_refund,
       t.document_id       as document_id,   -- bono link → View bono survives sync
+      d.storage_path      as document_path, -- Storage fallback when cache is empty
       (
         select coalesce(jsonb_agg(to_jsonb(l) order by l.line_no), '[]'::jsonb)
         from (
@@ -100,6 +104,7 @@ begin
     join public.transaction_type tt on tt.id = t.type_id
     left join public.party p on p.id = t.party_id
     left join public.payment_method pm on pm.id = t.payment_method_id
+    left join public.document d on d.shop_id = t.shop_id and d.id = t.document_id
     where t.shop_id = p_shop_id
       and (p_since is null or t.created_at > p_since)
 
@@ -123,6 +128,7 @@ begin
       pay.notes           as notes,
       (pay.refund_of_transaction_id is not null) as is_refund,
       null::uuid          as document_id,   -- payments have no bono
+      null::text          as document_path,
       '[]'::jsonb         as lines_summary,
       pay.created_at      as created_at_for_sort
     from public.payment pay
