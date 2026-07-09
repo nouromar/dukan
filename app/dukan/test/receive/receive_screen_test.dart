@@ -692,8 +692,22 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  // Open the full-screen review from the banner.
+  Future<void> openReview(WidgetTester tester) async {
+    await tester.tap(find.text(en.bonoSuggestionsReview));
+    await tester.pumpAndSettle();
+  }
+
+  // Remove the (single remaining) amber line via its status ▾ menu.
+  Future<void> removeAmberLine(WidgetTester tester) async {
+    await tester.tap(find.text(en.bonoReviewStatusNeedsReview));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.bonoReviewRemove));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets(
-    'bono: attach → banner → review → APPLY merges bound lines + learns',
+    'bono: review → mark ready + remove → Accept merges lines + learns',
     (tester) async {
       api.onSuggestReceiveLinesFromBono =
           (_, _, _, _) async => threeSuggestions();
@@ -705,17 +719,21 @@ void main() {
       // Banner announces the 3 read lines.
       expect(find.text(en.bonoSuggestionsFound(3)), findsOneWidget);
 
-      // Open the review sheet: 2 bound lines are checkboxes (pre-checked),
-      // the unmatched line is read-only.
-      await tester.tap(find.text(en.bonoSuggestionsReview));
-      await tester.pumpAndSettle();
-      expect(find.byType(CheckboxListTile), findsNWidgets(2));
-      expect(find.text(en.bonoSuggestionsUnmatchedSection), findsOneWidget);
+      // Full-screen review: line 1 (high) starts Ready (green); lines 2 (med)
+      // and 3 (new) start amber, so Accept is gated.
+      await openReview(tester);
+      expect(find.text(en.bonoReviewMarkReady), findsNWidgets(2));
+      expect(find.text(en.bonoReviewAcceptGate(2, 3)), findsOneWidget);
 
-      // APPLY.
-      await tester.tap(
-        find.widgetWithText(FilledButton, en.bonoSuggestionsApply),
-      );
+      // Mark the med line (first amber card) ready.
+      await tester.tap(find.text(en.bonoReviewMarkReady).first);
+      await tester.pumpAndSettle();
+
+      // Remove the remaining amber (new-item) line → both survivors green.
+      await removeAmberLine(tester);
+      expect(find.text(en.bonoReviewAccept(2)), findsOneWidget);
+
+      await tester.tap(find.text(en.bonoReviewAccept(2)));
       await tester.pumpAndSettle();
 
       // Both bound lines merged into the receive; learning fired once each.
@@ -728,7 +746,7 @@ void main() {
     },
   );
 
-  testWidgets('bono: APPLY never overwrites a manually-entered line', (
+  testWidgets('bono: Accept never overwrites a manually-entered line', (
     tester,
   ) async {
     api.onSuggestReceiveLinesFromBono =
@@ -750,11 +768,12 @@ void main() {
     await tester.pumpAndSettle();
     await attachBono(tester);
 
-    await tester.tap(find.text(en.bonoSuggestionsReview));
+    await openReview(tester);
+    // Make everything green: mark the med line ready, drop the new-item line.
+    await tester.tap(find.text(en.bonoReviewMarkReady).first);
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.widgetWithText(FilledButton, en.bonoSuggestionsApply),
-    );
+    await removeAmberLine(tester);
+    await tester.tap(find.text(en.bonoReviewAccept(2)));
     await tester.pumpAndSettle();
 
     // siu-1 keeps the manual values; only siu-2 was added; learning fired
@@ -766,7 +785,7 @@ void main() {
     expect(api.confirmBonoSuggestionCalls.single.shopItemUnitId, 'siu-2');
   });
 
-  testWidgets('bono: bind a "Not found" line → it becomes applyable + learns', (
+  testWidgets('bono: Pick existing binds a new line → Accept adds it + learns', (
     tester,
   ) async {
     api.onSuggestReceiveLinesFromBono = (_, _, _, _) async => [
@@ -802,19 +821,20 @@ void main() {
     await tester.pumpAndSettle();
     await attachBono(tester);
 
-    await tester.tap(find.text(en.bonoSuggestionsReview));
-    await tester.pumpAndSettle();
+    await openReview(tester);
 
-    // The unmatched line offers "Choose item" (not yet applyable).
-    expect(find.text(en.bonoBindChooseItem), findsOneWidget);
-    await tester.tap(find.text(en.bonoBindChooseItem));
+    // The lone new-item line is amber → Accept gated. Bind it via the status
+    // ▾ menu → "Pick existing product".
+    expect(find.text(en.bonoReviewAcceptGate(1, 1)), findsOneWidget);
+    await tester.tap(find.text(en.bonoReviewStatusNeedsReview));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.bonoReviewPickExisting));
     await tester.pumpAndSettle(); // picker opens + initial search
     await tester.tap(find.text('Laptop'));
-    await tester.pumpAndSettle(); // bind → picker pops → row checked
+    await tester.pumpAndSettle(); // bind → picker pops → line turns green
 
-    await tester.tap(
-      find.widgetWithText(FilledButton, en.bonoSuggestionsApply),
-    );
+    // Now ready → Accept enabled.
+    await tester.tap(find.text(en.bonoReviewAccept(1)));
     await tester.pumpAndSettle();
 
     // Bound line added with the OCR qty, and the mapping is learned.
@@ -900,6 +920,61 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(en.bonoSuggestionsReview), findsNothing);
+  });
+
+  // Manual attach (no pumpAndSettle) so we can observe the loading window
+  // before the first 3s poll tick.
+  Future<void> attachNoSettle(WidgetTester tester) async {
+    await tester.tap(find.widgetWithText(ActionChip, en.bonoChipLabel));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(en.bonoAttachCamera));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+
+  testWidgets(
+    'bono: "Reading…" banner shows after a successful attach + is dismissible',
+    (tester) async {
+      api.onSuggestReceiveLinesFromBono = (_, _, _, _) async => const [];
+      await pumpReceive(tester, bonoPicker: _FakePicker());
+      await tester.pumpAndSettle();
+      await attachNoSettle(tester);
+
+      // Bridges the silence before OCR lands — no Review button yet.
+      expect(find.text(en.bonoSuggestionsReading), findsOneWidget);
+      expect(find.text(en.bonoSuggestionsReview), findsNothing);
+
+      // X-dismiss hides it.
+      await tester.tap(find.descendant(
+        of: find.byType(BonoSuggestionBanner),
+        matching: find.byIcon(Icons.close),
+      ));
+      await tester.pump();
+      expect(find.text(en.bonoSuggestionsReading), findsNothing);
+
+      // Drain the still-running poll so no timer outlives the test.
+      await tester.pump(const Duration(seconds: 33));
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('bono: "Reading…" morphs into the Review banner when OCR lands', (
+    tester,
+  ) async {
+    api.onSuggestReceiveLinesFromBono = (_, _, _, _) async => threeSuggestions();
+    await pumpReceive(tester, bonoPicker: _FakePicker());
+    await tester.pumpAndSettle();
+    await attachNoSettle(tester);
+
+    // Loading first…
+    expect(find.text(en.bonoSuggestionsReading), findsOneWidget);
+
+    // …then the first 3s poll tick fetches suggestions → the same slot morphs.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump();
+    expect(find.text(en.bonoSuggestionsReading), findsNothing);
+    expect(find.text(en.bonoSuggestionsFound(3)), findsOneWidget);
+    await tester.pumpAndSettle();
   });
 
   testWidgets(

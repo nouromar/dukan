@@ -85,6 +85,10 @@ class AddNewItemSheet {
     ShopSummary shop, {
     required String initialName,
     AddNewItemVariant variant = AddNewItemVariant.sale,
+    String? initialCategoryId,
+    String? initialBaseUnitCode,
+    String? initialPackUnitCode,
+    num? initialPackSize,
   }) {
     return showModalBottomSheet<AddNewItemResult>(
       context: context,
@@ -93,6 +97,10 @@ class AddNewItemSheet {
         shop: shop,
         initialName: initialName,
         variant: variant,
+        initialCategoryId: initialCategoryId,
+        initialBaseUnitCode: initialBaseUnitCode,
+        initialPackUnitCode: initialPackUnitCode,
+        initialPackSize: initialPackSize,
       ),
     );
   }
@@ -137,11 +145,19 @@ class _AddNewItemBody extends StatefulWidget {
     required this.shop,
     required this.initialName,
     required this.variant,
+    this.initialCategoryId,
+    this.initialBaseUnitCode,
+    this.initialPackUnitCode,
+    this.initialPackSize,
   });
 
   final ShopSummary shop;
   final String initialName;
   final AddNewItemVariant variant;
+  final String? initialCategoryId;
+  final String? initialBaseUnitCode;
+  final String? initialPackUnitCode;
+  final num? initialPackSize;
 
   @override
   State<_AddNewItemBody> createState() => _AddNewItemBodyState();
@@ -156,12 +172,15 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
   String? _categoryId;
   bool _saving = false;
   String? _locale;
+  bool _prefilledPackaging = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialName);
     _priceController = TextEditingController();
+    // Prefill the category from an AI/caller suggestion (e.g. a bono line).
+    _categoryId = widget.initialCategoryId;
     _nameController.addListener(_rebuild);
     _priceController.addListener(_rebuild);
   }
@@ -182,6 +201,68 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
         locale: current,
       );
     }
+    // One-time: pre-select the packaging from a caller/AI suggestion (a bono
+    // line). Async (needs the unit table for code→label), so it can't ride in
+    // initState like the category. Guarded so the locale re-fire never repeats it.
+    if (!_prefilledPackaging) {
+      _prefilledPackaging = true;
+      _prefillPackaging();
+    }
+  }
+
+  // Resolve the caller's packaging codes to a concrete _PickerChoice, exactly
+  // as the custom-packaging form synthesizes one — so the sheet opens with the
+  // packaging already chosen (SAVE lit, no tap). Silently no-ops if there's no
+  // base code, a code can't be resolved, or the cashier already picked during
+  // the load.
+  Future<void> _prefillPackaging() async {
+    final baseCode = widget.initialBaseUnitCode;
+    if (baseCode == null) return;
+    final List<UnitOption> units;
+    try {
+      units = await context.read<ShopApi>().listUnits();
+    } catch (_) {
+      return; // offline / lookup failed → cashier picks manually
+    }
+    if (!mounted || _picked != null) return;
+
+    UnitOption? byCode(String? code) {
+      if (code == null) return null;
+      for (final u in units) {
+        if (u.code == code) return u;
+      }
+      return null;
+    }
+
+    final base = byCode(baseCode);
+    if (base == null) return;
+
+    final pack = byCode(widget.initialPackUnitCode);
+    final size = widget.initialPackSize;
+    final packOk = pack != null &&
+        pack.code != base.code &&
+        size != null &&
+        size > 0 &&
+        size != 1 &&
+        filterPackagingsForBase<UnitOption>(base.code, units, (u) => u.code)
+            .any((u) => u.code == pack.code);
+
+    final choice = packOk
+        ? _PickerChoice.packaged(
+            baseUnitCode: base.code,
+            baseUnitLabel: base.label,
+            soldUnitCode: pack.code,
+            soldUnitLabel: pack.label,
+            conversion: size,
+            source: 'custom',
+          )
+        : _PickerChoice.baseOnly(
+            baseUnitCode: base.code,
+            baseUnitLabel: base.label,
+          );
+
+    if (!mounted || _picked != null) return;
+    setState(() => _picked = choice);
   }
 
   @override

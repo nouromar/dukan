@@ -40,6 +40,7 @@ import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
 import 'package:dukan/receive/bono_image_cache.dart';
+import 'package:dukan/receive/bono_review_screen.dart';
 import 'package:dukan/receive/bono_suggestion_review_sheet.dart';
 import 'package:dukan/shared/realtime.dart';
 import 'package:dukan/observability/timing.dart';
@@ -117,6 +118,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   // with a poll fallback). Server-only + inert offline — any fetch error just
   // leaves the banner absent. See docs/bono-ocr-prepopulate.md.
   List<BonoSuggestion> _bonoSuggestions = const [];
+  // True from a successful (online) upload until the review is ready, the OCR
+  // times out, or the cashier dismisses it — drives the "Reading the bono…"
+  // banner so there's no silence between attach and the review appearing.
+  bool _bonoLoading = false;
   bool _bonoSuggestionsDismissed = false;
   // First-use teaching hint in the empty state. Session-scoped (no persistence):
   // it vanishes the moment a line is added or a bono attached, so an experienced
@@ -545,6 +550,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         ext: ext,
         bytes: bytes,
       );
+      // Only the online path starts OCR now; offline defers it to sync, so we
+      // don't spin "Reading the bono…" when nothing is reading yet.
+      var uploaded = false;
       try {
         await api.uploadBonoImageAt(
           shopId: shopId,
@@ -553,6 +561,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           bytes: bytes,
           mimeType: mime,
         );
+        uploaded = true;
         // Uploaded — mark the cache entry uploaded (evictable) in the background.
         unawaited(cached
             .then((_) => cache.markUploaded(docId))
@@ -588,7 +597,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         unawaited(cache.evictToLimit());
       }
       if (!mounted) return;
-      _armBonoSuggestions(docId);
+      _armBonoSuggestions(docId, expectOcr: uploaded);
       setState(() {});
       ScaffoldMessenger.of(
         context,
@@ -606,9 +615,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   // suggest RPC returns empty until OCR writes document.ocr_result, so we
   // re-fetch on each document-row change and, as a backstop, every 3s up to
   // ~30s. Inert offline (RealtimeWatcher is null, fetches throw and are eaten).
-  void _armBonoSuggestions(String docId) {
+  void _armBonoSuggestions(String docId, {bool expectOcr = true}) {
     _resetBonoState();
     _bonoDocumentId = docId;
+    _bonoLoading = expectOcr;
     _bonoWatcher = RealtimeWatcher.tryCreate(
       channelName: 'bono_ocr:$docId',
       subscriptions: [
@@ -623,6 +633,11 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       _bonoPollTicks += 1;
       if (_bonoSuggestions.isNotEmpty || _bonoPollTicks > 10) {
         timer.cancel();
+        // Timed out with no result (OCR failed / junk image) → drop the spinner
+        // so it never hangs; the cashier just keeps entering by hand.
+        if (mounted && _bonoLoading && _bonoSuggestions.isEmpty) {
+          setState(() => _bonoLoading = false);
+        }
         return;
       }
       _fetchBonoSuggestions(docId);
@@ -646,7 +661,11 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       _bonoPoll?.cancel();
       _bonoWatcher?.dispose();
       _bonoWatcher = null;
-      setState(() => _bonoSuggestions = rows);
+      // The "Reading…" banner morphs into the "N lines · Review" banner.
+      setState(() {
+        _bonoSuggestions = rows;
+        _bonoLoading = false;
+      });
     } catch (_) {
       // Offline or OCR not ready — a later poll/realtime tick retries.
     }
@@ -658,14 +677,11 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   Future<void> _reviewBonoSuggestions() async {
     final l = tr(context);
     final supplierId = context.read<ReceiveController>().supplier?.id;
-    final selected = await showModalBottomSheet<List<BonoApplyLine>>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => BonoSuggestionReviewSheet(
-        suggestions: _bonoSuggestions,
-        shop: widget.shop,
-        supplierPartyId: supplierId,
-      ),
+    final selected = await openBonoReview(
+      context,
+      suggestions: _bonoSuggestions,
+      shop: widget.shop,
+      supplierPartyId: supplierId,
     );
     if (selected == null || selected.isEmpty || !mounted) return;
     final controller = context.read<ReceiveController>();
@@ -721,6 +737,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     _bonoDocumentId = null;
     _bonoSuggestions = const [];
     _bonoSuggestionsDismissed = false;
+    _bonoLoading = false;
   }
 
   void _onChangeSupplier() {
@@ -1333,6 +1350,15 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 onReview: _reviewBonoSuggestions,
                 onDismiss: () =>
                     setState(() => _bonoSuggestionsDismissed = true),
+              )
+            // Bridges the silence between attach and the review: a dismissible
+            // "Reading the bono…" strip that morphs into the banner above.
+            else if (_bonoLoading)
+              BonoSuggestionBanner(
+                loading: true,
+                count: 0,
+                onReview: () {},
+                onDismiss: () => setState(() => _bonoLoading = false),
               ),
             if (!linesFull)
               Expanded(

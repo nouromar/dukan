@@ -64,6 +64,12 @@ class BonoSuggestion {
     required this.lineTotal,
     required this.confidence,
     required this.reason,
+    this.suggestedCategoryId,
+    this.suggestedCategoryCode,
+    this.suggestedCategoryName,
+    this.suggestedBaseUnitCode,
+    this.suggestedPackUnitCode,
+    this.suggestedPackSize,
   });
 
   factory BonoSuggestion.fromJson(Map<String, dynamic> json) => BonoSuggestion(
@@ -81,6 +87,12 @@ class BonoSuggestion {
         lineTotal: (json['line_total'] as num?)?.toDouble(),
         confidence: json['confidence'] as String? ?? 'low',
         reason: json['reason'] as String? ?? 'no_match',
+        suggestedCategoryId: json['suggested_category_id'] as String?,
+        suggestedCategoryCode: json['suggested_category_code'] as String?,
+        suggestedCategoryName: json['suggested_category_name'] as String?,
+        suggestedBaseUnitCode: json['suggested_base_unit_code'] as String?,
+        suggestedPackUnitCode: json['suggested_pack_unit_code'] as String?,
+        suggestedPackSize: (json['suggested_pack_size'] as num?)?.toDouble(),
       );
 
   final int lineNo;
@@ -97,6 +109,16 @@ class BonoSuggestion {
   final double? lineTotal;
   final String confidence; // 'high' | 'med' | 'low'
   final String reason; // 'supplier_alias' | 'shop_alias' | 'no_match'
+
+  // Suggested category + packaging for the review card. On a MATCHED line these
+  // are the item's real category (from the shop_item); on an UNMATCHED (new
+  // item) line they're the AI proposal, snapped server-side to real refs.
+  final String? suggestedCategoryId;
+  final String? suggestedCategoryCode;
+  final String? suggestedCategoryName;
+  final String? suggestedBaseUnitCode;
+  final String? suggestedPackUnitCode;
+  final double? suggestedPackSize;
 
   /// True when the line is bound to a concrete item + packaging (can be
   /// applied directly). A `'low'`/no-match line needs the cashier to pick.

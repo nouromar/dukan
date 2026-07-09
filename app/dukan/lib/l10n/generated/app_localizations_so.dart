@@ -161,6 +161,92 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
+  String get bonoReviewTitle => 'Hubi bono-ga';
+
+  @override
+  String bonoReviewReady(int count) {
+    return '$count diyaar';
+  }
+
+  @override
+  String bonoReviewNeedsReview(int count) {
+    return '$count u baahan hubin';
+  }
+
+  @override
+  String get bonoReviewStatusReady => 'Diyaar';
+
+  @override
+  String get bonoReviewStatusNeedsReview => 'Hubi';
+
+  @override
+  String get bonoReviewNewItem => 'Cusub';
+
+  @override
+  String get bonoReviewMarkReady => 'Diyaari';
+
+  @override
+  String get bonoReviewPickExisting => 'Dooro alaab jirta';
+
+  @override
+  String get bonoReviewChangeItem => 'Bedel alaabta';
+
+  @override
+  String get bonoReviewViewPhoto => 'Eeg sawirka bono-ga';
+
+  @override
+  String get bonoReviewFlag => 'Calaamadi hubin';
+
+  @override
+  String get bonoReviewRemove => 'Ka saar';
+
+  @override
+  String bonoReviewAccept(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Aqbal $count sadar',
+      one: 'Aqbal 1 sadar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bonoReviewAcceptGate(int count, int total) {
+    return '$count ka mid ah $total u baahan hubin';
+  }
+
+  @override
+  String get bonoReviewEditTitle => 'Wax ka beddel sadarka';
+
+  @override
+  String get bonoReviewEditItem => 'Alaab';
+
+  @override
+  String get bonoReviewEditCategory => 'Qayb';
+
+  @override
+  String get bonoReviewEditPackaging => 'Baakid';
+
+  @override
+  String get bonoReviewEditTotal => 'Wadar';
+
+  @override
+  String get bonoReviewEditSave => 'Kaydi';
+
+  @override
+  String get bonoReviewUncategorized => 'Aan la qaybin';
+
+  @override
+  String get bonoReviewPriceRequired => 'Marka hore geli qiime';
+
+  @override
+  String get bonoReviewPickPackaging => 'Dooro baakid';
+
+  @override
+  String get bonoReviewSavingItems => 'Waxaa la kaydinayaa alaabta cusub…';
+
+  @override
   String get bonoChipLabel => 'Bono';
 
   @override
@@ -1584,7 +1670,7 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get receiveVoidBlockedStockMessage =>
-      'Alaabaha alaab dejintan qaarkood mar hore wuu dhaqaaqay. Tirtiridda waa la diiday.';
+      'Lama tirtiri karo: alaabtan waxay leedahay iib ama alaab-dejin ka dambeysay. Marka hore tirtir tii ugu dambeysay.';
 
   @override
   String get receiveVoidBlockedPaidMessage =>

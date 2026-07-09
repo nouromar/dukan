@@ -60,6 +60,13 @@ export const BONO_SCHEMA = {
           line_total: { type: ["number", "null"] },
           confidence: { type: "number", minimum: 0, maximum: 1 },
           notes: { type: ["string", "null"] },
+          // Optional classification (used downstream ONLY for lines that don't
+          // match an existing item). Codes MUST come from the provided lists;
+          // the suggest RPC re-snaps them and drops anything unknown.
+          suggested_category_code: { type: ["string", "null"] },
+          suggested_base_unit_code: { type: ["string", "null"] },
+          suggested_pack_unit_code: { type: ["string", "null"] },
+          suggested_pack_size: { type: ["number", "null"] },
         },
       },
     },
@@ -79,24 +86,38 @@ const SYSTEM_PROMPT =
   `Be conservative. If a line is illegible, set confidence < 0.5. Do NOT invent ` +
   `items. Do NOT match to specific shop products — that step is downstream. Your job ` +
   `is faithful transcription + light structuring. Put anything you cannot read into ` +
-  `unparseable_sections rather than guessing.`;
+  `unparseable_sections rather than guessing.\n\n` +
+  `You MAY also propose, per line, a category and packaging (suggested_category_code, ` +
+  `suggested_base_unit_code, suggested_pack_unit_code, suggested_pack_size) to help set ` +
+  `up items the shop does not stock yet. Pick codes ONLY from the lists given in the ` +
+  `user message; if unsure, use null. NEVER invent a category or unit code.`;
 
 export interface BonoContext {
   shop_name?: string | null;
   currency_code?: string | null;
   top_items?: string[] | null;
   top_suppliers?: string[] | null;
+  categories?: Array<{ code: string; name: string }> | null;
+  units?: Array<{ code: string; label: string }> | null;
 }
 
 export function buildUserPrompt(ctx: BonoContext): string {
   const suppliers = (ctx.top_suppliers ?? []).join(", ");
   const items = (ctx.top_items ?? []).join(", ");
+  const categories = (ctx.categories ?? []).map((c) => `${c.code} (${c.name})`).join(", ");
+  const units = (ctx.units ?? []).map((u) => `${u.code} (${u.label})`).join(", ");
   return (
     `Shop name: "${ctx.shop_name ?? ""}"\n` +
     `Currency: ${ctx.currency_code ?? ""}\n` +
     `Known suppliers in this shop (you may see one of these in the header):\n  ${suppliers}\n` +
     `Common items in this shop's catalog (for spelling reference only, do NOT ` +
-    `force-match to these):\n  ${items}`
+    `force-match to these):\n  ${items}\n` +
+    `Category codes (choose suggested_category_code ONLY from these, else null):\n  ${categories}\n` +
+    `Unit codes (choose suggested_base_unit_code / suggested_pack_unit_code ONLY from ` +
+    `these, else null):\n  ${units}\n` +
+    `For each line, suggested_base_unit_code is the smallest unit the item is counted ` +
+    `in, suggested_pack_unit_code is the pack it's received in, and suggested_pack_size ` +
+    `is how many base units per pack (e.g. 25 for a 25 kg bag).`
   );
 }
 

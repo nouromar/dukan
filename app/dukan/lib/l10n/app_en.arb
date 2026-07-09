@@ -65,6 +65,51 @@
       "count": { "type": "int" }
     }
   },
+  "bonoReviewTitle": "Review bono",
+  "bonoReviewReady": "{count} ready",
+  "@bonoReviewReady": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bonoReviewNeedsReview": "{count} need review",
+  "@bonoReviewNeedsReview": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bonoReviewStatusReady": "Ready",
+  "bonoReviewStatusNeedsReview": "Needs review",
+  "bonoReviewNewItem": "New",
+  "bonoReviewMarkReady": "Mark ready",
+  "bonoReviewPickExisting": "Pick existing product",
+  "bonoReviewChangeItem": "Change item",
+  "bonoReviewViewPhoto": "View bono photo",
+  "bonoReviewFlag": "Flag for review",
+  "bonoReviewRemove": "Remove line",
+  "bonoReviewAccept": "{count, plural, =1{Accept 1 line} other{Accept {count} lines}}",
+  "@bonoReviewAccept": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bonoReviewAcceptGate": "{count} of {total} need review",
+  "@bonoReviewAcceptGate": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "bonoReviewEditTitle": "Edit line",
+  "bonoReviewEditItem": "Item",
+  "bonoReviewEditCategory": "Category",
+  "bonoReviewEditPackaging": "Packaging",
+  "bonoReviewEditTotal": "Total",
+  "bonoReviewEditSave": "Save",
+  "bonoReviewUncategorized": "Uncategorized",
+  "bonoReviewPriceRequired": "Add a price first",
+  "bonoReviewPickPackaging": "Pick packaging",
+  "bonoReviewSavingItems": "Saving new items…",
   "bonoChipLabel": "Bono",
   "bonoHintTitle": "Take a photo of the bono",
   "bonoHintSubtitle": "We'll read the items for you",
@@ -636,7 +681,7 @@
   "receiveVoidConfirmNo": "CANCEL",
   "receiveVoidedToast": "Receive voided",
   "receiveVoidFailedMessage": "Could not void this receive. Check your internet and try again.",
-  "receiveVoidBlockedStockMessage": "Some items from this receive have already moved. Void blocked.",
+  "receiveVoidBlockedStockMessage": "Can't void: these items have a newer sale or receive. Undo the newest one first.",
   "receiveVoidBlockedPaidMessage": "You've already paid part of this bono. Undo that payment first (in Money Out), then void it.",
   "cartLineSubtotal": "{quantity} × {unitPrice} = {subtotal}",
   "cartRemoveLineTooltip": "Remove {name}",

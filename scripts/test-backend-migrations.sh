@@ -6960,6 +6960,16 @@ begin
     raise exception
       'SS (5f): a lines_summary row is missing unit_amount/unit_label/packaging_label';
   end if;
+  -- (5g) Every transaction row must carry document_id (0110). Without it a
+  --      bono-linked receive loses its "View bono" button once it syncs (the
+  --      synced mirror row replaces the optimistic one that had the link).
+  if exists (
+    select 1
+    from jsonb_array_elements(v_payload->'transactions') x
+    where not (x ? 'document_id')
+  ) then
+    raise exception 'SS (5g): a transactions_delta row is missing document_id';
+  end if;
 end;
 $$;
 
@@ -8066,6 +8076,143 @@ begin
   exception when raise_exception then null;
   end;
   raise notice 'NN: bono OCR unrelated-user deny passed';
+end;
+$$;
+reset role;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+reset role;
+
+-- =====================================================================
+-- §NN2 Bono suggested category + packaging for new items (0109)
+-- =====================================================================
+-- MATCHED lines carry the real shop_item category; UNMATCHED lines carry the
+-- AI proposal snapped to real refs (unknown codes → null / base='piece').
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id  uuid;
+  v_supplier uuid;
+  v_item     uuid;
+  v_unit     uuid;
+  v_cat_id   uuid := '00000000-0000-4000-8000-0000000000c1'::uuid;
+  v_cat_code text;
+  v_doc      uuid := '00000000-0000-4000-8000-00000000d002'::uuid;
+  r          record;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_supplier from public.party where shop_id = v_shop_id and name = 'Hodan Beverages';
+  select si.id, siu.id into v_item, v_unit
+  from public.shop_item si
+  join public.shop_item_unit siu
+    on siu.shop_id = si.shop_id and siu.shop_item_id = si.id
+       and siu.conversion_to_base = 1 and siu.is_active
+  where si.shop_id = v_shop_id and si.is_active
+  limit 1;
+  if v_supplier is null or v_item is null or v_unit is null then
+    raise exception '0109: fixtures missing';
+  end if;
+
+  -- A real shop-owned category, and the matched item classified into it.
+  perform public.create_shop_category(v_shop_id, v_cat_id, 'Snacks Test', null);
+  select code into v_cat_code from public.category where id = v_cat_id;
+  perform public.set_shop_item_category(v_shop_id, v_item, v_cat_id, null);
+
+  perform public.create_bono_document(
+    v_shop_id, v_doc,
+    v_shop_id::text || '/documents/' || v_doc::text || '/image.jpg',
+    'image/jpeg', 1000);
+  -- Line 1 will match (learned below); lines 2 + 3 are new items with the AI's
+  -- proposed classification: line 2 all-valid, line 3 all-unknown codes.
+  update public.document set ocr_result = pg_catalog.jsonb_build_object(
+    'lines', pg_catalog.jsonb_build_array(
+      pg_catalog.jsonb_build_object('raw_text','CATTEST MATCHED','quantity',1,'confidence',0.9),
+      pg_catalog.jsonb_build_object(
+        'raw_text','ZZZQ NEWA XY','quantity',2,'confidence',0.8,
+        'suggested_category_code', v_cat_code,
+        'suggested_base_unit_code','piece',
+        'suggested_pack_unit_code','packet',
+        'suggested_pack_size', 24),
+      pg_catalog.jsonb_build_object(
+        'raw_text','ZZZQ NEWB XY','quantity',1,'confidence',0.7,
+        'suggested_category_code','__nope_cat__',
+        'suggested_base_unit_code','__nope_base__',
+        'suggested_pack_unit_code','__nope_pack__',
+        'suggested_pack_size', -5)
+    ))
+  where shop_id = v_shop_id and id = v_doc;
+
+  -- Teach line 1 so it resolves to the categorized item.
+  perform public.confirm_bono_suggestion(v_shop_id, v_doc, v_supplier, 'CATTEST MATCHED', v_item, v_unit, 1.0);
+
+  -- (a) MATCHED line → suggested category is the item's REAL category (lookup).
+  select * into r from public.suggest_receive_lines_from_bono(v_shop_id, v_doc, v_supplier) where line_no = 1;
+  if r.reason <> 'supplier_alias' then
+    raise exception '0109: line 1 expected a match, got %', r.reason;
+  end if;
+  if r.suggested_category_id <> v_cat_id or r.suggested_category_code <> v_cat_code then
+    raise exception '0109: matched line category not the real shop_item category (% / %)',
+      r.suggested_category_id, r.suggested_category_code;
+  end if;
+
+  -- (b) UNMATCHED line, valid codes → snapped through unchanged.
+  select * into r from public.suggest_receive_lines_from_bono(v_shop_id, v_doc, v_supplier) where line_no = 2;
+  if r.reason <> 'no_match' then
+    raise exception '0109: line 2 expected no_match, got %', r.reason;
+  end if;
+  if r.suggested_category_id <> v_cat_id
+     or r.suggested_base_unit_code <> 'piece'
+     or r.suggested_pack_unit_code <> 'packet'
+     or r.suggested_pack_size <> 24 then
+    raise exception '0109: line 2 valid suggestion not passed through (% % % %)',
+      r.suggested_category_id, r.suggested_base_unit_code, r.suggested_pack_unit_code, r.suggested_pack_size;
+  end if;
+
+  -- (c) UNMATCHED line, all-unknown codes → category null, base→piece, pack null,
+  --     non-positive size → null.
+  select * into r from public.suggest_receive_lines_from_bono(v_shop_id, v_doc, v_supplier) where line_no = 3;
+  if r.suggested_category_id is not null or r.suggested_category_code is not null then
+    raise exception '0109: unknown category not dropped (% / %)', r.suggested_category_id, r.suggested_category_code;
+  end if;
+  if r.suggested_base_unit_code <> 'piece' then
+    raise exception '0109: unknown base unit did not fall back to piece (%)', r.suggested_base_unit_code;
+  end if;
+  if r.suggested_pack_unit_code is not null then
+    raise exception '0109: unknown pack unit not dropped (%)', r.suggested_pack_unit_code;
+  end if;
+  if r.suggested_pack_size is not null then
+    raise exception '0109: non-positive pack size not dropped (%)', r.suggested_pack_size;
+  end if;
+
+  raise notice 'NN2: bono suggested category + packaging tests passed';
+end;
+$$;
+reset role;
+
+-- ocr_bono_context now includes the category + unit vocabulary. It is granted to
+-- service_role only; run as the superuser session (bypasses the grant).
+reset role;
+do $$
+declare
+  v_shop_id uuid;
+  v_ctx     jsonb;
+begin
+  select shop_id into v_shop_id from test_ids;
+  v_ctx := public.ocr_bono_context(v_shop_id, 'so');
+  if pg_catalog.jsonb_typeof(v_ctx -> 'categories') <> 'array' then
+    raise exception '0109: ocr_bono_context missing categories array';
+  end if;
+  if pg_catalog.jsonb_typeof(v_ctx -> 'units') <> 'array' then
+    raise exception '0109: ocr_bono_context missing units array';
+  end if;
+  if not exists (
+    select 1 from pg_catalog.jsonb_array_elements(v_ctx -> 'units') u
+    where u ->> 'code' = 'piece'
+  ) then
+    raise exception '0109: ocr_bono_context units missing the piece unit';
+  end if;
+  raise notice 'NN2: ocr_bono_context category + unit vocabulary passed';
 end;
 $$;
 reset role;

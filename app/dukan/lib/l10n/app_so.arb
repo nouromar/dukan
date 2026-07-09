@@ -53,6 +53,51 @@
       "count": { "type": "int" }
     }
   },
+  "bonoReviewTitle": "Hubi bono-ga",
+  "bonoReviewReady": "{count} diyaar",
+  "@bonoReviewReady": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bonoReviewNeedsReview": "{count} u baahan hubin",
+  "@bonoReviewNeedsReview": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bonoReviewStatusReady": "Diyaar",
+  "bonoReviewStatusNeedsReview": "Hubi",
+  "bonoReviewNewItem": "Cusub",
+  "bonoReviewMarkReady": "Diyaari",
+  "bonoReviewPickExisting": "Dooro alaab jirta",
+  "bonoReviewChangeItem": "Bedel alaabta",
+  "bonoReviewViewPhoto": "Eeg sawirka bono-ga",
+  "bonoReviewFlag": "Calaamadi hubin",
+  "bonoReviewRemove": "Ka saar",
+  "bonoReviewAccept": "{count, plural, =1{Aqbal 1 sadar} other{Aqbal {count} sadar}}",
+  "@bonoReviewAccept": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bonoReviewAcceptGate": "{count} ka mid ah {total} u baahan hubin",
+  "@bonoReviewAcceptGate": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "bonoReviewEditTitle": "Wax ka beddel sadarka",
+  "bonoReviewEditItem": "Alaab",
+  "bonoReviewEditCategory": "Qayb",
+  "bonoReviewEditPackaging": "Baakid",
+  "bonoReviewEditTotal": "Wadar",
+  "bonoReviewEditSave": "Kaydi",
+  "bonoReviewUncategorized": "Aan la qaybin",
+  "bonoReviewPriceRequired": "Marka hore geli qiime",
+  "bonoReviewPickPackaging": "Dooro baakid",
+  "bonoReviewSavingItems": "Waxaa la kaydinayaa alaabta cusub…",
   "bonoChipLabel": "Bono",
   "bonoHintTitle": "Sawir bonoga",
   "bonoHintSubtitle": "Waan kuu akhrin doonaa alaabta",
@@ -610,7 +655,7 @@
   "receiveVoidConfirmNo": "JOOJI",
   "receiveVoidedToast": "Alaab dejinta waa la tirtiray",
   "receiveVoidFailedMessage": "Alaab dejinta lama tirtiri karin. Hubi internetka oo isku day mar kale.",
-  "receiveVoidBlockedStockMessage": "Alaabaha alaab dejintan qaarkood mar hore wuu dhaqaaqay. Tirtiridda waa la diiday.",
+  "receiveVoidBlockedStockMessage": "Lama tirtiri karo: alaabtan waxay leedahay iib ama alaab-dejin ka dambeysay. Marka hore tirtir tii ugu dambeysay.",
   "receiveVoidBlockedPaidMessage": "Qayb ka mid ah bono-gan hore ayaad u bixisay. Marka hore tirtir bixinta (Lacag Bixin), ka dibna tirtir alaab-dejinta.",
   "cartLineSubtotal": "{quantity} × {unitPrice} = {subtotal}",
   "cartRemoveLineTooltip": "Ka saar {name}",

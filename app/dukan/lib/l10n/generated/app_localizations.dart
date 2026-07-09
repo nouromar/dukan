@@ -356,6 +356,150 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Added 1 line} other{Added {count} lines}}'**
   String bonoSuggestionsAppliedToast(int count);
 
+  /// No description provided for @bonoReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review bono'**
+  String get bonoReviewTitle;
+
+  /// No description provided for @bonoReviewReady.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} ready'**
+  String bonoReviewReady(int count);
+
+  /// No description provided for @bonoReviewNeedsReview.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} need review'**
+  String bonoReviewNeedsReview(int count);
+
+  /// No description provided for @bonoReviewStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get bonoReviewStatusReady;
+
+  /// No description provided for @bonoReviewStatusNeedsReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs review'**
+  String get bonoReviewStatusNeedsReview;
+
+  /// No description provided for @bonoReviewNewItem.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get bonoReviewNewItem;
+
+  /// No description provided for @bonoReviewMarkReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark ready'**
+  String get bonoReviewMarkReady;
+
+  /// No description provided for @bonoReviewPickExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick existing product'**
+  String get bonoReviewPickExisting;
+
+  /// No description provided for @bonoReviewChangeItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Change item'**
+  String get bonoReviewChangeItem;
+
+  /// No description provided for @bonoReviewViewPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'View bono photo'**
+  String get bonoReviewViewPhoto;
+
+  /// No description provided for @bonoReviewFlag.
+  ///
+  /// In en, this message translates to:
+  /// **'Flag for review'**
+  String get bonoReviewFlag;
+
+  /// No description provided for @bonoReviewRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove line'**
+  String get bonoReviewRemove;
+
+  /// No description provided for @bonoReviewAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Accept 1 line} other{Accept {count} lines}}'**
+  String bonoReviewAccept(int count);
+
+  /// No description provided for @bonoReviewAcceptGate.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {total} need review'**
+  String bonoReviewAcceptGate(int count, int total);
+
+  /// No description provided for @bonoReviewEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit line'**
+  String get bonoReviewEditTitle;
+
+  /// No description provided for @bonoReviewEditItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get bonoReviewEditItem;
+
+  /// No description provided for @bonoReviewEditCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get bonoReviewEditCategory;
+
+  /// No description provided for @bonoReviewEditPackaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Packaging'**
+  String get bonoReviewEditPackaging;
+
+  /// No description provided for @bonoReviewEditTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get bonoReviewEditTotal;
+
+  /// No description provided for @bonoReviewEditSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get bonoReviewEditSave;
+
+  /// No description provided for @bonoReviewUncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get bonoReviewUncategorized;
+
+  /// No description provided for @bonoReviewPriceRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a price first'**
+  String get bonoReviewPriceRequired;
+
+  /// No description provided for @bonoReviewPickPackaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick packaging'**
+  String get bonoReviewPickPackaging;
+
+  /// No description provided for @bonoReviewSavingItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving new items…'**
+  String get bonoReviewSavingItems;
+
   /// No description provided for @bonoChipLabel.
   ///
   /// In en, this message translates to:
@@ -2775,7 +2919,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveVoidBlockedStockMessage.
   ///
   /// In en, this message translates to:
-  /// **'Some items from this receive have already moved. Void blocked.'**
+  /// **'Can\'t void: these items have a newer sale or receive. Undo the newest one first.'**
   String get receiveVoidBlockedStockMessage;
 
   /// No description provided for @receiveVoidBlockedPaidMessage.
