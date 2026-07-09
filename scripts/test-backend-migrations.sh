@@ -6960,15 +6960,17 @@ begin
     raise exception
       'SS (5f): a lines_summary row is missing unit_amount/unit_label/packaging_label';
   end if;
-  -- (5g) Every transaction row must carry document_id (0110). Without it a
-  --      bono-linked receive loses its "View bono" button once it syncs (the
-  --      synced mirror row replaces the optimistic one that had the link).
+  -- (5g) Every transaction row must carry document_id + document_path (0110).
+  --      Without document_id a bono-linked receive loses its "View bono" button
+  --      once it syncs; without document_path, View bono can't sign a Storage
+  --      URL when the on-device cache is empty (e.g. after a reinstall) → the
+  --      photo shows "unavailable".
   if exists (
     select 1
     from jsonb_array_elements(v_payload->'transactions') x
-    where not (x ? 'document_id')
+    where not (x ? 'document_id') or not (x ? 'document_path')
   ) then
-    raise exception 'SS (5g): a transactions_delta row is missing document_id';
+    raise exception 'SS (5g): a transactions_delta row is missing document_id/document_path';
   end if;
 end;
 $$;
