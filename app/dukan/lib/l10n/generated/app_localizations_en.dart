@@ -2507,7 +2507,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get storageSyncTitle => 'Storage & sync';
+  String get storageSyncTitle => 'Local Storage & Sync';
 
   @override
   String get storageSyncStatusConnected => 'Connected';
