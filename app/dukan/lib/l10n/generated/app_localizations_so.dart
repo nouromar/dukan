@@ -2522,7 +2522,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get storageSyncTitle => 'Kayd & is-waafajin';
+  String get storageSyncTitle => 'Kaydka Gudaha & Is-waafajin';
 
   @override
   String get storageSyncStatusConnected => 'Ku xidhan';

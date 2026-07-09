@@ -1125,7 +1125,7 @@
       }
     }
   },
-  "storageSyncTitle": "Storage & sync",
+  "storageSyncTitle": "Local Storage & Sync",
   "storageSyncStatusConnected": "Connected",
   "storageSyncStatusOffline": "Offline",
   "storageSyncLastSyncedLabel": "Last synced",
