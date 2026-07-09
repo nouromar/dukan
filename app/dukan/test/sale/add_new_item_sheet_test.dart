@@ -55,6 +55,9 @@ void main() {
     WidgetTester tester, {
     String initialName = 'New Soap',
     AddNewItemVariant variant = AddNewItemVariant.sale,
+    String? initialBaseUnitCode,
+    String? initialPackUnitCode,
+    num? initialPackSize,
   }) async {
     AddNewItemResult? captured;
     var didCapture = false;
@@ -70,6 +73,9 @@ void main() {
                     shop,
                     initialName: initialName,
                     variant: variant,
+                    initialBaseUnitCode: initialBaseUnitCode,
+                    initialPackUnitCode: initialPackUnitCode,
+                    initialPackSize: initialPackSize,
                   );
                   didCapture = true;
                 },
@@ -379,6 +385,87 @@ void main() {
       expect(post.params['base_unit_id'], captured!.shopItemUnitId);
       expect(post.params['name'], 'Caano');
       expect(post.clientOpId, isNotNull);
+    },
+  );
+
+  // --- AI/caller packaging prefill (bono new-item "accept as-is") -----------
+
+  testWidgets(
+    'initialPack* pre-selects the packaging → SAVE lit with no packaging tap;'
+    ' createShopItem carries the sold unit + conversion',
+    (tester) async {
+      final read = await pumpAndOpen(
+        tester,
+        initialName: 'BSMTI',
+        variant: AddNewItemVariant.receive,
+        initialBaseUnitCode: 'kg',
+        initialPackUnitCode: 'bag',
+        initialPackSize: 25,
+      );
+
+      // Packaging is already chosen (async prefill resolved during settle):
+      // the receive SAVE is enabled without ever tapping a packaging chip.
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, en.addNewItemAddToReceiveButton),
+      );
+      expect(button.onPressed, isNotNull);
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.addNewItemAddToReceiveButton),
+      );
+      await tester.pumpAndSettle();
+
+      final call = api.createShopItemCalls.single;
+      expect(call.baseUnitCode, 'kg');
+      expect(call.soldUnitCode, 'bag');
+      expect(call.soldConversion, 25);
+      expect(read(), isNotNull);
+    },
+  );
+
+  testWidgets(
+    'initialBaseUnitCode with no pack → base-only pick (soldUnitCode null)',
+    (tester) async {
+      await pumpAndOpen(
+        tester,
+        initialName: 'Loose Rice',
+        variant: AddNewItemVariant.receive,
+        initialBaseUnitCode: 'kg',
+      );
+
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, en.addNewItemAddToReceiveButton),
+      );
+      expect(button.onPressed, isNotNull);
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.addNewItemAddToReceiveButton),
+      );
+      await tester.pumpAndSettle();
+
+      final call = api.createShopItemCalls.single;
+      expect(call.baseUnitCode, 'kg');
+      expect(call.soldUnitCode, isNull);
+      expect(call.soldConversion, isNull);
+    },
+  );
+
+  testWidgets(
+    'unresolvable initialBaseUnitCode → no pre-select (SAVE stays disabled)',
+    (tester) async {
+      await pumpAndOpen(
+        tester,
+        initialName: 'Mystery',
+        variant: AddNewItemVariant.receive,
+        initialBaseUnitCode: 'zzz_not_a_unit',
+        initialPackUnitCode: 'also_bogus',
+        initialPackSize: 12,
+      );
+
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, en.addNewItemAddToReceiveButton),
+      );
+      expect(button.onPressed, isNull);
     },
   );
 }

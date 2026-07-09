@@ -158,6 +158,92 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get bonoReviewTitle => 'Review bono';
+
+  @override
+  String bonoReviewReady(int count) {
+    return '$count ready';
+  }
+
+  @override
+  String bonoReviewNeedsReview(int count) {
+    return '$count need review';
+  }
+
+  @override
+  String get bonoReviewStatusReady => 'Ready';
+
+  @override
+  String get bonoReviewStatusNeedsReview => 'Needs review';
+
+  @override
+  String get bonoReviewNewItem => 'New';
+
+  @override
+  String get bonoReviewMarkReady => 'Mark ready';
+
+  @override
+  String get bonoReviewPickExisting => 'Pick existing product';
+
+  @override
+  String get bonoReviewChangeItem => 'Change item';
+
+  @override
+  String get bonoReviewViewPhoto => 'View bono photo';
+
+  @override
+  String get bonoReviewFlag => 'Flag for review';
+
+  @override
+  String get bonoReviewRemove => 'Remove line';
+
+  @override
+  String bonoReviewAccept(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Accept $count lines',
+      one: 'Accept 1 line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bonoReviewAcceptGate(int count, int total) {
+    return '$count of $total need review';
+  }
+
+  @override
+  String get bonoReviewEditTitle => 'Edit line';
+
+  @override
+  String get bonoReviewEditItem => 'Item';
+
+  @override
+  String get bonoReviewEditCategory => 'Category';
+
+  @override
+  String get bonoReviewEditPackaging => 'Packaging';
+
+  @override
+  String get bonoReviewEditTotal => 'Total';
+
+  @override
+  String get bonoReviewEditSave => 'Save';
+
+  @override
+  String get bonoReviewUncategorized => 'Uncategorized';
+
+  @override
+  String get bonoReviewPriceRequired => 'Add a price first';
+
+  @override
+  String get bonoReviewPickPackaging => 'Pick packaging';
+
+  @override
+  String get bonoReviewSavingItems => 'Saving new items…';
+
+  @override
   String get bonoChipLabel => 'Bono';
 
   @override
@@ -1575,7 +1661,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get receiveVoidBlockedStockMessage =>
-      'Some items from this receive have already moved. Void blocked.';
+      'Can\'t void: these items have a newer sale or receive. Undo the newest one first.';
 
   @override
   String get receiveVoidBlockedPaidMessage =>

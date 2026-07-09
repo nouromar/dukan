@@ -21,12 +21,20 @@ class AddNewItemSheet {
     BuildContext context,
     ShopSummary shop, {
     required String initialName,
+    String? initialCategoryId,
+    String? initialBaseUnitCode,
+    String? initialPackUnitCode,
+    num? initialPackSize,
   }) {
     return shared.AddNewItemSheet.show(
       context,
       shop,
       initialName: initialName,
       variant: shared.AddNewItemVariant.receive,
+      initialCategoryId: initialCategoryId,
+      initialBaseUnitCode: initialBaseUnitCode,
+      initialPackUnitCode: initialPackUnitCode,
+      initialPackSize: initialPackSize,
     );
   }
 }
