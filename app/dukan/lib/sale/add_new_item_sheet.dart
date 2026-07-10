@@ -73,9 +73,13 @@ class AddNewItemResult {
   final num? salePrice;
 }
 
-/// Sale variant requires a price; Receive doesn't. The shared widget
-/// flips behaviour off this enum so both files end up tiny.
-enum AddNewItemVariant { sale, receive }
+/// Sale requires a price; Receive omits it. `product` is the deliberate
+/// "Add a product" flow (Products "+" / setup onboarding): price shown, plus
+/// an optional opening-stock section and "Save & add another" for fast setup.
+/// Advanced bits (extra packagings, aliases, supplier, barcode) are added
+/// afterward on ShopItemDetailScreen — so creation stays one screen, one
+/// packaging, no per-packaging stock, no hidden base-unit split.
+enum AddNewItemVariant { sale, receive, product }
 
 class AddNewItemSheet {
   /// Sale-side entry point. The receive sibling forwards with
@@ -166,6 +170,11 @@ class _AddNewItemBody extends StatefulWidget {
 class _AddNewItemBodyState extends State<_AddNewItemBody> {
   late final TextEditingController _nameController;
   late final TextEditingController _priceController;
+  // Product variant only: opening stock entered ONCE in the picked selling
+  // unit (converted to base on save), with a cost per that unit.
+  late final TextEditingController _openingQtyController;
+  late final TextEditingController _openingCostController;
+  final FocusNode _nameFocus = FocusNode();
   Future<NewItemOptions>? _optionsFuture;
   Future<List<CategoryOption>>? _categoriesFuture;
   _PickerChoice? _picked;
@@ -174,15 +183,21 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
   String? _locale;
   bool _prefilledPackaging = false;
 
+  bool get _isProduct => widget.variant == AddNewItemVariant.product;
+
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialName);
     _priceController = TextEditingController();
+    _openingQtyController = TextEditingController();
+    _openingCostController = TextEditingController();
     // Prefill the category from an AI/caller suggestion (e.g. a bono line).
     _categoryId = widget.initialCategoryId;
     _nameController.addListener(_rebuild);
     _priceController.addListener(_rebuild);
+    _openingQtyController.addListener(_rebuild);
+    _openingCostController.addListener(_rebuild);
   }
 
   @override
@@ -269,9 +284,25 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
   void dispose() {
     _nameController.removeListener(_rebuild);
     _priceController.removeListener(_rebuild);
+    _openingQtyController.removeListener(_rebuild);
+    _openingCostController.removeListener(_rebuild);
     _nameController.dispose();
     _priceController.dispose();
+    _openingQtyController.dispose();
+    _openingCostController.dispose();
+    _nameFocus.dispose();
     super.dispose();
+  }
+
+  /// "Save & add another" (product variant): keep the sheet open, clear the
+  /// per-item fields, keep the chosen category, and refocus the name.
+  void _resetForAddAnother() {
+    _nameController.clear();
+    _priceController.clear();
+    _openingQtyController.clear();
+    _openingCostController.clear();
+    setState(() => _picked = null);
+    _nameFocus.requestFocus();
   }
 
   void _rebuild() {
@@ -286,8 +317,32 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     return value;
   }
 
-  bool get _priceShown => widget.variant == AddNewItemVariant.sale;
+  // Sale + product both price the item; receive omits it (cost lands via
+  // post_receive). Required once a packaging is picked on those variants.
+  bool get _priceShown => widget.variant != AddNewItemVariant.receive;
   bool get _priceRequired => _priceShown && _picked != null;
+
+  // Opening stock (product only): optional. Once a quantity is typed, a cost
+  // is required — the post_inventory_adjustment RPC needs a unit cost on any
+  // increase.
+  bool get _openingShown => _isProduct && _picked != null;
+  num? get _openingQty {
+    final raw = _openingQtyController.text.trim();
+    if (raw.isEmpty) return null;
+    final v = num.tryParse(raw);
+    if (v == null || v < 0) return null;
+    return v;
+  }
+
+  num? get _openingCost {
+    final raw = _openingCostController.text.trim();
+    if (raw.isEmpty) return null;
+    final v = num.tryParse(raw);
+    if (v == null || v < 0) return null;
+    return v;
+  }
+
+  bool get _hasOpeningQty => (_openingQty ?? 0) > 0;
 
   bool get _canSave {
     if (_saving) return false;
@@ -296,6 +351,13 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     if (_priceRequired && _parsedPrice == null) return false;
     if (!_priceRequired && _priceController.text.trim().isNotEmpty) {
       if (_parsedPrice == null) return false;
+    }
+    // Product: a typed opening quantity must be valid and carry a positive cost.
+    if (_isProduct) {
+      if (_openingQtyController.text.trim().isNotEmpty && _openingQty == null) {
+        return false;
+      }
+      if (_hasOpeningQty && ((_openingCost ?? 0) <= 0)) return false;
     }
     return true;
   }
@@ -371,7 +433,7 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     setState(() => _picked = picked);
   }
 
-  Future<void> _onSave() async {
+  Future<void> _onSave({bool addAnother = false}) async {
     final l = tr(context);
     final name = _nameController.text.trim();
     if (name.isEmpty) {
@@ -394,13 +456,28 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
       return;
     }
 
+    // Product opening stock (optional): entered in the SELLING unit, converted
+    // to base once via the single conversion the shopkeeper already chose —
+    // "6 sacks @ $42" → 6×50 = 300 base-kg at $42/50 = $0.84/kg. One packaging,
+    // one stock number, no hidden per-packaging summing.
+    final conv = (choice.conversion ?? 1).toDouble();
+    final openingQty = _isProduct ? _openingQty : null;
+    final hasOpening = (openingQty ?? 0) > 0;
+    final openingCost = _openingCost;
+    if (_isProduct && hasOpening && (openingCost == null || openingCost <= 0)) {
+      showError(context, l.addNewItemInvalidPriceMessage);
+      return;
+    }
+    final openingBaseQty = hasOpening ? openingQty!.toDouble() * conv : 0.0;
+    final openingUnitCost = hasOpening ? openingCost!.toDouble() / conv : null;
+
     setState(() => _saving = true);
     final api = context.read<ShopApi>();
     final queue = context.read<OfflineQueueController>();
     final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
     final languageCode = context.read<LocaleController>().locale.languageCode;
     final defaultSide =
-        widget.variant == AddNewItemVariant.sale ? 'sale' : 'receive';
+        widget.variant == AddNewItemVariant.receive ? 'receive' : 'sale';
 
     // Synthesize the packaging label locally (mirrors the server's
     // `_format_conversion` helper) — no round trip needed.
@@ -420,6 +497,12 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     final soldUnitId = choice.isBaseOnly ? null : generateUuidV4();
     final defaultUnitId = soldUnitId ?? baseUnitId;
     final itemOpId = generateClientOpId('item');
+    final flagsOpId = generateClientOpId('flags');
+    final stockOpId = generateClientOpId('opening');
+    // Product with a distinct selling packaging: make it the default for BOTH
+    // sides so receiving also defaults to the sack (not the base kg). Base-only
+    // items already default the base for both — no extra call.
+    final needsReceiveDefault = _isProduct && soldUnitId != null;
     String actorId = '';
     try {
       actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
@@ -486,6 +569,19 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
       );
     }
 
+    // "Save & add another" keeps the sheet open; otherwise pop the result.
+    void finish() {
+      if (addAnother) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.addNewItemSavedToast(name))),
+        );
+        _resetForAddAnother();
+      } else {
+        popResult();
+      }
+    }
+
     try {
       await api.createShopItem(
         shopId: widget.shop.id,
@@ -502,17 +598,37 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
         soldUnitId: soldUnitId,
         clientOpId: itemOpId,
       );
+      if (needsReceiveDefault) {
+        await api.setShopItemUnitDefaultFlags(
+          shopId: widget.shop.id,
+          shopItemUnitId: soldUnitId,
+          isDefaultSale: true,
+          isDefaultReceive: true,
+          clientOpId: flagsOpId,
+        );
+      }
+      if (hasOpening) {
+        await api.postOpeningStockAdjustment(
+          shopId: widget.shop.id,
+          shopItemId: shopItemId,
+          baseQuantity: openingBaseQty,
+          unitCost: openingUnitCost,
+          clientOpId: stockOpId,
+        );
+      }
       await writeMirror();
-      popResult();
+      finish();
     } on PostgrestException catch (error, stackTrace) {
       _handleFailure(error, stackTrace, l.addNewItemFailedMessage);
     } catch (error, stackTrace) {
-      // Transient (offline / network) — mirror + queue with the client
-      // ids. Thin-client → surface.
+      // Transient (offline / network) — mirror + queue with the client ids.
+      // Stagger queued_at so the create drains before the flags + opening-stock
+      // posts that depend on the item/unit existing. Thin-client → surface.
       if (repo == null) {
         _handleFailure(error, stackTrace, l.addNewItemFailedMessage);
       } else {
         await writeMirror();
+        final now = DateTime.now();
         await queue.enqueue(PendingPost(
           id: generateClientOpId('post'),
           clientOpId: itemOpId,
@@ -532,9 +648,40 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
             soldUnitId: soldUnitId,
             defaultSide: defaultSide,
           ),
-          queuedAt: DateTime.now(),
+          queuedAt: now,
         ));
-        popResult();
+        if (needsReceiveDefault) {
+          await queue.enqueue(PendingPost(
+            id: generateClientOpId('post'),
+            clientOpId: flagsOpId,
+            shopId: widget.shop.id,
+            originalActorUserId: actorId,
+            rpc: 'set_shop_item_unit_default_flags',
+            params: buildSetShopItemUnitDefaultFlagsParams(
+              shopItemUnitId: soldUnitId,
+              isDefaultSale: true,
+              isDefaultReceive: true,
+            ),
+            queuedAt: now.add(const Duration(milliseconds: 1)),
+          ));
+        }
+        if (hasOpening) {
+          await queue.enqueue(PendingPost(
+            id: generateClientOpId('post'),
+            clientOpId: stockOpId,
+            shopId: widget.shop.id,
+            originalActorUserId: actorId,
+            rpc: 'post_inventory_adjustment',
+            params: buildPostInventoryAdjustmentParams(
+              reasonCode: 'opening',
+              shopItemId: shopItemId,
+              quantityDelta: openingBaseQty,
+              unitCost: openingUnitCost,
+            ),
+            queuedAt: now.add(const Duration(milliseconds: 2)),
+          ));
+        }
+        finish();
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -559,12 +706,16 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     final l = tr(context);
     final theme = Theme.of(context);
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    final variantHeader = widget.variant == AddNewItemVariant.sale
-        ? l.addNewItemHowSoldHeader
-        : l.addNewItemHowDeliveredHeader;
-    final buttonLabel = widget.variant == AddNewItemVariant.sale
-        ? l.addNewItemAddToSaleButton
-        : l.addNewItemAddToReceiveButton;
+    final variantHeader = widget.variant == AddNewItemVariant.receive
+        ? l.addNewItemHowDeliveredHeader
+        : l.addNewItemHowSoldHeader;
+    final buttonLabel = switch (widget.variant) {
+      AddNewItemVariant.sale => l.addNewItemAddToSaleButton,
+      AddNewItemVariant.receive => l.addNewItemAddToReceiveButton,
+      AddNewItemVariant.product => l.addNewItemSaveButton,
+    };
+    final sheetTitle =
+        _isProduct ? l.addProductSheetTitle : l.addNewItemSheetTitle;
     final choice = _picked;
     final pickedLabel = choice == null
         ? null
@@ -593,7 +744,7 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
                 children: [
                   Expanded(
                     child: Text(
-                      l.addNewItemSheetTitle,
+                      sheetTitle,
                       style: theme.textTheme.titleLarge,
                     ),
                   ),
@@ -614,6 +765,7 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
                     children: [
                       TextField(
                         controller: _nameController,
+                        focusNode: _nameFocus,
                         autofocus: true,
                         textInputAction: TextInputAction.next,
                         textCapitalization: TextCapitalization.sentences,
@@ -703,28 +855,63 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
                           ),
                         ),
                       ],
+                      // Product only: opening stock, asked ONCE in the picked
+                      // selling unit. Cost appears only when a quantity is typed.
+                      if (_openingShown) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          l.addNewItemOpeningStockHeader,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _openingQtyController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9.]'),
+                            ),
+                          ],
+                          decoration: InputDecoration(
+                            labelText: l.addNewItemOpeningQtyLabel,
+                            suffixText: pickedLabel,
+                            isDense: true,
+                          ),
+                        ),
+                        if (_hasOpeningQty) ...[
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _openingCostController,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9.]'),
+                              ),
+                            ],
+                            decoration: InputDecoration(
+                              labelText: l.addNewItemOpeningCostLabel,
+                              prefixText: '${widget.shop.currencySymbol} ',
+                              isDense: true,
+                            ),
+                          ),
+                        ],
+                      ],
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _saving
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(56),
-                      ),
-                      child: Text(l.addNewItemCancelButton),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _canSave ? _onSave : null,
+              if (_isProduct)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FilledButton(
+                      onPressed: _canSave ? () => _onSave() : null,
                       style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(56),
                       ),
@@ -732,15 +919,55 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2.5),
                             )
                           : Text(buttonLabel),
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed:
+                          _canSave ? () => _onSave(addAnother: true) : null,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                      ),
+                      child: Text(l.addNewItemSaveAndAddAnotherButton),
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _saving
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(56),
+                        ),
+                        child: Text(l.addNewItemCancelButton),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: _canSave ? () => _onSave() : null,
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(56),
+                        ),
+                        child: _saving
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : Text(buttonLabel),
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),

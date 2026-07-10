@@ -3222,6 +3222,12 @@ abstract class AppLocalizations {
   /// **'Add new item'**
   String get addNewItemSheetTitle;
 
+  /// No description provided for @addProductSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add product'**
+  String get addProductSheetTitle;
+
   /// No description provided for @addNewItemNameLabel.
   ///
   /// In en, this message translates to:
@@ -3245,6 +3251,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CANCEL'**
   String get addNewItemCancelButton;
+
+  /// No description provided for @addNewItemSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get addNewItemSaveButton;
+
+  /// No description provided for @addNewItemSaveAndAddAnotherButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE & ADD ANOTHER'**
+  String get addNewItemSaveAndAddAnotherButton;
+
+  /// No description provided for @addNewItemOpeningStockHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock you have now (optional)'**
+  String get addNewItemOpeningStockHeader;
+
+  /// No description provided for @addNewItemOpeningQtyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How many?'**
+  String get addNewItemOpeningQtyLabel;
+
+  /// No description provided for @addNewItemOpeningCostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost for each'**
+  String get addNewItemOpeningCostLabel;
+
+  /// No description provided for @addNewItemSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {name}'**
+  String addNewItemSavedToast(String name);
 
   /// No description provided for @addNewItemAddToSaleButton.
   ///
@@ -4185,7 +4227,7 @@ abstract class AppLocalizations {
   /// No description provided for @storageSyncTitle.
   ///
   /// In en, this message translates to:
-  /// **'Storage & sync'**
+  /// **'Local Storage & Sync'**
   String get storageSyncTitle;
 
   /// No description provided for @storageSyncStatusConnected.
@@ -4443,7 +4485,7 @@ abstract class AppLocalizations {
   /// No description provided for @storageSyncDrawerEntry.
   ///
   /// In en, this message translates to:
-  /// **'Storage & sync'**
+  /// **'Local Storage & Sync'**
   String get storageSyncDrawerEntry;
 
   /// No description provided for @drawerManageCategories.

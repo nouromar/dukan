@@ -16,7 +16,7 @@ import 'package:dukan/products/catalog_picker_screen.dart';
 import 'package:dukan/products/products_cache.dart';
 import 'package:dukan/products/products_filter_sheet.dart';
 import 'package:dukan/products/shop_item_detail_screen.dart';
-import 'package:dukan/products/shop_item_editor_screen.dart';
+import 'package:dukan/sale/add_new_item_sheet.dart';
 import 'package:dukan/shared/display_name.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -273,10 +273,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   Future<void> _openEditor() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => ShopItemEditorScreen(shop: widget.shop),
-      ),
+    // Simplified single-packaging create (name → how sold → price → optional
+    // opening stock). Advanced editing — extra sizes, aliases, supplier,
+    // barcode — lives on ShopItemDetailScreen after the product exists.
+    await AddNewItemSheet.show(
+      context,
+      widget.shop,
+      initialName: '',
+      variant: AddNewItemVariant.product,
     );
     if (!mounted) return;
     _reload();

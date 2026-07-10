@@ -1864,6 +1864,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewItemSheetTitle => 'Add new item';
 
   @override
+  String get addProductSheetTitle => 'Add product';
+
+  @override
   String get addNewItemNameLabel => 'Name';
 
   @override
@@ -1874,6 +1877,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addNewItemCancelButton => 'CANCEL';
+
+  @override
+  String get addNewItemSaveButton => 'SAVE';
+
+  @override
+  String get addNewItemSaveAndAddAnotherButton => 'SAVE & ADD ANOTHER';
+
+  @override
+  String get addNewItemOpeningStockHeader => 'Stock you have now (optional)';
+
+  @override
+  String get addNewItemOpeningQtyLabel => 'How many?';
+
+  @override
+  String get addNewItemOpeningCostLabel => 'Cost for each';
+
+  @override
+  String addNewItemSavedToast(String name) {
+    return 'Saved $name';
+  }
 
   @override
   String get addNewItemAddToSaleButton => 'ADD TO SALE';

@@ -468,4 +468,109 @@ void main() {
       expect(button.onPressed, isNull);
     },
   );
+
+  // --- Product variant: single-packaging create + opening stock -----------
+
+  testWidgets(
+    'product packaged: SAVE creates item, defaults the sold unit both sides,'
+    ' and posts opening stock converted to base',
+    (tester) async {
+      final read = await pumpAndOpen(
+        tester,
+        initialName: 'Bariis',
+        variant: AddNewItemVariant.product,
+      );
+      await tester.tap(find.text('Bag')); // single 25-Kg bag → auto-picks
+      await tester.pumpAndSettle();
+
+      // Fields now: name(0), price(1), opening qty(2).
+      await tester.enterText(find.byType(TextField).at(1), '45');
+      await tester.pump();
+      await tester.enterText(find.byType(TextField).at(2), '6');
+      await tester.pump();
+      // Cost field appears once a quantity is typed → index 3.
+      await tester.enterText(find.byType(TextField).at(3), '42');
+      await tester.pump();
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.addNewItemSaveButton),
+      );
+      await tester.pumpAndSettle();
+
+      final create = api.createShopItemCalls.single;
+      expect(create.baseUnitCode, 'kg');
+      expect(create.soldUnitCode, 'bag');
+      expect(create.soldConversion, 25);
+      expect(create.salePrice, 45);
+      expect(create.defaultSide, 'sale');
+      // Sold unit becomes the default for BOTH sides.
+      final flags = api.setShopItemUnitDefaultFlagsCalls.single;
+      expect(flags.isDefaultSale, isTrue);
+      expect(flags.isDefaultReceive, isTrue);
+      // Opening stock summed to base: 6 × 25 = 150 kg @ 42/25 = 1.68 per kg.
+      final adj = api.postInventoryAdjustmentCalls.single;
+      expect(adj.reasonCode, 'opening');
+      expect(adj.shopItemId, create.shopItemId);
+      expect(adj.quantityDelta, 150);
+      expect((adj.unitCost as num).toDouble(), closeTo(1.68, 1e-9));
+      expect(read(), isNotNull);
+    },
+  );
+
+  testWidgets(
+    'product base-only, no stock: one createShopItem, no default-flag or'
+    ' inventory calls',
+    (tester) async {
+      await pumpAndOpen(
+        tester,
+        initialName: 'Loose Rice',
+        variant: AddNewItemVariant.product,
+      );
+      await tester.tap(find.text(en.addNewItemLooseType));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.addNewItemBaseOnlyTile('Kg')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).at(1), '3'); // price
+      await tester.pump();
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.addNewItemSaveButton),
+      );
+      await tester.pumpAndSettle();
+
+      final create = api.createShopItemCalls.single;
+      expect(create.soldUnitCode, isNull);
+      expect(create.defaultSide, 'sale');
+      expect(api.setShopItemUnitDefaultFlagsCalls, isEmpty);
+      expect(api.postInventoryAdjustmentCalls, isEmpty);
+    },
+  );
+
+  testWidgets('product "Save & add another" keeps the sheet open, cleared',
+      (tester) async {
+    await pumpAndOpen(
+      tester,
+      initialName: 'First',
+      variant: AddNewItemVariant.product,
+    );
+    await tester.tap(find.text('Bag'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(1), '45');
+    await tester.pump();
+
+    await tester.tap(
+      find.widgetWithText(
+        OutlinedButton,
+        en.addNewItemSaveAndAddAnotherButton,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Saved once, but the sheet is still open with the packaging reset (chips
+    // shown again) for the next item.
+    expect(api.createShopItemCalls, hasLength(1));
+    expect(find.text(en.addProductSheetTitle), findsOneWidget);
+    expect(find.text(en.addNewItemLooseType), findsOneWidget);
+  });
 }

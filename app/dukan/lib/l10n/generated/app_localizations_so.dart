@@ -1876,6 +1876,9 @@ class AppLocalizationsSo extends AppLocalizations {
   String get addNewItemSheetTitle => 'Ku dar alaab cusub';
 
   @override
+  String get addProductSheetTitle => 'Ku dar alaab';
+
+  @override
   String get addNewItemNameLabel => 'Magaca';
 
   @override
@@ -1886,6 +1889,27 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get addNewItemCancelButton => 'JOOJI';
+
+  @override
+  String get addNewItemSaveButton => 'KAYDI';
+
+  @override
+  String get addNewItemSaveAndAddAnotherButton => 'KAYDI & KU DAR MID KALE';
+
+  @override
+  String get addNewItemOpeningStockHeader =>
+      'Alaabta aad hadda haysato (ikhtiyaari)';
+
+  @override
+  String get addNewItemOpeningQtyLabel => 'Immisa?';
+
+  @override
+  String get addNewItemOpeningCostLabel => 'Qiimaha midkiiba';
+
+  @override
+  String addNewItemSavedToast(String name) {
+    return 'Waa la kaydiyay $name';
+  }
 
   @override
   String get addNewItemAddToSaleButton => 'KU DAR IIBKA';

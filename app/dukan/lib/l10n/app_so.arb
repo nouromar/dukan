@@ -717,10 +717,22 @@
   "unitPickerAddPackagingButton": "+ Ku dar xirmo",
   "addNewItemSearchResult": "+ Ku dar alaab cusub: “{query}”",
   "addNewItemSheetTitle": "Ku dar alaab cusub",
+  "addProductSheetTitle": "Ku dar alaab",
   "addNewItemNameLabel": "Magaca",
   "addNewItemUnitChooseHint": "Dooro",
   "addNewItemCategoryLabel": "Qaybta (ikhtiyaari)",
   "addNewItemCancelButton": "JOOJI",
+  "addNewItemSaveButton": "KAYDI",
+  "addNewItemSaveAndAddAnotherButton": "KAYDI & KU DAR MID KALE",
+  "addNewItemOpeningStockHeader": "Alaabta aad hadda haysato (ikhtiyaari)",
+  "addNewItemOpeningQtyLabel": "Immisa?",
+  "addNewItemOpeningCostLabel": "Qiimaha midkiiba",
+  "addNewItemSavedToast": "Waa la kaydiyay {name}",
+  "@addNewItemSavedToast": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "addNewItemAddToSaleButton": "KU DAR IIBKA",
   "addNewItemAddToReceiveButton": "KU DAR DEJINTA",
   "addNewItemMissingNameMessage": "Magaca waa loo baahan yahay",

@@ -13,7 +13,9 @@
 //   3. Aliases + barcodes — compact reference sections.
 //
 // All mutations commit immediately to the server (per-tile save). CREATE
-// for new products still lives in ShopItemEditorScreen.
+// for new products is the simplified single-packaging AddNewItemSheet
+// (product variant) opened from the Products "+" FAB; this screen is where
+// extra packagings / aliases / barcodes / supplier are added afterward.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1189,12 +1191,10 @@ class _PackagingTile extends StatelessWidget {
             // "actions you can take". The actions Wrap is hidden
             // entirely when !canBindBarcode (both callbacks null).
             //
-            // Existing UX note (pre-#346): the editor lets the
-            // cashier bind a barcode to the base packaging at item
-            // creation (shop_item_editor_screen.dart line 503);
-            // detail-screen consistency means letting them bind one
-            // later too — that's why the action affordances render
-            // for any active unit including BASE.
+            // Barcode binding lives here on the detail screen (the create
+            // sheet stays minimal); detail-screen consistency means letting
+            // the cashier bind one to any active unit including BASE — that's
+            // why the action affordances render for every active unit.
             if (barcodes.isNotEmpty) ...[
               const SizedBox(height: 6),
               Wrap(

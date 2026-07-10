@@ -21,7 +21,7 @@ import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
 import 'package:dukan/products/catalog_picker_screen.dart';
 import 'package:dukan/products/products_screen.dart';
-import 'package:dukan/products/shop_item_editor_screen.dart';
+import 'package:dukan/sale/add_new_item_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -73,6 +73,18 @@ class _SetupItemOnboardingScreenState extends State<SetupItemOnboardingScreen> {
     if (mounted) await _dismissAndPushHome();
   }
 
+  /// "Add my own items" — the simplified product-create sheet ("Save & add
+  /// another" lets them add many in a row), then dismiss the onboarding card.
+  Future<void> _addProductsAndDismiss() async {
+    await AddNewItemSheet.show(
+      context,
+      widget.shop,
+      initialName: '',
+      variant: AddNewItemVariant.product,
+    );
+    if (mounted) await _dismissAndPushHome();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
@@ -99,11 +111,7 @@ class _SetupItemOnboardingScreenState extends State<SetupItemOnboardingScreen> {
                 title: l.setupOnboardingAddItemsTitle,
                 body: l.setupOnboardingAddItemsBody,
                 icon: Icons.add_box_outlined,
-                onTap: _dismissing
-                    ? null
-                    : () => _pushAndDismiss(
-                          ShopItemEditorScreen(shop: widget.shop),
-                        ),
+                onTap: _dismissing ? null : _addProductsAndDismiss,
               ),
               const SizedBox(height: 12),
               _OnboardingCard(

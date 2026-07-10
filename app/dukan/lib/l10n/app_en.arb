@@ -742,10 +742,22 @@
   "unitPickerAddPackagingButton": "+ Add packaging",
   "addNewItemSearchResult": "+ Add new item: “{query}”",
   "addNewItemSheetTitle": "Add new item",
+  "addProductSheetTitle": "Add product",
   "addNewItemNameLabel": "Name",
   "addNewItemUnitChooseHint": "Choose",
   "addNewItemCategoryLabel": "Category (optional)",
   "addNewItemCancelButton": "CANCEL",
+  "addNewItemSaveButton": "SAVE",
+  "addNewItemSaveAndAddAnotherButton": "SAVE & ADD ANOTHER",
+  "addNewItemOpeningStockHeader": "Stock you have now (optional)",
+  "addNewItemOpeningQtyLabel": "How many?",
+  "addNewItemOpeningCostLabel": "Cost for each",
+  "addNewItemSavedToast": "Saved {name}",
+  "@addNewItemSavedToast": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "addNewItemAddToSaleButton": "ADD TO SALE",
   "addNewItemAddToReceiveButton": "ADD TO RECEIVE",
   "addNewItemMissingNameMessage": "Name is required",
