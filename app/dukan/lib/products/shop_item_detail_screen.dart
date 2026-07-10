@@ -70,6 +70,16 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
   String? _liveDisplayName;
   RealtimeWatcher? _watcher;
 
+  /// Just-added packagings, kept until an authoritative fetch confirms
+  /// them. Adding a packaging writes the mirror AND fires the server-side
+  /// `shop_item_unit` realtime event (see [_watcher]); that event races a
+  /// delta sync that rewrites this item's unit set, so a plain `_reload()`
+  /// can momentarily read the mirror without the new row — the bug where
+  /// the new package only appeared after leaving and re-opening the screen.
+  /// Merging these in build makes the new packaging show instantly and
+  /// survive the race; entries are pruned once a fetch reports them.
+  final Map<String, ShopItemUnitDetail> _pendingUnits = {};
+
   @override
   void initState() {
     super.initState();
@@ -142,6 +152,7 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
           categories = const <CategoryOption>[];
         }
         _liveDisplayName = detail.header.displayName;
+        _prunePending(detail);
         return _ProductBootstrap(detail: detail, categories: categories);
       }
       // Local row missing — fall through to the network so the
@@ -160,9 +171,19 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
     final results = await Future.wait([detailF, categoriesF]);
     final detail = results[0] as ShopItemDetail;
     _liveDisplayName = detail.header.displayName;
+    _prunePending(detail);
     return _ProductBootstrap(
       detail: detail,
       categories: results[1] as List<CategoryOption>,
+    );
+  }
+
+  /// Drop any optimistically-held packaging that an authoritative fetch
+  /// now reports — from then on it renders from [detail] itself.
+  void _prunePending(ShopItemDetail detail) {
+    if (_pendingUnits.isEmpty) return;
+    _pendingUnits.removeWhere(
+      (id, _) => detail.units.any((u) => u.shopItemUnitId == id),
     );
   }
 
@@ -284,6 +305,23 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       bootstrap.detail.header.baseUnitLabel,
     );
     if (created == null || !mounted) return;
+    // Optimistically hold the new packaging so it renders immediately and
+    // survives the realtime/delta-sync race that could otherwise drop it
+    // from the reload (see [_pendingUnits]).
+    _pendingUnits[created.shopItemUnitId] = ShopItemUnitDetail(
+      shopItemUnitId: created.shopItemUnitId,
+      itemUnitId: null,
+      unitCode: created.unitCode,
+      unitLabel: created.unitLabel,
+      packagingLabel: created.packagingLabel,
+      conversionToBase: created.conversionToBase,
+      salePrice: created.salePrice,
+      lastCost: created.lastCost,
+      isDefaultSale: false,
+      isDefaultReceive: false,
+      isBaseUnit: created.isBaseUnit,
+      isActive: true,
+    );
     _reload();
   }
 
@@ -718,6 +756,7 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
             return _DetailBody(
               bootstrap: snapshot.data!,
               shop: widget.shop,
+              pendingUnits: _pendingUnits.values.toList(growable: false),
               onEditPrice: _onEditPrice,
               onAddPackaging: _onAddPackaging,
               onToggleDefault: _onToggleDefault,
@@ -756,6 +795,7 @@ class _DetailBody extends StatelessWidget {
   const _DetailBody({
     required this.bootstrap,
     required this.shop,
+    required this.pendingUnits,
     required this.onEditPrice,
     required this.onAddPackaging,
     required this.onToggleDefault,
@@ -772,6 +812,10 @@ class _DetailBody extends StatelessWidget {
 
   final _ProductBootstrap bootstrap;
   final ShopSummary shop;
+
+  /// Optimistically-held just-added packagings not yet confirmed by a
+  /// fetch (see [_ShopItemDetailScreenState._pendingUnits]).
+  final List<ShopItemUnitDetail> pendingUnits;
   final Future<void> Function(ShopItemUnitDetail) onEditPrice;
   final VoidCallback onAddPackaging;
   final Future<void> Function(
@@ -803,14 +847,27 @@ class _DetailBody extends StatelessWidget {
     // don't have that UX yet and rendering them inline was the bug
     // behind "I cannot delete empty packaging" (#350): the delete RPC
     // succeeded but the soft-disabled row stayed visible.
-    final units = [...detail.units.where((u) => u.isActive)]..sort((a, b) {
+    // Merge any optimistically-held new packagings the authoritative
+    // fetch hasn't caught up to yet (see [_pendingUnits]) — deduped by id
+    // so a confirmed row never doubles up.
+    final mergedUnits = <ShopItemUnitDetail>[
+      ...detail.units,
+      ...pendingUnits.where(
+        (p) => !detail.units.any((u) => u.shopItemUnitId == p.shopItemUnitId),
+      ),
+    ];
+    final units = [...mergedUnits.where((u) => u.isActive)]..sort((a, b) {
         if (a.isBaseUnit && !b.isBaseUnit) return -1;
         if (!a.isBaseUnit && b.isBaseUnit) return 1;
         return a.conversionToBase.compareTo(b.conversionToBase);
       });
     final aliases = detail.aliases;
-    final defaultSale = units.firstWhere(
-      (u) => u.isDefaultSale,
+    // Feedback: express the stock readout in the default *receive*
+    // packaging when one exists (that's the size the shop restocks in,
+    // so "3 sacks" is what they picture on hand), else fall back to the
+    // base unit. Was previously the default *sale* packaging.
+    final stockUnit = units.firstWhere(
+      (u) => u.isDefaultReceive,
       orElse: () => units.firstWhere(
         (u) => u.isBaseUnit,
         orElse: () => units.first,
@@ -824,9 +881,9 @@ class _DetailBody extends StatelessWidget {
       stock: header.currentStock,
       baseLabel: header.baseUnitLabel,
       packagingLabel:
-          defaultSale.isBaseUnit ? null : defaultSale.packagingLabel,
+          stockUnit.isBaseUnit ? null : stockUnit.packagingLabel,
       conversion:
-          defaultSale.isBaseUnit ? null : defaultSale.conversionToBase,
+          stockUnit.isBaseUnit ? null : stockUnit.conversionToBase,
     );
     // Capability gates. Cashier role lacks all three — the screen
     // renders as informational: prices and stock visible, every

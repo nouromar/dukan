@@ -1071,6 +1071,8 @@ class ShopItemSummary {
     required this.isActive,
     this.defaultSalePrice,
     this.anyPriceSet = false,
+    this.defaultReceivePackagingLabel,
+    this.defaultReceiveConversion,
   });
 
   factory ShopItemSummary.fromJson(Map<String, dynamic> json) =>
@@ -1088,6 +1090,13 @@ class ShopItemSummary {
         // 0045 additions — null in older callers / fixtures.
         defaultSalePrice: (json['default_sale_price'] as num?)?.toDouble(),
         anyPriceSet: json['any_price_set'] as bool? ?? false,
+        // 0112 additions — the default *receive* packaging so the list
+        // tile can render stock the way the shop restocks. Null (base
+        // unit) for older callers / fixtures / not-yet-deployed RPC.
+        defaultReceivePackagingLabel:
+            json['default_receive_packaging_label'] as String?,
+        defaultReceiveConversion:
+            (json['default_receive_conversion'] as num?)?.toDouble(),
       );
 
   final String shopItemId;
@@ -1121,6 +1130,17 @@ class ShopItemSummary {
   /// True if any packaging on this shop_item has a non-null
   /// sale_price. Drives the "no price yet" filter.
   final bool anyPriceSet;
+
+  /// Packaging label of the default-for-*receive* packaging, when the shop
+  /// has one that isn't the base unit. The Products list renders
+  /// `current_stock` in this packaging (the size the shop restocks in) so
+  /// the tile reads "3 sacks + 5kg" instead of raw base "155kg". Null →
+  /// render in the base unit.
+  final String? defaultReceivePackagingLabel;
+
+  /// Conversion-to-base of [defaultReceivePackagingLabel]. Paired with it;
+  /// null when the stock renders in the base unit.
+  final double? defaultReceiveConversion;
 }
 
 /// Full per-packaging detail for the shop_item editor / detail screen.

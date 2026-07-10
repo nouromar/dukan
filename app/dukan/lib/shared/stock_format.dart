@@ -112,12 +112,15 @@ const Set<String> _abbreviatedUnits = {
 bool _unitAttaches(String label) =>
     _abbreviatedUnits.contains(label.trim().toLowerCase());
 
-/// Drop trailing zeros from a numeric stock value so 25.000 reads "25"
-/// and 0.500 reads "0.5". Negatives keep their sign.
+/// Render a numeric stock value with at most ONE decimal place, dropping a
+/// trailing zero so whole values read "25" (not "25.0") and fractional ones
+/// round to a single decimal: 12.53 → "12.5", 0.55 → "0.6". Shopkeepers see
+/// tidy numbers on the Sale, Receive, and Product pages instead of long
+/// binary-fraction tails. Negatives keep their sign.
 String _pretty(num value) {
   if (value == value.roundToDouble()) return value.toInt().toString();
   return value
-      .toStringAsFixed(3)
+      .toStringAsFixed(1)
       .replaceFirst(RegExp(r'0+$'), '')
       .replaceFirst(RegExp(r'\.$'), '');
 }

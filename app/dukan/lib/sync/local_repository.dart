@@ -652,14 +652,21 @@ class LocalRepository {
   }) async {
     final units = await packagingsForItem(item.shopItemId);
     LocalShopItemUnit? defaultSale;
+    LocalShopItemUnit? defaultReceive;
     LocalShopItemUnit? baseUnit;
     var anyPriceSet = false;
     for (final u in units) {
       if (u.salePrice != null && u.salePrice != 0) anyPriceSet = true;
       if (u.isDefaultSale) defaultSale = u;
+      if (u.isDefaultReceive) defaultReceive = u;
       if (u.conversionToBase == 1) baseUnit = u;
     }
     final preferred = defaultSale ?? baseUnit;
+    // Stock on the Products list renders in the default *receive* packaging
+    // when the shop has one that isn't the base unit; otherwise base.
+    final receiveUnit = defaultReceive ?? baseUnit;
+    final showReceivePack =
+        receiveUnit != null && receiveUnit.conversionToBase != 1;
     return ShopItemSummary(
       shopItemId: item.shopItemId,
       itemId: item.itemId,
@@ -675,6 +682,10 @@ class LocalRepository {
       isActive: item.isActive,
       defaultSalePrice: preferred?.salePrice?.toDouble(),
       anyPriceSet: anyPriceSet,
+      defaultReceivePackagingLabel:
+          showReceivePack ? receiveUnit.packagingLabel : null,
+      defaultReceiveConversion:
+          showReceivePack ? receiveUnit.conversionToBase.toDouble() : null,
     );
   }
 

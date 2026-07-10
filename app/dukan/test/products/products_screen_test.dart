@@ -18,6 +18,8 @@ ShopItemSummary _shopItem({
   double currentStock = 50,
   int unitCount = 1,
   bool isActive = true,
+  String? defaultReceivePackagingLabel,
+  double? defaultReceiveConversion,
 }) => ShopItemSummary(
   shopItemId: shopItemId,
   itemId: itemId,
@@ -28,6 +30,8 @@ ShopItemSummary _shopItem({
   currentStock: currentStock,
   unitCount: unitCount,
   isActive: isActive,
+  defaultReceivePackagingLabel: defaultReceivePackagingLabel,
+  defaultReceiveConversion: defaultReceiveConversion,
 );
 
 void main() {
@@ -98,6 +102,28 @@ void main() {
       find.text('50Kg'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('stock renders in the default receive packaging when set', (
+    tester,
+  ) async {
+    // 155kg on hand, restocked in 25kg sacks → "6 Sack(25Kg) + 5kg".
+    api.onListShopItems = (_, _, _, _) async => [
+      _shopItem(
+        displayName: 'Bariis Basmati',
+        baseUnitLabel: 'kg',
+        currentStock: 155,
+        defaultReceivePackagingLabel: '25 Sack',
+        defaultReceiveConversion: 25,
+      ),
+    ];
+
+    await pumpProducts(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('6 Sack(25kg) + 5kg'), findsOneWidget);
+    // Not the raw base-unit rendering.
+    expect(find.text('155kg'), findsNothing);
   });
 
   // TODO(v2): rewrite for new activation semantics — T#145

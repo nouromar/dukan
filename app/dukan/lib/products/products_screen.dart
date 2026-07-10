@@ -558,6 +558,10 @@ class _ShopItemTile extends StatelessWidget {
     final stockText = formatCompoundStock(
       stock: row.currentStock,
       baseLabel: row.baseUnitLabel,
+      // Render in the default *receive* packaging when the shop has one
+      // (the size they restock in), else base unit.
+      packagingLabel: row.defaultReceivePackagingLabel,
+      conversion: row.defaultReceiveConversion,
     );
     final subtitleBits = <Widget>[
       if (row.categoryName != null && row.categoryName!.trim().isNotEmpty)

@@ -162,5 +162,24 @@ void main() {
         '2 Box(12 piece) + 6 piece',
       );
     });
+
+    test('fractional stock rounds to a single decimal place', () {
+      // Long binary-fraction tails collapse to one decimal on every page.
+      expect(formatCompoundStock(stock: 12.53, baseLabel: 'kg'), '12.5kg');
+      expect(formatCompoundStock(stock: 12.549, baseLabel: 'kg'), '12.5kg');
+      expect(formatCompoundStock(stock: 12.55, baseLabel: 'kg'), '12.6kg');
+      // Whole values stay whole (no ".0").
+      expect(formatCompoundStock(stock: 12, baseLabel: 'kg'), '12kg');
+      // The compound remainder is rounded too.
+      expect(
+        formatCompoundStock(
+          stock: 27.53,
+          baseLabel: 'kg',
+          packagingLabel: '25 Bag',
+          conversion: 25,
+        ),
+        '1 Bag(25kg) + 2.5kg',
+      );
+    });
   });
 }

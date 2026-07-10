@@ -134,8 +134,9 @@ void main() {
 
       await pumpDetail(tester);
 
-      // Stock readout (now its own section under the ITEM tiles).
-      expect(find.text('50Kg'), findsOneWidget);
+      // Stock readout, expressed in the default *receive* packaging (the
+      // "25 Kg Bag" here) rather than raw base — 50kg → "2 Bag(25Kg)".
+      expect(find.text('2 Bag(25Kg)'), findsOneWidget);
 
       // First packaging row (base) is in view by default.
       expect(find.text('Kg'), findsWidgets);
@@ -276,13 +277,61 @@ void main() {
     expect(api.deactivateShopItemUnitCalls, isEmpty);
   });
 
+  testWidgets(
+    'add packaging appears immediately even if the reload lacks it '
+    '(optimistic merge — no need to re-open the screen)',
+    (tester) async {
+      // getShopItem always returns the OLD detail (no "50 Kg Bag"), as if a
+      // racing delta sync dropped the just-added row from the reload. The
+      // new packaging must still show — this was the bug where it only
+      // appeared after leaving and re-opening the detail screen.
+      api.onGetShopItem = (_, _, _) async => _detail();
+      api.onSuggestItemPackagings = (_, _, _, _, _, _) async => const [
+            PackagingSuggestion(
+              unitCode: 'bag',
+              unitLabel: 'Bag',
+              conversionToBase: 50,
+              uses: 3,
+              source: 'category',
+            ),
+          ];
+      api.onCreateShopItemUnit = (_, _, _, _, _) async => 'new-siu-50';
+
+      await pumpDetail(tester);
+
+      // Open the add-packaging sheet.
+      final addButton = find.text(en.shopItemEditorAddPackagingButton);
+      await tester.scrollUntilVisible(addButton, 120);
+      await tester.ensureVisible(addButton);
+      await tester.pumpAndSettle();
+      await tester.tap(addButton);
+      await tester.pumpAndSettle();
+
+      // Sheet opened with the suggested packaging.
+      expect(find.text(en.addPackagingSuggestionsHeader), findsOneWidget);
+
+      // Pick the new "50 Kg Bag" suggestion, then save.
+      await tester.tap(find.text('50 Kg Bag'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.addPackagingSaveButton),
+      );
+      await tester.pumpAndSettle();
+
+      // Sheet closed; the reload's getShopItem still lacks the row, yet the
+      // optimistically-merged packaging is on screen.
+      await tester.scrollUntilVisible(find.text('50 Kg Bag'), 120);
+      expect(find.text('50 Kg Bag'), findsOneWidget);
+    },
+  );
+
   testWidgets('Stock readout tap → adjust sheet → postInventoryAdjustment fires',
       (tester) async {
     api.onGetShopItem = (_, _, _) async => _detail();
     await pumpDetail(tester);
 
     // Tap the big stock readout to open the adjust sheet.
-    await tester.tap(find.text('50Kg'));
+    await tester.tap(find.text('2 Bag(25Kg)'));
     await tester.pumpAndSettle();
 
     // Default mode is "Set exact" (Opening is hidden post-onboarding
@@ -312,7 +361,7 @@ void main() {
       api.onGetShopItem = (_, _, _) async => _detail(currentStock: 50);
       await pumpDetail(tester);
 
-      await tester.tap(find.text('50Kg'));
+      await tester.tap(find.text('2 Bag(25Kg)'));
       await tester.pumpAndSettle();
       // Pick "Set exact" mode.
       await tester.tap(find.widgetWithText(
