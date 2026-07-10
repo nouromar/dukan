@@ -1942,6 +1942,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewItemCustomSoldUnitLabel => 'Sold as';
 
   @override
+  String get addNewItemCustomSoldByLabel => 'Sold by';
+
+  @override
+  String get addNewItemCustomInnerUnitLabel =>
+      'A pack of smaller units? (optional)';
+
+  @override
+  String addNewItemCustomInnerNone(String unit) {
+    return 'No — just the $unit';
+  }
+
+  @override
   String addNewItemCustomConversionLabel(String base, String sold) {
     return 'How many $base in 1 $sold?';
   }

@@ -547,6 +547,44 @@ void main() {
     },
   );
 
+  testWidgets(
+    'custom packaging (product): title is "how is it sold", asks "Sold by"'
+    ' first, and a plain unit is reachable as base-only',
+    (tester) async {
+      await pumpAndOpen(
+        tester,
+        initialName: 'Hilwa 400g',
+        variant: AddNewItemVariant.product,
+      );
+      await tester.tap(find.text(en.addNewItemCustomPackagingEntry));
+      await tester.pumpAndSettle();
+
+      // Title is the sell-side question, not the supplier one; first field is
+      // "Sold by", not "Base unit".
+      expect(find.text(en.addNewItemHowDeliveredHeader), findsNothing);
+      expect(find.text(en.addNewItemCustomSoldByLabel), findsOneWidget);
+
+      // Pick a plain selling unit → reachable as base-only (no pack), which the
+      // old "Sold as" dropdown excluded.
+      await tester.tap(find.byType(DropdownButtonFormField<UnitOption>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Piece').last);
+      await tester.pumpAndSettle();
+
+      final useBtn = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, en.addNewItemUseCustomButton),
+      );
+      expect(useBtn.onPressed, isNotNull);
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.addNewItemUseCustomButton),
+      );
+      await tester.pumpAndSettle();
+
+      // Back on the main sheet with the base-only pick applied.
+      expect(find.text('→ Piece'), findsOneWidget);
+    },
+  );
+
   testWidgets('product "Save & add another" keeps the sheet open, cleared',
       (tester) async {
     await pumpAndOpen(

@@ -760,6 +760,14 @@
   "addNewItemCustomPackagingEntry": "+ Xirmo gaar ah",
   "addNewItemCustomBaseUnitLabel": "Halbeegga aasaasi",
   "addNewItemCustomSoldUnitLabel": "Loo iibiyo",
+  "addNewItemCustomSoldByLabel": "Lagu iibiyo",
+  "addNewItemCustomInnerUnitLabel": "Ma tahay xabbo ka kooban halbeeg yar? (ikhtiyaari)",
+  "addNewItemCustomInnerNone": "Maya — kaliya {unit}",
+  "@addNewItemCustomInnerNone": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
   "addNewItemCustomConversionLabel": "Imisa {base} ayaa ku jira 1 {sold}?",
   "@addNewItemCustomConversionLabel": {
     "placeholders": {

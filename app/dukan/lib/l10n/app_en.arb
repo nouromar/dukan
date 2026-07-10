@@ -785,6 +785,14 @@
   "addNewItemCustomPackagingEntry": "+ Custom packaging",
   "addNewItemCustomBaseUnitLabel": "Base unit",
   "addNewItemCustomSoldUnitLabel": "Sold as",
+  "addNewItemCustomSoldByLabel": "Sold by",
+  "addNewItemCustomInnerUnitLabel": "A pack of smaller units? (optional)",
+  "addNewItemCustomInnerNone": "No — just the {unit}",
+  "@addNewItemCustomInnerNone": {
+    "placeholders": {
+      "unit": { "type": "String" }
+    }
+  },
   "addNewItemCustomConversionLabel": "How many {base} in 1 {sold}?",
   "@addNewItemCustomConversionLabel": {
     "placeholders": {

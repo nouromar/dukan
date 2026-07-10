@@ -1957,6 +1957,18 @@ class AppLocalizationsSo extends AppLocalizations {
   String get addNewItemCustomSoldUnitLabel => 'Loo iibiyo';
 
   @override
+  String get addNewItemCustomSoldByLabel => 'Lagu iibiyo';
+
+  @override
+  String get addNewItemCustomInnerUnitLabel =>
+      'Ma tahay xabbo ka kooban halbeeg yar? (ikhtiyaari)';
+
+  @override
+  String addNewItemCustomInnerNone(String unit) {
+    return 'Maya — kaliya $unit';
+  }
+
+  @override
   String addNewItemCustomConversionLabel(String base, String sold) {
     return 'Imisa $base ayaa ku jira 1 $sold?';
   }

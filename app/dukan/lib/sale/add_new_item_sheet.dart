@@ -1199,27 +1199,42 @@ class _PackagingPickerBodyState extends State<_PackagingPickerBody> {
     return value;
   }
 
+  // Sold-first model: the shopkeeper first picks the SELLING unit; the inner
+  // (smaller/base) unit is optional. No inner unit → sold IS the base (base-
+  // only). With an inner unit → the sold unit is a pack of `conversion` inner
+  // units. (`_customSoldUnit` = "Sold by", `_customBaseUnit` = inner unit.)
   _PickerChoice? get _customCandidate {
-    final base = _customBaseUnit;
     final sold = _customSoldUnit;
-    if (base == null || sold == null) return null;
-    if (sold.code == base.code) {
-      // sold == base degenerates into a base-only pick.
+    if (sold == null) return null;
+    final inner = _customBaseUnit;
+    if (inner == null || inner.code == sold.code) {
+      // Sold in the counting unit directly.
       return _PickerChoice.baseOnly(
-        baseUnitCode: base.code,
-        baseUnitLabel: base.label,
+        baseUnitCode: sold.code,
+        baseUnitLabel: sold.label,
       );
     }
     final conv = _parsedCustomConversion;
     if (conv == null) return null;
     return _PickerChoice.packaged(
-      baseUnitCode: base.code,
-      baseUnitLabel: base.label,
+      baseUnitCode: inner.code,
+      baseUnitLabel: inner.label,
       soldUnitCode: sold.code,
       soldUnitLabel: sold.label,
       conversion: conv,
       source: 'custom',
     );
+  }
+
+  /// Inner (smaller) units a `sold` unit can be a pack of — i.e. bases for
+  /// which `sold` is a valid packaging (a bag is made of kg, a box of pieces).
+  List<UnitOption> _innerUnitOptions(List<UnitOption> units, UnitOption sold) {
+    return units
+        .where((u) =>
+            u.code != sold.code &&
+            filterPackagingsForBase<UnitOption>(u.code, units, (x) => x.code)
+                .any((p) => p.code == sold.code))
+        .toList();
   }
 
   List<UnitOption> _sortUnits(List<UnitOption> units) {
@@ -1245,9 +1260,9 @@ class _PackagingPickerBodyState extends State<_PackagingPickerBody> {
     final l = tr(context);
     final theme = Theme.of(context);
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    final title = widget.variant == AddNewItemVariant.sale
-        ? l.addNewItemHowSoldHeader
-        : l.addNewItemHowDeliveredHeader;
+    final title = widget.variant == AddNewItemVariant.receive
+        ? l.addNewItemHowDeliveredHeader
+        : l.addNewItemHowSoldHeader;
     final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
     return SafeArea(
       child: ConstrainedBox(
@@ -1348,14 +1363,18 @@ class _PackagingPickerBodyState extends State<_PackagingPickerBody> {
       future: _unitsFuture,
       builder: (context, snapshot) {
         final units = snapshot.data ?? const <UnitOption>[];
+        final sold = _customSoldUnit;
+        final innerOptions =
+            sold == null ? const <UnitOption>[] : _innerUnitOptions(units, sold);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // 1) The unit the shopkeeper SELLS in — the natural first question.
             DropdownButtonFormField<UnitOption>(
-              initialValue: _customBaseUnit,
+              initialValue: sold,
               isExpanded: true,
               decoration: InputDecoration(
-                labelText: l.addNewItemCustomBaseUnitLabel,
+                labelText: l.addNewItemCustomSoldByLabel,
                 isDense: true,
               ),
               items: [
@@ -1363,34 +1382,41 @@ class _PackagingPickerBodyState extends State<_PackagingPickerBody> {
                   DropdownMenuItem(value: u, child: Text(u.label)),
               ],
               onChanged: (u) => setState(() {
-                _customBaseUnit = u;
-                _customSoldUnit = null;
+                _customSoldUnit = u;
+                _customBaseUnit = null;
+                _customConversionController.clear();
               }),
             ),
-            if (_customBaseUnit != null) ...[
+            // 2) OPTIONAL: is one of those a pack of a smaller unit? Default
+            //    "no" keeps it sold-as-one-unit (base-only) — so the selling
+            //    unit is always reachable, no "base unit" jargon up front.
+            if (sold != null && innerOptions.isNotEmpty) ...[
               const SizedBox(height: 8),
-              DropdownButtonFormField<UnitOption>(
-                initialValue: _customSoldUnit,
+              DropdownButtonFormField<UnitOption?>(
+                initialValue: _customBaseUnit,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: l.addNewItemCustomSoldUnitLabel,
+                  labelText: l.addNewItemCustomInnerUnitLabel,
                   isDense: true,
                 ),
                 items: [
-                  // Filter to packagings that make sense for the picked
-                  // base (e.g., kg-base → no bottle/litre/piece).
-                  for (final u in filterPackagingsForBase<UnitOption>(
-                    _customBaseUnit!.code,
-                    units,
-                    (u) => u.code,
-                  ))
-                    DropdownMenuItem(value: u, child: Text(u.label)),
+                  DropdownMenuItem<UnitOption?>(
+                    value: null,
+                    child: Text(l.addNewItemCustomInnerNone(sold.label)),
+                  ),
+                  for (final u in innerOptions)
+                    DropdownMenuItem<UnitOption?>(
+                      value: u,
+                      child: Text(u.label),
+                    ),
                 ],
-                onChanged: (u) => setState(() => _customSoldUnit = u),
+                onChanged: (u) => setState(() {
+                  _customBaseUnit = u;
+                  if (u == null) _customConversionController.clear();
+                }),
               ),
             ],
-            if (_customSoldUnit != null &&
-                _customSoldUnit!.code != _customBaseUnit?.code) ...[
+            if (sold != null && _customBaseUnit != null) ...[
               const SizedBox(height: 8),
               TextField(
                 controller: _customConversionController,
@@ -1403,7 +1429,7 @@ class _PackagingPickerBodyState extends State<_PackagingPickerBody> {
                 decoration: InputDecoration(
                   labelText: l.addNewItemCustomConversionLabel(
                     _customBaseUnit!.label,
-                    _customSoldUnit!.label,
+                    sold.label,
                   ),
                   isDense: true,
                 ),
@@ -1412,7 +1438,7 @@ class _PackagingPickerBodyState extends State<_PackagingPickerBody> {
                 const SizedBox(height: 4),
                 Text(
                   l.packagingConversionPreview(
-                    _customSoldUnit!.label,
+                    sold.label,
                     _formatConversionPreview(_parsedCustomConversion!),
                     _customBaseUnit!.label,
                   ),

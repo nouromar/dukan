@@ -3366,6 +3366,24 @@ abstract class AppLocalizations {
   /// **'Sold as'**
   String get addNewItemCustomSoldUnitLabel;
 
+  /// No description provided for @addNewItemCustomSoldByLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold by'**
+  String get addNewItemCustomSoldByLabel;
+
+  /// No description provided for @addNewItemCustomInnerUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'A pack of smaller units? (optional)'**
+  String get addNewItemCustomInnerUnitLabel;
+
+  /// No description provided for @addNewItemCustomInnerNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No — just the {unit}'**
+  String addNewItemCustomInnerNone(String unit);
+
   /// No description provided for @addNewItemCustomConversionLabel.
   ///
   /// In en, this message translates to:
