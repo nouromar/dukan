@@ -469,26 +469,31 @@ void main() {
     },
   );
 
-  // --- Product variant: single-packaging create + opening stock -----------
+  // --- Product variant: "How is it sold?" is a plain all-units dropdown ----
+
+  // Opens the product-variant "How is it sold?" dropdown and picks [label].
+  Future<void> pickSoldUnit(WidgetTester tester, String label) async {
+    await tester.tap(find.byType(DropdownButtonFormField<UnitOption>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(label).last);
+    await tester.pumpAndSettle();
+  }
 
   testWidgets(
-    'product packaged: SAVE creates item, defaults the sold unit both sides,'
-    ' and posts opening stock converted to base',
+    'product: pick a unit → base-only createShopItem + opening stock (conv 1)',
     (tester) async {
       final read = await pumpAndOpen(
         tester,
         initialName: 'Bariis',
         variant: AddNewItemVariant.product,
       );
-      await tester.tap(find.text('Bag')); // single 25-Kg bag → auto-picks
-      await tester.pumpAndSettle();
+      await pickSoldUnit(tester, 'Kg');
 
-      // Fields now: name(0), price(1), opening qty(2).
+      // Fields: name(0), price(1), opening qty(2).
       await tester.enterText(find.byType(TextField).at(1), '45');
       await tester.pump();
       await tester.enterText(find.byType(TextField).at(2), '6');
       await tester.pump();
-      // Cost field appears once a quantity is typed → index 3.
       await tester.enterText(find.byType(TextField).at(3), '42');
       await tester.pump();
 
@@ -499,91 +504,42 @@ void main() {
 
       final create = api.createShopItemCalls.single;
       expect(create.baseUnitCode, 'kg');
-      expect(create.soldUnitCode, 'bag');
-      expect(create.soldConversion, 25);
+      expect(create.soldUnitCode, isNull); // base-only — no pack at create
       expect(create.salePrice, 45);
       expect(create.defaultSide, 'sale');
-      // Sold unit becomes the default for BOTH sides.
-      final flags = api.setShopItemUnitDefaultFlagsCalls.single;
-      expect(flags.isDefaultSale, isTrue);
-      expect(flags.isDefaultReceive, isTrue);
-      // Opening stock summed to base: 6 × 25 = 150 kg @ 42/25 = 1.68 per kg.
+      // Base-only → base is default for both sides, no extra flag call.
+      expect(api.setShopItemUnitDefaultFlagsCalls, isEmpty);
+      // Opening stock in the counting unit (conversion 1): 6 kg @ $42/kg.
       final adj = api.postInventoryAdjustmentCalls.single;
       expect(adj.reasonCode, 'opening');
       expect(adj.shopItemId, create.shopItemId);
-      expect(adj.quantityDelta, 150);
-      expect((adj.unitCost as num).toDouble(), closeTo(1.68, 1e-9));
+      expect(adj.quantityDelta, 6);
+      expect((adj.unitCost as num).toDouble(), 42);
       expect(read(), isNotNull);
     },
   );
 
-  testWidgets(
-    'product base-only, no stock: one createShopItem, no default-flag or'
-    ' inventory calls',
-    (tester) async {
-      await pumpAndOpen(
-        tester,
-        initialName: 'Loose Rice',
-        variant: AddNewItemVariant.product,
-      );
-      await tester.tap(find.text(en.addNewItemLooseType));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(en.addNewItemBaseOnlyTile('Kg')));
-      await tester.pumpAndSettle();
+  testWidgets('product: no opening stock → no inventory call', (tester) async {
+    await pumpAndOpen(
+      tester,
+      initialName: 'Soap',
+      variant: AddNewItemVariant.product,
+    );
+    await pickSoldUnit(tester, 'Piece');
+    await tester.enterText(find.byType(TextField).at(1), '0.5'); // price
+    await tester.pump();
 
-      await tester.enterText(find.byType(TextField).at(1), '3'); // price
-      await tester.pump();
+    await tester.tap(
+      find.widgetWithText(FilledButton, en.addNewItemSaveButton),
+    );
+    await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.widgetWithText(FilledButton, en.addNewItemSaveButton),
-      );
-      await tester.pumpAndSettle();
-
-      final create = api.createShopItemCalls.single;
-      expect(create.soldUnitCode, isNull);
-      expect(create.defaultSide, 'sale');
-      expect(api.setShopItemUnitDefaultFlagsCalls, isEmpty);
-      expect(api.postInventoryAdjustmentCalls, isEmpty);
-    },
-  );
-
-  testWidgets(
-    'custom packaging (product): title is "how is it sold", asks "Sold by"'
-    ' first, and a plain unit is reachable as base-only',
-    (tester) async {
-      await pumpAndOpen(
-        tester,
-        initialName: 'Hilwa 400g',
-        variant: AddNewItemVariant.product,
-      );
-      await tester.tap(find.text(en.addNewItemCustomPackagingEntry));
-      await tester.pumpAndSettle();
-
-      // Title is the sell-side question, not the supplier one; first field is
-      // "Sold by", not "Base unit".
-      expect(find.text(en.addNewItemHowDeliveredHeader), findsNothing);
-      expect(find.text(en.addNewItemCustomSoldByLabel), findsOneWidget);
-
-      // Pick a plain selling unit → reachable as base-only (no pack), which the
-      // old "Sold as" dropdown excluded.
-      await tester.tap(find.byType(DropdownButtonFormField<UnitOption>));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Piece').last);
-      await tester.pumpAndSettle();
-
-      final useBtn = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, en.addNewItemUseCustomButton),
-      );
-      expect(useBtn.onPressed, isNotNull);
-      await tester.tap(
-        find.widgetWithText(FilledButton, en.addNewItemUseCustomButton),
-      );
-      await tester.pumpAndSettle();
-
-      // Back on the main sheet with the base-only pick applied.
-      expect(find.text('→ Piece'), findsOneWidget);
-    },
-  );
+    final create = api.createShopItemCalls.single;
+    expect(create.baseUnitCode, 'piece');
+    expect(create.soldUnitCode, isNull);
+    expect(api.postInventoryAdjustmentCalls, isEmpty);
+    expect(api.setShopItemUnitDefaultFlagsCalls, isEmpty);
+  });
 
   testWidgets('product "Save & add another" keeps the sheet open, cleared',
       (tester) async {
@@ -592,8 +548,7 @@ void main() {
       initialName: 'First',
       variant: AddNewItemVariant.product,
     );
-    await tester.tap(find.text('Bag'));
-    await tester.pumpAndSettle();
+    await pickSoldUnit(tester, 'Kg');
     await tester.enterText(find.byType(TextField).at(1), '45');
     await tester.pump();
 
@@ -605,10 +560,36 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Saved once, but the sheet is still open with the packaging reset (chips
-    // shown again) for the next item.
+    // Saved once, sheet still open with the unit reset for the next item.
     expect(api.createShopItemCalls, hasLength(1));
     expect(find.text(en.addProductSheetTitle), findsOneWidget);
-    expect(find.text(en.addNewItemLooseType), findsOneWidget);
+    expect(find.byType(DropdownButtonFormField<UnitOption>), findsOneWidget);
+  });
+
+  // Custom packaging still serves Sale/Receive quick-add; it now asks "Sold by"
+  // first so a plain unit is reachable as base-only (the old form excluded it).
+  testWidgets('custom packaging (sale): "Sold by" first, base-only reachable',
+      (tester) async {
+    await pumpAndOpen(tester, initialName: 'Hilwa 400g');
+    await tester.tap(find.text(en.addNewItemCustomPackagingEntry));
+    await tester.pumpAndSettle();
+
+    expect(find.text(en.addNewItemCustomSoldByLabel), findsOneWidget);
+
+    await tester.tap(find.byType(DropdownButtonFormField<UnitOption>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Piece').last);
+    await tester.pumpAndSettle();
+
+    final useBtn = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, en.addNewItemUseCustomButton),
+    );
+    expect(useBtn.onPressed, isNotNull);
+    await tester.tap(
+      find.widgetWithText(FilledButton, en.addNewItemUseCustomButton),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('→ Piece'), findsOneWidget);
   });
 }

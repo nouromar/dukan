@@ -177,6 +177,11 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
   final FocusNode _nameFocus = FocusNode();
   Future<NewItemOptions>? _optionsFuture;
   Future<List<CategoryOption>>? _categoriesFuture;
+  // Product variant: "How is it sold?" is a plain all-units dropdown — pick the
+  // unit it's sold/counted in (base-only). No chips, no pack conversion here;
+  // splitting into a pack of smaller units is done later on the detail screen.
+  Future<List<UnitOption>>? _unitsFuture;
+  UnitOption? _productUnit;
   _PickerChoice? _picked;
   String? _categoryId;
   bool _saving = false;
@@ -207,8 +212,14 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     if (_locale != current) {
       _locale = current;
       final api = context.read<ShopApi>();
-      _optionsFuture =
-          api.fetchNewItemOptions(categoryId: _categoryId, locale: current);
+      if (_isProduct) {
+        // The all-units dropdown source (session-cached in ShopApi).
+        _unitsFuture = api.listUnits();
+      } else {
+        // Sale/Receive quick-add: category-suggested packaging chips.
+        _optionsFuture =
+            api.fetchNewItemOptions(categoryId: _categoryId, locale: current);
+      }
       // #393: local-mirror-aware so the category picker works offline.
       _categoriesFuture = loadCategoryOptions(
         context,
@@ -301,7 +312,10 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     _priceController.clear();
     _openingQtyController.clear();
     _openingCostController.clear();
-    setState(() => _picked = null);
+    setState(() {
+      _picked = null;
+      _productUnit = null;
+    });
     _nameFocus.requestFocus();
   }
 
@@ -812,28 +826,65 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        variantHeader,
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      _Tier1Chips(
-                        optionsFuture: _optionsFuture,
-                        picked: choice,
-                        saving: _saving,
-                        onTapType: _onTapType,
-                        onTapLoose: _onTapLoose,
-                        onTapCustom: _onTapCustom,
-                      ),
-                      if (choice != null) ...[
-                        const SizedBox(height: 8),
+                      if (_isProduct)
+                        // "How is it sold?" — a plain dropdown of all units.
+                        FutureBuilder<List<UnitOption>>(
+                          future: _unitsFuture,
+                          builder: (context, snapshot) {
+                            final units =
+                                snapshot.data ?? const <UnitOption>[];
+                            return DropdownButtonFormField<UnitOption>(
+                              initialValue: _productUnit,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                labelText: variantHeader,
+                                isDense: true,
+                              ),
+                              items: [
+                                for (final u in units)
+                                  DropdownMenuItem(
+                                    value: u,
+                                    child: Text(u.label),
+                                  ),
+                              ],
+                              onChanged: _saving
+                                  ? null
+                                  : (u) => setState(() {
+                                        _productUnit = u;
+                                        _picked = u == null
+                                            ? null
+                                            : _PickerChoice.baseOnly(
+                                                baseUnitCode: u.code,
+                                                baseUnitLabel: u.label,
+                                              );
+                                      }),
+                            );
+                          },
+                        )
+                      else ...[
                         Text(
-                          '→ ${pickedLabel!}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          variantHeader,
+                          style: theme.textTheme.titleMedium,
                         ),
+                        const SizedBox(height: 8),
+                        _Tier1Chips(
+                          optionsFuture: _optionsFuture,
+                          picked: choice,
+                          saving: _saving,
+                          onTapType: _onTapType,
+                          onTapLoose: _onTapLoose,
+                          onTapCustom: _onTapCustom,
+                        ),
+                        if (choice != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            '→ ${pickedLabel!}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ],
                       if (_priceShown && choice != null) ...[
                         const SizedBox(height: 12),
