@@ -1210,7 +1210,7 @@
   "storageSyncResetFailedToast": "Reset failed",
   "storageSyncSettingsHeader": "Settings",
   "storageSyncWifiOnlyLabel": "Sync only on Wi-Fi",
-  "storageSyncDrawerEntry": "Storage & sync",
+  "storageSyncDrawerEntry": "Local Storage & Sync",
   "drawerManageCategories": "Categories",
   "manageCategoriesTitle": "Categories",
   "manageCategoriesProductsTab": "Products",

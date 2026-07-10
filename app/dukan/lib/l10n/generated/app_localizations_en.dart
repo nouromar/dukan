@@ -2697,7 +2697,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get storageSyncWifiOnlyLabel => 'Sync only on Wi-Fi';
 
   @override
-  String get storageSyncDrawerEntry => 'Storage & sync';
+  String get storageSyncDrawerEntry => 'Local Storage & Sync';
 
   @override
   String get drawerManageCategories => 'Categories';
