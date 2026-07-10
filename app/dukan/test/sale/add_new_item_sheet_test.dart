@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -540,6 +542,74 @@ void main() {
     expect(api.postInventoryAdjustmentCalls, isEmpty);
     expect(api.setShopItemUnitDefaultFlagsCalls, isEmpty);
   });
+
+  testWidgets(
+    'product: a hung create times out → queued, sheet still closes (no wedge)',
+    (tester) async {
+      // The first network call hangs (cold radio). The 8s timeout must recover
+      // into the queue path instead of leaving SAVE stuck spinning.
+      api.onCreateShopItem =
+          (_, _, _, _, _, _, _, _, _) => Completer<CreateShopItemResult>().future;
+
+      final drained = <PendingPost>[];
+      final queue = OfflineQueueController(
+        dao: PendingPostDao(AppDatabase.instance()),
+        executor: (p) async => drained.add(p),
+        backoff: (_) => Duration.zero,
+        clock: () => DateTime.utc(2026, 7, 2),
+      );
+      addTearDown(queue.dispose);
+
+      var closed = false;
+      await tester.pumpWidget(
+        wrapWithApp(
+          Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: FilledButton(
+                  onPressed: () async {
+                    await AddNewItemSheet.show(
+                      context,
+                      shop,
+                      initialName: 'Rice',
+                      variant: AddNewItemVariant.product,
+                    );
+                    closed = true;
+                  },
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+          shopApi: api,
+          offlineQueueController: queue,
+          configResolver:
+              FakeConfigResolver(values: const {'use_local_db': true}),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownButtonFormField<UnitOption>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kg').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).at(1), '10'); // price
+      await tester.pump();
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, en.addNewItemSaveButton),
+      );
+      await tester.pump(); // kick off the save
+      await tester.pump(const Duration(seconds: 9)); // fire the 8s timeout
+      await tester.pumpAndSettle();
+
+      expect(closed, isTrue, reason: 'the sheet must close, not wedge');
+      expect(
+        drained.where((p) => p.rpc == 'create_shop_item'),
+        isNotEmpty,
+      );
+    },
+  );
 
   testWidgets('product "Save & add another" keeps the sheet open, cleared',
       (tester) async {

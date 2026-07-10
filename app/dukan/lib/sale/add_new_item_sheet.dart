@@ -448,6 +448,9 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
   }
 
   Future<void> _onSave({bool addAnother = false}) async {
+    // Guard re-entrancy: a fast double-tap (before the _saving rebuild lands)
+    // would otherwise mint a SECOND item and fire two creates.
+    if (_saving) return;
     final l = tr(context);
     final name = _nameController.text.trim();
     if (name.isEmpty) {
@@ -485,11 +488,13 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     final openingBaseQty = hasOpening ? openingQty!.toDouble() * conv : 0.0;
     final openingUnitCost = hasOpening ? openingCost!.toDouble() / conv : null;
 
-    setState(() => _saving = true);
+    // Read providers BEFORE flipping _saving so a missing provider (or any
+    // synchronous throw) can never leave the button stuck spinning.
     final api = context.read<ShopApi>();
     final queue = context.read<OfflineQueueController>();
     final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
     final languageCode = context.read<LocaleController>().locale.languageCode;
+    setState(() => _saving = true);
     final defaultSide =
         widget.variant == AddNewItemVariant.receive ? 'receive' : 'sale';
 
@@ -597,6 +602,12 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     }
 
     try {
+      // Bound the first network call: after an idle app the mobile radio can
+      // be asleep and the request hangs, which used to wedge _saving=true (the
+      // button stuck spinning, taps no-op, only an exit + retry recovered).
+      // A timeout converts that into the transient path below → mirror + queue
+      // + close, so SAVE always resolves. Idempotent on client_op_id, so if the
+      // slow call *also* lands server-side there's no duplicate.
       await api.createShopItem(
         shopId: widget.shop.id,
         name: name,
@@ -611,7 +622,7 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
         baseUnitId: baseUnitId,
         soldUnitId: soldUnitId,
         clientOpId: itemOpId,
-      );
+      ).timeout(const Duration(seconds: 8));
       if (needsReceiveDefault) {
         await api.setShopItemUnitDefaultFlags(
           shopId: widget.shop.id,
