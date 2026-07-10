@@ -2714,7 +2714,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get storageSyncWifiOnlyLabel => 'Kaliya marka Wi-Fi jiro';
 
   @override
-  String get storageSyncDrawerEntry => 'Kayd & is-waafajin';
+  String get storageSyncDrawerEntry => 'Kaydka Gudaha & Is-waafajin';
 
   @override
   String get drawerManageCategories => 'Qaybaha';
