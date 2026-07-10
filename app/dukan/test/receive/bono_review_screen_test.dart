@@ -160,11 +160,11 @@ void main() {
       await tester.tap(save);
       await tester.pumpAndSettle();
 
-      // Item created with the AI packaging, and the line is now Ready.
+      // Item created base-only with the AI's pack (selling) unit pre-selected,
+      // and the line is now Ready.
       final call = api.createShopItemCalls.single;
-      expect(call.baseUnitCode, 'piece');
-      expect(call.soldUnitCode, 'packet');
-      expect(call.soldConversion, 24);
+      expect(call.baseUnitCode, 'packet'); // pack unit preferred, base-only
+      expect(call.soldUnitCode, isNull);
       expect(find.text(en.bonoReviewStatusReady), findsOneWidget);
       expect(find.text(en.bonoReviewAccept(1)), findsOneWidget);
     },

@@ -57,8 +57,16 @@ void main() {
     return () => didCapture ? captured : null;
   }
 
+  // Opens the "How did the supplier deliver?" dropdown and picks [label].
+  Future<void> pickSoldUnit(WidgetTester tester, String label) async {
+    await tester.tap(find.byType(DropdownButtonFormField<UnitOption>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(label).last);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets(
-    'receive variant: trigger prompt is "How did the supplier deliver?"'
+    'receive variant: dropdown prompt is "How did the supplier deliver?"'
     ' and the price field is never shown',
     (tester) async {
       await pumpAndOpen(tester, initialName: 'Caano');
@@ -66,10 +74,7 @@ void main() {
       expect(find.text(en.addNewItemHowDeliveredHeader), findsOneWidget);
       expect(find.text(en.addNewItemHowSoldHeader), findsNothing);
 
-      // Single base unit (kg) → tapping the inline "Loose" chip auto-
-      // picks "By Kg" without opening a sub-sheet.
-      await tester.tap(find.text(en.addNewItemLooseType));
-      await tester.pumpAndSettle();
+      await pickSoldUnit(tester, 'Kg');
 
       // Receive variant: price field stays hidden even after a pick.
       expect(
@@ -121,9 +126,7 @@ void main() {
       };
 
       final readResult = await pumpAndOpen(tester, initialName: 'Caano');
-      // Single base unit (kg) → tap inline Loose chip auto-picks By Kg.
-      await tester.tap(find.text(en.addNewItemLooseType));
-      await tester.pumpAndSettle();
+      await pickSoldUnit(tester, 'Kg');
 
       await tester.tap(
         find.widgetWithText(FilledButton, en.addNewItemAddToReceiveButton),

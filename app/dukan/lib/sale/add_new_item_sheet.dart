@@ -1,27 +1,21 @@
-// Shop-local "+ Add new item" bottom sheet. Opens from the Sale and
-// Receive search affordances when no existing row matches the cashier's
-// query. Creates a new shop_item — possibly with TWO packagings in one
-// atomic call (a base packaging + a sold packaging like "25-Kg bag") —
-// and returns the IDs the caller needs to drop the new item straight
-// into the cart / line composer.
+// Shop-local "+ Add new item" bottom sheet. Opens from Sale/Receive search
+// (no matching row) and from the Products "+" / setup onboarding. Creates a
+// new shop_item (base-only) and returns the IDs the caller drops straight into
+// the cart / line composer.
 //
-// Picker-first design (per docs/add-item-flows.md §2 & §4.1):
-//   * The cashier picks one combined "How is it sold?" choice — either
-//     a base-only row ("By kg") or a packaged row ("25-Kg bag" /
-//     "12-Bottle carton"). Suggestions come from
-//     `suggest_new_item_options`.
-//   * A "+ Custom packaging" entry expands an inline form (base unit
-//     dropdown + sold unit dropdown + conversion) for the long-tail
-//     case where the picker has no match.
-//   * Sale price field is only shown on the sale variant AND only after
-//     a packaging has been picked; the label is packaging-aware.
+// Simplified, dropdown-first (per shopkeeper feedback):
+//   * "How is it sold?" / "How did the supplier deliver?" is a plain dropdown
+//     of every unit — the cashier picks the unit the item is sold and counted
+//     in. No chips, no per-packaging conversion here. Splitting an item into a
+//     pack of smaller units is done afterward on ShopItemDetailScreen.
+//   * The sale price field shows on sale + product (not receive — cost lands
+//     via post_receive); required once a unit is picked.
 //
-// Variant flips two things:
-//   * Title verb ("How is it sold?" vs "How did the supplier deliver?")
-//     and button label (ADD TO SALE vs ADD TO RECEIVE).
-//   * Whether the sale price field appears and is required at all. Sale
-//     requires it; Receive omits it entirely — cost lands later via
-//     `post_receive`.
+// Variant differences:
+//   * sale/receive — quick-add; title verb + button (ADD TO SALE / RECEIVE),
+//     and whether the price field appears.
+//   * product — the deliberate "Add product" flow: price + an optional
+//     opening-stock section (entered in the picked unit) + "Save & add another".
 //
 // Receive re-exports this widget from `lib/receive/add_new_item_sheet.dart`
 // so both call sites import from the path that matches their flow.
@@ -38,13 +32,11 @@ import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/api/types.dart';
-import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/locale_controller.dart';
 import 'package:dukan/shared/packaging_label.dart';
-import 'package:dukan/shared/unit_compatibility.dart';
 
 /// What the caller gets back on a successful save. Mirrors the fields the
 /// Sale cart / Receive line composer pre-fill from after a "+ Add new
@@ -110,10 +102,10 @@ class AddNewItemSheet {
   }
 }
 
-/// One picker choice. Either a base-only ("By kg", conversion implicit
-/// = 1) or a packaged option ("25-Kg bag"). The custom form is rendered
-/// as a separate path — not a `_PickerChoice` instance — so its state
-/// (base/sold/conversion controllers) stays out of the picker model.
+/// The picked "How is it sold?" unit — the unit an item is sold and counted
+/// in (always base-only now; packs of smaller units are added later on the
+/// detail screen). The sold/conversion fields are retained (always null) so the
+/// save path stays uniform.
 class _PickerChoice {
   const _PickerChoice.baseOnly({
     required this.baseUnitCode,
@@ -122,15 +114,6 @@ class _PickerChoice {
        soldUnitLabel = null,
        conversion = null,
        source = 'base';
-
-  const _PickerChoice.packaged({
-    required this.baseUnitCode,
-    required this.baseUnitLabel,
-    required String this.soldUnitCode,
-    required String this.soldUnitLabel,
-    required num this.conversion,
-    required this.source,
-  });
 
   final String baseUnitCode;
   final String baseUnitLabel;
@@ -175,13 +158,12 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
   late final TextEditingController _openingQtyController;
   late final TextEditingController _openingCostController;
   final FocusNode _nameFocus = FocusNode();
-  Future<NewItemOptions>? _optionsFuture;
   Future<List<CategoryOption>>? _categoriesFuture;
-  // Product variant: "How is it sold?" is a plain all-units dropdown — pick the
-  // unit it's sold/counted in (base-only). No chips, no pack conversion here;
-  // splitting into a pack of smaller units is done later on the detail screen.
+  // "How is it sold?" is a plain all-units dropdown (every variant) — pick the
+  // unit it's sold/counted in (base-only). Packs of smaller units are set up
+  // later on the product detail screen.
   Future<List<UnitOption>>? _unitsFuture;
-  UnitOption? _productUnit;
+  UnitOption? _soldUnit;
   _PickerChoice? _picked;
   String? _categoryId;
   bool _saving = false;
@@ -212,14 +194,8 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     if (_locale != current) {
       _locale = current;
       final api = context.read<ShopApi>();
-      if (_isProduct) {
-        // The all-units dropdown source (session-cached in ShopApi).
-        _unitsFuture = api.listUnits();
-      } else {
-        // Sale/Receive quick-add: category-suggested packaging chips.
-        _optionsFuture =
-            api.fetchNewItemOptions(categoryId: _categoryId, locale: current);
-      }
+      // The all-units dropdown source (session-cached in ShopApi).
+      _unitsFuture = api.listUnits();
       // #393: local-mirror-aware so the category picker works offline.
       _categoriesFuture = loadCategoryOptions(
         context,
@@ -242,8 +218,13 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
   // base code, a code can't be resolved, or the cashier already picked during
   // the load.
   Future<void> _prefillPackaging() async {
-    final baseCode = widget.initialBaseUnitCode;
-    if (baseCode == null) return;
+    // Bono flow: pre-select the unit dropdown from the caller's suggested codes
+    // (prefer the pack/selling unit, else the base) as a base-only pick, so the
+    // sheet opens ready to save. No-op if there's no code, it can't be resolved,
+    // or the cashier already picked during the load.
+    final preferred =
+        widget.initialPackUnitCode ?? widget.initialBaseUnitCode;
+    if (preferred == null) return;
     final List<UnitOption> units;
     try {
       units = await context.read<ShopApi>().listUnits();
@@ -251,44 +232,22 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
       return; // offline / lookup failed → cashier picks manually
     }
     if (!mounted || _picked != null) return;
-
-    UnitOption? byCode(String? code) {
-      if (code == null) return null;
-      for (final u in units) {
-        if (u.code == code) return u;
+    UnitOption? unit;
+    for (final u in units) {
+      if (u.code == preferred) {
+        unit = u;
+        break;
       }
-      return null;
     }
-
-    final base = byCode(baseCode);
-    if (base == null) return;
-
-    final pack = byCode(widget.initialPackUnitCode);
-    final size = widget.initialPackSize;
-    final packOk = pack != null &&
-        pack.code != base.code &&
-        size != null &&
-        size > 0 &&
-        size != 1 &&
-        filterPackagingsForBase<UnitOption>(base.code, units, (u) => u.code)
-            .any((u) => u.code == pack.code);
-
-    final choice = packOk
-        ? _PickerChoice.packaged(
-            baseUnitCode: base.code,
-            baseUnitLabel: base.label,
-            soldUnitCode: pack.code,
-            soldUnitLabel: pack.label,
-            conversion: size,
-            source: 'custom',
-          )
-        : _PickerChoice.baseOnly(
-            baseUnitCode: base.code,
-            baseUnitLabel: base.label,
-          );
-
-    if (!mounted || _picked != null) return;
-    setState(() => _picked = choice);
+    if (unit == null) return;
+    final resolved = unit;
+    setState(() {
+      _soldUnit = resolved;
+      _picked = _PickerChoice.baseOnly(
+        baseUnitCode: resolved.code,
+        baseUnitLabel: resolved.label,
+      );
+    });
   }
 
   @override
@@ -314,7 +273,7 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     _openingCostController.clear();
     setState(() {
       _picked = null;
-      _productUnit = null;
+      _soldUnit = null;
     });
     _nameFocus.requestFocus();
   }
@@ -374,77 +333,6 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
       if (_hasOpeningQty && ((_openingCost ?? 0) <= 0)) return false;
     }
     return true;
-  }
-
-  /// Tier-1 tap on a packaged type ("Bag" / "Box" / …). Auto-picks
-  /// when only one size exists for that type; otherwise opens a small
-  /// sub-sheet listing just the sizes for that type.
-  Future<void> _onTapType(
-    String typeCode,
-    List<PackagedUnitSuggestion> rowsForType,
-  ) async {
-    if (rowsForType.length == 1) {
-      final p = rowsForType.first;
-      setState(() {
-        _picked = _PickerChoice.packaged(
-          baseUnitCode: p.baseUnitCode,
-          baseUnitLabel: p.baseUnitLabel,
-          soldUnitCode: p.unitCode,
-          soldUnitLabel: p.unitLabel,
-          conversion: p.conversionToBase,
-          source: p.source,
-        );
-      });
-      return;
-    }
-    final picked = await _PackagingPickerSheet.show(
-      context,
-      variant: widget.variant,
-      mode: _PickerMode.sizesForType(typeCode),
-      rows: rowsForType,
-      baseUnits: const [],
-    );
-    if (!mounted || picked == null) return;
-    setState(() => _picked = picked);
-  }
-
-  /// Tier-1 tap on the "Loose" chip — opens a sub-sheet listing the
-  /// base-unit chips ("By Packet", "By Kg", …). Auto-picks when there's
-  /// only one base unit.
-  Future<void> _onTapLoose(List<BaseUnitOption> baseUnits) async {
-    if (baseUnits.length == 1) {
-      final b = baseUnits.first;
-      setState(() {
-        _picked = _PickerChoice.baseOnly(
-          baseUnitCode: b.unitCode,
-          baseUnitLabel: b.unitLabel,
-        );
-      });
-      return;
-    }
-    final picked = await _PackagingPickerSheet.show(
-      context,
-      variant: widget.variant,
-      mode: const _PickerMode.loose(),
-      rows: const [],
-      baseUnits: baseUnits,
-    );
-    if (!mounted || picked == null) return;
-    setState(() => _picked = picked);
-  }
-
-  /// Tier-1 tap on the "+ Custom packaging" chip — opens the custom
-  /// form sub-sheet.
-  Future<void> _onTapCustom() async {
-    final picked = await _PackagingPickerSheet.show(
-      context,
-      variant: widget.variant,
-      mode: const _PickerMode.custom(),
-      rows: const [],
-      baseUnits: const [],
-    );
-    if (!mounted || picked == null) return;
-    setState(() => _picked = picked);
   }
 
   Future<void> _onSave({bool addAnother = false}) async {
@@ -837,66 +725,42 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      if (_isProduct)
-                        // "How is it sold?" — a plain dropdown of all units.
-                        FutureBuilder<List<UnitOption>>(
-                          future: _unitsFuture,
-                          builder: (context, snapshot) {
-                            final units =
-                                snapshot.data ?? const <UnitOption>[];
-                            return DropdownButtonFormField<UnitOption>(
-                              initialValue: _productUnit,
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: variantHeader,
-                                isDense: true,
-                              ),
-                              items: [
-                                for (final u in units)
-                                  DropdownMenuItem(
-                                    value: u,
-                                    child: Text(u.label),
-                                  ),
-                              ],
-                              onChanged: _saving
-                                  ? null
-                                  : (u) => setState(() {
-                                        _productUnit = u;
-                                        _picked = u == null
-                                            ? null
-                                            : _PickerChoice.baseOnly(
-                                                baseUnitCode: u.code,
-                                                baseUnitLabel: u.label,
-                                              );
-                                      }),
-                            );
-                          },
-                        )
-                      else ...[
-                        Text(
-                          variantHeader,
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        _Tier1Chips(
-                          optionsFuture: _optionsFuture,
-                          picked: choice,
-                          saving: _saving,
-                          onTapType: _onTapType,
-                          onTapLoose: _onTapLoose,
-                          onTapCustom: _onTapCustom,
-                        ),
-                        if (choice != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            '→ ${pickedLabel!}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w600,
+                      // "How is it sold?" / "How did the supplier deliver?" —
+                      // a plain dropdown of every unit. Pick the unit it's sold
+                      // and counted in (base-only). Packs of smaller units are
+                      // set up later on the product detail screen.
+                      FutureBuilder<List<UnitOption>>(
+                        future: _unitsFuture,
+                        builder: (context, snapshot) {
+                          final units = snapshot.data ?? const <UnitOption>[];
+                          return DropdownButtonFormField<UnitOption>(
+                            initialValue: _soldUnit,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              labelText: variantHeader,
+                              isDense: true,
                             ),
-                          ),
-                        ],
-                      ],
+                            items: [
+                              for (final u in units)
+                                DropdownMenuItem(
+                                  value: u,
+                                  child: Text(u.label),
+                                ),
+                            ],
+                            onChanged: _saving
+                                ? null
+                                : (u) => setState(() {
+                                      _soldUnit = u;
+                                      _picked = u == null
+                                          ? null
+                                          : _PickerChoice.baseOnly(
+                                              baseUnitCode: u.code,
+                                              baseUnitLabel: u.label,
+                                            );
+                                    }),
+                          );
+                        },
+                      ),
                       if (_priceShown && choice != null) ...[
                         const SizedBox(height: 12),
                         TextField(
@@ -1037,552 +901,4 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     );
   }
 
-}
-
-/// Inline Tier-1 chip strip rendered directly in the main "Add new item"
-/// sheet — saves a tap vs the previous trigger-then-sub-sheet path.
-/// One chip per distinct packaging type code seen in the catalog, plus
-/// a synthetic "Loose" chip (drills into the base-unit list) and a
-/// "+ Custom packaging" escape hatch.
-class _Tier1Chips extends StatelessWidget {
-  const _Tier1Chips({
-    required this.optionsFuture,
-    required this.picked,
-    required this.saving,
-    required this.onTapType,
-    required this.onTapLoose,
-    required this.onTapCustom,
-  });
-
-  final Future<NewItemOptions>? optionsFuture;
-  final _PickerChoice? picked;
-  final bool saving;
-  final Future<void> Function(
-    String typeCode,
-    List<PackagedUnitSuggestion> rowsForType,
-  ) onTapType;
-  final Future<void> Function(List<BaseUnitOption> baseUnits) onTapLoose;
-  final Future<void> Function() onTapCustom;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = tr(context);
-    final theme = Theme.of(context);
-    return FutureBuilder<NewItemOptions>(
-      future: optionsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final options =
-            snapshot.data ?? const NewItemOptions(baseUnits: [], packagedUnits: []);
-        final byType = <String, List<PackagedUnitSuggestion>>{};
-        for (final p in options.packagedUnits) {
-          byType.putIfAbsent(p.unitCode, () => []).add(p);
-        }
-        final isPickedBaseOnly = picked != null && picked!.isBaseOnly;
-        final pickedTypeCode = picked != null && !picked!.isBaseOnly
-            ? picked!.soldUnitCode
-            : null;
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            if (options.baseUnits.isNotEmpty)
-              _ChoiceTile(
-                label: l.addNewItemLooseType,
-                selected: isPickedBaseOnly,
-                onTap: saving ? null : () => onTapLoose(options.baseUnits),
-              ),
-            for (final entry in byType.entries)
-              _ChoiceTile(
-                label: entry.value.first.unitLabel,
-                selected: pickedTypeCode == entry.key,
-                onTap: saving
-                    ? null
-                    : () => onTapType(entry.key, entry.value),
-              ),
-            _ChoiceTile(
-              label: l.addNewItemCustomPackagingEntry,
-              icon: Icons.tune,
-              selected: picked != null && picked!.source == 'custom',
-              onTap: saving ? null : onTapCustom,
-            ),
-            // Soft hint when both arrays come back empty (e.g., the
-            // catalog has no packaged items in this category yet). The
-            // Custom chip above still works.
-            if (options.baseUnits.isEmpty && options.packagedUnits.isEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  l.addNewItemLoadOptionsFailedHint,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-/// Tier-2 / custom mode for the sub-sheet. The main sheet's chip strip
-/// picks a Tier-1 type code; this mode flags how to populate the
-/// sub-sheet body.
-sealed class _PickerMode {
-  const _PickerMode();
-  const factory _PickerMode.sizesForType(String typeCode) = _SizesForType;
-  const factory _PickerMode.loose() = _LooseMode;
-  const factory _PickerMode.custom() = _CustomMode;
-}
-
-class _SizesForType extends _PickerMode {
-  const _SizesForType(this.typeCode);
-  final String typeCode;
-}
-
-class _LooseMode extends _PickerMode {
-  const _LooseMode();
-}
-
-class _CustomMode extends _PickerMode {
-  const _CustomMode();
-}
-
-/// Sub-sheet picker — Tier-1 lives inline on the main sheet now, so this
-/// sub-sheet only handles:
-///   * sizes for one specific type ("Box" → 12 Packet / 20 Packet / …),
-///   * loose mode ("Loose" → By Packet / By Kg / …), or
-///   * the custom-packaging form (unit dropdown + conversion field).
-/// Pops back a `_PickerChoice` on confirm (or null on dismiss).
-class _PackagingPickerSheet {
-  static Future<_PickerChoice?> show(
-    BuildContext context, {
-    required AddNewItemVariant variant,
-    required _PickerMode mode,
-    required List<PackagedUnitSuggestion> rows,
-    required List<BaseUnitOption> baseUnits,
-  }) {
-    return showModalBottomSheet<_PickerChoice>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _PackagingPickerBody(
-        variant: variant,
-        mode: mode,
-        rows: rows,
-        baseUnits: baseUnits,
-      ),
-    );
-  }
-}
-
-class _PackagingPickerBody extends StatefulWidget {
-  const _PackagingPickerBody({
-    required this.variant,
-    required this.mode,
-    required this.rows,
-    required this.baseUnits,
-  });
-
-  final AddNewItemVariant variant;
-  final _PickerMode mode;
-  final List<PackagedUnitSuggestion> rows;
-  final List<BaseUnitOption> baseUnits;
-
-  @override
-  State<_PackagingPickerBody> createState() => _PackagingPickerBodyState();
-}
-
-class _PackagingPickerBodyState extends State<_PackagingPickerBody> {
-  late bool _customMode;
-  Future<List<UnitOption>>? _unitsFuture;
-  UnitOption? _customBaseUnit;
-  UnitOption? _customSoldUnit;
-  late final TextEditingController _customConversionController;
-
-  /// Grocery-first ordering for the custom dropdowns. Server-ranked
-  /// suggestions don't need this.
-  static const _groceryOrder = <String>[
-    'kg',
-    'piece',
-    'packet',
-    'bottle',
-    'bag',
-    'carton',
-    'box',
-    'litre',
-    'ml',
-    'gram',
-    'sack',
-    'dozen',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _customConversionController = TextEditingController();
-    _customConversionController.addListener(_rebuild);
-    _customMode = widget.mode is _CustomMode;
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Lazy-load the unit list the moment the body needs it: opens
-    // straight into custom mode if the main sheet routed us there.
-    if (_customMode && _unitsFuture == null) {
-      _unitsFuture = context.read<ShopApi>().listUnits().then(_sortUnits);
-    }
-  }
-
-  @override
-  void dispose() {
-    _customConversionController.removeListener(_rebuild);
-    _customConversionController.dispose();
-    super.dispose();
-  }
-
-  void _rebuild() {
-    if (mounted) setState(() {});
-  }
-
-  num? get _parsedCustomConversion {
-    final raw = _customConversionController.text.trim();
-    if (raw.isEmpty) return null;
-    final value = num.tryParse(raw);
-    if (value == null || value <= 0) return null;
-    // Conversion = 1 means "same size as the base" — that IS the base
-    // packaging. Server rejects it; we filter so the confirm CTA stays
-    // disabled.
-    if (value == 1) return null;
-    return value;
-  }
-
-  // Sold-first model: the shopkeeper first picks the SELLING unit; the inner
-  // (smaller/base) unit is optional. No inner unit → sold IS the base (base-
-  // only). With an inner unit → the sold unit is a pack of `conversion` inner
-  // units. (`_customSoldUnit` = "Sold by", `_customBaseUnit` = inner unit.)
-  _PickerChoice? get _customCandidate {
-    final sold = _customSoldUnit;
-    if (sold == null) return null;
-    final inner = _customBaseUnit;
-    if (inner == null || inner.code == sold.code) {
-      // Sold in the counting unit directly.
-      return _PickerChoice.baseOnly(
-        baseUnitCode: sold.code,
-        baseUnitLabel: sold.label,
-      );
-    }
-    final conv = _parsedCustomConversion;
-    if (conv == null) return null;
-    return _PickerChoice.packaged(
-      baseUnitCode: inner.code,
-      baseUnitLabel: inner.label,
-      soldUnitCode: sold.code,
-      soldUnitLabel: sold.label,
-      conversion: conv,
-      source: 'custom',
-    );
-  }
-
-  /// Inner (smaller) units a `sold` unit can be a pack of — i.e. bases for
-  /// which `sold` is a valid packaging (a bag is made of kg, a box of pieces).
-  List<UnitOption> _innerUnitOptions(List<UnitOption> units, UnitOption sold) {
-    return units
-        .where((u) =>
-            u.code != sold.code &&
-            filterPackagingsForBase<UnitOption>(u.code, units, (x) => x.code)
-                .any((p) => p.code == sold.code))
-        .toList();
-  }
-
-  List<UnitOption> _sortUnits(List<UnitOption> units) {
-    final ordered = [...units]..sort((a, b) {
-        final ai = _groceryOrder.indexOf(a.code);
-        final bi = _groceryOrder.indexOf(b.code);
-        if (ai == -1 && bi == -1) return a.code.compareTo(b.code);
-        if (ai == -1) return 1;
-        if (bi == -1) return -1;
-        return ai.compareTo(bi);
-      });
-    return ordered;
-  }
-
-  void _confirmCustom() {
-    final candidate = _customCandidate;
-    if (candidate == null) return;
-    Navigator.of(context).pop(candidate);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = tr(context);
-    final theme = Theme.of(context);
-    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    final title = widget.variant == AddNewItemVariant.receive
-        ? l.addNewItemHowDeliveredHeader
-        : l.addNewItemHowSoldHeader;
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
-    return SafeArea(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + viewInsets),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: theme.textTheme.titleLarge,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: l.addNewItemCancelButton,
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: _customMode
-                      ? _customForm(theme, l)
-                      : _sizesOrBaseUnits(theme, l),
-                ),
-              ),
-              if (_customMode) ...[
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed:
-                      _customCandidate == null ? null : _confirmCustom,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(56),
-                  ),
-                  child: Text(l.addNewItemUseCustomButton),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Renders the body for the chip-only modes (loose or sizesForType).
-  /// Custom mode is handled by `_customForm` higher up; this builder is
-  /// only ever called when `_customMode` is false.
-  Widget _sizesOrBaseUnits(ThemeData theme, AppLocalizations l) {
-    final children = <Widget>[];
-    final mode = widget.mode;
-    if (mode is _LooseMode) {
-      for (final b in widget.baseUnits) {
-        children.add(_ChoiceTile(
-          label: l.addNewItemBaseOnlyTile(b.unitLabel),
-          selected: false,
-          onTap: () => Navigator.of(context).pop(
-            _PickerChoice.baseOnly(
-              baseUnitCode: b.unitCode,
-              baseUnitLabel: b.unitLabel,
-            ),
-          ),
-        ));
-      }
-    } else if (mode is _SizesForType) {
-      for (final p in widget.rows) {
-        children.add(_ChoiceTile(
-          label: packagingLabel(
-            p.conversionToBase,
-            p.baseUnitLabel,
-            p.unitLabel,
-          ),
-          selected: false,
-          onTap: () => Navigator.of(context).pop(
-            _PickerChoice.packaged(
-              baseUnitCode: p.baseUnitCode,
-              baseUnitLabel: p.baseUnitLabel,
-              soldUnitCode: p.unitCode,
-              soldUnitLabel: p.unitLabel,
-              conversion: p.conversionToBase,
-              source: p.source,
-            ),
-          ),
-        ));
-      }
-    }
-    return Wrap(spacing: 8, runSpacing: 8, children: children);
-  }
-
-  Widget _customForm(ThemeData theme, AppLocalizations l) {
-    return FutureBuilder<List<UnitOption>>(
-      future: _unitsFuture,
-      builder: (context, snapshot) {
-        final units = snapshot.data ?? const <UnitOption>[];
-        final sold = _customSoldUnit;
-        final innerOptions =
-            sold == null ? const <UnitOption>[] : _innerUnitOptions(units, sold);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 1) The unit the shopkeeper SELLS in — the natural first question.
-            DropdownButtonFormField<UnitOption>(
-              initialValue: sold,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: l.addNewItemCustomSoldByLabel,
-                isDense: true,
-              ),
-              items: [
-                for (final u in units)
-                  DropdownMenuItem(value: u, child: Text(u.label)),
-              ],
-              onChanged: (u) => setState(() {
-                _customSoldUnit = u;
-                _customBaseUnit = null;
-                _customConversionController.clear();
-              }),
-            ),
-            // 2) OPTIONAL: is one of those a pack of a smaller unit? Default
-            //    "no" keeps it sold-as-one-unit (base-only) — so the selling
-            //    unit is always reachable, no "base unit" jargon up front.
-            if (sold != null && innerOptions.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              DropdownButtonFormField<UnitOption?>(
-                initialValue: _customBaseUnit,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: l.addNewItemCustomInnerUnitLabel,
-                  isDense: true,
-                ),
-                items: [
-                  DropdownMenuItem<UnitOption?>(
-                    value: null,
-                    child: Text(l.addNewItemCustomInnerNone(sold.label)),
-                  ),
-                  for (final u in innerOptions)
-                    DropdownMenuItem<UnitOption?>(
-                      value: u,
-                      child: Text(u.label),
-                    ),
-                ],
-                onChanged: (u) => setState(() {
-                  _customBaseUnit = u;
-                  if (u == null) _customConversionController.clear();
-                }),
-              ),
-            ],
-            if (sold != null && _customBaseUnit != null) ...[
-              const SizedBox(height: 8),
-              TextField(
-                controller: _customConversionController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                ],
-                decoration: InputDecoration(
-                  labelText: l.addNewItemCustomConversionLabel(
-                    _customBaseUnit!.label,
-                    sold.label,
-                  ),
-                  isDense: true,
-                ),
-              ),
-              if (_parsedCustomConversion != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  l.packagingConversionPreview(
-                    sold.label,
-                    _formatConversionPreview(_parsedCustomConversion!),
-                    _customBaseUnit!.label,
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ],
-          ],
-        );
-      },
-    );
-  }
-}
-
-String _formatConversionPreview(num value) {
-  if (value == value.roundToDouble()) return value.toInt().toString();
-  return value.toString();
-}
-
-/// One row in the "How is it sold?" grouped picker. Visual treatment:
-/// outlined when unselected, filled when selected — gives a clear
-/// at-a-glance "this is what I picked" without making the whole list
-/// hard to read. Sized to its content so it can live inside a Wrap and
-/// pack many options per row.
-class _ChoiceTile extends StatelessWidget {
-  const _ChoiceTile({
-    required this.label,
-    this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData? icon;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final bg = selected
-        ? theme.colorScheme.primaryContainer
-        : theme.colorScheme.surface;
-    final fg = selected
-        ? theme.colorScheme.onPrimaryContainer
-        : theme.colorScheme.onSurface;
-    return Material(
-      color: bg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: selected
-              ? theme.colorScheme.primary
-              : theme.colorScheme.outlineVariant,
-        ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          // ≥ 44dp tall keeps the tap target close to the 56dp guideline
-          // even though the chip itself shrinks to its label.
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 18, color: fg),
-                const SizedBox(width: 8),
-              ],
-              Text(
-                label,
-                style: theme.textTheme.bodyMedium?.copyWith(color: fg),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

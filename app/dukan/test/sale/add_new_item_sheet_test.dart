@@ -94,60 +94,42 @@ void main() {
     return () => didCapture ? captured : null;
   }
 
+  // Opens the "How is it sold?" dropdown and picks [label].
+  Future<void> pickSoldUnit(WidgetTester tester, String label) async {
+    await tester.tap(find.byType(DropdownButtonFormField<UnitOption>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(label).last);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets(
-    'initial layout: name prefilled, trigger shows the prompt, ADD TO SALE'
-    ' disabled, price field hidden until pick',
+    'initial layout: name prefilled, unit dropdown shown, ADD TO SALE disabled,'
+    ' price hidden until a unit is picked',
     (tester) async {
       await pumpAndOpen(tester, initialName: 'Caano');
 
-      // Name prefilled.
       expect(find.text('Caano'), findsOneWidget);
-      // Trigger placeholder shows the variant prompt.
+      // The "How is it sold?" dropdown (label + the control).
       expect(find.text(en.addNewItemHowSoldHeader), findsOneWidget);
-      // Chips are NOT inline — they live in the sub-picker until tapped.
-      expect(find.text(en.addNewItemBaseOnlyTile('Kg')), findsNothing);
+      expect(find.byType(DropdownButtonFormField<UnitOption>), findsOneWidget);
+      // No price field yet.
       expect(
         find.textContaining(en.addNewItemPickedPriceLabel('')),
         findsNothing,
       );
 
-      // ADD TO SALE button disabled.
       final button = tester.widget<FilledButton>(
         find.widgetWithText(FilledButton, en.addNewItemAddToSaleButton),
       );
       expect(button.onPressed, isNull);
-
-      // Tier 1 chips render inline on the main sheet (no sub-sheet trip).
-      expect(find.text(en.addNewItemLooseType), findsOneWidget);
-      expect(find.text('Bag'), findsOneWidget);
-      expect(
-        find.text(en.addNewItemCustomPackagingEntry),
-        findsOneWidget,
-      );
-      // Tier 2 chips not yet visible — they live in the sub-sheet that
-      // opens when the type has multiple sizes.
-      expect(find.text(en.addNewItemBaseOnlyTile('Kg')), findsNothing);
-      expect(find.text('25 Kg Bag'), findsNothing);
-
-      // Tap "Loose" → sub-sheet opens with the base-unit chips.
-      await tester.tap(find.text(en.addNewItemLooseType));
-      await tester.pumpAndSettle();
-      expect(find.text(en.addNewItemBaseOnlyTile('Kg')), findsOneWidget);
-      expect(find.text(en.addNewItemBaseOnlyTile('Packet')), findsOneWidget);
     },
   );
 
   testWidgets(
-    'picking a base-only chip closes the sub-picker, surfaces the price'
-    ' field on the main sheet with a packaging-aware label',
+    'sale: picking a unit surfaces the price field; SAVE enables with a price',
     (tester) async {
       await pumpAndOpen(tester, initialName: 'Caano');
-
-      // Inline Loose chip → sub-sheet base-units → By Kg.
-      await tester.tap(find.text(en.addNewItemLooseType));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(en.addNewItemBaseOnlyTile('Kg')));
-      await tester.pumpAndSettle();
+      await pickSoldUnit(tester, 'Kg');
 
       expect(
         find.text(en.addNewItemPickedPriceLabel('Kg')),
@@ -160,7 +142,6 @@ void main() {
       );
       expect(disabled.onPressed, isNull);
 
-      // Type a price.
       await tester.enterText(find.byType(TextField).last, '2.5');
       await tester.pump();
 
@@ -216,10 +197,7 @@ void main() {
 
       final readResult = await pumpAndOpen(tester, initialName: 'Caano');
 
-      await tester.tap(find.text(en.addNewItemLooseType));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(en.addNewItemBaseOnlyTile('Kg')));
-      await tester.pumpAndSettle();
+      await pickSoldUnit(tester, 'Kg');
       await tester.enterText(find.byType(TextField).last, '2.5');
       await tester.pump();
 
@@ -248,67 +226,6 @@ void main() {
       expect(result.packagingLabel, 'Kg');
       expect(result.baseUnitLabel, 'Kg');
       expect(result.salePrice, 2.5);
-    },
-  );
-
-  testWidgets(
-    'sale packaged confirm: createShopItem called with sold packaging,'
-    ' packaging label synthesized "25 Kg Bag"',
-    (tester) async {
-      ({
-        String? soldUnitCode,
-        num? soldConversion,
-        String defaultSide,
-      })?
-      createCall;
-      api.onCreateShopItem =
-          (_, _, _, _, _, _, soldUnitCode, soldConversion, defaultSide) async {
-            createCall = (
-              soldUnitCode: soldUnitCode,
-              soldConversion: soldConversion,
-              defaultSide: defaultSide,
-            );
-            return (
-              shopItemId: 'new-shop-item-id',
-              defaultShopItemUnitId: 'new-siu-id',
-            );
-          };
-
-      final readResult = await pumpAndOpen(tester, initialName: 'Bariis');
-
-      // Tap the inline "Bag" type chip. Since Bag has only one size in
-      // the fixture, the main sheet auto-picks 25 Kg Bag — no sub-sheet
-      // trip.
-      await tester.tap(find.text('Bag'));
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text(en.addNewItemPickedPriceLabel('25 Kg Bag')),
-        findsOneWidget,
-      );
-
-      await tester.enterText(find.byType(TextField).last, '120');
-      await tester.pump();
-
-      await tester.tap(
-        find.widgetWithText(FilledButton, en.addNewItemAddToSaleButton),
-      );
-      await tester.pumpAndSettle();
-
-      expect(createCall!.soldUnitCode, 'bag');
-      expect(createCall!.soldConversion, 25);
-      expect(createCall!.defaultSide, 'sale');
-
-      final result = readResult()!;
-      expect(result.packagingLabel, '25 Kg Bag');
-      expect(result.baseUnitCode, 'kg');
-      expect(result.baseUnitLabel, 'Kg');
-      // Distinct sold packaging (0095): the client minted a separate sold
-      // unit id, and it's the one dropped into the cart (the default).
-      final call = api.createShopItemCalls.last;
-      expect(call.soldUnitId, isNotNull);
-      expect(call.baseUnitId, isNotNull);
-      expect(result.shopItemUnitId, call.soldUnitId);
     },
   );
 
@@ -365,10 +282,7 @@ void main() {
       );
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(en.addNewItemLooseType));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(en.addNewItemBaseOnlyTile('Kg')));
-      await tester.pumpAndSettle();
+      await pickSoldUnit(tester, 'Kg');
       await tester.enterText(find.byType(TextField).last, '2.5');
       await tester.pump();
       await tester.tap(
@@ -393,8 +307,8 @@ void main() {
   // --- AI/caller packaging prefill (bono new-item "accept as-is") -----------
 
   testWidgets(
-    'initialPack* pre-selects the packaging → SAVE lit with no packaging tap;'
-    ' createShopItem carries the sold unit + conversion',
+    'initialPack* pre-selects the unit (base-only) → SAVE lit with no tap;'
+    ' createShopItem uses the pack unit as the base',
     (tester) async {
       final read = await pumpAndOpen(
         tester,
@@ -405,8 +319,8 @@ void main() {
         initialPackSize: 25,
       );
 
-      // Packaging is already chosen (async prefill resolved during settle):
-      // the receive SAVE is enabled without ever tapping a packaging chip.
+      // The dropdown is pre-selected to the pack (selling) unit as base-only:
+      // the receive SAVE is enabled without any tap.
       final button = tester.widget<FilledButton>(
         find.widgetWithText(FilledButton, en.addNewItemAddToReceiveButton),
       );
@@ -418,9 +332,8 @@ void main() {
       await tester.pumpAndSettle();
 
       final call = api.createShopItemCalls.single;
-      expect(call.baseUnitCode, 'kg');
-      expect(call.soldUnitCode, 'bag');
-      expect(call.soldConversion, 25);
+      expect(call.baseUnitCode, 'bag'); // pack unit preferred, base-only
+      expect(call.soldUnitCode, isNull);
       expect(read(), isNotNull);
     },
   );
@@ -472,14 +385,6 @@ void main() {
   );
 
   // --- Product variant: "How is it sold?" is a plain all-units dropdown ----
-
-  // Opens the product-variant "How is it sold?" dropdown and picks [label].
-  Future<void> pickSoldUnit(WidgetTester tester, String label) async {
-    await tester.tap(find.byType(DropdownButtonFormField<UnitOption>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(label).last);
-    await tester.pumpAndSettle();
-  }
 
   testWidgets(
     'product: pick a unit → base-only createShopItem + opening stock (conv 1)',
@@ -636,30 +541,4 @@ void main() {
     expect(find.byType(DropdownButtonFormField<UnitOption>), findsOneWidget);
   });
 
-  // Custom packaging still serves Sale/Receive quick-add; it now asks "Sold by"
-  // first so a plain unit is reachable as base-only (the old form excluded it).
-  testWidgets('custom packaging (sale): "Sold by" first, base-only reachable',
-      (tester) async {
-    await pumpAndOpen(tester, initialName: 'Hilwa 400g');
-    await tester.tap(find.text(en.addNewItemCustomPackagingEntry));
-    await tester.pumpAndSettle();
-
-    expect(find.text(en.addNewItemCustomSoldByLabel), findsOneWidget);
-
-    await tester.tap(find.byType(DropdownButtonFormField<UnitOption>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Piece').last);
-    await tester.pumpAndSettle();
-
-    final useBtn = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, en.addNewItemUseCustomButton),
-    );
-    expect(useBtn.onPressed, isNotNull);
-    await tester.tap(
-      find.widgetWithText(FilledButton, en.addNewItemUseCustomButton),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('→ Piece'), findsOneWidget);
-  });
 }
