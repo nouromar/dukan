@@ -192,8 +192,21 @@ class _MaterialAppShell extends StatelessWidget {
     colorScheme: ColorScheme.fromSeed(
       seedColor: const Color(0xFF005C46),
       brightness: Brightness.light,
-    ).copyWith(surface: const Color(0xFFF8FAF7)),
-    scaffoldBackgroundColor: const Color(0xFFF8FAF7),
+      // Crisp white surfaces (cards/sheets) so they lift off the sage ground.
+    ).copyWith(surface: const Color(0xFFFFFFFF)),
+    // Soft sage ground (was near-white #F8FAF7) — gives white cards depth so
+    // the app reads more "designed" without moving any layout. See the theme
+    // prototype. Pure token change: ground colour + the CardTheme below.
+    scaffoldBackgroundColor: const Color(0xFFECF1EA),
+    cardTheme: CardThemeData(
+      color: Colors.white,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xFFDDE5D9)),
+      ),
+    ),
     // Every declared fontSize goes through `kFontScale` so a single
     // constant tunes the whole app. See lib/shared/typography.dart.
     textTheme: const TextTheme(
