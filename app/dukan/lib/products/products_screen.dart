@@ -559,9 +559,13 @@ class _ShopItemTile extends StatelessWidget {
       stock: row.currentStock,
       baseLabel: row.baseUnitLabel,
       // Render in the default *receive* packaging when the shop has one
-      // (the size they restock in), else base unit.
+      // (the size they restock in), else base unit. Compact: the list tile
+      // has a narrow trailing slot, so show just the whole-packaging count
+      // ("1001 Carton") — the full "N Carton(24 packet) + 14 packet" form
+      // is reserved for the roomy detail-screen readout.
       packagingLabel: row.defaultReceivePackagingLabel,
       conversion: row.defaultReceiveConversion,
+      compact: true,
     );
     final subtitleBits = <Widget>[
       if (row.categoryName != null && row.categoryName!.trim().isNotEmpty)
@@ -609,13 +613,21 @@ class _ShopItemTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              stockText,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: stockLevelColor(context, level),
-                fontWeight: level == StockLevel.healthy
-                    ? FontWeight.w500
-                    : FontWeight.w800,
+            // Cap the stock text width + ellipsis so a large packaging
+            // count can never squeeze the product name to a sliver (the
+            // trailing slot is otherwise unbounded).
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 140),
+              child: Text(
+                stockText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: stockLevelColor(context, level),
+                  fontWeight: level == StockLevel.healthy
+                      ? FontWeight.w500
+                      : FontWeight.w800,
+                ),
               ),
             ),
             if (level != StockLevel.healthy)

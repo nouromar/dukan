@@ -107,7 +107,9 @@ void main() {
   testWidgets('stock renders in the default receive packaging when set', (
     tester,
   ) async {
-    // 155kg on hand, restocked in 25kg sacks → "6 Sack(25Kg) + 5kg".
+    // 155kg on hand, restocked in 25kg sacks. The list tile is compact —
+    // whole-packaging count only ("6 Sack"), not the full sized+remainder
+    // form that would overflow the narrow trailing slot.
     api.onListShopItems = (_, _, _, _) async => [
       _shopItem(
         displayName: 'Bariis Basmati',
@@ -121,9 +123,10 @@ void main() {
     await pumpProducts(tester);
     await tester.pumpAndSettle();
 
-    expect(find.text('6 Sack(25kg) + 5kg'), findsOneWidget);
-    // Not the raw base-unit rendering.
+    expect(find.text('6 Sack'), findsOneWidget);
+    // Not the raw base-unit rendering, nor the long compound form.
     expect(find.text('155kg'), findsNothing);
+    expect(find.text('6 Sack(25kg) + 5kg'), findsNothing);
   });
 
   // TODO(v2): rewrite for new activation semantics — T#145
