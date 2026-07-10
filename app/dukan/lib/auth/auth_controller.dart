@@ -76,8 +76,17 @@ class AuthController extends ChangeNotifier {
 
     _session = _client.auth.currentSession;
     _authSubscription = _client.auth.onAuthStateChange.listen((state) async {
-      _session = state.session;
-      if (_session == null) {
+      // A null session on the EVENT can be a transient resume-time blip:
+      // supabase_flutter emits while it refreshes the (expired) token after the
+      // app has been idle for minutes, and briefly reports no session. The
+      // PERSISTED session (currentSession) is the source of truth — a genuine
+      // sign-out clears it too (signOut() -> _client.auth.signOut()). Falling
+      // back to it means we DON'T flash the LoginScreen on every
+      // resume-after-idle while the user is still authenticated (which is why a
+      // full restart, reading the same persisted session, goes straight Home).
+      final session = state.session ?? _client.auth.currentSession;
+      _session = session;
+      if (session == null) {
         _shops = const [];
         _selectedShop = null;
         _shopLoadFailed = false;
