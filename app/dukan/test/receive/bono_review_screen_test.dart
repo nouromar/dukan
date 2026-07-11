@@ -5,6 +5,7 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/receive/bono_review_screen.dart';
+import 'package:dukan/receive/bono_suggestion_review_sheet.dart' show BonoApplyLine;
 import 'package:dukan/shared/packaging_label.dart';
 
 import '../shared/fakes.dart';
@@ -33,8 +34,7 @@ BonoSuggestion _bound({
       'suggested_category_name': categoryName,
     });
 
-// A matched item whose OCR pack is NEW to it (0114 new_packaging=true): the
-// item resolves (si/siu), but the AI proposes a carton of 12 the item lacks.
+// A matched item whose OCR pack is NEW to it (0114 new_packaging=true).
 BonoSuggestion _newPack({required int lineNo}) => BonoSuggestion.fromJson({
       'line_no': lineNo,
       'raw_text': 'PACK $lineNo',
@@ -83,182 +83,181 @@ void main() {
     en = lookupAppLocalizations(const Locale('en'));
   });
 
+  // Pump the screen directly — for pure-UI assertions that don't Save (Save
+  // pops the route).
   Widget host(List<BonoSuggestion> suggestions) => wrapWithApp(
         BonoReviewScreen(suggestions: suggestions, shop: shop),
         shopApi: api,
       );
 
-  testWidgets('high starts Ready, med/new start Needs review, Accept gated',
+  // Push the screen via openBonoReview and capture what Save returns.
+  Future<List<BonoApplyLine>? Function()> pushReview(
+    WidgetTester tester,
+    List<BonoSuggestion> suggestions,
+  ) async {
+    List<BonoApplyLine>? captured;
+    var done = false;
+    await tester.pumpWidget(
+      wrapWithApp(
+        Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: FilledButton(
+                onPressed: () async {
+                  captured = await openBonoReview(
+                    context,
+                    suggestions: suggestions,
+                    shop: shop,
+                  );
+                  done = true;
+                },
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+        shopApi: api,
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    return () => done ? captured : null;
+  }
+
+  testWidgets(
+    'matched shows no chip; new lines show amber chips; Save + lead counts',
+    (tester) async {
+      await tester.pumpWidget(host([
+        _bound(lineNo: 1, confidence: 'high'),
+        _newItem(lineNo: 2),
+        _newPack(lineNo: 3),
+      ]));
+      await tester.pumpAndSettle();
+
+      // Two glance cues, no per-card buttons / status pills.
+      expect(find.text(en.bonoReviewNewProduct), findsOneWidget); // new item
+      expect(find.text(en.bonoReviewNewPack), findsOneWidget); // new pack
+      // Lead strip: 3 lines, 2 of them new.
+      expect(find.text(en.bonoReviewLineCount(3)), findsOneWidget);
+      expect(find.text(en.bonoReviewLinesNew(2)), findsOneWidget);
+      // Save is always enabled; subtitle counts new PRODUCTS only (1).
+      final save = tester.widget<FilledButton>(
+        find.ancestor(
+          of: find.text(en.bonoReviewSave(3)),
+          matching: find.byType(FilledButton),
+        ),
+      );
+      expect(save.onPressed, isNotNull);
+      expect(find.text(en.bonoReviewSaveNew(1)), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Save materializes: new item → create_shop_item, new pack → create_shop_item_unit',
+    (tester) async {
+      final read = await pushReview(tester, [
+        _bound(lineNo: 1, confidence: 'high'),
+        _newItem(lineNo: 2),
+        _newPack(lineNo: 3),
+      ]);
+
+      await tester.tap(find.text(en.bonoReviewSave(3)));
+      await tester.pumpAndSettle();
+
+      // The new product is created with the AI's base + pack, default-receive.
+      final ci = api.createShopItemCalls.single;
+      expect(ci.baseUnitCode, 'piece');
+      expect(ci.soldUnitCode, 'packet');
+      expect(ci.soldConversion, 24);
+      expect(ci.defaultSide, 'receive');
+      // The new pack is added to the matched item.
+      final cu = api.createShopItemUnitCalls.single;
+      expect(cu.unitCode, 'carton');
+      expect(cu.conversionToBase, 12);
+      // All three lines come back for the receive to merge.
+      final out = read();
+      expect(out, isNotNull);
+      expect(out!.length, 3);
+    },
+  );
+
+  testWidgets('matched-only Save creates nothing and returns the lines',
       (tester) async {
-    await tester.pumpWidget(host([
+    final read = await pushReview(tester, [
       _bound(lineNo: 1, confidence: 'high'),
       _bound(lineNo: 2, confidence: 'med'),
-      _newItem(lineNo: 3),
-    ]));
+    ]);
+
+    await tester.tap(find.text(en.bonoReviewSave(2)));
     await tester.pumpAndSettle();
 
-    expect(find.text(en.bonoReviewStatusReady), findsOneWidget);
-    expect(find.text(en.bonoReviewStatusNeedsReview), findsOneWidget); // med
-    expect(find.text(en.bonoReviewStatusNewItem), findsOneWidget); // new item
-    // 2 of 3 need review → Accept disabled with the gate label.
-    expect(find.text(en.bonoReviewAcceptGate(2, 3)), findsOneWidget);
-    final button = tester.widget<FilledButton>(
-      find.ancestor(
-        of: find.text(en.bonoReviewAcceptGate(2, 3)),
-        matching: find.byType(FilledButton),
-      ),
-    );
-    expect(button.onPressed, isNull);
+    expect(api.createShopItemCalls, isEmpty);
+    expect(api.createShopItemUnitCalls, isEmpty);
+    final out = read();
+    expect(out!.map((l) => l.shopItemUnitId).toSet(), {'siu-1', 'siu-2'});
   });
 
-  testWidgets('Mark ready flips a med line green → Accept enabled',
-      (tester) async {
-    await tester.pumpWidget(host([_bound(lineNo: 1, confidence: 'med')]));
-    await tester.pumpAndSettle();
-
-    expect(find.text(en.bonoReviewAcceptGate(1, 1)), findsOneWidget);
-    await tester.tap(find.text(en.bonoReviewMarkReady));
-    await tester.pumpAndSettle();
-
-    expect(find.text(en.bonoReviewStatusReady), findsOneWidget);
-    final button = tester.widget<FilledButton>(
-      find.ancestor(
-        of: find.text(en.bonoReviewAccept(1)),
-        matching: find.byType(FilledButton),
-      ),
-    );
-    expect(button.onPressed, isNotNull);
-  });
-
-  testWidgets('Flag for review sends a green line back to amber',
+  testWidgets('tap a card opens the edit sheet; changing qty updates the line',
       (tester) async {
     await tester.pumpWidget(host([_bound(lineNo: 1, confidence: 'high')]));
     await tester.pumpAndSettle();
 
-    // Green + acceptable to start.
-    expect(find.text(en.bonoReviewAccept(1)), findsOneWidget);
-
-    // Open the Ready ▾ menu → Flag for review.
-    await tester.tap(find.text(en.bonoReviewStatusReady));
+    await tester.tap(find.text('Item 1'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(en.bonoReviewFlag));
+    expect(find.text(en.bonoReviewEditTitle), findsOneWidget);
+
+    // First TextField is quantity (Product/Packaging rows are InputDecorators).
+    await tester.enterText(find.byType(TextField).first, '9');
+    await tester.tap(find.text(en.bonoReviewEditSave));
     await tester.pumpAndSettle();
 
-    expect(find.text(en.bonoReviewStatusNeedsReview), findsOneWidget);
-    expect(find.text(en.bonoReviewAcceptGate(1, 1)), findsOneWidget);
+    // Sheet closed; the card reflects the new quantity.
+    expect(find.text(en.bonoReviewEditTitle), findsNothing);
+    expect(find.textContaining('× 9'), findsOneWidget);
   });
 
-  testWidgets('Remove drops a line from the review + the count',
+  testWidgets('Remove in the sheet drops the line and its Save count',
       (tester) async {
     await tester.pumpWidget(host([
       _bound(lineNo: 1, confidence: 'high'),
       _newItem(lineNo: 2),
     ]));
     await tester.pumpAndSettle();
+    expect(find.text(en.bonoReviewSave(2)), findsOneWidget);
 
-    // 1 amber (new item) → gate says 1 of 2. Remove it via the ▾ menu.
-    expect(find.text(en.bonoReviewAcceptGate(1, 2)), findsOneWidget);
-    await tester.tap(find.text(en.bonoReviewStatusNewItem));
+    await tester.tap(find.text('NEW 2')); // the new-item card (name = raw text)
     await tester.pumpAndSettle();
     await tester.tap(find.text(en.bonoReviewRemove));
     await tester.pumpAndSettle();
 
-    // Only the green line remains → Accept 1.
-    expect(find.text(en.bonoReviewAccept(1)), findsOneWidget);
+    // One line left, and the "New product" cue is gone.
+    expect(find.text(en.bonoReviewSave(1)), findsOneWidget);
+    expect(find.text(en.bonoReviewNewProduct), findsNothing);
   });
 
-  testWidgets(
-    'Create on a new line → one-tap create_shop_item materializes the AI pack',
-    (tester) async {
-      // _newItem seeds base 'piece', pack 'packet', size 24 — resolvable from
-      // the default fake listUnits().
-      await tester.pumpWidget(host([_newItem(lineNo: 1, categoryName: 'Snacks')]));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text(en.bonoReviewCreateItem('NEW 1')));
-      await tester.pumpAndSettle();
-
-      // No full sheet — the item is created in one call with base = small unit
-      // and the received pack as the default-receive packaging.
-      expect(
-          find.widgetWithText(FilledButton, en.addNewItemAddToReceiveButton),
-          findsNothing);
-      final call = api.createShopItemCalls.single;
-      expect(call.baseUnitCode, 'piece');
-      expect(call.soldUnitCode, 'packet');
-      expect(call.soldConversion, 24);
-      expect(call.defaultSide, 'receive');
-      // Line is now Ready → Accept enabled.
-      expect(find.text(en.bonoReviewStatusReady), findsOneWidget);
-      expect(find.text(en.bonoReviewAccept(1)), findsOneWidget);
-    },
-  );
-
-  testWidgets('Edit before creating still opens the full sheet',
+  testWidgets('new-pack line: pick an existing pack in the sheet, nothing added',
       (tester) async {
-    await tester.pumpWidget(host([_newItem(lineNo: 1)]));
+    final read = await pushReview(tester, [_newPack(lineNo: 1)]);
+
+    // Open the card; its packaging shows the AI's new pack.
+    await tester.tap(find.text('Item 1'));
     await tester.pumpAndSettle();
-
-    await tester.tap(find.text(en.bonoReviewStatusNewItem));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(en.bonoReviewEditNew));
-    await tester.pumpAndSettle();
-
-    // The full new-item sheet is up (its receive SAVE button is present).
-    expect(find.widgetWithText(FilledButton, en.addNewItemAddToReceiveButton),
-        findsOneWidget);
-  });
-
-  testWidgets('new-size line → Add packaging adds the AI pack + rebinds Ready',
-      (tester) async {
-    await tester.pumpWidget(host([_newPack(lineNo: 1)]));
-    await tester.pumpAndSettle();
-
-    // Even a high-confidence match with a genuinely new pack starts amber.
-    expect(find.text(en.bonoReviewStatusNewSize), findsOneWidget);
-    expect(find.text(en.bonoReviewAcceptGate(1, 1)), findsOneWidget);
-
-    final label = en.bonoReviewAddPackaging(packagingLabel(12, 'Kg', 'Carton'));
-    await tester.tap(find.text(label));
-    await tester.pumpAndSettle();
-
-    // The AI's pack is added to the matched item and the line rebinds to it.
-    final call = api.createShopItemUnitCalls.single;
-    expect(call.shopItemId, 'si-1');
-    expect(call.unitCode, 'carton');
-    expect(call.conversionToBase, 12);
-    expect(find.text(en.bonoReviewStatusReady), findsOneWidget);
-    expect(find.text(en.bonoReviewAccept(1)), findsOneWidget);
-  });
-
-  testWidgets('Use existing packaging binds an existing pack, adds nothing',
-      (tester) async {
-    await tester.pumpWidget(host([_newPack(lineNo: 1)]));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text(en.bonoReviewStatusNewSize));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(en.bonoReviewKeepPackaging));
+    final aiPack = packagingLabel(12, 'Kg', 'Carton');
+    await tester.tap(find.text(aiPack));
     await tester.pumpAndSettle(); // the item's packaging picker opens
-    // Pick one of the item's existing packs (fake default: base Kg + 25 Kg Bag).
+
+    // Pick an existing pack (fake default: base Kg + 25 Kg Bag).
     await tester.tap(find.text('25 Kg Bag'));
     await tester.pumpAndSettle();
-
-    // Line is Ready, bound to the existing pack — no new packaging created.
-    expect(find.text(en.bonoReviewStatusReady), findsOneWidget);
-    expect(api.createShopItemUnitCalls, isEmpty);
-  });
-
-  testWidgets('category chip marks AI proposals on new lines only',
-      (tester) async {
-    await tester.pumpWidget(host([
-      _bound(lineNo: 1, confidence: 'high', categoryName: 'Staples'),
-      _newItem(lineNo: 2, categoryName: 'Snacks'),
-    ]));
+    await tester.tap(find.text(en.bonoReviewEditSave));
     await tester.pumpAndSettle();
 
-    // Matched line: plain category. New line: category + "New" marker.
-    expect(find.text('Staples'), findsOneWidget);
-    expect(find.text('Snacks · ${en.bonoReviewNewItem}'), findsOneWidget);
+    await tester.tap(find.text(en.bonoReviewSave(1)));
+    await tester.pumpAndSettle();
+
+    // Bound to the existing pack — no new packaging created.
+    expect(api.createShopItemUnitCalls, isEmpty);
+    final out = read();
+    expect(out!.single.shopItemUnitId, 'unit-bag-25');
   });
 }

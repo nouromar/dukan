@@ -67,52 +67,29 @@
     }
   },
   "bonoReviewTitle": "Review bono",
-  "bonoReviewReady": "{count} ready",
-  "@bonoReviewReady": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
+  "bonoReviewSave": "{count, plural, =1{Save 1 line} other{Save {count} lines}}",
+  "@bonoReviewSave": {
+    "placeholders": { "count": { "type": "int" } }
   },
-  "bonoReviewNeedsReview": "{count} need review",
-  "@bonoReviewNeedsReview": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
+  "bonoReviewSaveNew": "{count, plural, =1{adds 1 new product} other{adds {count} new products}}",
+  "@bonoReviewSaveNew": {
+    "placeholders": { "count": { "type": "int" } }
   },
-  "bonoReviewStatusReady": "Ready",
-  "bonoReviewStatusNeedsReview": "Needs review",
-  "bonoReviewNewItem": "New",
-  "bonoReviewMarkReady": "Mark ready",
-  "bonoReviewCreateItem": "Create “{name}”",
-  "@bonoReviewCreateItem": {
-    "placeholders": { "name": { "type": "String" } }
+  "bonoReviewLineCount": "{count, plural, =1{1 line} other{{count} lines}}",
+  "@bonoReviewLineCount": {
+    "placeholders": { "count": { "type": "int" } }
   },
-  "bonoReviewAddPackaging": "Add packaging — {label}",
-  "@bonoReviewAddPackaging": {
-    "placeholders": { "label": { "type": "String" } }
+  "bonoReviewLinesNew": "{count} new",
+  "@bonoReviewLinesNew": {
+    "placeholders": { "count": { "type": "int" } }
   },
-  "bonoReviewStatusNewItem": "New item",
-  "bonoReviewStatusNewSize": "New packaging",
-  "bonoReviewEditNew": "Edit before creating",
-  "bonoReviewKeepPackaging": "Use existing packaging",
+  "bonoReviewNewProduct": "New product",
+  "bonoReviewNewPack": "New pack",
+  "bonoReviewEditName": "Name",
+  "bonoReviewChangeProduct": "Change product",
   "bonoReviewPickExisting": "Pick existing product",
-  "bonoReviewChangeItem": "Change item",
-  "bonoReviewViewPhoto": "View bono photo",
-  "bonoReviewFlag": "Flag for review",
+  "bonoReviewPhoto": "Photo",
   "bonoReviewRemove": "Remove line",
-  "bonoReviewAccept": "{count, plural, =1{Accept 1 line} other{Accept {count} lines}}",
-  "@bonoReviewAccept": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
-  "bonoReviewAcceptGate": "{count} of {total} need review",
-  "@bonoReviewAcceptGate": {
-    "placeholders": {
-      "count": { "type": "int" },
-      "total": { "type": "int" }
-    }
-  },
   "bonoReviewEditTitle": "Edit line",
   "bonoReviewEditItem": "Item",
   "bonoReviewEditCategory": "Category",
@@ -120,9 +97,6 @@
   "bonoReviewEditTotal": "Total",
   "bonoReviewEditSave": "Save",
   "bonoReviewUncategorized": "Uncategorized",
-  "bonoReviewPriceRequired": "Add a price first",
-  "bonoReviewPickPackaging": "Pick packaging",
-  "bonoReviewSavingItems": "Saving new items…",
   "bonoChipLabel": "Bono",
   "bonoHintTitle": "Take a photo of the bono",
   "bonoHintSubtitle": "We'll read the items for you",

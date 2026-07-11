@@ -1,18 +1,19 @@
-// Full-screen bono review — the AI-prefilled, accept-or-edit surface that
-// replaces the old read-only BonoSuggestionReviewSheet.
+// Full-screen bono review — the AI-prefilled "glance and fix" surface.
 //
-// Each OCR'd line is a card in one of two states:
-//   * GREEN / Ready       — a high-confidence match, cashier-confirmed. Its
-//                           category + packaging are the item's REAL data.
-//   * AMBER / Needs review — a low/verify match or a NEW item. The AI proposes
-//                           the category + packaging (from the suggest RPC).
+// The OCR already matched, priced and packaged every line, so the shopkeeper's
+// job is a binary per line: it LOOKS RIGHT → leave it, or it's WRONG → tap the
+// card to fix it in one sheet. There are no per-line buttons, no status menu,
+// and no gated Accept — just two glance cues:
+//   * green ✓        — matched to a product you already have.
+//   * amber "New …"  — a NEW product (unmatched) or a NEW pack (matched item,
+//                      packaging it doesn't have yet). Auto-included, flagged.
 //
-// "Ready" means cashier-confirmed, not "matched" — so Accept can require every
-// line green (or removed) and still always be reachable: a new-item line turns
-// green by Pick existing (bind to a real item) or Mark ready (create it via the
-// new-item sheet, prefilled with the AI category). Accept commits the ready
-// lines to the receive (via BonoApplyLine) and closes. See
-// docs/bono-ocr-prepopulate.md and .claude/plans/we-want-create-app-happy-toast.md.
+// Nothing is written while reviewing. On Save, each line is materialized in the
+// right way — matched → received as-is; new pack → the size is added; new
+// product → the item is created with the AI's base + pack — then all lines are
+// returned as BonoApplyLine for the receive to merge + learn. Errors are
+// warnings (fix later via Void), never blockers. See docs/bono-ocr-prepopulate.md
+// and .claude/plans/we-want-create-app-happy-toast.md.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +21,6 @@ import 'package:provider/provider.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/products/item_creator.dart';
-import 'package:dukan/receive/add_new_item_sheet.dart';
 import 'package:dukan/receive/bono_bind_item_sheet.dart';
 import 'package:dukan/receive/bono_suggestion_review_sheet.dart' show BonoApplyLine;
 import 'package:dukan/receive/unit_picker_sheet.dart';
@@ -28,9 +28,16 @@ import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/packaging_label.dart';
 import 'package:dukan/shared/quantity_chips.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
-/// Push the full-screen review and resolve with the lines the cashier accepted
-/// (or null if they backed out). Same return contract as the old sheet, so the
+const Color _green = Color(0xFF2E7D32);
+const Color _amber = Color(0xFFE65100);
+
+String _fmtNum(double n) =>
+    n == n.roundToDouble() ? n.toStringAsFixed(0) : n.toString();
+
+/// Push the full-screen review and resolve with the lines the cashier saved
+/// (or null if they backed out). Same return contract as before, so the
 /// caller's merge + learning loop is unchanged.
 Future<List<BonoApplyLine>?> openBonoReview(
   BuildContext context, {
@@ -74,9 +81,12 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
       widget.suggestions.map(_Line.fromSuggestion).toList();
 
   // Unit code → display label, for synthesizing packaging labels when
-  // materializing the AI's detected pack (Create / Add packaging). Falls back
-  // to raw codes until it loads; the create/add paths work either way.
+  // materializing the AI's detected pack. Falls back to raw codes until loaded.
   Map<String, String> _unitLabels = {};
+  // Shop categories for the edit sheet's new-item category dropdown.
+  List<CategoryOption> _categories = const [];
+  bool _loadedCategories = false;
+  bool _saving = false;
 
   Iterable<_Line> get _active => _lines.where((l) => !l.removed);
 
@@ -86,86 +96,149 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
     _loadUnitLabels();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loadedCategories) return;
+    _loadedCategories = true;
+    _loadCategories();
+  }
+
   Future<void> _loadUnitLabels() async {
     try {
       final units = await context.read<ShopApi>().listUnits();
       if (!mounted) return;
-      setState(() {
-        _unitLabels = {for (final u in units) u.code: u.label};
-      });
+      setState(() => _unitLabels = {for (final u in units) u.code: u.label});
     } catch (_) {
       // Raw codes are an acceptable fallback for the label synthesis.
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final cats = await loadCategoryOptions(
+        context,
+        shopId: widget.shop.id,
+        locale: Localizations.localeOf(context).languageCode,
+      );
+      if (!mounted) return;
+      setState(() => _categories = cats);
+    } catch (_) {
+      // Category is optional; the dropdown just shows "Uncategorized".
     }
   }
 
   String _labelFor(String? code) =>
       code == null ? '' : (_unitLabels[code] ?? code);
 
-  // The packaging the AI wants us to materialize (new item pack, or the new
-  // size to add to a matched item), rendered as "Carton (12 pcs)".
-  String _newPackLabel(_Line line) {
-    if (line.packSize == null || line.packUnitCode == null) return '';
-    return packagingLabel(
-      line.packSize!,
-      _labelFor(line.baseUnitCode),
-      _labelFor(line.packUnitCode),
-    );
+  // What the line will be received as: the AI's new pack for new-product /
+  // new-pack lines, otherwise the matched item's real packaging.
+  String _packLabelFor(_Line line) {
+    if (line.packSize != null && line.packUnitCode != null) {
+      return packagingLabel(
+        line.packSize!,
+        _labelFor(line.baseUnitCode),
+        _labelFor(line.packUnitCode),
+      );
+    }
+    return line.packagingLabel.isNotEmpty
+        ? line.packagingLabel
+        : _labelFor(line.baseUnitCode);
   }
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
-    final theme = Theme.of(context);
     final active = _active.toList();
-    final needCount = active.where((l) => !l.ready).length;
-    final readyCount = active.where((l) => l.ready).length;
-    final canAccept = active.isNotEmpty && needCount == 0;
+    final newCount = active.where((x) => x.isNew || x.newPackaging).length;
+    final newProducts = active.where((x) => x.isNew).length;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l.bonoReviewTitle),
-      ),
-      body: Column(
-        children: [
-          // Summary strip: how many are done vs need you.
-          Container(
-            width: double.infinity,
-            color: theme.colorScheme.surfaceContainerHighest,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                _Dot(color: _green(theme)),
-                const SizedBox(width: 6),
-                Text(l.bonoReviewReady(readyCount)),
-                const SizedBox(width: 16),
-                _Dot(color: _amber(theme)),
-                const SizedBox(width: 6),
-                Text(l.bonoReviewNeedsReview(needCount)),
-              ],
+        actions: [
+          if (widget.onViewPhoto != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: TextButton.icon(
+                onPressed: widget.onViewPhoto,
+                icon: const Icon(Icons.image_outlined, size: 18),
+                label: Text(l.bonoReviewPhoto),
+              ),
             ),
-          ),
-          Expanded(
-            child: active.isEmpty
-                ? Center(child: Text(l.bonoSuggestionsUnmatchedSection))
-                : ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 96, top: 4),
+        ],
+      ),
+      body: active.isEmpty
+          ? Center(child: Text(l.bonoSuggestionsUnmatchedSection))
+          : Column(
+              children: [
+                // Lead strip: how many lines, how many are new.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Row(
+                    children: [
+                      Text(
+                        l.bonoReviewLineCount(active.length),
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      if (newCount > 0) ...[
+                        Text('   ·   ',
+                            style: Theme.of(context).textTheme.titleSmall),
+                        Text(
+                          l.bonoReviewLinesNew(newCount),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(
+                                  color: _amber, fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 12, top: 2),
                     itemCount: active.length,
                     itemBuilder: (context, i) => _card(active[i], i + 1),
                   ),
-          ),
-        ],
-      ),
+                ),
+              ],
+            ),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: SizedBox(
             width: double.infinity,
-            height: 56,
+            height: 60,
             child: FilledButton(
-              onPressed: canAccept ? _accept : null,
-              child: Text(canAccept
-                  ? l.bonoReviewAccept(readyCount)
-                  : l.bonoReviewAcceptGate(needCount, active.length)),
+              onPressed: active.isEmpty || _saving ? null : _save,
+              child: _saving
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l.bonoReviewSave(active.length),
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w800),
+                        ),
+                        if (newProducts > 0)
+                          Text(
+                            l.bonoReviewSaveNew(newProducts),
+                            style: const TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.w500),
+                          ),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -176,35 +249,42 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
   Widget _card(_Line line, int number) {
     final l = tr(context);
     final theme = Theme.of(context);
-    final accent = line.ready ? _green(theme) : _amber(theme);
-    final categoryName = line.categoryName ?? l.bonoReviewUncategorized;
+    final flagged = line.isNew || line.newPackaging;
+    final accent = flagged ? _amber : _green;
 
     return Card(
       margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
       clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(width: 6, color: accent),
-            Expanded(
-              child: InkWell(
-                onTap: () => _editLine(line),
+      child: InkWell(
+        onTap: () => _editLine(line),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(width: 6, color: accent),
+              Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 8, 12),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Each element gets its own full-width line so long
-                      // real-world names + categories never squeeze each other
-                      // (a phone can't fit status chip + name + category on one
-                      // row). Line number (matches the paper bono order) +
-                      // status chip (▾ menu) first, then name, then category.
+                      // Number (matches the paper bono) + the one glance cue,
+                      // and a faint pencil hinting the whole card is tappable.
                       Row(
                         children: [
                           _NumberBadge(number: number, color: accent),
                           const SizedBox(width: 8),
-                          Flexible(child: _statusMenu(line)),
+                          if (flagged)
+                            _NewChip(
+                              label: line.isNew
+                                  ? l.bonoReviewNewProduct
+                                  : l.bonoReviewNewPack,
+                            )
+                          else
+                            const _OkMark(),
+                          const Spacer(),
+                          Icon(Icons.edit_outlined,
+                              size: 16, color: theme.colorScheme.outline),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -215,22 +295,8 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
                         style: theme.textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w600),
                       ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: _CategoryChip(
-                          label: categoryName,
-                          ai: line.isNew,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Packaging · qty · price · total.
-                      Text(
-                        _detailLine(line),
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                      // Raw bono text — only when it differs from the name
-                      // (for a new item the name IS the raw text, so it'd dupe).
+                      const SizedBox(height: 6),
+                      Text(_detailLine(line), style: theme.textTheme.bodyMedium),
                       if (line.rawText.isNotEmpty &&
                           line.rawText != line.displayName) ...[
                         const SizedBox(height: 2),
@@ -243,441 +309,173 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
                           ),
                         ),
                       ],
-                      if (!line.ready) ...[
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 44,
-                          child: _primaryAction(line),
-                        ),
-                      ],
                     ],
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Per-case primary CTA: new item → Create; matched item with a new pack →
-  // Add packaging (materialize the AI's size); otherwise a plain confirm.
-  Widget _primaryAction(_Line line) {
-    final l = tr(context);
-    if (line.isNew) {
-      return FilledButton.tonalIcon(
-        onPressed: () => _createNewItem(line),
-        icon: const Icon(Icons.add, size: 18),
-        label: Text(
-          l.bonoReviewCreateItem(line.displayName),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      );
-    }
-    if (line.newPackaging) {
-      return FilledButton.tonalIcon(
-        onPressed: () => _addNewPackaging(line),
-        icon: const Icon(Icons.add_box_outlined, size: 18),
-        label: Text(
-          l.bonoReviewAddPackaging(_newPackLabel(line)),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      );
-    }
-    return FilledButton.tonalIcon(
-      onPressed: () => _markReady(line),
-      icon: const Icon(Icons.check, size: 18),
-      label: Text(l.bonoReviewMarkReady),
-    );
-  }
-
   String _detailLine(_Line line) {
-    // For a new-size line, show the pack we'll add — more useful than the
-    // fallback binding it currently resolves to.
-    final labelText =
-        line.newPackaging ? _newPackLabel(line) : line.packagingLabel;
-    final pkg = labelText.isNotEmpty ? labelText : '—';
-    final qty = '× ${_fmtQty(line.quantity)}';
+    final label = _packLabelFor(line);
+    final pkg = label.isNotEmpty ? label : '—';
+    final qty = '× ${_fmtNum(line.quantity)}';
     final total = line.lineTotal != null
         ? ' · ${formatMoney(line.lineTotal!, widget.shop)}'
         : '';
     return '$pkg   $qty$total';
   }
 
-  Widget _statusMenu(_Line line) {
-    final l = tr(context);
-    final theme = Theme.of(context);
-    final ready = line.ready;
-    final color = ready ? _green(theme) : _amber(theme);
-    final label = ready
-        ? l.bonoReviewStatusReady
-        : line.isNew
-            ? l.bonoReviewStatusNewItem
-            : line.newPackaging
-                ? l.bonoReviewStatusNewSize
-                : l.bonoReviewStatusNeedsReview;
-    return PopupMenuButton<String>(
-      tooltip: label,
-      onSelected: (v) => _onMenu(line, v),
-      itemBuilder: (context) => [
-        if (line.isNew) ...[
-          PopupMenuItem(value: 'pick', child: Text(l.bonoReviewPickExisting)),
-          PopupMenuItem(value: 'edit_new', child: Text(l.bonoReviewEditNew)),
-        ] else ...[
-          PopupMenuItem(value: 'change', child: Text(l.bonoReviewChangeItem)),
-          if (line.newPackaging)
-            PopupMenuItem(
-                value: 'keep_pack', child: Text(l.bonoReviewKeepPackaging)),
-        ],
-        if (widget.onViewPhoto != null)
-          PopupMenuItem(value: 'photo', child: Text(l.bonoReviewViewPhoto)),
-        if (ready)
-          PopupMenuItem(value: 'flag', child: Text(l.bonoReviewFlag)),
-        PopupMenuItem(value: 'remove', child: Text(l.bonoReviewRemove)),
-      ],
-      child: Chip(
-        visualDensity: VisualDensity.compact,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        backgroundColor: color.withValues(alpha: 0.16),
-        side: BorderSide(color: color),
-        avatar: Icon(ready ? Icons.check_circle : Icons.error_outline,
-            size: 16, color: color),
-        label: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: theme.textTheme.labelMedium),
-            Icon(Icons.arrow_drop_down, size: 18, color: color),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _onMenu(_Line line, String action) async {
-    switch (action) {
-      case 'pick':
-      case 'change':
-        await _pickExisting(line);
-      case 'edit_new':
-        await _editNewInSheet(line);
-      case 'keep_pack':
-        await _useExistingPackaging(line);
-      case 'photo':
-        widget.onViewPhoto?.call();
-      case 'flag':
-        setState(() => line.ready = false);
-      case 'remove':
-        setState(() => line.removed = true);
-    }
-  }
-
-  // Tap the card body → edit. Matched lines open the light edit sheet; new
-  // lines open the full new-item sheet (base-only override of one-tap Create).
+  // Tap a card → the one edit sheet. It mutates the line in place and pops an
+  // action (saved / removed); we just rebuild.
   Future<void> _editLine(_Line line) async {
-    if (line.isNew) {
-      await _editNewInSheet(line);
-      return;
-    }
-    final result = await showModalBottomSheet<_EditResult>(
+    final action = await showModalBottomSheet<_EditAction>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _EditLineSheet(line: line, shop: widget.shop),
+      builder: (_) => _EditLineSheet(
+        line: line,
+        shop: widget.shop,
+        unitLabels: _unitLabels,
+        categories: _categories,
+        supplierPartyId: widget.supplierPartyId,
+      ),
     );
-    if (result == null || !mounted) return;
+    if (!mounted || action == null) return;
     setState(() {
-      line.quantity = result.quantity;
-      line.lineTotal = result.lineTotal;
-      if (result.shopItemUnitId != null) {
-        line.shopItemUnitId = result.shopItemUnitId;
-        line.packagingLabel = result.packagingLabel ?? line.packagingLabel;
-        line.baseUnitLabel = result.baseUnitLabel ?? line.baseUnitLabel;
-      }
+      if (action == _EditAction.removed) line.removed = true;
     });
   }
 
-  Future<void> _markReady(_Line line) async {
-    // A verify/low match that already resolves to a real item + packaging:
-    // confirming is the whole gesture. (New items / new sizes route to their
-    // own one-tap actions; this stays a plain confirm.)
-    setState(() => line.ready = true);
-  }
-
-  // One-tap Create: materialize the AI's item AND its detected pack in a single
-  // create_shop_item call (base = small unit, received pack = default-receive).
-  // No sheet — the full editor is still reachable via "Edit before creating".
-  Future<void> _createNewItem(_Line line) async {
+  // The only write point: materialize each line the right way, then hand the
+  // receive well-formed apply lines. Offline-safe (the item_creator helpers
+  // queue + return optimistic ids). A hard reject leaves the screen open.
+  Future<void> _save() async {
+    if (_saving) return;
     final l = tr(context);
-    final baseCode = line.baseUnitCode;
-    if (baseCode == null) {
-      // OCR gave no base unit to build on — fall back to the full sheet.
-      await _editNewInSheet(line);
-      return;
-    }
-    final hasPack = line.packUnitCode != null &&
-        line.packSize != null &&
-        line.packSize! > 1;
-    final result = await createShopItemDraft(
-      context,
-      shop: widget.shop,
-      name: line.displayName,
-      categoryId: line.suggestedCategoryId,
-      baseUnitCode: baseCode,
-      baseUnitLabel: _labelFor(baseCode),
-      soldUnitCode: hasPack ? line.packUnitCode : null,
-      soldUnitLabel: hasPack ? _labelFor(line.packUnitCode) : null,
-      soldConversion: hasPack ? line.packSize : null,
-      languageCode: Localizations.localeOf(context).languageCode,
-      defaultSide: 'receive',
-      errorMessage: l.addNewItemFailedMessage,
-    );
-    if (result == null || !mounted) return;
-    setState(() {
-      line.shopItemId = result.shopItemId;
-      line.shopItemUnitId = result.shopItemUnitId;
-      line.itemId = null; // shop-local new item
-      line.displayName = result.displayName;
-      line.packagingLabel = result.packagingLabel;
-      line.baseUnitLabel = result.baseUnitLabel;
-      line.newPackaging = false;
-      line.learnConfidence = 1; // explicit cashier creation
-      line.ready = true;
-    });
-  }
-
-  // Full new-item sheet — the base-only override of one-tap Create (and the
-  // fallback when OCR gave no base unit).
-  Future<void> _editNewInSheet(_Line line) async {
-    final result = await AddNewItemSheet.show(
-      context,
-      widget.shop,
-      initialName: line.displayName,
-      initialCategoryId: line.suggestedCategoryId,
-      initialBaseUnitCode: line.baseUnitCode,
-      initialPackUnitCode: line.packUnitCode,
-      initialPackSize: line.packSize,
-    );
-    if (result == null || !mounted) return;
-    setState(() {
-      line.shopItemId = result.shopItemId;
-      line.shopItemUnitId = result.shopItemUnitId;
-      line.itemId = null; // shop-local new item
-      line.displayName = result.displayName;
-      line.packagingLabel = result.packagingLabel;
-      line.baseUnitLabel = result.baseUnitLabel;
-      line.newPackaging = false;
-      line.learnConfidence = 1; // explicit cashier creation
-      line.ready = true;
-    });
-  }
-
-  // One-tap Add packaging: add the AI's detected size to the matched item and
-  // rebind the line to it (as a NON-default unit; the learned alias resolves
-  // future bonos to it).
-  Future<void> _addNewPackaging(_Line line) async {
-    final l = tr(context);
-    final packCode = line.packUnitCode;
-    final size = line.packSize;
-    if (line.shopItemId == null || packCode == null || size == null) return;
-    final added = await addShopItemUnitDraft(
-      context,
-      shop: widget.shop,
-      shopItemId: line.shopItemId!,
-      unitCode: packCode,
-      unitLabel: _labelFor(packCode),
-      baseUnitLabel: _labelFor(line.baseUnitCode),
-      conversionToBase: size,
-      errorMessage: l.addNewItemFailedMessage,
-    );
-    if (added == null || !mounted) return;
-    setState(() {
-      line.shopItemUnitId = added.shopItemUnitId;
-      line.packagingLabel = added.packagingLabel;
-      line.newPackaging = false;
-      line.learnConfidence = 1; // explicit cashier add
-      line.ready = true;
-    });
-  }
-
-  // Skip creating the new size — receive against one of the item's EXISTING
-  // packagings instead. Opens the item's packaging picker so the cashier
-  // chooses which existing pack (not just the matcher's resolved fallback).
-  Future<void> _useExistingPackaging(_Line line) async {
-    if (line.shopItemId == null) return;
-    final picked = await showUnitPicker(
-      context,
-      shopId: widget.shop.id,
-      shopItemId: line.shopItemId!,
-      screen: 'receive',
-      baseUnitCode: line.baseUnitCode,
-      baseUnitLabel: _labelFor(line.baseUnitCode),
-    );
-    if (picked == null || !mounted) return;
-    setState(() {
-      line.shopItemUnitId = picked.shopItemUnitId;
-      line.packagingLabel = picked.packagingLabel;
-      line.newPackaging = false;
-      line.learnConfidence = 1; // explicit cashier binding
-      line.ready = true;
-    });
-  }
-
-  Future<void> _pickExisting(_Line line) async {
-    final target = await showBonoBindItemPicker(
-      context,
-      shop: widget.shop,
-      supplierPartyId: widget.supplierPartyId,
-      initialQuery: line.rawText,
-    );
-    if (target == null || !mounted) return;
-    setState(() {
-      line.shopItemId = target.shopItemId;
-      line.shopItemUnitId = target.shopItemUnitId;
-      line.itemId = target.itemId;
-      line.displayName = target.displayName;
-      line.packagingLabel = target.packagingLabel;
-      line.baseUnitLabel = target.baseUnitLabel;
-      line.learnConfidence = 1; // explicit cashier binding
-      line.ready = true;
-    });
-  }
-
-  void _accept() {
+    setState(() => _saving = true);
     final out = <BonoApplyLine>[];
+    var failed = false;
+
     for (final line in _active) {
-      if (line.shopItemId == null || line.shopItemUnitId == null) continue;
+      String? itemId = line.shopItemId;
+      String? unitId = line.shopItemUnitId;
+      var pkg = line.packagingLabel;
+      var baseLbl = line.baseUnitLabel;
+
+      if (line.isNew) {
+        final baseCode = line.baseUnitCode ?? 'piece';
+        final hasPack = line.packUnitCode != null &&
+            line.packSize != null &&
+            line.packSize! > 1;
+        final r = await createShopItemDraft(
+          context,
+          shop: widget.shop,
+          name: line.displayName,
+          categoryId: line.categoryId,
+          baseUnitCode: baseCode,
+          baseUnitLabel: _labelFor(baseCode),
+          soldUnitCode: hasPack ? line.packUnitCode : null,
+          soldUnitLabel: hasPack ? _labelFor(line.packUnitCode) : null,
+          soldConversion: hasPack ? line.packSize : null,
+          languageCode: Localizations.localeOf(context).languageCode,
+          defaultSide: 'receive',
+          errorMessage: l.addNewItemFailedMessage,
+        );
+        if (r == null) {
+          failed = true;
+          break;
+        }
+        itemId = r.shopItemId;
+        unitId = r.shopItemUnitId;
+        pkg = r.packagingLabel;
+        baseLbl = r.baseUnitLabel;
+      } else if (line.newPackaging &&
+          line.packUnitCode != null &&
+          line.packSize != null) {
+        final added = await addShopItemUnitDraft(
+          context,
+          shop: widget.shop,
+          shopItemId: line.shopItemId!,
+          unitCode: line.packUnitCode!,
+          unitLabel: _labelFor(line.packUnitCode),
+          baseUnitLabel: _labelFor(line.baseUnitCode),
+          conversionToBase: line.packSize!,
+          errorMessage: l.addNewItemFailedMessage,
+        );
+        if (added == null) {
+          failed = true;
+          break;
+        }
+        unitId = added.shopItemUnitId;
+        pkg = added.packagingLabel;
+      }
+
+      if (itemId == null || unitId == null) continue;
       out.add(BonoApplyLine(
-        shopItemId: line.shopItemId!,
-        shopItemUnitId: line.shopItemUnitId!,
+        shopItemId: itemId,
+        shopItemUnitId: unitId,
         itemId: line.itemId,
         displayName: line.displayName,
-        packagingLabel: line.packagingLabel,
-        baseUnitLabel: line.baseUnitLabel,
+        packagingLabel: pkg,
+        baseUnitLabel: baseLbl,
         quantity: line.quantity,
         lineTotal: line.lineTotal ?? 0,
         rawText: line.rawText,
         learnConfidence: line.learnConfidence,
       ));
     }
+
+    if (!mounted) return;
+    if (failed) {
+      // The helper already surfaced the error; keep the screen so the cashier
+      // can Remove/retry the offending line.
+      setState(() => _saving = false);
+      return;
+    }
     Navigator.of(context).pop(out);
   }
-
-  Color _green(ThemeData t) => const Color(0xFF2E7D32);
-  Color _amber(ThemeData t) => const Color(0xFFE65100);
-  String _fmtQty(double n) =>
-      n == n.roundToDouble() ? n.toStringAsFixed(0) : n.toString();
 }
 
-/// Mutable per-line draft the review screen edits in place.
-class _Line {
-  _Line({
-    required this.rawText,
-    required this.shopItemId,
-    required this.shopItemUnitId,
-    required this.itemId,
-    required this.displayName,
-    required this.categoryName,
-    required this.suggestedCategoryId,
-    required this.packagingLabel,
-    required this.baseUnitLabel,
-    required this.baseUnitCode,
-    required this.packUnitCode,
-    required this.packSize,
-    required this.quantity,
-    required this.lineTotal,
-    required this.ready,
-    required this.learnConfidence,
-    this.newPackaging = false,
-  });
-
-  factory _Line.fromSuggestion(BonoSuggestion s) {
-    final total = s.lineTotal ??
-        (s.unitPrice != null ? s.unitPrice! * s.quantity : null);
-    if (s.isBound) {
-      // A matched line whose OCR pack is NEW to the item (0114) carries the
-      // AI pack to add and can't be "Ready" until the cashier resolves it
-      // (Add packaging, or Use existing packaging) — regardless of match
-      // confidence, because the resolved fallback unit is the wrong size.
-      final newPack = s.newPackaging &&
-          s.suggestedPackUnitCode != null &&
-          s.suggestedPackSize != null;
-      return _Line(
-        rawText: s.rawText,
-        shopItemId: s.suggestedShopItemId,
-        shopItemUnitId: s.suggestedShopItemUnitId,
-        itemId: s.itemId,
-        displayName: s.displayName ?? s.rawText,
-        categoryName: s.suggestedCategoryName,
-        suggestedCategoryId: s.suggestedCategoryId,
-        packagingLabel: s.unitCode ?? s.baseUnitCode ?? '',
-        baseUnitLabel: s.baseUnitCode ?? '',
-        baseUnitCode: s.baseUnitCode,
-        packUnitCode: newPack ? s.suggestedPackUnitCode : null,
-        packSize: newPack ? s.suggestedPackSize : null,
-        newPackaging: newPack,
-        quantity: s.quantity,
-        lineTotal: total,
-        ready: s.confidence == 'high' && !newPack,
-        learnConfidence: s.confidence == 'high' ? 0.9 : 0.6,
-      );
-    }
-    // Unmatched / new item — AI proposal, snapped server-side.
-    return _Line(
-      rawText: s.rawText,
-      shopItemId: null,
-      shopItemUnitId: null,
-      itemId: null,
-      displayName: s.rawText,
-      categoryName: s.suggestedCategoryName,
-      suggestedCategoryId: s.suggestedCategoryId,
-      packagingLabel: s.suggestedPackUnitCode ?? s.suggestedBaseUnitCode ?? '',
-      baseUnitLabel: s.suggestedBaseUnitCode ?? '',
-      baseUnitCode: s.suggestedBaseUnitCode,
-      packUnitCode: s.suggestedPackUnitCode,
-      packSize: s.suggestedPackSize,
-      quantity: s.quantity,
-      lineTotal: total,
-      ready: false,
-      learnConfidence: 1,
-    );
-  }
-
-  final String rawText;
-  String? shopItemId;
-  String? shopItemUnitId;
-  String? itemId;
-  String displayName;
-  String? categoryName;
-  final String? suggestedCategoryId;
-  String packagingLabel;
-  String baseUnitLabel;
-  final String? baseUnitCode;
-  final String? packUnitCode;
-  final double? packSize;
-  double quantity;
-  double? lineTotal;
-  bool ready;
-  bool removed = false;
-  double learnConfidence;
-  // Matched line whose OCR pack is new to the item — flips false once the
-  // cashier adds the packaging or keeps the existing binding.
-  bool newPackaging;
-
-  bool get isNew => shopItemId == null;
-}
-
-class _Dot extends StatelessWidget {
-  const _Dot({required this.color});
-  final Color color;
+// Small green tick — the "matched, trust it" cue.
+class _OkMark extends StatelessWidget {
+  const _OkMark();
   @override
   Widget build(BuildContext context) => Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        width: 22,
+        height: 22,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: _green.withValues(alpha: 0.14),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.check, size: 15, color: _green),
       );
+}
+
+// Amber "New product" / "New pack" chip — the "give this a look" cue.
+class _NewChip extends StatelessWidget {
+  const _NewChip({required this.label});
+  final String label;
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: _amber.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall
+            ?.copyWith(color: _amber, fontWeight: FontWeight.w800),
+      ),
+    );
+  }
 }
 
 // Card position (1-based) so the cashier can cross-check against the paper
@@ -690,8 +488,8 @@ class _NumberBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      width: 26,
-      height: 26,
+      width: 24,
+      height: 24,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.16),
@@ -707,52 +505,113 @@ class _NumberBadge extends StatelessWidget {
   }
 }
 
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({required this.label, required this.ai});
-  final String label;
-  final bool ai;
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        ai ? '$label · ${tr(context).bonoReviewNewItem}' : label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.labelSmall
-            ?.copyWith(color: theme.colorScheme.onSecondaryContainer),
-      ),
-    );
-  }
-}
-
-/// Result of the Edit-line sheet for a MATCHED line.
-class _EditResult {
-  const _EditResult({
+/// Mutable per-line draft the review screen edits in place.
+class _Line {
+  _Line({
+    required this.rawText,
+    required this.shopItemId,
+    required this.shopItemUnitId,
+    required this.itemId,
+    required this.displayName,
+    required this.categoryId,
+    required this.packagingLabel,
+    required this.baseUnitLabel,
+    required this.baseUnitCode,
+    required this.packUnitCode,
+    required this.packSize,
     required this.quantity,
     required this.lineTotal,
-    this.shopItemUnitId,
-    this.packagingLabel,
-    this.baseUnitLabel,
+    required this.learnConfidence,
+    this.newPackaging = false,
   });
-  final double quantity;
-  final double? lineTotal;
-  final String? shopItemUnitId;
-  final String? packagingLabel;
-  final String? baseUnitLabel;
+
+  factory _Line.fromSuggestion(BonoSuggestion s) {
+    final total = s.lineTotal ??
+        (s.unitPrice != null ? s.unitPrice! * s.quantity : null);
+    if (s.isBound) {
+      // Matched line whose OCR pack is NEW to the item (0114) carries the AI
+      // pack to add; otherwise it's a clean matched line.
+      final newPack = s.newPackaging &&
+          s.suggestedPackUnitCode != null &&
+          s.suggestedPackSize != null;
+      return _Line(
+        rawText: s.rawText,
+        shopItemId: s.suggestedShopItemId,
+        shopItemUnitId: s.suggestedShopItemUnitId,
+        itemId: s.itemId,
+        displayName: s.displayName ?? s.rawText,
+        categoryId: s.suggestedCategoryId,
+        packagingLabel: s.unitCode ?? s.baseUnitCode ?? '',
+        baseUnitLabel: s.baseUnitCode ?? '',
+        baseUnitCode: s.baseUnitCode,
+        packUnitCode: newPack ? s.suggestedPackUnitCode : null,
+        packSize: newPack ? s.suggestedPackSize : null,
+        newPackaging: newPack,
+        quantity: s.quantity,
+        lineTotal: total,
+        learnConfidence: s.confidence == 'high' ? 0.9 : 0.6,
+      );
+    }
+    // Unmatched / new item — AI proposal, snapped server-side.
+    return _Line(
+      rawText: s.rawText,
+      shopItemId: null,
+      shopItemUnitId: null,
+      itemId: null,
+      displayName: s.rawText,
+      categoryId: s.suggestedCategoryId,
+      packagingLabel: s.suggestedPackUnitCode ?? s.suggestedBaseUnitCode ?? '',
+      baseUnitLabel: s.suggestedBaseUnitCode ?? '',
+      baseUnitCode: s.suggestedBaseUnitCode,
+      packUnitCode: s.suggestedPackUnitCode,
+      packSize: s.suggestedPackSize,
+      quantity: s.quantity,
+      lineTotal: total,
+      learnConfidence: 1,
+    );
+  }
+
+  final String rawText;
+  String? shopItemId;
+  String? shopItemUnitId;
+  String? itemId;
+  String displayName;
+  String? categoryId;
+  String packagingLabel;
+  String baseUnitLabel;
+  final String? baseUnitCode;
+  final String? packUnitCode;
+  final double? packSize;
+  double quantity;
+  double? lineTotal;
+  bool removed = false;
+  double learnConfidence;
+  // Matched line whose OCR pack is new to the item — flips false once the
+  // cashier picks an existing pack instead.
+  bool newPackaging;
+
+  bool get isNew => shopItemId == null;
 }
 
-/// One editing surface for a matched line: quantity, packaging, total. Reuses
-/// the OS numpad + QuantityChips + the existing unit picker.
+enum _EditAction { saved, removed }
+
+/// One editing surface for EVERY line: product, packaging, quantity, total,
+/// remove. Kind-aware rows (a new product also edits name + category), but the
+/// same gesture and shell. Mutates the passed [_Line]; pops an [_EditAction].
 class _EditLineSheet extends StatefulWidget {
-  const _EditLineSheet({required this.line, required this.shop});
+  const _EditLineSheet({
+    required this.line,
+    required this.shop,
+    required this.unitLabels,
+    required this.categories,
+    this.supplierPartyId,
+  });
+
   final _Line line;
   final ShopSummary shop;
+  final Map<String, String> unitLabels;
+  final List<CategoryOption> categories;
+  final String? supplierPartyId;
 
   @override
   State<_EditLineSheet> createState() => _EditLineSheetState();
@@ -760,28 +619,63 @@ class _EditLineSheet extends StatefulWidget {
 
 class _EditLineSheetState extends State<_EditLineSheet> {
   late final TextEditingController _qty =
-      TextEditingController(text: _fmt(widget.line.quantity));
+      TextEditingController(text: _fmtNum(widget.line.quantity));
   late final TextEditingController _total = TextEditingController(
-      text: widget.line.lineTotal != null ? _fmt(widget.line.lineTotal!) : '');
-
-  String? _unitId;
-  String? _pkgLabel;
-  String? _baseLabel;
+      text: widget.line.lineTotal != null ? _fmtNum(widget.line.lineTotal!) : '');
+  late final TextEditingController _name =
+      TextEditingController(text: widget.line.displayName);
 
   @override
   void dispose() {
     _qty.dispose();
     _total.dispose();
+    _name.dispose();
     super.dispose();
   }
 
-  double get _q => double.tryParse(_qty.text.trim()) ?? widget.line.quantity;
-  double? get _t {
-    final raw = _total.text.trim();
-    if (raw.isEmpty) return null;
-    return double.tryParse(raw);
+  String _labelFor(String? code) =>
+      code == null ? '' : (widget.unitLabels[code] ?? code);
+
+  String _packLabel() {
+    final line = widget.line;
+    if (line.packSize != null && line.packUnitCode != null) {
+      return packagingLabel(
+        line.packSize!,
+        _labelFor(line.baseUnitCode),
+        _labelFor(line.packUnitCode),
+      );
+    }
+    return line.packagingLabel.isNotEmpty
+        ? line.packagingLabel
+        : _labelFor(line.baseUnitCode);
   }
 
+  // Bind this line to an existing product (fixes a wrong/missed match, and
+  // converts a new-product line into a matched one).
+  Future<void> _changeProduct() async {
+    final target = await showBonoBindItemPicker(
+      context,
+      shop: widget.shop,
+      supplierPartyId: widget.supplierPartyId,
+      initialQuery: widget.line.rawText,
+    );
+    if (target == null || !mounted) return;
+    setState(() {
+      final line = widget.line;
+      line.shopItemId = target.shopItemId;
+      line.shopItemUnitId = target.shopItemUnitId;
+      line.itemId = target.itemId;
+      line.displayName = target.displayName;
+      line.packagingLabel = target.packagingLabel;
+      line.baseUnitLabel = target.baseUnitLabel;
+      line.newPackaging = false;
+      line.learnConfidence = 1;
+      _name.text = target.displayName;
+    });
+  }
+
+  // Change to a different EXISTING packaging of the matched item (the picker's
+  // inline "+ Add packaging" also covers a custom size).
   Future<void> _changePackaging() async {
     final line = widget.line;
     final picked = await showUnitPicker(
@@ -790,14 +684,49 @@ class _EditLineSheetState extends State<_EditLineSheet> {
       shopItemId: line.shopItemId!,
       screen: 'receive',
       baseUnitCode: line.baseUnitCode,
-      baseUnitLabel: line.baseUnitLabel,
+      baseUnitLabel: _labelFor(line.baseUnitCode),
     );
     if (picked == null || !mounted) return;
     setState(() {
-      _unitId = picked.shopItemUnitId;
-      _pkgLabel = picked.packagingLabel;
-      _baseLabel = picked.packagingLabel;
+      line.shopItemUnitId = picked.shopItemUnitId;
+      line.packagingLabel = picked.packagingLabel;
+      line.newPackaging = false;
     });
+  }
+
+  void _save() {
+    final line = widget.line;
+    line.quantity = double.tryParse(_qty.text.trim()) ?? line.quantity;
+    final t = _total.text.trim();
+    line.lineTotal = t.isEmpty ? null : (double.tryParse(t) ?? line.lineTotal);
+    if (line.isNew) {
+      final name = _name.text.trim();
+      if (name.isNotEmpty) line.displayName = name;
+    }
+    Navigator.of(context).pop(_EditAction.saved);
+  }
+
+  Widget _tapRow({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        child: Row(
+          children: [
+            Expanded(child: Text(value.isEmpty ? '—' : value)),
+            const Icon(Icons.arrow_drop_down),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -806,96 +735,143 @@ class _EditLineSheetState extends State<_EditLineSheet> {
     final theme = Theme.of(context);
     final line = widget.line;
     final viewInsets = MediaQuery.viewInsetsOf(context).bottom;
-    final pkgLabel = _pkgLabel ??
-        (line.packagingLabel.isNotEmpty
-            ? line.packagingLabel
-            : l.bonoReviewPickPackaging);
+    // Guard: only pass a category value the dropdown actually has an item for.
+    final catValue =
+        widget.categories.any((c) => c.id == line.categoryId) ? line.categoryId : null;
 
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + viewInsets),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(l.bonoReviewEditTitle,
-                      style: theme.textTheme.titleLarge),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(l.bonoReviewEditTitle,
+                        style: theme.textTheme.titleLarge),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (line.isNew) ...[
+                TextField(
+                  controller: _name,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    labelText: l.bonoReviewEditName,
+                    border: const OutlineInputBorder(),
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _changeProduct,
+                    icon: const Icon(Icons.search, size: 18),
+                    label: Text(l.bonoReviewPickExisting),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                DropdownButtonFormField<String?>(
+                  initialValue: catValue,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: l.bonoReviewEditCategory,
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text(l.bonoReviewUncategorized),
+                    ),
+                    ...widget.categories.map(
+                      (c) => DropdownMenuItem<String?>(
+                        value: c.id,
+                        child: Text(c.name, overflow: TextOverflow.ellipsis),
+                      ),
+                    ),
+                  ],
+                  onChanged: (v) => setState(() => line.categoryId = v),
+                ),
+                const SizedBox(height: 10),
+                // A new product's base/pack comes from the AI; not editable
+                // inline (rare) — Pick existing or Remove if it's wrong.
+                InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: l.bonoReviewEditPackaging,
+                    border: const OutlineInputBorder(),
+                  ),
+                  child: Text(_packLabel()),
+                ),
+              ] else ...[
+                _tapRow(
+                  label: l.bonoReviewEditItem,
+                  value: line.displayName,
+                  onTap: _changeProduct,
+                ),
+                const SizedBox(height: 10),
+                _tapRow(
+                  label: l.bonoReviewEditPackaging,
+                  value: _packLabel(),
+                  onTap: _changePackaging,
                 ),
               ],
-            ),
-            const SizedBox(height: 4),
-            Text(line.displayName, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 16),
-            // Packaging
-            InkWell(
-              onTap: line.shopItemId == null ? null : _changePackaging,
-              borderRadius: BorderRadius.circular(8),
-              child: InputDecorator(
+              const SizedBox(height: 12),
+              TextField(
+                controller: _qty,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
-                  labelText: l.bonoReviewEditPackaging,
+                  labelText: l.quantity,
                   border: const OutlineInputBorder(),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(child: Text(pkgLabel)),
-                    const Icon(Icons.arrow_drop_down),
-                  ],
+              ),
+              const SizedBox(height: 8),
+              QuantityChips(
+                onSelected: (v) =>
+                    setState(() => _qty.text = _fmtNum(v.toDouble())),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _total,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: l.bonoReviewEditTotal,
+                  prefixText: '${widget.shop.currencyCode} ',
+                  border: const OutlineInputBorder(),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _qty,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: l.quantity,
-                border: const OutlineInputBorder(),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 52,
+                child: FilledButton(
+                  onPressed: _save,
+                  child: Text(l.bonoReviewEditSave),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            QuantityChips(
-              onSelected: (v) =>
-                  setState(() => _qty.text = _fmt(v.toDouble())),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _total,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: l.bonoReviewEditTotal,
-                prefixText: '${widget.shop.currencyCode} ',
-                border: const OutlineInputBorder(),
+              const SizedBox(height: 6),
+              TextButton.icon(
+                onPressed: () =>
+                    Navigator.of(context).pop(_EditAction.removed),
+                icon: Icon(Icons.delete_outline,
+                    size: 18, color: theme.colorScheme.error),
+                label: Text(
+                  l.bonoReviewRemove,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 56,
-              child: FilledButton(
-                onPressed: () => Navigator.of(context).pop(_EditResult(
-                  quantity: _q,
-                  lineTotal: _t,
-                  shopItemUnitId: _unitId,
-                  packagingLabel: _pkgLabel,
-                  baseUnitLabel: _baseLabel,
-                )),
-                child: Text(l.bonoReviewEditSave),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-
-  String _fmt(double n) =>
-      n == n.roundToDouble() ? n.toStringAsFixed(0) : n.toString();
 }

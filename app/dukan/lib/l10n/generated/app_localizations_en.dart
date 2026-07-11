@@ -165,79 +165,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bonoReviewTitle => 'Review bono';
 
   @override
-  String bonoReviewReady(int count) {
-    return '$count ready';
-  }
-
-  @override
-  String bonoReviewNeedsReview(int count) {
-    return '$count need review';
-  }
-
-  @override
-  String get bonoReviewStatusReady => 'Ready';
-
-  @override
-  String get bonoReviewStatusNeedsReview => 'Needs review';
-
-  @override
-  String get bonoReviewNewItem => 'New';
-
-  @override
-  String get bonoReviewMarkReady => 'Mark ready';
-
-  @override
-  String bonoReviewCreateItem(String name) {
-    return 'Create “$name”';
-  }
-
-  @override
-  String bonoReviewAddPackaging(String label) {
-    return 'Add packaging — $label';
-  }
-
-  @override
-  String get bonoReviewStatusNewItem => 'New item';
-
-  @override
-  String get bonoReviewStatusNewSize => 'New packaging';
-
-  @override
-  String get bonoReviewEditNew => 'Edit before creating';
-
-  @override
-  String get bonoReviewKeepPackaging => 'Use existing packaging';
-
-  @override
-  String get bonoReviewPickExisting => 'Pick existing product';
-
-  @override
-  String get bonoReviewChangeItem => 'Change item';
-
-  @override
-  String get bonoReviewViewPhoto => 'View bono photo';
-
-  @override
-  String get bonoReviewFlag => 'Flag for review';
-
-  @override
-  String get bonoReviewRemove => 'Remove line';
-
-  @override
-  String bonoReviewAccept(int count) {
+  String bonoReviewSave(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Accept $count lines',
-      one: 'Accept 1 line',
+      other: 'Save $count lines',
+      one: 'Save 1 line',
     );
     return '$_temp0';
   }
 
   @override
-  String bonoReviewAcceptGate(int count, int total) {
-    return '$count of $total need review';
+  String bonoReviewSaveNew(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'adds $count new products',
+      one: 'adds 1 new product',
+    );
+    return '$_temp0';
   }
+
+  @override
+  String bonoReviewLineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines',
+      one: '1 line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bonoReviewLinesNew(int count) {
+    return '$count new';
+  }
+
+  @override
+  String get bonoReviewNewProduct => 'New product';
+
+  @override
+  String get bonoReviewNewPack => 'New pack';
+
+  @override
+  String get bonoReviewEditName => 'Name';
+
+  @override
+  String get bonoReviewChangeProduct => 'Change product';
+
+  @override
+  String get bonoReviewPickExisting => 'Pick existing product';
+
+  @override
+  String get bonoReviewPhoto => 'Photo';
+
+  @override
+  String get bonoReviewRemove => 'Remove line';
 
   @override
   String get bonoReviewEditTitle => 'Edit line';
@@ -259,15 +243,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bonoReviewUncategorized => 'Uncategorized';
-
-  @override
-  String get bonoReviewPriceRequired => 'Add a price first';
-
-  @override
-  String get bonoReviewPickPackaging => 'Pick packaging';
-
-  @override
-  String get bonoReviewSavingItems => 'Saving new items…';
 
   @override
   String get bonoChipLabel => 'Bono';

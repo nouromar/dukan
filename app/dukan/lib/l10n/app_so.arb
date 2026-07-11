@@ -55,52 +55,29 @@
     }
   },
   "bonoReviewTitle": "Hubi bono-ga",
-  "bonoReviewReady": "{count} diyaar",
-  "@bonoReviewReady": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
+  "bonoReviewSave": "{count, plural, =1{Kaydi 1 sadar} other{Kaydi {count} sadar}}",
+  "@bonoReviewSave": {
+    "placeholders": { "count": { "type": "int" } }
   },
-  "bonoReviewNeedsReview": "{count} u baahan hubin",
-  "@bonoReviewNeedsReview": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
+  "bonoReviewSaveNew": "{count, plural, =1{waxay ku dartaa 1 alaab cusub} other{waxay ku dartaa {count} alaab cusub}}",
+  "@bonoReviewSaveNew": {
+    "placeholders": { "count": { "type": "int" } }
   },
-  "bonoReviewStatusReady": "Diyaar",
-  "bonoReviewStatusNeedsReview": "Hubi",
-  "bonoReviewNewItem": "Cusub",
-  "bonoReviewMarkReady": "Diyaari",
-  "bonoReviewCreateItem": "Samee “{name}”",
-  "@bonoReviewCreateItem": {
-    "placeholders": { "name": { "type": "String" } }
+  "bonoReviewLineCount": "{count, plural, =1{1 sadar} other{{count} sadar}}",
+  "@bonoReviewLineCount": {
+    "placeholders": { "count": { "type": "int" } }
   },
-  "bonoReviewAddPackaging": "Ku dar xirmo — {label}",
-  "@bonoReviewAddPackaging": {
-    "placeholders": { "label": { "type": "String" } }
+  "bonoReviewLinesNew": "{count} cusub",
+  "@bonoReviewLinesNew": {
+    "placeholders": { "count": { "type": "int" } }
   },
-  "bonoReviewStatusNewItem": "Alaab cusub",
-  "bonoReviewStatusNewSize": "Xirmo Cusub",
-  "bonoReviewEditNew": "Wax ka beddel",
-  "bonoReviewKeepPackaging": "Isticmaal xirmo hore",
+  "bonoReviewNewProduct": "Alaab cusub",
+  "bonoReviewNewPack": "Xirmo cusub",
+  "bonoReviewEditName": "Magac",
+  "bonoReviewChangeProduct": "Bedel alaabta",
   "bonoReviewPickExisting": "Dooro alaab jirta",
-  "bonoReviewChangeItem": "Bedel alaabta",
-  "bonoReviewViewPhoto": "Eeg sawirka bono-ga",
-  "bonoReviewFlag": "Calaamadi hubin",
+  "bonoReviewPhoto": "Sawir",
   "bonoReviewRemove": "Ka saar",
-  "bonoReviewAccept": "{count, plural, =1{Aqbal 1 sadar} other{Aqbal {count} sadar}}",
-  "@bonoReviewAccept": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  },
-  "bonoReviewAcceptGate": "{count} ka mid ah {total} u baahan hubin",
-  "@bonoReviewAcceptGate": {
-    "placeholders": {
-      "count": { "type": "int" },
-      "total": { "type": "int" }
-    }
-  },
   "bonoReviewEditTitle": "Wax ka beddel sadarka",
   "bonoReviewEditItem": "Alaab",
   "bonoReviewEditCategory": "Qayb",
@@ -108,9 +85,6 @@
   "bonoReviewEditTotal": "Wadar",
   "bonoReviewEditSave": "Kaydi",
   "bonoReviewUncategorized": "Aan la qaybin",
-  "bonoReviewPriceRequired": "Marka hore geli qiime",
-  "bonoReviewPickPackaging": "Dooro baakid",
-  "bonoReviewSavingItems": "Waxaa la kaydinayaa alaabta cusub…",
   "bonoChipLabel": "Bono",
   "bonoHintTitle": "Sawir bonoga",
   "bonoHintSubtitle": "Waan kuu akhrin doonaa alaabta",

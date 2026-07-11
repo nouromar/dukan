@@ -368,77 +368,53 @@ abstract class AppLocalizations {
   /// **'Review bono'**
   String get bonoReviewTitle;
 
-  /// No description provided for @bonoReviewReady.
+  /// No description provided for @bonoReviewSave.
   ///
   /// In en, this message translates to:
-  /// **'{count} ready'**
-  String bonoReviewReady(int count);
+  /// **'{count, plural, =1{Save 1 line} other{Save {count} lines}}'**
+  String bonoReviewSave(int count);
 
-  /// No description provided for @bonoReviewNeedsReview.
+  /// No description provided for @bonoReviewSaveNew.
   ///
   /// In en, this message translates to:
-  /// **'{count} need review'**
-  String bonoReviewNeedsReview(int count);
+  /// **'{count, plural, =1{adds 1 new product} other{adds {count} new products}}'**
+  String bonoReviewSaveNew(int count);
 
-  /// No description provided for @bonoReviewStatusReady.
+  /// No description provided for @bonoReviewLineCount.
   ///
   /// In en, this message translates to:
-  /// **'Ready'**
-  String get bonoReviewStatusReady;
+  /// **'{count, plural, =1{1 line} other{{count} lines}}'**
+  String bonoReviewLineCount(int count);
 
-  /// No description provided for @bonoReviewStatusNeedsReview.
+  /// No description provided for @bonoReviewLinesNew.
   ///
   /// In en, this message translates to:
-  /// **'Needs review'**
-  String get bonoReviewStatusNeedsReview;
+  /// **'{count} new'**
+  String bonoReviewLinesNew(int count);
 
-  /// No description provided for @bonoReviewNewItem.
+  /// No description provided for @bonoReviewNewProduct.
   ///
   /// In en, this message translates to:
-  /// **'New'**
-  String get bonoReviewNewItem;
+  /// **'New product'**
+  String get bonoReviewNewProduct;
 
-  /// No description provided for @bonoReviewMarkReady.
+  /// No description provided for @bonoReviewNewPack.
   ///
   /// In en, this message translates to:
-  /// **'Mark ready'**
-  String get bonoReviewMarkReady;
+  /// **'New pack'**
+  String get bonoReviewNewPack;
 
-  /// No description provided for @bonoReviewCreateItem.
+  /// No description provided for @bonoReviewEditName.
   ///
   /// In en, this message translates to:
-  /// **'Create “{name}”'**
-  String bonoReviewCreateItem(String name);
+  /// **'Name'**
+  String get bonoReviewEditName;
 
-  /// No description provided for @bonoReviewAddPackaging.
+  /// No description provided for @bonoReviewChangeProduct.
   ///
   /// In en, this message translates to:
-  /// **'Add packaging — {label}'**
-  String bonoReviewAddPackaging(String label);
-
-  /// No description provided for @bonoReviewStatusNewItem.
-  ///
-  /// In en, this message translates to:
-  /// **'New item'**
-  String get bonoReviewStatusNewItem;
-
-  /// No description provided for @bonoReviewStatusNewSize.
-  ///
-  /// In en, this message translates to:
-  /// **'New packaging'**
-  String get bonoReviewStatusNewSize;
-
-  /// No description provided for @bonoReviewEditNew.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit before creating'**
-  String get bonoReviewEditNew;
-
-  /// No description provided for @bonoReviewKeepPackaging.
-  ///
-  /// In en, this message translates to:
-  /// **'Use existing packaging'**
-  String get bonoReviewKeepPackaging;
+  /// **'Change product'**
+  String get bonoReviewChangeProduct;
 
   /// No description provided for @bonoReviewPickExisting.
   ///
@@ -446,41 +422,17 @@ abstract class AppLocalizations {
   /// **'Pick existing product'**
   String get bonoReviewPickExisting;
 
-  /// No description provided for @bonoReviewChangeItem.
+  /// No description provided for @bonoReviewPhoto.
   ///
   /// In en, this message translates to:
-  /// **'Change item'**
-  String get bonoReviewChangeItem;
-
-  /// No description provided for @bonoReviewViewPhoto.
-  ///
-  /// In en, this message translates to:
-  /// **'View bono photo'**
-  String get bonoReviewViewPhoto;
-
-  /// No description provided for @bonoReviewFlag.
-  ///
-  /// In en, this message translates to:
-  /// **'Flag for review'**
-  String get bonoReviewFlag;
+  /// **'Photo'**
+  String get bonoReviewPhoto;
 
   /// No description provided for @bonoReviewRemove.
   ///
   /// In en, this message translates to:
   /// **'Remove line'**
   String get bonoReviewRemove;
-
-  /// No description provided for @bonoReviewAccept.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{Accept 1 line} other{Accept {count} lines}}'**
-  String bonoReviewAccept(int count);
-
-  /// No description provided for @bonoReviewAcceptGate.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} of {total} need review'**
-  String bonoReviewAcceptGate(int count, int total);
 
   /// No description provided for @bonoReviewEditTitle.
   ///
@@ -523,24 +475,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Uncategorized'**
   String get bonoReviewUncategorized;
-
-  /// No description provided for @bonoReviewPriceRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Add a price first'**
-  String get bonoReviewPriceRequired;
-
-  /// No description provided for @bonoReviewPickPackaging.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick packaging'**
-  String get bonoReviewPickPackaging;
-
-  /// No description provided for @bonoReviewSavingItems.
-  ///
-  /// In en, this message translates to:
-  /// **'Saving new items…'**
-  String get bonoReviewSavingItems;
 
   /// No description provided for @bonoChipLabel.
   ///

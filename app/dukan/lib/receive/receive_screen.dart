@@ -40,6 +40,7 @@ import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/receive/unit_picker_sheet.dart';
 import 'package:dukan/receive/bono_image_cache.dart';
+import 'package:dukan/receive/bono_photo_view.dart';
 import 'package:dukan/receive/bono_review_screen.dart';
 import 'package:dukan/receive/bono_suggestion_review_sheet.dart';
 import 'package:dukan/shared/realtime.dart';
@@ -685,11 +686,15 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   Future<void> _reviewBonoSuggestions() async {
     final l = tr(context);
     final supplierId = context.read<ReceiveController>().supplier?.id;
+    final photoDocId = _bonoDocumentId;
     final selected = await openBonoReview(
       context,
       suggestions: _bonoSuggestions,
       shop: widget.shop,
       supplierPartyId: supplierId,
+      // The photo is the shopkeeper's real verification tool — surface it in
+      // the review app bar, sourced from the just-attached bytes we cached.
+      onViewPhoto: photoDocId == null ? null : () => _viewBonoPhoto(photoDocId),
     );
     if (selected == null || selected.isEmpty || !mounted) return;
     final controller = context.read<ReceiveController>();
@@ -734,6 +739,29 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         SnackBar(content: Text(l.bonoSuggestionsAppliedToast(added))),
       );
     }
+  }
+
+  // Show the attached bono photo from the local cache (bytes are written on
+  // attach). Falls back to a brief note if they're not available.
+  Future<void> _viewBonoPhoto(String docId) async {
+    final l = tr(context);
+    final cache = context.read<BonoImageCache>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final bytes = await cache.bytesFor(docId);
+    if (!mounted) return;
+    if (bytes == null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l.receiveDetailBonoUnavailable)),
+      );
+      return;
+    }
+    await navigator.push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => BonoPhotoView(imageProvider: MemoryImage(bytes)),
+      ),
+    );
   }
 
   void _resetBonoState() {

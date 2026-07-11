@@ -168,79 +168,63 @@ class AppLocalizationsSo extends AppLocalizations {
   String get bonoReviewTitle => 'Hubi bono-ga';
 
   @override
-  String bonoReviewReady(int count) {
-    return '$count diyaar';
-  }
-
-  @override
-  String bonoReviewNeedsReview(int count) {
-    return '$count u baahan hubin';
-  }
-
-  @override
-  String get bonoReviewStatusReady => 'Diyaar';
-
-  @override
-  String get bonoReviewStatusNeedsReview => 'Hubi';
-
-  @override
-  String get bonoReviewNewItem => 'Cusub';
-
-  @override
-  String get bonoReviewMarkReady => 'Diyaari';
-
-  @override
-  String bonoReviewCreateItem(String name) {
-    return 'Samee “$name”';
-  }
-
-  @override
-  String bonoReviewAddPackaging(String label) {
-    return 'Ku dar xirmo — $label';
-  }
-
-  @override
-  String get bonoReviewStatusNewItem => 'Alaab cusub';
-
-  @override
-  String get bonoReviewStatusNewSize => 'Xirmo Cusub';
-
-  @override
-  String get bonoReviewEditNew => 'Wax ka beddel';
-
-  @override
-  String get bonoReviewKeepPackaging => 'Isticmaal xirmo hore';
-
-  @override
-  String get bonoReviewPickExisting => 'Dooro alaab jirta';
-
-  @override
-  String get bonoReviewChangeItem => 'Bedel alaabta';
-
-  @override
-  String get bonoReviewViewPhoto => 'Eeg sawirka bono-ga';
-
-  @override
-  String get bonoReviewFlag => 'Calaamadi hubin';
-
-  @override
-  String get bonoReviewRemove => 'Ka saar';
-
-  @override
-  String bonoReviewAccept(int count) {
+  String bonoReviewSave(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Aqbal $count sadar',
-      one: 'Aqbal 1 sadar',
+      other: 'Kaydi $count sadar',
+      one: 'Kaydi 1 sadar',
     );
     return '$_temp0';
   }
 
   @override
-  String bonoReviewAcceptGate(int count, int total) {
-    return '$count ka mid ah $total u baahan hubin';
+  String bonoReviewSaveNew(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'waxay ku dartaa $count alaab cusub',
+      one: 'waxay ku dartaa 1 alaab cusub',
+    );
+    return '$_temp0';
   }
+
+  @override
+  String bonoReviewLineCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sadar',
+      one: '1 sadar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String bonoReviewLinesNew(int count) {
+    return '$count cusub';
+  }
+
+  @override
+  String get bonoReviewNewProduct => 'Alaab cusub';
+
+  @override
+  String get bonoReviewNewPack => 'Xirmo cusub';
+
+  @override
+  String get bonoReviewEditName => 'Magac';
+
+  @override
+  String get bonoReviewChangeProduct => 'Bedel alaabta';
+
+  @override
+  String get bonoReviewPickExisting => 'Dooro alaab jirta';
+
+  @override
+  String get bonoReviewPhoto => 'Sawir';
+
+  @override
+  String get bonoReviewRemove => 'Ka saar';
 
   @override
   String get bonoReviewEditTitle => 'Wax ka beddel sadarka';
@@ -262,15 +246,6 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get bonoReviewUncategorized => 'Aan la qaybin';
-
-  @override
-  String get bonoReviewPriceRequired => 'Marka hore geli qiime';
-
-  @override
-  String get bonoReviewPickPackaging => 'Dooro baakid';
-
-  @override
-  String get bonoReviewSavingItems => 'Waxaa la kaydinayaa alaabta cusub…';
 
   @override
   String get bonoChipLabel => 'Bono';

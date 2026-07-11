@@ -745,16 +745,16 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  // Remove the (single remaining) new-item line via its status ▾ menu.
+  // Remove the new-item line by tapping its card → the edit sheet → Remove.
   Future<void> removeNewItemLine(WidgetTester tester) async {
-    await tester.tap(find.text(en.bonoReviewStatusNewItem));
+    await tester.tap(find.text('ZZZ UNKNOWN')); // threeSuggestions line 3
     await tester.pumpAndSettle();
     await tester.tap(find.text(en.bonoReviewRemove));
     await tester.pumpAndSettle();
   }
 
   testWidgets(
-    'bono: review → mark ready + remove → Accept merges lines + learns',
+    'bono: review → remove the new line → Save merges the matched lines + learns',
     (tester) async {
       api.onSuggestReceiveLinesFromBono =
           (_, _, _, _) async => threeSuggestions();
@@ -766,25 +766,14 @@ void main() {
       // Banner announces the 3 read lines.
       expect(find.text(en.bonoSuggestionsFound(3)), findsOneWidget);
 
-      // Full-screen review: line 1 (high) starts Ready (green); line 2 (med)
-      // is amber with "Mark ready"; line 3 (new) is amber with "Create …", so
-      // Accept is gated.
+      // Review: lines 1 (high) + 2 (med) are matched (auto-included); line 3 is
+      // a new product. Drop it; Save the two matched lines.
       await openReview(tester);
-      expect(find.text(en.bonoReviewMarkReady), findsOneWidget); // only the med
-      expect(find.text(en.bonoReviewAcceptGate(2, 3)), findsOneWidget);
-
-      // Mark the med line ready.
-      await tester.tap(find.text(en.bonoReviewMarkReady));
-      await tester.pumpAndSettle();
-
-      // Remove the remaining amber (new-item) line → both survivors green.
       await removeNewItemLine(tester);
-      expect(find.text(en.bonoReviewAccept(2)), findsOneWidget);
-
-      await tester.tap(find.text(en.bonoReviewAccept(2)));
+      await tester.tap(find.text(en.bonoReviewSave(2)));
       await tester.pumpAndSettle();
 
-      // Both bound lines merged into the receive; learning fired once each.
+      // Both matched lines merged into the receive; learning fired once each.
       expect(receive.lines.keys.toSet(), {'siu-1', 'siu-2'});
       expect(api.confirmBonoSuggestionCalls, hasLength(2));
       expect(
@@ -794,7 +783,7 @@ void main() {
     },
   );
 
-  testWidgets('bono: Accept never overwrites a manually-entered line', (
+  testWidgets('bono: Save never overwrites a manually-entered line', (
     tester,
   ) async {
     api.onSuggestReceiveLinesFromBono =
@@ -817,11 +806,8 @@ void main() {
     await attachBono(tester);
 
     await openReview(tester);
-    // Make everything green: mark the med line ready, drop the new-item line.
-    await tester.tap(find.text(en.bonoReviewMarkReady));
-    await tester.pumpAndSettle();
     await removeNewItemLine(tester);
-    await tester.tap(find.text(en.bonoReviewAccept(2)));
+    await tester.tap(find.text(en.bonoReviewSave(2)));
     await tester.pumpAndSettle();
 
     // siu-1 keeps the manual values; only siu-2 was added; learning fired
@@ -833,7 +819,7 @@ void main() {
     expect(api.confirmBonoSuggestionCalls.single.shopItemUnitId, 'siu-2');
   });
 
-  testWidgets('bono: Pick existing binds a new line → Accept adds it + learns', (
+  testWidgets('bono: Pick existing binds a new line → Save adds it + learns', (
     tester,
   ) async {
     api.onSuggestReceiveLinesFromBono = (_, _, _, _) async => [
@@ -871,18 +857,17 @@ void main() {
 
     await openReview(tester);
 
-    // The lone new-item line is amber → Accept gated. Bind it via the status
-    // ▾ menu → "Pick existing product".
-    expect(find.text(en.bonoReviewAcceptGate(1, 1)), findsOneWidget);
-    await tester.tap(find.text(en.bonoReviewStatusNewItem));
+    // Open the lone new-product line → the edit sheet → Pick existing product.
+    await tester.tap(find.text('MODEL X LAPTOP'));
     await tester.pumpAndSettle();
     await tester.tap(find.text(en.bonoReviewPickExisting));
     await tester.pumpAndSettle(); // picker opens + initial search
     await tester.tap(find.text('Laptop'));
-    await tester.pumpAndSettle(); // bind → picker pops → line turns green
+    await tester.pumpAndSettle(); // bind → picker pops → sheet now matched
+    await tester.tap(find.text(en.bonoReviewEditSave));
+    await tester.pumpAndSettle();
 
-    // Now ready → Accept enabled.
-    await tester.tap(find.text(en.bonoReviewAccept(1)));
+    await tester.tap(find.text(en.bonoReviewSave(1)));
     await tester.pumpAndSettle();
 
     // Bound line added with the OCR qty, and the mapping is learned.
