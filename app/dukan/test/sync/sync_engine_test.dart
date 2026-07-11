@@ -358,6 +358,80 @@ void main() {
     },
   );
 
+  test(
+    'deltaSync isolates a failing resource: items throwing does not block '
+    'parties/categories/transactions/invoices',
+    () async {
+      const t0 = 1700000000000;
+      const t1 = 1700000005000;
+      for (final resource in SyncResource.all) {
+        await repo.writeSyncState(
+          shopId: shopId,
+          resource: resource,
+          lastSyncedAtMs: t0,
+          fullSyncDone: true,
+        );
+      }
+      var itemsCalls = 0;
+      var partiesCalls = 0;
+      var catsCalls = 0;
+      var txnCalls = 0;
+      var invCalls = 0;
+      // Items (first in the sequence) fails hard...
+      api.onGetShopItemsDelta = ({required shopId, required since}) async {
+        itemsCalls += 1;
+        throw StateError('items delta boom');
+      };
+      // ...every later resource must still be attempted and advance.
+      api.onGetPartiesDelta = ({required shopId, required since}) async {
+        partiesCalls += 1;
+        return const {'parties': [], 'server_now_ms': t1};
+      };
+      api.onGetCategoriesDelta = ({required shopId, required since}) async {
+        catsCalls += 1;
+        return const {
+          'expense_categories': [],
+          'categories': [],
+          'units': [],
+          'server_now_ms': t1,
+        };
+      };
+      api.onGetTransactionsDelta =
+          ({required shopId, required since, int limit = 200}) async {
+        txnCalls += 1;
+        return const {'transactions': [], 'server_now_ms': t1};
+      };
+      api.onGetUnpaidInvoicesDelta = ({required shopId, required since}) async {
+        invCalls += 1;
+        return const {'unpaid_invoices': [], 'server_now_ms': t1};
+      };
+
+      final engine = SyncEngine(
+        shopApi: api,
+        localRepository: repo,
+        pendingPostDao: postDao,
+      );
+      await engine.deltaSync(shopId);
+
+      // Every resource after the failing one was still attempted...
+      expect(itemsCalls, 1);
+      expect(partiesCalls, 1);
+      expect(catsCalls, 1);
+      expect(txnCalls, 1);
+      expect(invCalls, 1);
+
+      // ...their cursors advanced to t1, while the failed items cursor stayed
+      // at t0 so its next delta retries the same window (no data skipped).
+      final state = await repo.loadSyncState(shopId);
+      expect(state[SyncResource.items]!.lastSyncedAtMs, t0);
+      expect(state[SyncResource.parties]!.lastSyncedAtMs, t1);
+      expect(state[SyncResource.categories]!.lastSyncedAtMs, t1);
+      expect(state[SyncResource.transactions]!.lastSyncedAtMs, t1);
+      expect(state[SyncResource.unpaidInvoices]!.lastSyncedAtMs, t1);
+      engine.dispose();
+    },
+  );
+
   test('bulk burst: many events in the debounce window flush once',
       () async {
     for (final resource in SyncResource.all) {

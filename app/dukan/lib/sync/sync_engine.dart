@@ -240,83 +240,36 @@ class SyncEngine extends ChangeNotifier {
     }
   }
 
-  /// Fan-out delta calls for each resource. Each uses its own
-  /// `last_synced_at` cutoff so a partial failure leaves the other
-  /// resources advanced.
+  /// Fan-out delta calls for each resource. Each resource syncs
+  /// INDEPENDENTLY (its own try/catch inside [_deltaForResource]) so a
+  /// failure in one — a poison payload, or a transient blip mid-sequence —
+  /// can never starve the resources after it: parties, transactions, and
+  /// invoices still advance even if items fails. (Previously all five shared
+  /// one try/catch, so an early failure aborted the whole sequence and a
+  /// persistent single-resource error froze every other resource forever.)
   Future<void> deltaSync(String shopId) async {
     if (_state != SyncEngineState.live &&
         _state != SyncEngineState.deltaSync) {
       _setState(SyncEngineState.deltaSync);
     }
-    final state = await _local.loadSyncState(shopId);
-    try {
-      // Items
-      final itemsSince = _sinceFromState(state[SyncResource.items]);
-      final itemsPayload = await _shopApi.getShopItemsDelta(
-        shopId: shopId,
-        since: itemsSince,
-      );
-      await _local.applyItemsPayload(itemsPayload);
-      await _local.writeSyncState(
-        shopId: shopId,
-        resource: SyncResource.items,
-        lastSyncedAtMs: _serverNowOrLocal(itemsPayload),
-      );
-      // Parties
-      final partiesSince = _sinceFromState(state[SyncResource.parties]);
-      final partiesPayload = await _shopApi.getPartiesDelta(
-        shopId: shopId,
-        since: partiesSince,
-      );
-      await _local.applyPartiesPayload(partiesPayload);
-      await _local.writeSyncState(
-        shopId: shopId,
-        resource: SyncResource.parties,
-        lastSyncedAtMs: _serverNowOrLocal(partiesPayload),
-      );
-      // Categories
-      final catsSince = _sinceFromState(state[SyncResource.categories]);
-      final catsPayload = await _shopApi.getCategoriesDelta(
-        shopId: shopId,
-        since: catsSince,
-      );
-      await _local.applyCategoriesPayload(catsPayload);
-      await _local.writeSyncState(
-        shopId: shopId,
-        resource: SyncResource.categories,
-        lastSyncedAtMs: _serverNowOrLocal(catsPayload),
-      );
-      // Transactions
-      final txnsSince = _sinceFromState(state[SyncResource.transactions]);
-      final txnsPayload = await _shopApi.getTransactionsDelta(
-        shopId: shopId,
-        since: txnsSince,
-      );
-      await _local.applyTransactionsPayload(txnsPayload);
-      await _local.writeSyncState(
-        shopId: shopId,
-        resource: SyncResource.transactions,
-        lastSyncedAtMs: _serverNowOrLocal(txnsPayload),
-      );
-      // Unpaid invoices (#391)
-      final invSince =
-          _sinceFromState(state[SyncResource.unpaidInvoices]);
-      final invPayload = await _shopApi.getUnpaidInvoicesDelta(
-        shopId: shopId,
-        since: invSince,
-      );
-      await _local.applyUnpaidInvoicesPayload(invPayload);
-      await _local.writeSyncState(
-        shopId: shopId,
-        resource: SyncResource.unpaidInvoices,
-        lastSyncedAtMs: _serverNowOrLocal(invPayload),
-      );
-      _lastError = null;
+    var anySucceeded = false;
+    var anyFailed = false;
+    for (final resource in SyncResource.all) {
+      final ok = await _deltaForResource(shopId, resource);
+      if (ok) {
+        anySucceeded = true;
+      } else {
+        anyFailed = true;
+      }
+    }
+
+    if (!anyFailed) _lastError = null;
+    if (anySucceeded) {
       _lastSyncedAt = _clock();
-      // A successful sync proves we're back online — clear the realtime-down
-      // marker so the "Working offline" banner actually dismisses on a manual
-      // retry (or the next poll) instead of lingering until an app restart.
-      // The realtime listener re-flags if its socket is genuinely still down.
+      // At least one resource reached the server, so we're online — clear the
+      // realtime-down marker so the "Working offline" banner dismisses on a
+      // manual retry (or the next poll) instead of lingering until an app
+      // restart. The realtime listener re-flags if its socket is still down.
       // When already `live` (a poll, not a deltaSync→live transition) we must
       // notify explicitly, otherwise the banner never rebuilds.
       final wasOffline = _realtimeDisconnectedAt != null;
@@ -326,11 +279,10 @@ class SyncEngine extends ChangeNotifier {
       } else if (wasOffline) {
         notifyListeners();
       }
-    } catch (error, stack) {
-      _lastError = error;
-      _reportError?.call(error, stack, 'SyncEngine.deltaSync');
-      // Don't transition to errored — live mode should survive a
-      // single delta hiccup. The next poll catches up.
+    } else if (_state == SyncEngineState.deltaSync) {
+      // Everything failed (likely offline) — don't get stuck in deltaSync;
+      // go live so cached data is usable. Leave the offline marker in place.
+      _setState(SyncEngineState.live);
     }
   }
 
@@ -444,7 +396,11 @@ class SyncEngine extends ChangeNotifier {
     }
   }
 
-  Future<void> _deltaForResource(String shopId, String resource) async {
+  /// Sync a single resource from its own cursor. Returns true on success,
+  /// false when the fetch/apply threw (already reported) or the resource is
+  /// unknown — so callers ([deltaSync]) can tell "advanced" from "stalled"
+  /// without one resource's failure affecting another.
+  Future<bool> _deltaForResource(String shopId, String resource) async {
     final state = await _local.loadSyncState(shopId);
     final since = _sinceFromState(state[resource]);
     try {
@@ -476,16 +432,18 @@ class SyncEngine extends ChangeNotifier {
           await _local.applyUnpaidInvoicesPayload(payload);
           break;
         default:
-          return;
+          return false;
       }
       await _local.writeSyncState(
         shopId: shopId,
         resource: resource,
         lastSyncedAtMs: _serverNowOrLocal(payload),
       );
+      return true;
     } catch (error, stack) {
       _reportError?.call(
           error, stack, 'SyncEngine._deltaForResource[$resource]');
+      return false;
     }
   }
 
