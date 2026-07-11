@@ -416,16 +416,45 @@ class TodaySummary {
     required this.receivablesTotal,
     required this.payablesTotal,
     required this.lowStockCount,
+    // 0113: today's activity across the other daily flows. Default 0 so
+    // existing callers and pre-0113 cached JSON stay valid.
+    this.salesCount = 0,
+    this.receivedToday = 0,
+    this.receivedCount = 0,
+    this.moneyInToday = 0,
+    this.moneyInCount = 0,
+    this.moneyOutToday = 0,
+    this.moneyOutCount = 0,
+    this.expensesToday = 0,
+    this.expensesCount = 0,
   });
 
   factory TodaySummary.fromJson(Map<String, dynamic> json) => TodaySummary(
     salesToday: (json['sales_today'] as num).toDouble(),
+    salesCount: (json['sales_count'] as num?)?.toInt() ?? 0,
+    receivedToday: (json['received_today'] as num?)?.toDouble() ?? 0,
+    receivedCount: (json['received_count'] as num?)?.toInt() ?? 0,
+    moneyInToday: (json['money_in_today'] as num?)?.toDouble() ?? 0,
+    moneyInCount: (json['money_in_count'] as num?)?.toInt() ?? 0,
+    moneyOutToday: (json['money_out_today'] as num?)?.toDouble() ?? 0,
+    moneyOutCount: (json['money_out_count'] as num?)?.toInt() ?? 0,
+    expensesToday: (json['expenses_today'] as num?)?.toDouble() ?? 0,
+    expensesCount: (json['expenses_count'] as num?)?.toInt() ?? 0,
     receivablesTotal: (json['receivables_total'] as num).toDouble(),
     payablesTotal: (json['payables_total'] as num).toDouble(),
     lowStockCount: (json['low_stock_count'] as num).toInt(),
   );
 
   final double salesToday;
+  final int salesCount;
+  final double receivedToday;
+  final int receivedCount;
+  final double moneyInToday;
+  final int moneyInCount;
+  final double moneyOutToday;
+  final int moneyOutCount;
+  final double expensesToday;
+  final int expensesCount;
   final double receivablesTotal;
   final double payablesTotal;
   final int lowStockCount;

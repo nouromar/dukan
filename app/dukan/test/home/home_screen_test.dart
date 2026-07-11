@@ -130,10 +130,19 @@ void main() {
   });
 
   testWidgets(
-    'today summary renders sales, receivables, payables, low-stock',
+    'today card renders all five activity rows + the attention section',
     (tester) async {
       shopApi.onGetTodaySummary = (_, _) async => const TodaySummary(
             salesToday: 1234,
+            salesCount: 7,
+            receivedToday: 300,
+            receivedCount: 1,
+            moneyInToday: 40,
+            moneyInCount: 3,
+            moneyOutToday: 0,
+            moneyOutCount: 0,
+            expensesToday: 12,
+            expensesCount: 2,
             receivablesTotal: 50,
             payablesTotal: 20,
             lowStockCount: 3,
@@ -149,7 +158,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(en.homeTodayHeader), findsOneWidget);
+      // Five activity rows (labels drop "today" — the header carries it).
       expect(find.text(en.homeSalesTodayLabel), findsOneWidget);
+      expect(find.text(en.homeReceivedLabel), findsOneWidget);
+      expect(find.text(en.homeMoneyInLabel), findsOneWidget);
+      expect(find.text(en.homeMoneyOutLabel), findsOneWidget);
+      expect(find.text(en.homeExpensesLabel), findsOneWidget);
+      // Counts render in parens next to the money.
+      expect(find.text('(7)'), findsOneWidget); // 7 sales
+      expect(find.text('(0)'), findsOneWidget); // 0 money-out
+      // Attention section.
+      expect(find.text(en.homeNeedsAttentionLabel), findsOneWidget);
       expect(find.text(en.homeReceivablesLabel), findsOneWidget);
       expect(find.text(en.homePayablesLabel), findsOneWidget);
       expect(find.text(en.homeLowStockLabel), findsOneWidget);

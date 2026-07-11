@@ -389,7 +389,22 @@ class AppLocalizationsSo extends AppLocalizations {
   String get homeTodayHeader => 'Maanta';
 
   @override
-  String get homeSalesTodayLabel => 'Iibka maanta';
+  String get homeSalesTodayLabel => 'Iibka';
+
+  @override
+  String get homeReceivedLabel => 'La helay';
+
+  @override
+  String get homeMoneyInLabel => 'Lacag gashay';
+
+  @override
+  String get homeMoneyOutLabel => 'Lacag baxday';
+
+  @override
+  String get homeExpensesLabel => 'Kharashaad';
+
+  @override
+  String get homeNeedsAttentionLabel => 'Fiiro u baahan';
 
   @override
   String get homeReceivablesLabel => 'Deyn lagaa qabo';

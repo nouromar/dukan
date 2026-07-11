@@ -47,12 +47,9 @@ class TodaySummaryCache {
     if (entry == null) return null;
     try {
       final json = jsonDecode(entry.valueJson) as Map<String, dynamic>;
-      return TodaySummary(
-        salesToday: (json['sales_today'] as num).toDouble(),
-        receivablesTotal: (json['receivables_total'] as num).toDouble(),
-        payablesTotal: (json['payables_total'] as num).toDouble(),
-        lowStockCount: (json['low_stock_count'] as num).toInt(),
-      );
+      // fromJson tolerates a pre-0113 shape (new activity fields default to 0)
+      // so an old cached row still renders — the background refresh fills them.
+      return TodaySummary.fromJson(json);
     } catch (_) {
       // Corrupt JSON (shape changed between versions) — drop the row
       // so future reads start fresh.
@@ -75,6 +72,15 @@ class TodaySummaryCache {
       final dao = CacheDao(AppDatabase.instance(), configResolver: resolver);
       final json = <String, dynamic>{
         'sales_today': summary.salesToday,
+        'sales_count': summary.salesCount,
+        'received_today': summary.receivedToday,
+        'received_count': summary.receivedCount,
+        'money_in_today': summary.moneyInToday,
+        'money_in_count': summary.moneyInCount,
+        'money_out_today': summary.moneyOutToday,
+        'money_out_count': summary.moneyOutCount,
+        'expenses_today': summary.expensesToday,
+        'expenses_count': summary.expensesCount,
         'receivables_total': summary.receivablesTotal,
         'payables_total': summary.payablesTotal,
         'low_stock_count': summary.lowStockCount,

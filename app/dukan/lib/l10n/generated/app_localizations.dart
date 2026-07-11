@@ -779,8 +779,38 @@ abstract class AppLocalizations {
   /// No description provided for @homeSalesTodayLabel.
   ///
   /// In en, this message translates to:
-  /// **'Sales today'**
+  /// **'Sales'**
   String get homeSalesTodayLabel;
+
+  /// No description provided for @homeReceivedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Received'**
+  String get homeReceivedLabel;
+
+  /// No description provided for @homeMoneyInLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Money in'**
+  String get homeMoneyInLabel;
+
+  /// No description provided for @homeMoneyOutLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Money out'**
+  String get homeMoneyOutLabel;
+
+  /// No description provided for @homeExpensesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get homeExpensesLabel;
+
+  /// No description provided for @homeNeedsAttentionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get homeNeedsAttentionLabel;
 
   /// No description provided for @homeReceivablesLabel.
   ///

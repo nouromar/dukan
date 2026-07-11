@@ -7,12 +7,15 @@ import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/shared/typography.dart';
 import 'package:dukan/config/config_resolver.dart';
+import 'package:dukan/expense/expense_history_screen.dart';
 import 'package:dukan/expense/expense_screen.dart';
 import 'package:dukan/home/dukan_drawer.dart';
 import 'package:dukan/payment/payment_controller.dart';
+import 'package:dukan/payment/payment_history_screen.dart';
 import 'package:dukan/payment/payment_screen.dart';
 import 'package:dukan/products/products_screen.dart';
 import 'package:dukan/receive/receive_controller.dart';
+import 'package:dukan/receive/receive_history_screen.dart';
 import 'package:dukan/receive/receive_screen.dart';
 import 'package:dukan/receive/supplier_picker_screen.dart';
 import 'package:dukan/parties/customers_screen.dart';
@@ -504,105 +507,156 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
     );
   }
 
+  /// Push [builder] and reload the summary on return (the daily numbers may
+  /// have changed if the shopkeeper posted/voided from the drilled-in screen).
+  Future<void> _openAndReload(WidgetBuilder builder) async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: builder));
+    if (mounted) _reload();
+  }
+
   Widget _renderSummary(BuildContext context, TodaySummary s) {
     final l = tr(context);
     final theme = Theme.of(context);
     return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l.homeTodayHeader,
-                  style: theme.textTheme.titleSmall,
-                ),
-                const SizedBox(height: 2),
-                InkWell(
-                  onTap: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => SaleHistoryScreen(shop: widget.shop),
-                      ),
-                    );
-                    if (mounted) _reload();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            l.homeSalesTodayLabel,
-                            style: theme.textTheme.bodyLarge,
-                          ),
-                        ),
-                        Text(
-                          formatMoney(s.salesToday, widget.shop),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        Icon(
-                          Icons.chevron_right,
-                          size: 20,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const Divider(height: 12),
-                _CounterRow(
-                  label: l.homeReceivablesLabel,
-                  amount: formatMoney(s.receivablesTotal, widget.shop),
-                  highlight: s.receivablesTotal > 0,
-                  onTap: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => CustomersScreen(
-                          shop: widget.shop,
-                          // Land already scoped to who-owes-you so
-                          // the user sees exactly what they tapped.
-                          initialHasBalanceOnly: true,
-                        ),
-                      ),
-                    );
-                    if (mounted) _reload();
-                  },
-                ),
-                _CounterRow(
-                  label: l.homePayablesLabel,
-                  amount: formatMoney(s.payablesTotal, widget.shop),
-                  highlight: s.payablesTotal > 0,
-                  onTap: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => SuppliersScreen(
-                          shop: widget.shop,
-                          initialHasBalanceOnly: true,
-                        ),
-                      ),
-                    );
-                    if (mounted) _reload();
-                  },
-                ),
-                _CounterRow(
-                  label: l.homeLowStockLabel,
-                  amount: l.homeLowStockCount(s.lowStockCount),
-                  highlight: s.lowStockCount > 0,
-                  onTap: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => LowStockScreen(shop: widget.shop),
-                      ),
-                    );
-                    if (mounted) _reload();
-                  },
-                ),
-              ],
+      // Compact: 5 activity rows + 3 attention rows in roughly the footprint
+      // the four-row card used, so Home stays calm. The header ("Today") owns
+      // the day context, so the row labels drop "today".
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l.homeTodayHeader, style: theme.textTheme.titleSmall),
+          const SizedBox(height: 2),
+          // Today's activity across the five daily flows (total + count).
+          _TodayRow(
+            label: l.homeSalesTodayLabel,
+            money: formatMoney(s.salesToday, widget.shop),
+            count: s.salesCount,
+            onTap: () =>
+                _openAndReload((_) => SaleHistoryScreen(shop: widget.shop)),
+          ),
+          _TodayRow(
+            label: l.homeReceivedLabel,
+            money: formatMoney(s.receivedToday, widget.shop),
+            count: s.receivedCount,
+            onTap: () =>
+                _openAndReload((_) => ReceiveHistoryScreen(shop: widget.shop)),
+          ),
+          _TodayRow(
+            label: l.homeMoneyInLabel,
+            money: formatMoney(s.moneyInToday, widget.shop),
+            count: s.moneyInCount,
+            onTap: () =>
+                _openAndReload((_) => PaymentHistoryScreen(shop: widget.shop)),
+          ),
+          _TodayRow(
+            label: l.homeMoneyOutLabel,
+            money: formatMoney(s.moneyOutToday, widget.shop),
+            count: s.moneyOutCount,
+            onTap: () =>
+                _openAndReload((_) => PaymentHistoryScreen(shop: widget.shop)),
+          ),
+          _TodayRow(
+            label: l.homeExpensesLabel,
+            money: formatMoney(s.expensesToday, widget.shop),
+            count: s.expensesCount,
+            onTap: () =>
+                _openAndReload((_) => ExpenseHistoryScreen(shop: widget.shop)),
+          ),
+          const Divider(height: 12),
+          Text(
+            l.homeNeedsAttentionLabel,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
             ),
-          );
+          ),
+          const SizedBox(height: 2),
+          _CounterRow(
+            label: l.homeReceivablesLabel,
+            amount: formatMoney(s.receivablesTotal, widget.shop),
+            highlight: s.receivablesTotal > 0,
+            // Land already scoped to who-owes-you so the user sees exactly
+            // what they tapped.
+            onTap: () => _openAndReload(
+              (_) => CustomersScreen(
+                shop: widget.shop,
+                initialHasBalanceOnly: true,
+              ),
+            ),
+          ),
+          _CounterRow(
+            label: l.homePayablesLabel,
+            amount: formatMoney(s.payablesTotal, widget.shop),
+            highlight: s.payablesTotal > 0,
+            onTap: () => _openAndReload(
+              (_) => SuppliersScreen(
+                shop: widget.shop,
+                initialHasBalanceOnly: true,
+              ),
+            ),
+          ),
+          _CounterRow(
+            label: l.homeLowStockLabel,
+            amount: l.homeLowStockCount(s.lowStockCount),
+            highlight: s.lowStockCount > 0,
+            onTap: () =>
+                _openAndReload((_) => LowStockScreen(shop: widget.shop)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One compact "today activity" row: label · money · (count) · chevron.
+/// Money is neutral (activity, not an alert) and the count sits in parens.
+class _TodayRow extends StatelessWidget {
+  const _TodayRow({
+    required this.label,
+    required this.money,
+    required this.count,
+    required this.onTap,
+  });
+
+  final String label;
+  final String money;
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          children: [
+            Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
+            Text(
+              money,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '($count)',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

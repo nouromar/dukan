@@ -3334,8 +3334,8 @@ declare
 begin
   select id into v_shop_id from public.shop where name = 'Setup Checklist Shop';
 
-  -- get_today_summary returns a jsonb with the four scalars; numeric
-  -- coalescing means non-null even when the shop has no activity today.
+  -- get_today_summary returns a jsonb of scalars; numeric coalescing means
+  -- non-null even when the shop has no activity today.
   v_summary := public.get_today_summary(v_shop_id, 'en');
   v_sales_today := (v_summary ->> 'sales_today')::numeric;
   v_receivables := (v_summary ->> 'receivables_total')::numeric;
@@ -3346,6 +3346,22 @@ begin
      or v_payables is null
      or v_low_count is null then
     raise exception 'W: get_today_summary fields must never be null (got %)',
+      v_summary;
+  end if;
+
+  -- 0113: the day-activity fields (sales/received/money-in/out/expenses,
+  -- each a total + a count) must all be present and non-null too.
+  if (v_summary ->> 'sales_count')     is null
+     or (v_summary ->> 'received_today')  is null
+     or (v_summary ->> 'received_count')  is null
+     or (v_summary ->> 'money_in_today')  is null
+     or (v_summary ->> 'money_in_count')  is null
+     or (v_summary ->> 'money_out_today') is null
+     or (v_summary ->> 'money_out_count') is null
+     or (v_summary ->> 'expenses_today')  is null
+     or (v_summary ->> 'expenses_count')  is null then
+    raise exception
+      'W: get_today_summary day-activity fields must never be null (got %)',
       v_summary;
   end if;
 

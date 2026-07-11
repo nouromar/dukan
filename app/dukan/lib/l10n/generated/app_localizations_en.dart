@@ -386,7 +386,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTodayHeader => 'Today';
 
   @override
-  String get homeSalesTodayLabel => 'Sales today';
+  String get homeSalesTodayLabel => 'Sales';
+
+  @override
+  String get homeReceivedLabel => 'Received';
+
+  @override
+  String get homeMoneyInLabel => 'Money in';
+
+  @override
+  String get homeMoneyOutLabel => 'Money out';
+
+  @override
+  String get homeExpensesLabel => 'Expenses';
+
+  @override
+  String get homeNeedsAttentionLabel => 'Needs attention';
 
   @override
   String get homeReceivablesLabel => 'Customers owe you';
