@@ -551,8 +551,14 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
   Widget _renderSummary(BuildContext context, TodaySummary s) {
     final l = tr(context);
     final theme = Theme.of(context);
-    // Shared small-caps section label — used for both "Today" and the
-    // "Needs attention" sub-header so they read as one family.
+    // Two-tier hierarchy: the card header ("Today" / "Summary") is the darker,
+    // slightly larger title; "Needs attention" stays a muted small-caps
+    // sub-label so it reads one level down from the header, above the rows.
+    final headerLabelStyle = theme.textTheme.titleSmall?.copyWith(
+      color: theme.colorScheme.onSurface,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.1,
+    );
     final sectionLabelStyle = theme.textTheme.labelSmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
       fontWeight: FontWeight.w700,
@@ -579,7 +585,7 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
                   // "Today" once expanded (the day it's showing).
                   Text(
                     _expanded ? l.homeTodayHeader : l.homeSummaryLabel,
-                    style: sectionLabelStyle,
+                    style: headerLabelStyle,
                   ),
                   const Spacer(),
                   Icon(
