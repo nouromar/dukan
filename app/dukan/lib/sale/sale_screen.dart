@@ -623,6 +623,13 @@ class _SaleScreenState extends State<SaleScreen> {
   }
 
   Future<void> _save() async {
+    // Re-entrancy guard (synchronous, before any await). On the optimistic
+    // path `_saving` is cleared right after the cart clears — not before the
+    // first await — and the SAVE button only visually disables on the next
+    // rebuild. A fast double-tap on a laggy mid-range Android would otherwise
+    // run _save twice against the still-full cart, minting two client_op_ids
+    // and posting the sale TWICE. Bail immediately on re-entry.
+    if (_saving) return;
     final l = tr(context);
     final cart = context.read<CartController>();
     if (cart.isEmpty) {
@@ -634,6 +641,11 @@ class _SaleScreenState extends State<SaleScreen> {
       _pickCustomer();
       return;
     }
+    // Set true AFTER validation (so a validation-failed save doesn't wedge
+    // the flag) and BEFORE the first await. The optimistic path clears it
+    // again the instant the cart empties (line ~_saving = false), re-enabling
+    // input well within the speed budget — the background post runs unguarded.
+    _saving = true;
     Timing.mark('save.tapped');
 
     final api = context.read<ShopApi>();
@@ -1002,6 +1014,10 @@ class _SaleScreenState extends State<SaleScreen> {
               amount: total,
             );
           }
+          // Drop the optimistic history row too — a hard reject means the
+          // server has no matching sale, so leaving it would show a phantom
+          // in Sales History and a retry would stack a second one.
+          await localRepo.deleteOptimisticTransaction(txnId: clientTxnId);
         } catch (_) {
           /* best-effort revert; sync reconciles regardless */
         }

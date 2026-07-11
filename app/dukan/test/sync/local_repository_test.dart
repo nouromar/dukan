@@ -408,6 +408,39 @@ void main() {
     expect(sales.map((t) => t.txnId), ['t-2', 't-1']);
   });
 
+  test(
+      'deleteOptimisticTransaction removes an unsynced row but spares a synced one',
+      () async {
+    // Optimistic (server_updated_at = 0) sale, as written on the SAVE path.
+    await repo.writeOptimisticTransaction(
+      clientOpId: 'op-1',
+      txnId: 'txn-opt',
+      shopId: shopId,
+      typeCode: 'sale',
+      occurredAtMs: 1700,
+      total: 50,
+      payload: const {'lines_summary': <dynamic>[]},
+    );
+    // Synced sale (server_updated_at != 0 via the delta payload).
+    await repo.applyTransactionsPayload({
+      'transactions': [_txn('txn-synced', 'sale', occurredMs: 1800, total: 30)],
+    });
+
+    var ids =
+        (await repo.historySales(shopId: shopId)).map((s) => s.txnId).toList();
+    expect(ids, containsAll(<String>['txn-opt', 'txn-synced']));
+
+    // The hard-reject revert deletes the optimistic row...
+    await repo.deleteOptimisticTransaction(txnId: 'txn-opt');
+    // ...but must never touch a synced one (guarded on server_updated_at = 0).
+    await repo.deleteOptimisticTransaction(txnId: 'txn-synced');
+
+    ids =
+        (await repo.historySales(shopId: shopId)).map((s) => s.txnId).toList();
+    expect(ids, contains('txn-synced'));
+    expect(ids, isNot(contains('txn-opt')));
+  });
+
   test('getPaymentDetailLocal reads a payment from the mirror (offline)',
       () async {
     await repo.applyTransactionsPayload({

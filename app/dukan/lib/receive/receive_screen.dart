@@ -857,6 +857,12 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   }
 
   Future<void> _save() async {
+    // Re-entrancy guard (synchronous, before any await / setState). The SAVE
+    // button only disables on the next rebuild after `_saving` flips, so a
+    // fast double-tap on a laggy mid-range Android would run _save twice
+    // against the still-full lines, minting two client_op_ids and posting the
+    // bono TWICE. Bail immediately on re-entry.
+    if (_saving) return;
     final l = tr(context);
     final controller = context.read<ReceiveController>();
     final supplier = controller.supplier;
@@ -1069,6 +1075,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
           direction: 'O',
           amount: total,
         );
+        // Drop the optimistic history row too — a hard reject means the
+        // server has no matching receive, so leaving it would show a phantom
+        // in Receive History and a retry would stack a second one.
+        await localRepoForOptimistic.deleteOptimisticTransaction(txnId: txnId);
       } catch (_) {
         /* best-effort revert; sync reconciles regardless */
       }

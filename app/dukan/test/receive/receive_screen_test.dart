@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dukan/api/shop_api.dart';
@@ -370,6 +371,52 @@ void main() {
       // Always fully credit.
       expect(captured!['paidAmount'], 0);
       expect(captured!['paymentMethod'], isNull);
+    },
+  );
+
+  testWidgets(
+    'double-tapping SAVE posts the receive only once (re-entrancy guard)',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          shopItemId: 'si-1',
+          itemId: 'i1',
+          defaultShopItemUnitId: 'siu-bag',
+          displayName: 'Bariis',
+          baseUnitCode: 'kg',
+          baseUnitLabel: 'Kg',
+          defaultUnitCode: 'bag',
+          defaultUnitLabel: 'Bag',
+          defaultUnitConversionToBase: 25,
+          packagingLabel: '25 Kg Bag',
+          defaultUnitLastCost: 24,
+        ),
+      ];
+      var postCalls = 0;
+      // Hang the post so _saving stays true across the second tap.
+      final gate = Completer<String>();
+      api.onPostReceive = (_, _, _, _, _, _, _, _) {
+        postCalls++;
+        return gate.future;
+      };
+
+      await pumpReceive(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bariis'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.receiveAddLineButton));
+      await tester.pumpAndSettle();
+
+      // Two taps, no rebuild between — only the synchronous _saving guard
+      // stops the second post (without it, two client_op_ids → a duplicate
+      // bono).
+      final save = find.widgetWithText(FilledButton, en.receiveSaveButton);
+      await tester.tap(save);
+      await tester.tap(save);
+      await tester.pump();
+
+      expect(postCalls, 1);
+      // Post left hung on purpose; an incomplete Completer creates no timer.
     },
   );
 

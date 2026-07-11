@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -238,6 +240,46 @@ void main() {
         findsOneWidget,
       );
       expect(find.text(en.saleReceiptShareButton), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'double-tapping SAVE posts the sale only once (re-entrancy guard)',
+    (tester) async {
+      api.onSearchItems = (_, _, _, _, _, _) async => [
+        fakeActivatedItem(
+          shopItemId: 'si-rice',
+          itemId: 'item-rice',
+          defaultShopItemUnitId: 'siu-rice',
+          displayName: 'Bariis Basmati',
+          defaultUnitSalePrice: 1.5,
+        ),
+      ];
+      var postCalls = 0;
+      // Hang the post so _saving stays true across the second tap.
+      final gate = Completer<String>();
+      api.onPostSale = (_, _, _, _, _, _, _) {
+        postCalls++;
+        return gate.future;
+      };
+
+      await pumpSale(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bariis Basmati'));
+      await tester.pumpAndSettle();
+
+      // Two taps with NO rebuild in between — the button is still visually
+      // enabled on the second tap, so only the synchronous _saving guard can
+      // stop the second post. Without the guard this fires postSale twice
+      // (two client_op_ids → a duplicate sale).
+      final save = find.widgetWithText(FilledButton, en.saleSaveButton);
+      await tester.tap(save);
+      await tester.tap(save);
+      await tester.pump();
+
+      expect(postCalls, 1);
+      // Leave the post hung — the assertion is about the second tap. (An
+      // incomplete Completer creates no pending timer, so teardown is clean.)
     },
   );
 

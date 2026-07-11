@@ -2231,6 +2231,21 @@ class LocalRepository {
     );
   }
 
+  /// Remove an optimistic (still-unsynced) transaction row after the server
+  /// HARD-rejected the post — otherwise the rejected sale/receive lingers in
+  /// history forever (no server row shares its client_op_id, so delta sync
+  /// never replaces it) and a retry would stack a second phantom. Guarded on
+  /// `server_updated_at = 0` so a genuinely synced row is never deleted. No-op
+  /// if the row is already gone.
+  Future<void> deleteOptimisticTransaction({required String txnId}) async {
+    final db = await _db;
+    await db.delete(
+      'local_transaction',
+      where: 'txn_id = ? AND server_updated_at = 0',
+      whereArgs: [txnId],
+    );
+  }
+
   // ---- Sync state ----------------------------------------------------------
 
   Future<Map<String, ResourceSyncState>> loadSyncState(String shopId) async {
