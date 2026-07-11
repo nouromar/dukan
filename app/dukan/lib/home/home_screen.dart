@@ -26,6 +26,8 @@ import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/settings/language_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
+import 'package:dukan/storage/app_database.dart';
+import 'package:dukan/storage/device_config_dao.dart';
 import 'package:dukan/shared/favorites_cache.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
@@ -322,9 +324,18 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
   // ever rendered.
   TodaySummary? _lastKnown;
 
+  /// Collapse state for the card, remembered across launches (DeviceConfigDao)
+  /// so a shopkeeper who prefers "buttons first" isn't fighting the card every
+  /// time. Defaults to expanded (first-timers get the glance); the stored
+  /// value loads on mount. _TodayCard mounts once per Home lifetime, so the
+  /// async load can't cause a repeated flash.
+  static const String _kExpandedKey = 'home_today_expanded';
+  bool _expanded = true;
+
   @override
   void initState() {
     super.initState();
+    unawaited(_loadExpandedPref());
     // First-frame on Home == end of cold start (auth bootstrap + shop
     // selection are done by the time _TodayCard mounts). No-op in
     // release builds — the entire Timing class is tree-shaken.
@@ -468,6 +479,29 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
     });
   }
 
+  Future<void> _loadExpandedPref() async {
+    try {
+      final raw =
+          await DeviceConfigDao(AppDatabase.instance()).get(_kExpandedKey);
+      // Only a stored '0' collapses; missing/anything else stays expanded.
+      if (raw == '0' && mounted && _expanded) {
+        setState(() => _expanded = false);
+      }
+    } catch (_) {
+      // Best-effort — default (expanded) stands if the store is unavailable.
+    }
+  }
+
+  void _toggleExpanded() {
+    setState(() => _expanded = !_expanded);
+    final value = _expanded ? '1' : '0';
+    unawaited(
+      DeviceConfigDao(AppDatabase.instance())
+          .set(_kExpandedKey, value)
+          .catchError((_) {}),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
@@ -517,17 +551,44 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
   Widget _renderSummary(BuildContext context, TodaySummary s) {
     final l = tr(context);
     final theme = Theme.of(context);
+    // Shared small-caps section label — used for both "Today" and the
+    // "Needs attention" sub-header so they read as one family.
+    final sectionLabelStyle = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.4,
+    );
     return Padding(
       // Compact: 5 activity rows + 3 attention rows in roughly the footprint
       // the four-row card used, so Home stays calm. The header ("Today") owns
       // the day context, so the row labels drop "today".
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, _expanded ? 6 : 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l.homeTodayHeader, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 2),
-          // Today's activity across the five daily flows (total + count).
+          // Collapsible header — tap anywhere on the row to collapse/expand;
+          // the choice is remembered so the card doesn't crowd out the
+          // Sale/Receive buttons for a shopkeeper who prefers them first.
+          InkWell(
+            onTap: _toggleExpanded,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Text(l.homeTodayHeader, style: sectionLabelStyle),
+                  const Spacer(),
+                  Icon(
+                    _expanded ? Icons.expand_less : Icons.expand_more,
+                    size: 20,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded) ...[
+            const SizedBox(height: 2),
+            // Today's activity across the five daily flows (total + count).
           _TodayRow(
             label: l.homeSalesTodayLabel,
             money: formatMoney(s.salesToday, widget.shop),
@@ -564,14 +625,7 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
                 _openAndReload((_) => ExpenseHistoryScreen(shop: widget.shop)),
           ),
           const Divider(height: 12),
-          Text(
-            l.homeNeedsAttentionLabel,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
-            ),
-          ),
+          Text(l.homeNeedsAttentionLabel, style: sectionLabelStyle),
           const SizedBox(height: 2),
           _CounterRow(
             label: l.homeReceivablesLabel,
@@ -604,6 +658,7 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
             onTap: () =>
                 _openAndReload((_) => LowStockScreen(shop: widget.shop)),
           ),
+          ], // end if (_expanded)
         ],
       ),
     );

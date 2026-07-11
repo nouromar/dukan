@@ -176,6 +176,44 @@ void main() {
     },
   );
 
+  testWidgets('tapping the Today header collapses (and re-expands) the card', (
+    tester,
+  ) async {
+    shopApi.onGetTodaySummary = (_, _) async => const TodaySummary(
+          salesToday: 10,
+          salesCount: 1,
+          receivablesTotal: 5,
+          payablesTotal: 0,
+          lowStockCount: 0,
+        );
+
+    await tester.pumpWidget(
+      wrapWithApp(
+        HomeScreen(shop: fakeShop(), onSignOut: () {}),
+        authController: auth,
+        shopApi: shopApi,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Expanded by default: activity + attention rows visible.
+    expect(find.text(en.homeSalesTodayLabel), findsOneWidget);
+    expect(find.text(en.homeNeedsAttentionLabel), findsOneWidget);
+
+    // Tap the "Today" header to collapse.
+    await tester.tap(find.text(en.homeTodayHeader));
+    await tester.pumpAndSettle();
+
+    expect(find.text(en.homeTodayHeader), findsOneWidget); // header stays
+    expect(find.text(en.homeSalesTodayLabel), findsNothing); // body hidden
+    expect(find.text(en.homeNeedsAttentionLabel), findsNothing);
+
+    // Tap again to re-expand.
+    await tester.tap(find.text(en.homeTodayHeader));
+    await tester.pumpAndSettle();
+    expect(find.text(en.homeSalesTodayLabel), findsOneWidget);
+  });
+
   testWidgets('tapping low-stock row navigates into the low-stock report', (
     tester,
   ) async {
