@@ -196,20 +196,20 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String bonoReviewAddPackaging(String label) {
-    return 'Ku dar baakidh — $label';
+    return 'Ku dar xirmo — $label';
   }
 
   @override
   String get bonoReviewStatusNewItem => 'Alaab cusub';
 
   @override
-  String get bonoReviewStatusNewSize => 'Cabbir cusub';
+  String get bonoReviewStatusNewSize => 'Xirmo Cusub';
 
   @override
   String get bonoReviewEditNew => 'Wax ka beddel';
 
   @override
-  String get bonoReviewKeepPackaging => 'Sii hay baakidhka';
+  String get bonoReviewKeepPackaging => 'Isticmaal xirmo hore';
 
   @override
   String get bonoReviewPickExisting => 'Dooro alaab jirta';

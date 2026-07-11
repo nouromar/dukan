@@ -425,7 +425,7 @@ abstract class AppLocalizations {
   /// No description provided for @bonoReviewStatusNewSize.
   ///
   /// In en, this message translates to:
-  /// **'New size'**
+  /// **'New packaging'**
   String get bonoReviewStatusNewSize;
 
   /// No description provided for @bonoReviewEditNew.
@@ -437,7 +437,7 @@ abstract class AppLocalizations {
   /// No description provided for @bonoReviewKeepPackaging.
   ///
   /// In en, this message translates to:
-  /// **'Keep current packaging'**
+  /// **'Use existing packaging'**
   String get bonoReviewKeepPackaging;
 
   /// No description provided for @bonoReviewPickExisting.

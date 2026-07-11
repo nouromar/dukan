@@ -200,13 +200,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bonoReviewStatusNewItem => 'New item';
 
   @override
-  String get bonoReviewStatusNewSize => 'New size';
+  String get bonoReviewStatusNewSize => 'New packaging';
 
   @override
   String get bonoReviewEditNew => 'Edit before creating';
 
   @override
-  String get bonoReviewKeepPackaging => 'Keep current packaging';
+  String get bonoReviewKeepPackaging => 'Use existing packaging';
 
   @override
   String get bonoReviewPickExisting => 'Pick existing product';

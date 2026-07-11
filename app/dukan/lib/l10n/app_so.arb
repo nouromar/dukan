@@ -75,14 +75,14 @@
   "@bonoReviewCreateItem": {
     "placeholders": { "name": { "type": "String" } }
   },
-  "bonoReviewAddPackaging": "Ku dar baakidh — {label}",
+  "bonoReviewAddPackaging": "Ku dar xirmo — {label}",
   "@bonoReviewAddPackaging": {
     "placeholders": { "label": { "type": "String" } }
   },
   "bonoReviewStatusNewItem": "Alaab cusub",
-  "bonoReviewStatusNewSize": "Cabbir cusub",
+  "bonoReviewStatusNewSize": "Xirmo Cusub",
   "bonoReviewEditNew": "Wax ka beddel",
-  "bonoReviewKeepPackaging": "Sii hay baakidhka",
+  "bonoReviewKeepPackaging": "Isticmaal xirmo hore",
   "bonoReviewPickExisting": "Dooro alaab jirta",
   "bonoReviewChangeItem": "Bedel alaabta",
   "bonoReviewViewPhoto": "Eeg sawirka bono-ga",

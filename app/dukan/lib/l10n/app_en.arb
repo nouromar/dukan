@@ -92,9 +92,9 @@
     "placeholders": { "label": { "type": "String" } }
   },
   "bonoReviewStatusNewItem": "New item",
-  "bonoReviewStatusNewSize": "New size",
+  "bonoReviewStatusNewSize": "New packaging",
   "bonoReviewEditNew": "Edit before creating",
-  "bonoReviewKeepPackaging": "Keep current packaging",
+  "bonoReviewKeepPackaging": "Use existing packaging",
   "bonoReviewPickExisting": "Pick existing product",
   "bonoReviewChangeItem": "Change item",
   "bonoReviewViewPhoto": "View bono photo",

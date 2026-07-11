@@ -231,7 +231,7 @@ void main() {
     expect(find.text(en.bonoReviewAccept(1)), findsOneWidget);
   });
 
-  testWidgets('Keep current packaging confirms a new-size line without adding',
+  testWidgets('Use existing packaging binds an existing pack, adds nothing',
       (tester) async {
     await tester.pumpWidget(host([_newPack(lineNo: 1)]));
     await tester.pumpAndSettle();
@@ -239,8 +239,12 @@ void main() {
     await tester.tap(find.text(en.bonoReviewStatusNewSize));
     await tester.pumpAndSettle();
     await tester.tap(find.text(en.bonoReviewKeepPackaging));
+    await tester.pumpAndSettle(); // the item's packaging picker opens
+    // Pick one of the item's existing packs (fake default: base Kg + 25 Kg Bag).
+    await tester.tap(find.text('25 Kg Bag'));
     await tester.pumpAndSettle();
 
+    // Line is Ready, bound to the existing pack — no new packaging created.
     expect(find.text(en.bonoReviewStatusReady), findsOneWidget);
     expect(api.createShopItemUnitCalls, isEmpty);
   });

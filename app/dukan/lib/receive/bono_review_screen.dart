@@ -150,7 +150,7 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
                 : ListView.builder(
                     padding: const EdgeInsets.only(bottom: 96, top: 4),
                     itemCount: active.length,
-                    itemBuilder: (context, i) => _card(active[i]),
+                    itemBuilder: (context, i) => _card(active[i], i + 1),
                   ),
           ),
         ],
@@ -173,7 +173,7 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
     );
   }
 
-  Widget _card(_Line line) {
+  Widget _card(_Line line, int number) {
     final l = tr(context);
     final theme = Theme.of(context);
     final accent = line.ready ? _green(theme) : _amber(theme);
@@ -198,9 +198,15 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
                       // Each element gets its own full-width line so long
                       // real-world names + categories never squeeze each other
                       // (a phone can't fit status chip + name + category on one
-                      // row). Status chip (▾ menu) first, then name, then the
-                      // category chip.
-                      _statusMenu(line),
+                      // row). Line number (matches the paper bono order) +
+                      // status chip (▾ menu) first, then name, then category.
+                      Row(
+                        children: [
+                          _NumberBadge(number: number, color: accent),
+                          const SizedBox(width: 8),
+                          Flexible(child: _statusMenu(line)),
+                        ],
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         line.displayName,
@@ -359,11 +365,7 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
       case 'edit_new':
         await _editNewInSheet(line);
       case 'keep_pack':
-        // Bind to the existing pack the matcher resolved; don't add the size.
-        setState(() {
-          line.newPackaging = false;
-          line.ready = true;
-        });
+        await _useExistingPackaging(line);
       case 'photo':
         widget.onViewPhoto?.call();
       case 'flag':
@@ -500,6 +502,29 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
     });
   }
 
+  // Skip creating the new size — receive against one of the item's EXISTING
+  // packagings instead. Opens the item's packaging picker so the cashier
+  // chooses which existing pack (not just the matcher's resolved fallback).
+  Future<void> _useExistingPackaging(_Line line) async {
+    if (line.shopItemId == null) return;
+    final picked = await showUnitPicker(
+      context,
+      shopId: widget.shop.id,
+      shopItemId: line.shopItemId!,
+      screen: 'receive',
+      baseUnitCode: line.baseUnitCode,
+      baseUnitLabel: _labelFor(line.baseUnitCode),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      line.shopItemUnitId = picked.shopItemUnitId;
+      line.packagingLabel = picked.packagingLabel;
+      line.newPackaging = false;
+      line.learnConfidence = 1; // explicit cashier binding
+      line.ready = true;
+    });
+  }
+
   Future<void> _pickExisting(_Line line) async {
     final target = await showBonoBindItemPicker(
       context,
@@ -574,7 +599,7 @@ class _Line {
     if (s.isBound) {
       // A matched line whose OCR pack is NEW to the item (0114) carries the
       // AI pack to add and can't be "Ready" until the cashier resolves it
-      // (Add packaging, or Keep current packaging) — regardless of match
+      // (Add packaging, or Use existing packaging) — regardless of match
       // confidence, because the resolved fallback unit is the wrong size.
       final newPack = s.newPackaging &&
           s.suggestedPackUnitCode != null &&
@@ -653,6 +678,33 @@ class _Dot extends StatelessWidget {
         height: 10,
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       );
+}
+
+// Card position (1-based) so the cashier can cross-check against the paper
+// bono's line order. Tinted with the card's status accent.
+class _NumberBadge extends StatelessWidget {
+  const _NumberBadge({required this.number, required this.color});
+  final int number;
+  final Color color;
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: 26,
+      height: 26,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.16),
+        shape: BoxShape.circle,
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        '$number',
+        style: theme.textTheme.labelMedium
+            ?.copyWith(color: color, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
 }
 
 class _CategoryChip extends StatelessWidget {
