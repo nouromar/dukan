@@ -1014,7 +1014,20 @@ class LocalRepository {
   /// history show "voided" immediately, before the queued void_sale drains
   /// and the authoritative server payload syncs back. Stock / receivable
   /// reversal is applied by the server on drain (and reconciled on sync).
+  /// Flag a transaction voided in the mirror AND reverse the stock + party
+  /// balance the original post moved, so Products and the customers/suppliers
+  /// lists reflect the void instantly — especially offline, where nothing
+  /// syncs until reconnect (previously they stayed stale, showing the sold
+  /// stock as gone and the debt as still owed until the next sync).
+  ///
+  /// Idempotent: a transaction already flagged voided is a no-op, so a
+  /// re-drain or a double-call can never double-restore. And the reversal is
+  /// only ever an INTERIM correction — the next items/parties sync sets
+  /// absolute truth (which already includes the server's reversing entry), so
+  /// any slip self-heals and can never accumulate.
   Future<void> applyOptimisticVoid(String txnId) async {
+    final t = await getTransaction(txnId);
+    if (t == null || t.isVoided) return;
     final db = await _db;
     await db.update(
       'local_transaction',
@@ -1022,6 +1035,62 @@ class LocalRepository {
       where: 'txn_id = ?',
       whereArgs: [txnId],
     );
+    // Best-effort reversal of the projections the post bumped. Wrapped so a
+    // malformed payload never blocks the void flag (sync reconciles anyway).
+    try {
+      final summary = t.payload['lines_summary'];
+      final lines = <ProjectionLine>[
+        if (summary is List)
+          for (final raw in summary)
+            if (raw is Map &&
+                raw['shop_item_unit_id'] != null &&
+                raw['quantity'] is num)
+              ProjectionLine(
+                shopItemUnitId: raw['shop_item_unit_id'] as String,
+                quantity: raw['quantity'] as num,
+                // Reverse the original movement: a sale removed stock (restore
+                // +1); a receive added it (remove -1).
+                direction: t.typeCode == 'receive' ? -1 : 1,
+              ),
+      ];
+      final partyId = t.partyId;
+      switch (t.typeCode) {
+        case 'sale':
+          await applyOptimisticStockForLines(lines: lines);
+          // A debt sale charged the customer receivable += total (a cash sale
+          // has no party); voiding clears it.
+          if (partyId != null) {
+            await applyOptimisticPartyPayment(
+              partyId: partyId,
+              direction: 'I',
+              amount: t.total,
+            );
+          }
+        case 'receive':
+          await applyOptimisticStockForLines(lines: lines);
+          // A receive charged the supplier payable += total; voiding clears it.
+          if (partyId != null) {
+            await applyOptimisticPartyPayment(
+              partyId: partyId,
+              direction: 'O',
+              amount: t.total,
+            );
+          }
+        case 'payment':
+          // A payment reduced the party balance by amount; voiding restores it.
+          final direction = t.payload['direction'] as String?;
+          if (partyId != null && direction != null) {
+            await applyOptimisticPartyCharge(
+              partyId: partyId,
+              direction: direction,
+              amount: t.total,
+            );
+          }
+        // expense: no stock, no party balance — the void flag is enough.
+      }
+    } catch (_) {
+      // Best-effort; the next items/parties sync sets absolute truth.
+    }
   }
 
   /// Read a single payment's detail from the local mirror (offline-first,

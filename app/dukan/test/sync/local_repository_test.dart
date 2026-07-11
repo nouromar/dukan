@@ -588,6 +588,96 @@ void main() {
     expect((await repo.getTransaction('s-void'))!.isVoided, isTrue);
   });
 
+  test('applyOptimisticVoid restores stock + receivable for a voided debt sale',
+      () async {
+    // Item whose stock already reflects the $12 sale of 3 kg (10 → 7).
+    await repo.applyItemsPayload({
+      'items': [_item('si-1', 'Rice', stock: 7)],
+      'units': [
+        {
+          'shop_item_unit_id': 'siu-1',
+          'shop_item_id': 'si-1',
+          'unit_code': 'kg',
+          'packaging_label': 'Kg',
+          'conversion_to_base': 1,
+          'is_default_sale': true,
+          'is_default_receive': true,
+          'is_active': true,
+          'server_updated_at_ms': 1,
+        },
+      ],
+      'aliases': [],
+      'barcodes': [],
+    });
+    // Customer whose receivable already reflects the debt sale.
+    await repo.applyPartiesPayload({
+      'parties': [_party('cust-1', 'Ahmed', type: 'customer', receivable: 40)],
+    });
+    await repo.writeOptimisticTransaction(
+      clientOpId: 'op-s',
+      txnId: 'sale-1',
+      shopId: shopId,
+      typeCode: 'sale',
+      occurredAtMs: 1000,
+      total: 12,
+      partyId: 'cust-1',
+      payload: const {
+        'lines_summary': [
+          {'shop_item_unit_id': 'siu-1', 'quantity': 3},
+        ],
+      },
+    );
+
+    await repo.applyOptimisticVoid('sale-1');
+
+    // Stock restored (7 + 3) and the debt cleared (40 - 12).
+    expect((await repo.getShopItem('si-1'))!.currentStock, 10);
+    expect(
+      (await repo.searchParties('', shopId: shopId, typeCode: 'customer'))
+          .single
+          .receivable,
+      28,
+    );
+
+    // Idempotent: a re-drain / double-void must not double-restore.
+    await repo.applyOptimisticVoid('sale-1');
+    expect((await repo.getShopItem('si-1'))!.currentStock, 10);
+    expect(
+      (await repo.searchParties('', shopId: shopId, typeCode: 'customer'))
+          .single
+          .receivable,
+      28,
+    );
+  });
+
+  test('applyOptimisticVoid re-charges the party balance for a voided payment',
+      () async {
+    // Customer who paid $15 of a $40 debt (receivable now 25).
+    await repo.applyPartiesPayload({
+      'parties': [_party('cust-1', 'Ahmed', type: 'customer', receivable: 25)],
+    });
+    await repo.writeOptimisticTransaction(
+      clientOpId: 'op-p',
+      txnId: 'pay-1',
+      shopId: shopId,
+      typeCode: 'payment',
+      occurredAtMs: 1000,
+      total: 15,
+      partyId: 'cust-1',
+      payload: const {'direction': 'I', 'lines_summary': <dynamic>[]},
+    );
+
+    await repo.applyOptimisticVoid('pay-1');
+
+    // Voiding the payment puts the $15 back onto the debt (25 + 15).
+    expect(
+      (await repo.searchParties('', shopId: shopId, typeCode: 'customer'))
+          .single
+          .receivable,
+      40,
+    );
+  });
+
   test('projectedStock subtracts pending sale deltas', () async {
     await repo.applyItemsPayload({
       'items': [_item('si-1', 'Rice 5kg', stock: 10)],
