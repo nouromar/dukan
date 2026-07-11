@@ -90,13 +90,32 @@ class AuthController extends ChangeNotifier {
         _shops = const [];
         _selectedShop = null;
         _shopLoadFailed = false;
-      } else {
-        // Pending-invite auto-claim runs before shop load so any
-        // freshly-claimed shop shows up in the first loadShops()
-        // call — no extra refresh from the UI side.
-        await _claimPendingInvitesSilently();
-        await loadShops();
+        notifyListeners();
+        return;
       }
+      // start() OWNS the first load: its warm-cache path paints Home from the
+      // sqflite cache and re-validates access in the background. The
+      // `initialSession` event (fired on subscribe with the restored session,
+      // i.e. every cold start — including when the OS kills the idle app) must
+      // NOT trigger the listener's own network loadShops here: with _shops
+      // still empty that flip to shopsLoading races the cache paint and flashes
+      // the full-screen LoadingScreen for the length of the network round-trip.
+      // Skip it — start() already loads + revalidates. A genuine sign-in
+      // (`signedIn`) still loads (fresh user, LoadingScreen is correct there),
+      // and every later event — a resume `tokenRefreshed`, `userUpdated` —
+      // still reloads. Those keep _shops populated, so there's no flash, and
+      // they re-check access so a deactivated/deleted user (whose shop drops
+      // out of loadShops, or whose token is now invalid) is still caught and
+      // routed out on the next resume.
+      if (state.event == AuthChangeEvent.initialSession) {
+        notifyListeners();
+        return;
+      }
+      // Pending-invite auto-claim runs before shop load so any
+      // freshly-claimed shop shows up in the first loadShops()
+      // call — no extra refresh from the UI side.
+      await _claimPendingInvitesSilently();
+      await loadShops();
       notifyListeners();
     });
 
