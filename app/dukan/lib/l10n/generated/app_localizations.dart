@@ -3264,24 +3264,6 @@ abstract class AppLocalizations {
   /// **'SAVE & ADD ANOTHER'**
   String get addNewItemSaveAndAddAnotherButton;
 
-  /// No description provided for @addNewItemOpeningStockHeader.
-  ///
-  /// In en, this message translates to:
-  /// **'Stock you have now (optional)'**
-  String get addNewItemOpeningStockHeader;
-
-  /// No description provided for @addNewItemOpeningQtyLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'How many?'**
-  String get addNewItemOpeningQtyLabel;
-
-  /// No description provided for @addNewItemOpeningCostLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Cost for each'**
-  String get addNewItemOpeningCostLabel;
-
   /// No description provided for @addNewItemSavedToast.
   ///
   /// In en, this message translates to:

@@ -1885,15 +1885,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewItemSaveAndAddAnotherButton => 'SAVE & ADD ANOTHER';
 
   @override
-  String get addNewItemOpeningStockHeader => 'Stock you have now (optional)';
-
-  @override
-  String get addNewItemOpeningQtyLabel => 'How many?';
-
-  @override
-  String get addNewItemOpeningCostLabel => 'Cost for each';
-
-  @override
   String addNewItemSavedToast(String name) {
     return 'Saved $name';
   }

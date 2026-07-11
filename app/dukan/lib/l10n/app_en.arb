@@ -749,9 +749,6 @@
   "addNewItemCancelButton": "CANCEL",
   "addNewItemSaveButton": "SAVE",
   "addNewItemSaveAndAddAnotherButton": "SAVE & ADD ANOTHER",
-  "addNewItemOpeningStockHeader": "Stock you have now (optional)",
-  "addNewItemOpeningQtyLabel": "How many?",
-  "addNewItemOpeningCostLabel": "Cost for each",
   "addNewItemSavedToast": "Saved {name}",
   "@addNewItemSavedToast": {
     "placeholders": {

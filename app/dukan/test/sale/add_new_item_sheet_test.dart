@@ -387,7 +387,7 @@ void main() {
   // --- Product variant: "How is it sold?" is a plain all-units dropdown ----
 
   testWidgets(
-    'product: pick a unit → base-only createShopItem + opening stock (conv 1)',
+    'product: pick a unit + price → base-only createShopItem, never posts stock',
     (tester) async {
       final read = await pumpAndOpen(
         tester,
@@ -396,12 +396,9 @@ void main() {
       );
       await pickSoldUnit(tester, 'Kg');
 
-      // Fields: name(0), price(1), opening qty(2).
+      // Fields: name(0), price(1) — the opening-stock section is gone; stock
+      // is set later via the detail screen's adjust sheet.
       await tester.enterText(find.byType(TextField).at(1), '45');
-      await tester.pump();
-      await tester.enterText(find.byType(TextField).at(2), '6');
-      await tester.pump();
-      await tester.enterText(find.byType(TextField).at(3), '42');
       await tester.pump();
 
       await tester.tap(
@@ -416,37 +413,11 @@ void main() {
       expect(create.defaultSide, 'sale');
       // Base-only → base is default for both sides, no extra flag call.
       expect(api.setShopItemUnitDefaultFlagsCalls, isEmpty);
-      // Opening stock in the counting unit (conversion 1): 6 kg @ $42/kg.
-      final adj = api.postInventoryAdjustmentCalls.single;
-      expect(adj.reasonCode, 'opening');
-      expect(adj.shopItemId, create.shopItemId);
-      expect(adj.quantityDelta, 6);
-      expect((adj.unitCost as num).toDouble(), 42);
+      // Creating a product never posts an inventory adjustment.
+      expect(api.postInventoryAdjustmentCalls, isEmpty);
       expect(read(), isNotNull);
     },
   );
-
-  testWidgets('product: no opening stock → no inventory call', (tester) async {
-    await pumpAndOpen(
-      tester,
-      initialName: 'Soap',
-      variant: AddNewItemVariant.product,
-    );
-    await pickSoldUnit(tester, 'Piece');
-    await tester.enterText(find.byType(TextField).at(1), '0.5'); // price
-    await tester.pump();
-
-    await tester.tap(
-      find.widgetWithText(FilledButton, en.addNewItemSaveButton),
-    );
-    await tester.pumpAndSettle();
-
-    final create = api.createShopItemCalls.single;
-    expect(create.baseUnitCode, 'piece');
-    expect(create.soldUnitCode, isNull);
-    expect(api.postInventoryAdjustmentCalls, isEmpty);
-    expect(api.setShopItemUnitDefaultFlagsCalls, isEmpty);
-  });
 
   testWidgets(
     'product: a hung create times out → queued, sheet still closes (no wedge)',

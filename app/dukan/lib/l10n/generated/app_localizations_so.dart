@@ -1897,16 +1897,6 @@ class AppLocalizationsSo extends AppLocalizations {
   String get addNewItemSaveAndAddAnotherButton => 'KAYDI & KU DAR MID KALE';
 
   @override
-  String get addNewItemOpeningStockHeader =>
-      'Alaabta aad hadda haysato (ikhtiyaari)';
-
-  @override
-  String get addNewItemOpeningQtyLabel => 'Immisa?';
-
-  @override
-  String get addNewItemOpeningCostLabel => 'Qiimaha midkiiba';
-
-  @override
   String addNewItemSavedToast(String name) {
     return 'Waa la kaydiyay $name';
   }

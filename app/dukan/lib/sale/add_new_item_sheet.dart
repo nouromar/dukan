@@ -14,8 +14,8 @@
 // Variant differences:
 //   * sale/receive — quick-add; title verb + button (ADD TO SALE / RECEIVE),
 //     and whether the price field appears.
-//   * product — the deliberate "Add product" flow: price + an optional
-//     opening-stock section (entered in the picked unit) + "Save & add another".
+//   * product — the deliberate "Add product" flow: price + "Save & add
+//     another". Stock is set later via the detail screen's adjust sheet.
 //
 // Receive re-exports this widget from `lib/receive/add_new_item_sheet.dart`
 // so both call sites import from the path that matches their flow.
@@ -67,10 +67,10 @@ class AddNewItemResult {
 
 /// Sale requires a price; Receive omits it. `product` is the deliberate
 /// "Add a product" flow (Products "+" / setup onboarding): price shown, plus
-/// an optional opening-stock section and "Save & add another" for fast setup.
-/// Advanced bits (extra packagings, aliases, supplier, barcode) are added
-/// afterward on ShopItemDetailScreen — so creation stays one screen, one
-/// packaging, no per-packaging stock, no hidden base-unit split.
+/// "Save & add another" for fast setup. Advanced bits (opening stock, extra
+/// packagings, aliases, supplier, barcode) are added afterward on
+/// ShopItemDetailScreen — so creation stays one screen, one packaging, no
+/// hidden base-unit split.
 enum AddNewItemVariant { sale, receive, product }
 
 class AddNewItemSheet {
@@ -153,10 +153,6 @@ class _AddNewItemBody extends StatefulWidget {
 class _AddNewItemBodyState extends State<_AddNewItemBody> {
   late final TextEditingController _nameController;
   late final TextEditingController _priceController;
-  // Product variant only: opening stock entered ONCE in the picked selling
-  // unit (converted to base on save), with a cost per that unit.
-  late final TextEditingController _openingQtyController;
-  late final TextEditingController _openingCostController;
   final FocusNode _nameFocus = FocusNode();
   Future<List<CategoryOption>>? _categoriesFuture;
   // "How is it sold?" is a plain all-units dropdown (every variant) — pick the
@@ -177,14 +173,10 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     super.initState();
     _nameController = TextEditingController(text: widget.initialName);
     _priceController = TextEditingController();
-    _openingQtyController = TextEditingController();
-    _openingCostController = TextEditingController();
     // Prefill the category from an AI/caller suggestion (e.g. a bono line).
     _categoryId = widget.initialCategoryId;
     _nameController.addListener(_rebuild);
     _priceController.addListener(_rebuild);
-    _openingQtyController.addListener(_rebuild);
-    _openingCostController.addListener(_rebuild);
   }
 
   @override
@@ -254,12 +246,8 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
   void dispose() {
     _nameController.removeListener(_rebuild);
     _priceController.removeListener(_rebuild);
-    _openingQtyController.removeListener(_rebuild);
-    _openingCostController.removeListener(_rebuild);
     _nameController.dispose();
     _priceController.dispose();
-    _openingQtyController.dispose();
-    _openingCostController.dispose();
     _nameFocus.dispose();
     super.dispose();
   }
@@ -269,8 +257,6 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
   void _resetForAddAnother() {
     _nameController.clear();
     _priceController.clear();
-    _openingQtyController.clear();
-    _openingCostController.clear();
     setState(() {
       _picked = null;
       _soldUnit = null;
@@ -295,28 +281,6 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
   bool get _priceShown => widget.variant != AddNewItemVariant.receive;
   bool get _priceRequired => _priceShown && _picked != null;
 
-  // Opening stock (product only): optional. Once a quantity is typed, a cost
-  // is required — the post_inventory_adjustment RPC needs a unit cost on any
-  // increase.
-  bool get _openingShown => _isProduct && _picked != null;
-  num? get _openingQty {
-    final raw = _openingQtyController.text.trim();
-    if (raw.isEmpty) return null;
-    final v = num.tryParse(raw);
-    if (v == null || v < 0) return null;
-    return v;
-  }
-
-  num? get _openingCost {
-    final raw = _openingCostController.text.trim();
-    if (raw.isEmpty) return null;
-    final v = num.tryParse(raw);
-    if (v == null || v < 0) return null;
-    return v;
-  }
-
-  bool get _hasOpeningQty => (_openingQty ?? 0) > 0;
-
   bool get _canSave {
     if (_saving) return false;
     if (_nameController.text.trim().isEmpty) return false;
@@ -324,13 +288,6 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     if (_priceRequired && _parsedPrice == null) return false;
     if (!_priceRequired && _priceController.text.trim().isNotEmpty) {
       if (_parsedPrice == null) return false;
-    }
-    // Product: a typed opening quantity must be valid and carry a positive cost.
-    if (_isProduct) {
-      if (_openingQtyController.text.trim().isNotEmpty && _openingQty == null) {
-        return false;
-      }
-      if (_hasOpeningQty && ((_openingCost ?? 0) <= 0)) return false;
     }
     return true;
   }
@@ -361,21 +318,6 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
       return;
     }
 
-    // Product opening stock (optional): entered in the SELLING unit, converted
-    // to base once via the single conversion the shopkeeper already chose —
-    // "6 sacks @ $42" → 6×50 = 300 base-kg at $42/50 = $0.84/kg. One packaging,
-    // one stock number, no hidden per-packaging summing.
-    final conv = (choice.conversion ?? 1).toDouble();
-    final openingQty = _isProduct ? _openingQty : null;
-    final hasOpening = (openingQty ?? 0) > 0;
-    final openingCost = _openingCost;
-    if (_isProduct && hasOpening && (openingCost == null || openingCost <= 0)) {
-      showError(context, l.addNewItemInvalidPriceMessage);
-      return;
-    }
-    final openingBaseQty = hasOpening ? openingQty!.toDouble() * conv : 0.0;
-    final openingUnitCost = hasOpening ? openingCost!.toDouble() / conv : null;
-
     // Read providers BEFORE flipping _saving so a missing provider (or any
     // synchronous throw) can never leave the button stuck spinning.
     final api = context.read<ShopApi>();
@@ -405,7 +347,6 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
     final defaultUnitId = soldUnitId ?? baseUnitId;
     final itemOpId = generateClientOpId('item');
     final flagsOpId = generateClientOpId('flags');
-    final stockOpId = generateClientOpId('opening');
     // Product with a distinct selling packaging: make it the default for BOTH
     // sides so receiving also defaults to the sack (not the base kg). Base-only
     // items already default the base for both — no extra call.
@@ -520,23 +461,14 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
           clientOpId: flagsOpId,
         );
       }
-      if (hasOpening) {
-        await api.postOpeningStockAdjustment(
-          shopId: widget.shop.id,
-          shopItemId: shopItemId,
-          baseQuantity: openingBaseQty,
-          unitCost: openingUnitCost,
-          clientOpId: stockOpId,
-        );
-      }
       await writeMirror();
       finish();
     } on PostgrestException catch (error, stackTrace) {
       _handleFailure(error, stackTrace, l.addNewItemFailedMessage);
     } catch (error, stackTrace) {
       // Transient (offline / network) — mirror + queue with the client ids.
-      // Stagger queued_at so the create drains before the flags + opening-stock
-      // posts that depend on the item/unit existing. Thin-client → surface.
+      // Stagger queued_at so the create drains before the flags post that
+      // depends on the item/unit existing. Thin-client → surface.
       if (repo == null) {
         _handleFailure(error, stackTrace, l.addNewItemFailedMessage);
       } else {
@@ -576,22 +508,6 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
               isDefaultReceive: true,
             ),
             queuedAt: now.add(const Duration(milliseconds: 1)),
-          ));
-        }
-        if (hasOpening) {
-          await queue.enqueue(PendingPost(
-            id: generateClientOpId('post'),
-            clientOpId: stockOpId,
-            shopId: widget.shop.id,
-            originalActorUserId: actorId,
-            rpc: 'post_inventory_adjustment',
-            params: buildPostInventoryAdjustmentParams(
-              reasonCode: 'opening',
-              shopItemId: shopItemId,
-              quantityDelta: openingBaseQty,
-              unitCost: openingUnitCost,
-            ),
-            queuedAt: now.add(const Duration(milliseconds: 2)),
           ));
         }
         finish();
@@ -780,52 +696,6 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
                             isDense: true,
                           ),
                         ),
-                      ],
-                      // Product only: opening stock, asked ONCE in the picked
-                      // selling unit. Cost appears only when a quantity is typed.
-                      if (_openingShown) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          l.addNewItemOpeningStockHeader,
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _openingQtyController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[0-9.]'),
-                            ),
-                          ],
-                          decoration: InputDecoration(
-                            labelText: l.addNewItemOpeningQtyLabel,
-                            suffixText: pickedLabel,
-                            isDense: true,
-                          ),
-                        ),
-                        if (_hasOpeningQty) ...[
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _openingCostController,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'[0-9.]'),
-                              ),
-                            ],
-                            decoration: InputDecoration(
-                              labelText: l.addNewItemOpeningCostLabel,
-                              prefixText: '${widget.shop.currencySymbol} ',
-                              isDense: true,
-                            ),
-                          ),
-                        ],
                       ],
                     ],
                   ),
