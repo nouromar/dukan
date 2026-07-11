@@ -1215,25 +1215,39 @@ class _PackagingTile extends StatelessWidget {
                     spacing: 6,
                     runSpacing: 4,
                     children: [
+                      // Selection-only (radio-like): tapping the already-
+                      // selected chip is ignored. Every item must keep exactly
+                      // one default per side — the RPC only *promotes* (clears
+                      // siblings on set), so honoring a deselect would leave
+                      // the item with zero defaults and break Sale/Receive
+                      // prefill. Promote a different packaging instead. The
+                      // callback stays non-null so the selected chip renders
+                      // highlighted (not disabled-grey).
                       FilterChip(
                         label: Text(l.shopItemDetailDefaultSaleBadge),
                         selected: unit.isDefaultSale,
                         onSelected: onToggleDefault == null
                             ? null
-                            : (v) => onToggleDefault!(
-                                  isDefaultSale: v,
+                            : (v) {
+                                if (!v) return; // can't unset the only default
+                                onToggleDefault!(
+                                  isDefaultSale: true,
                                   isDefaultReceive: unit.isDefaultReceive,
-                                ),
+                                );
+                              },
                       ),
                       FilterChip(
                         label: Text(l.shopItemDetailDefaultReceiveBadge),
                         selected: unit.isDefaultReceive,
                         onSelected: onToggleDefault == null
                             ? null
-                            : (v) => onToggleDefault!(
+                            : (v) {
+                                if (!v) return; // can't unset the only default
+                                onToggleDefault!(
                                   isDefaultSale: unit.isDefaultSale,
-                                  isDefaultReceive: v,
-                                ),
+                                  isDefaultReceive: true,
+                                );
+                              },
                       ),
                     ],
                   ),
@@ -1383,7 +1397,7 @@ class _EditPriceDialogState extends State<_EditPriceDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop<num?>(null),
-          child: Text(l.cartClearConfirmNo),
+          child: Text(l.cancel),
         ),
         FilledButton(
           onPressed: _confirm,

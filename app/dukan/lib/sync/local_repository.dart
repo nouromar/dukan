@@ -667,11 +667,16 @@ class LocalRepository {
     final receiveUnit = defaultReceive ?? baseUnit;
     final showReceivePack =
         receiveUnit != null && receiveUnit.conversionToBase != 1;
+    // Resolve the category display name from the mirror so the Products list
+    // subtitle and the detail screen's Category tile show the real category
+    // (not "Other") when offline_mode = full. Without this the mirror path
+    // reported a null name and every item read as uncategorized.
+    final categoryName = await _localCategoryName(item.categoryId);
     return ShopItemSummary(
       shopItemId: item.shopItemId,
       itemId: item.itemId,
       displayName: item.displayName,
-      categoryName: null,
+      categoryName: categoryName,
       baseUnitCode: item.baseUnitCode,
       baseUnitLabel: item.baseUnitCode,
       // Show projected stock (mirror + pending queued deltas) so a queued
@@ -1527,6 +1532,23 @@ class LocalRepository {
   /// shape (top-level active rows; global first, then sort_order,
   /// then name). The stored `name` is the base label — offline it
   /// won't be locale-resolved, but the picker still functions.
+  /// Display name of a single category from the mirror, or null when the id
+  /// is null / unknown (treated as "Other" at the call site). Used to give
+  /// the offline product reads a real category label.
+  Future<String?> _localCategoryName(String? categoryId) async {
+    if (categoryId == null) return null;
+    final db = await _db;
+    final rows = await db.query(
+      'local_category',
+      columns: ['name'],
+      where: 'category_id = ?',
+      whereArgs: [categoryId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return rows.first['name'] as String?;
+  }
+
   Future<List<CategoryOption>> listCategoriesLocal({
     required String shopId,
   }) async {

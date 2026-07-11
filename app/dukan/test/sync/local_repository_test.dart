@@ -66,6 +66,52 @@ void main() {
     expect(box.isActive, isTrue);
   });
 
+  test('getShopItemDetail resolves the category name from the mirror', () async {
+    await repo.applyCategoriesPayload({
+      'categories': [
+        {
+          'id': 'cat-staples',
+          'shop_id': shopId,
+          'code': 'staples',
+          'parent_id': null,
+          'name': 'Staples',
+          'sort_order': 0,
+          'is_active': true,
+        },
+      ],
+    });
+    await repo.applyItemsPayload({
+      'items': [
+        {..._item('si-1', 'Bariis'), 'category_id': 'cat-staples'},
+        _item('si-2', 'Salt'), // category_id null
+      ],
+      'units': [
+        {
+          'shop_item_unit_id': 'siu-1',
+          'shop_item_id': 'si-1',
+          'unit_code': 'kg',
+          'packaging_label': 'Kg',
+          'conversion_to_base': 1,
+          'is_default_sale': true,
+          'is_default_receive': true,
+          'is_active': true,
+          'server_updated_at_ms': 1,
+        },
+      ],
+      'aliases': [],
+      'barcodes': [],
+    });
+
+    // Categorized item → real name (was null on the mirror, so the detail
+    // Category tile used to read "Other" on offline_mode = full).
+    final categorized = await repo.getShopItemDetail('si-1');
+    expect(categorized!.header.categoryName, 'Staples');
+
+    // Uncategorized item → null (rendered as "Other" at the call site).
+    final uncategorized = await repo.getShopItemDetail('si-2');
+    expect(uncategorized!.header.categoryName, isNull);
+  });
+
   test('searchItems returns active items by display_name + aliases',
       () async {
     await repo.applyItemsPayload({

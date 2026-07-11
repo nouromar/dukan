@@ -199,6 +199,56 @@ void main() {
     },
   );
 
+  testWidgets(
+    'default chips are selection-only: tapping the selected default is ignored',
+    (tester) async {
+      api.onGetShopItem = (_, _, _) async => _detail();
+      await pumpDetail(tester);
+
+      // Base "Kg" is default-for-sale → its "Sale" chip is selected. Tapping
+      // it would try to DESELECT, which must be ignored (an item must always
+      // keep exactly one default per side).
+      final selectedSale = find.byWidgetPredicate((w) =>
+          w is FilterChip &&
+          w.selected &&
+          w.label is Text &&
+          (w.label as Text).data == en.shopItemDetailDefaultSaleBadge);
+      await tester.scrollUntilVisible(selectedSale, 100);
+      expect(selectedSale, findsOneWidget);
+
+      await tester.tap(selectedSale);
+      await tester.pumpAndSettle();
+
+      // No default-flags mutation queued/drained — deselect is a no-op.
+      expect(api.setShopItemUnitDefaultFlagsCalls, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'promoting a different packaging to default fires the flags RPC',
+    (tester) async {
+      api.onGetShopItem = (_, _, _) async => _detail();
+      await pumpDetail(tester);
+
+      // The bag is NOT default-for-sale → its "Sale" chip is unselected.
+      final unselectedSale = find.byWidgetPredicate((w) =>
+          w is FilterChip &&
+          !w.selected &&
+          w.label is Text &&
+          (w.label as Text).data == en.shopItemDetailDefaultSaleBadge);
+      await tester.scrollUntilVisible(unselectedSale, 100);
+      expect(unselectedSale, findsOneWidget);
+
+      await tester.tap(unselectedSale);
+      await tester.pumpAndSettle();
+
+      expect(api.setShopItemUnitDefaultFlagsCalls, hasLength(1));
+      final call = api.setShopItemUnitDefaultFlagsCalls.single;
+      expect(call.shopItemUnitId, 'siu-bag');
+      expect(call.isDefaultSale, isTrue);
+    },
+  );
+
   testWidgets('AppBar has NO pencil — edits happen inline on this screen',
       (tester) async {
     api.onGetShopItem = (_, _, _) async => _detail();
