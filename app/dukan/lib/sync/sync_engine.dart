@@ -80,6 +80,7 @@ class SyncEngine extends ChangeNotifier {
     required PendingPostDao pendingPostDao,
     Duration realtimeDebounce = const Duration(milliseconds: 200),
     Duration deltaPollInterval = const Duration(minutes: 5),
+    Duration cursorOverlap = Duration.zero,
     DateTime Function()? clock,
     void Function(Object error, StackTrace stack, String hint)? reportError,
   })  : _shopApi = shopApi,
@@ -87,6 +88,7 @@ class SyncEngine extends ChangeNotifier {
         _pendingPostDao = pendingPostDao,
         _realtimeDebounce = realtimeDebounce,
         _deltaPollInterval = deltaPollInterval,
+        _cursorOverlapMs = cursorOverlap.inMilliseconds,
         _clock = clock ?? DateTime.now,
         _reportError = reportError;
 
@@ -95,8 +97,28 @@ class SyncEngine extends ChangeNotifier {
   final PendingPostDao _pendingPostDao;
   final Duration _realtimeDebounce;
   final Duration _deltaPollInterval;
+
+  /// How far to REWIND each cursor below the server's `server_now_ms` when
+  /// persisting it. The delta filter is `updated_at > cursor` and the server
+  /// stamps `server_now_ms` at its transaction start — so a row whose writing
+  /// transaction had set `updated_at` but not yet COMMITTED when the delta
+  /// snapshotted sits at `updated_at <= server_now` yet is invisible to that
+  /// read, and the next delta (`> server_now`) would skip it forever. Rewinding
+  /// a couple of seconds re-fetches that boundary window; the apply* upserts
+  /// are idempotent by id, so the overlap is harmless. Zero in tests (exact
+  /// cursors); a few seconds in production.
+  final int _cursorOverlapMs;
   final DateTime Function() _clock;
   final void Function(Object, StackTrace, String)? _reportError;
+
+  /// Persisted-cursor value for a fetched `server_now_ms`, rewound by
+  /// [_cursorOverlapMs] (never below zero). See that field for why.
+  int _cursorMs(int serverNowMs) {
+    if (_cursorOverlapMs <= 0) return serverNowMs;
+    return serverNowMs > _cursorOverlapMs
+        ? serverNowMs - _cursorOverlapMs
+        : serverNowMs;
+  }
 
   SyncEngineState _state = SyncEngineState.idle;
   SyncEngineState get state => _state;
@@ -222,7 +244,7 @@ class SyncEngine extends ChangeNotifier {
         await _local.writeSyncState(
           shopId: shopId,
           resource: resource,
-          lastSyncedAtMs: serverNowMs,
+          lastSyncedAtMs: _cursorMs(serverNowMs),
           fullSyncDone: true,
         );
       }
@@ -437,7 +459,7 @@ class SyncEngine extends ChangeNotifier {
       await _local.writeSyncState(
         shopId: shopId,
         resource: resource,
-        lastSyncedAtMs: _serverNowOrLocal(payload),
+        lastSyncedAtMs: _cursorMs(_serverNowOrLocal(payload)),
       );
       return true;
     } catch (error, stack) {

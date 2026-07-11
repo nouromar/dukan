@@ -432,6 +432,62 @@ void main() {
     },
   );
 
+  test(
+    'cursorOverlap rewinds the persisted cursor below server_now_ms so the '
+    'boundary window is re-fetched (not skipped)',
+    () async {
+      const t0 = 1700000000000;
+      const serverNow = 1700000010000;
+      for (final resource in SyncResource.all) {
+        await repo.writeSyncState(
+          shopId: shopId,
+          resource: resource,
+          lastSyncedAtMs: t0,
+          fullSyncDone: true,
+        );
+      }
+      api.onGetShopItemsDelta = ({required shopId, required since}) async =>
+          const {
+            'items': [],
+            'units': [],
+            'aliases': [],
+            'barcodes': [],
+            'server_now_ms': serverNow,
+          };
+      api.onGetPartiesDelta = ({required shopId, required since}) async =>
+          const {'parties': [], 'server_now_ms': serverNow};
+      api.onGetCategoriesDelta = ({required shopId, required since}) async =>
+          const {
+            'expense_categories': [],
+            'categories': [],
+            'units': [],
+            'server_now_ms': serverNow,
+          };
+      api.onGetTransactionsDelta =
+          ({required shopId, required since, int limit = 200}) async =>
+              const {'transactions': [], 'server_now_ms': serverNow};
+      api.onGetUnpaidInvoicesDelta = ({required shopId, required since}) async =>
+          const {'unpaid_invoices': [], 'server_now_ms': serverNow};
+
+      final engine = SyncEngine(
+        shopApi: api,
+        localRepository: repo,
+        pendingPostDao: postDao,
+        cursorOverlap: const Duration(seconds: 2),
+      );
+      await engine.deltaSync(shopId);
+
+      // Cursor lands 2s BELOW server_now_ms so the next delta re-scans the
+      // last 2s (idempotent) instead of jumping past an in-flight commit.
+      final state = await repo.loadSyncState(shopId);
+      for (final resource in SyncResource.all) {
+        expect(state[resource]!.lastSyncedAtMs, serverNow - 2000,
+            reason: '$resource cursor should be rewound by the overlap');
+      }
+      engine.dispose();
+    },
+  );
+
   test('bulk burst: many events in the debounce window flush once',
       () async {
     for (final resource in SyncResource.all) {

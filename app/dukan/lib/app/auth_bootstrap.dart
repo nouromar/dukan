@@ -188,6 +188,11 @@ class _AuthBootstrapState extends State<AuthBootstrap>
         seconds: _configResolver
             .resolve(ConfigKeys.syncDeltaPollIntervalS),
       ),
+      // Rewind each persisted cursor 2s below the server clock so a row whose
+      // writing transaction was mid-commit when a delta snapshotted is
+      // re-fetched next time instead of being skipped forever (the apply*
+      // upserts dedupe the overlap by id). See SyncEngine._cursorOverlapMs.
+      cursorOverlap: const Duration(seconds: 2),
       reportError: (error, stack, hint) {
         unawaited(CrashReporter.reportError(error, stack, hint: hint));
       },
