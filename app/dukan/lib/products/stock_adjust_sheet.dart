@@ -25,6 +25,7 @@ import 'package:dukan/shared/digit_input.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/shared/quantity_format.dart';
+import 'package:dukan/shared/stock_format.dart';
 
 enum StockAdjustMode { opening, add, subtract, setExact }
 
@@ -67,6 +68,12 @@ Future<bool?> showStockAdjustSheet(
   required String productName,
   required num currentStock,
   required String baseUnitLabel,
+  // The default-receive packaging the detail's readout renders in, so the
+  // "Current" line here shows the SAME "45 Carton(12 bottle) + 4 bottle" the
+  // shopkeeper just tapped — not the raw base total. Null (base-only item, or
+  // conversion ≤ 1) → the Current line stays the plain base unit.
+  String? packagingLabel,
+  num? conversion,
 }) {
   return showModalBottomSheet<bool>(
     context: context,
@@ -78,6 +85,8 @@ Future<bool?> showStockAdjustSheet(
       productName: productName,
       currentStock: currentStock,
       baseUnitLabel: baseUnitLabel,
+      packagingLabel: packagingLabel,
+      conversion: conversion,
     ),
   );
 }
@@ -89,6 +98,8 @@ class _StockAdjustBody extends StatefulWidget {
     required this.productName,
     required this.currentStock,
     required this.baseUnitLabel,
+    this.packagingLabel,
+    this.conversion,
   });
 
   final ShopSummary shop;
@@ -96,6 +107,8 @@ class _StockAdjustBody extends StatefulWidget {
   final String productName;
   final num currentStock;
   final String baseUnitLabel;
+  final String? packagingLabel;
+  final num? conversion;
 
   @override
   State<_StockAdjustBody> createState() => _StockAdjustBodyState();
@@ -324,10 +337,25 @@ class _StockAdjustBodyState extends State<_StockAdjustBody> {
               ),
               const SizedBox(height: 6),
               Text(
-                l.stockAdjustCurrentLabel(
-                  formatQty(widget.currentStock),
-                  widget.baseUnitLabel,
-                ),
+                // Show the current stock in the SAME packaging the detail's
+                // readout used (default-receive), so the two screens agree.
+                // The amount field below stays in the base unit. Base-only
+                // items keep the plain base line.
+                (widget.packagingLabel != null &&
+                        widget.conversion != null &&
+                        widget.conversion! > 1)
+                    ? l.stockAdjustCurrentValueLabel(
+                        formatCompoundStock(
+                          stock: widget.currentStock,
+                          baseLabel: widget.baseUnitLabel,
+                          packagingLabel: widget.packagingLabel,
+                          conversion: widget.conversion,
+                        ),
+                      )
+                    : l.stockAdjustCurrentLabel(
+                        formatQty(widget.currentStock),
+                        widget.baseUnitLabel,
+                      ),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

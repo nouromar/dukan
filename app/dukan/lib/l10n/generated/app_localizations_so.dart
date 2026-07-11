@@ -650,6 +650,11 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
+  String stockAdjustCurrentValueLabel(String value) {
+    return 'Hadda: $value';
+  }
+
+  @override
   String get stockAdjustModeOpening => 'Furitaan';
 
   @override

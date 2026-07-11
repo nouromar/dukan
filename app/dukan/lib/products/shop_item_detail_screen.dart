@@ -328,6 +328,22 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
   /// Tap the big stock readout → opens the adjust sheet (opening /
   /// add / subtract / set exact). Reloads on success.
   Future<void> _onAdjustStock(ShopItemDetail detail) async {
+    // Resolve the same unit the readout renders in — the default-receive
+    // packaging, else base — so the sheet's "Current" line matches the
+    // detail's "45 Carton(12 bottle) + 4 bottle" instead of the raw base
+    // total. A base-only item leaves stockUnit null and the sheet stays
+    // base-unit.
+    ShopItemUnitDetail? stockUnit;
+    for (final u in detail.units.where((u) => u.isActive)) {
+      if (u.isDefaultReceive) {
+        stockUnit = u;
+        break;
+      }
+      if (u.isBaseUnit && stockUnit == null) stockUnit = u;
+    }
+    final showPackaging = stockUnit != null &&
+        !stockUnit.isBaseUnit &&
+        stockUnit.conversionToBase > 1;
     final ok = await showStockAdjustSheet(
       context,
       shop: widget.shop,
@@ -335,6 +351,8 @@ class _ShopItemDetailScreenState extends State<ShopItemDetailScreen> {
       productName: displayName(detail.header.displayName),
       currentStock: detail.header.currentStock,
       baseUnitLabel: detail.header.baseUnitLabel,
+      packagingLabel: showPackaging ? stockUnit.packagingLabel : null,
+      conversion: showPackaging ? stockUnit.conversionToBase : null,
     );
     if (ok == true && mounted) _reload();
   }
@@ -929,19 +947,23 @@ class _DetailBody extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(
-                    l.shopItemDetailStockLabel,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                // Label takes only its intrinsic width — it's one short word.
+                // The value gets the whole remaining row and wraps to a second
+                // line before ellipsizing, so a long compound readout like
+                // "45 Carton(12 bottle) + 4 bottle" isn't cropped.
+                Text(
+                  l.shopItemDetailStockLabel,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Flexible(
+                Expanded(
                   child: Text(
                     stockText,
                     textAlign: TextAlign.end,
+                    maxLines: 2,
+                    softWrap: true,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,

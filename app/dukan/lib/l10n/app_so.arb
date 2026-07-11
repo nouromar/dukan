@@ -276,6 +276,14 @@
       }
     }
   },
+  "stockAdjustCurrentValueLabel": "Hadda: {value}",
+  "@stockAdjustCurrentValueLabel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "stockAdjustModeOpening": "Furitaan",
   "stockAdjustModeAdd": "Ku dar",
   "stockAdjustModeSubtract": "Ka jar",

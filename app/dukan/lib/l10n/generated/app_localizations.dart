@@ -1214,6 +1214,12 @@ abstract class AppLocalizations {
   /// **'Current: {amount} {unit}'**
   String stockAdjustCurrentLabel(String amount, String unit);
 
+  /// No description provided for @stockAdjustCurrentValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current: {value}'**
+  String stockAdjustCurrentValueLabel(String value);
+
   /// No description provided for @stockAdjustModeOpening.
   ///
   /// In en, this message translates to:

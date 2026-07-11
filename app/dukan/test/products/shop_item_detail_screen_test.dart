@@ -433,6 +433,62 @@ void main() {
     },
   );
 
+  testWidgets(
+    'adjust sheet "Current" echoes the default-receive packaging (matches the readout)',
+    (tester) async {
+      api.onGetShopItem = (_, _, _) async => _detail(currentStock: 50);
+      await pumpDetail(tester);
+
+      await tester.tap(find.text('2 Bag(25Kg)')); // the readout
+      await tester.pumpAndSettle();
+
+      // The sheet's Current line shows the SAME compound the detail showed,
+      // not the raw base "50 Kg" — so the two screens agree.
+      expect(
+        find.text(en.stockAdjustCurrentValueLabel('2 Bag(25Kg)')),
+        findsOneWidget,
+      );
+      expect(find.text(en.stockAdjustCurrentLabel('50', 'Kg')), findsNothing);
+      // The amount field stays in the base unit.
+      expect(
+        find.text(en.stockAdjustAmountLabel('Kg')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'adjust sheet "Current" stays base-unit for a base-only product',
+    (tester) async {
+      api.onGetShopItem = (_, _, _) async => _detail(
+            currentStock: 12,
+            units: const [
+              ShopItemUnitDetail(
+                shopItemUnitId: 'siu-base',
+                itemUnitId: null,
+                unitCode: 'kg',
+                unitLabel: 'Kg',
+                packagingLabel: 'Kg',
+                conversionToBase: 1,
+                salePrice: 1.5,
+                lastCost: null,
+                isDefaultSale: true,
+                isDefaultReceive: true,
+                isBaseUnit: true,
+                isActive: true,
+              ),
+            ],
+          );
+      await pumpDetail(tester);
+
+      // Base-only readout is the plain base ("12Kg"); tapping opens the sheet.
+      await tester.tap(find.text('12Kg'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(en.stockAdjustCurrentLabel('12', 'Kg')), findsOneWidget);
+    },
+  );
+
   testWidgets('+ Add barcode on packaging tile → addShopItemBarcode fires',
       (tester) async {
     api.onGetShopItem = (_, _, _) async => _detail();

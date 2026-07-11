@@ -647,6 +647,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String stockAdjustCurrentValueLabel(String value) {
+    return 'Current: $value';
+  }
+
+  @override
   String get stockAdjustModeOpening => 'Opening';
 
   @override

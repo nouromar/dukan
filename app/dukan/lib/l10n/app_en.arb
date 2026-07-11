@@ -291,6 +291,14 @@
       }
     }
   },
+  "stockAdjustCurrentValueLabel": "Current: {value}",
+  "@stockAdjustCurrentValueLabel": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "stockAdjustModeOpening": "Opening",
   "stockAdjustModeAdd": "Add",
   "stockAdjustModeSubtract": "Subtract",
