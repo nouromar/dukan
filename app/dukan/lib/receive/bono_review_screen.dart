@@ -268,8 +268,8 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Number (matches the paper bono) + the one glance cue,
-                      // and a faint pencil hinting the whole card is tappable.
+                      // Number (matches the paper bono) + the one glance cue.
+                      // A trailing chevron (below) says the whole card opens.
                       Row(
                         children: [
                           _NumberBadge(number: number, color: accent),
@@ -282,9 +282,6 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
                             )
                           else
                             const _OkMark(),
-                          const Spacer(),
-                          Icon(Icons.edit_outlined,
-                              size: 16, color: theme.colorScheme.outline),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -311,6 +308,15 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
                       ],
                     ],
                   ),
+                ),
+              ),
+              // Disclosure chevron — the "tap to open" affordance for the
+              // whole card, vertically centered against the row.
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 2, right: 6),
+                  child: Icon(Icons.chevron_right,
+                      size: 24, color: theme.colorScheme.onSurfaceVariant),
                 ),
               ),
             ],
