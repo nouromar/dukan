@@ -395,10 +395,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get homeSalesTodayLabel => 'Iibka';
 
   @override
-  String get homeReceivedLabel => 'La helay';
+  String get homeReceivedLabel => 'La dejiyey';
 
   @override
-  String get homeMoneyInLabel => 'Lacag gashay';
+  String get homeMoneyInLabel => 'Lacag timid';
 
   @override
   String get homeMoneyOutLabel => 'Lacag baxday';
