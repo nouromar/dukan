@@ -23,16 +23,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dukan/api/shop_api.dart';
-import 'package:dukan/queue/offline_queue_controller.dart';
-import 'package:dukan/queue/pending_post.dart';
-import 'package:dukan/queue/post_executor.dart';
-import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/products/item_creator.dart';
 import 'package:dukan/sync/use_local_db.dart';
 import 'package:dukan/api/types.dart';
-import 'package:dukan/shared/client_op_id.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/locale_controller.dart';
@@ -318,216 +313,43 @@ class _AddNewItemBodyState extends State<_AddNewItemBody> {
       return;
     }
 
-    // Read providers BEFORE flipping _saving so a missing provider (or any
-    // synchronous throw) can never leave the button stuck spinning.
-    final api = context.read<ShopApi>();
-    final queue = context.read<OfflineQueueController>();
-    final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
     final languageCode = context.read<LocaleController>().locale.languageCode;
-    setState(() => _saving = true);
     final defaultSide =
         widget.variant == AddNewItemVariant.receive ? 'receive' : 'sale';
-
-    // Synthesize the packaging label locally (mirrors the server's
-    // `_format_conversion` helper) — no round trip needed.
-    final label = choice.isBaseOnly
-        ? choice.baseUnitLabel
-        : packagingLabel(
-            choice.conversion!,
-            choice.baseUnitLabel,
-            choice.soldUnitLabel!,
-          );
-
-    // Mint ids up front (0095): the item, its base packaging, and — when
-    // the sold packaging is distinct — the sold packaging. The unit dropped
-    // into the cart is the sold unit if present, else the base.
-    final shopItemId = generateUuidV4();
-    final baseUnitId = generateUuidV4();
-    final soldUnitId = choice.isBaseOnly ? null : generateUuidV4();
-    final defaultUnitId = soldUnitId ?? baseUnitId;
-    final itemOpId = generateClientOpId('item');
-    final flagsOpId = generateClientOpId('flags');
-    // Product with a distinct selling packaging: make it the default for BOTH
-    // sides so receiving also defaults to the sack (not the base kg). Base-only
-    // items already default the base for both — no extra call.
-    final needsReceiveDefault = _isProduct && soldUnitId != null;
-    String actorId = '';
+    setState(() => _saving = true);
     try {
-      actorId = Supabase.instance.client.auth.currentUser?.id ?? '';
-    } catch (_) {}
-
-    // Optimistically mirror the whole item (row + packaging(s) + display
-    // alias) so it's searchable + selectable immediately, before the create
-    // drains.
-    Future<void> writeMirror() async {
-      if (repo == null) return;
-      try {
-        await repo.insertLocalShopItem(
-          shopItemId: shopItemId,
-          shopId: widget.shop.id,
-          displayName: name,
-          baseUnitCode: choice.baseUnitCode,
-          categoryId: _categoryId,
-        );
-        await repo.insertLocalShopItemUnit(
-          shopItemUnitId: baseUnitId,
-          shopItemId: shopItemId,
-          unitCode: choice.baseUnitCode,
-          packagingLabel: choice.baseUnitLabel,
-          conversionToBase: 1,
-          salePrice: choice.isBaseOnly ? price : null,
-        );
-        if (!choice.isBaseOnly) {
-          await repo.insertLocalShopItemUnit(
-            shopItemUnitId: soldUnitId!,
-            shopItemId: shopItemId,
-            unitCode: choice.soldUnitCode!,
-            packagingLabel: label,
-            conversionToBase: choice.conversion!,
-            salePrice: price,
-          );
-        }
-        await repo.insertLocalShopItemAlias(
-          shopItemId: shopItemId,
-          aliasText: name,
-          isDisplay: true,
-        );
-      } catch (e, st) {
-        FlutterError.reportError(FlutterErrorDetails(
-          exception: e,
-          stack: st,
-          library: 'dukan add-new-item',
-          context: ErrorDescription('optimistic shop_item create mirror'),
-        ));
-      }
-    }
-
-    void popResult() {
-      if (!mounted) return;
-      Navigator.of(context).pop(
-        AddNewItemResult(
-          shopItemId: shopItemId,
-          shopItemUnitId: defaultUnitId,
-          displayName: name,
-          packagingLabel: label,
-          baseUnitCode: choice.baseUnitCode,
-          baseUnitLabel: choice.baseUnitLabel,
-          salePrice: price,
-        ),
+      // The offline-robust create (mint ids → optimistic mirror → createShopItem
+      // w/ timeout → queue on transient failure) lives in the shared headless
+      // helper — the bono review's one-tap Create reuses it. The streamlined
+      // sheet is base-only (soldUnit* null); a caller that needs a base+pack
+      // passes them + defaultSide.
+      final result = await createShopItemDraft(
+        context,
+        shop: widget.shop,
+        name: name,
+        categoryId: _categoryId,
+        baseUnitCode: choice.baseUnitCode,
+        baseUnitLabel: choice.baseUnitLabel,
+        soldUnitCode: choice.isBaseOnly ? null : choice.soldUnitCode,
+        soldUnitLabel: choice.isBaseOnly ? null : choice.soldUnitLabel,
+        soldConversion: choice.isBaseOnly ? null : choice.conversion,
+        salePrice: price,
+        languageCode: languageCode,
+        defaultSide: defaultSide,
+        errorMessage: l.addNewItemFailedMessage,
       );
-    }
-
-    // "Save & add another" keeps the sheet open; otherwise pop the result.
-    void finish() {
+      if (result == null || !mounted) return; // hard reject already surfaced
       if (addAnother) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l.addNewItemSavedToast(name))),
         );
         _resetForAddAnother();
       } else {
-        popResult();
-      }
-    }
-
-    try {
-      // Bound the first network call: after an idle app the mobile radio can
-      // be asleep and the request hangs, which used to wedge _saving=true (the
-      // button stuck spinning, taps no-op, only an exit + retry recovered).
-      // A timeout converts that into the transient path below → mirror + queue
-      // + close, so SAVE always resolves. Idempotent on client_op_id, so if the
-      // slow call *also* lands server-side there's no duplicate.
-      await api.createShopItem(
-        shopId: widget.shop.id,
-        name: name,
-        languageCode: languageCode,
-        baseUnitCode: choice.baseUnitCode,
-        salePrice: price,
-        categoryId: _categoryId,
-        soldUnitCode: choice.isBaseOnly ? null : choice.soldUnitCode,
-        soldConversion: choice.isBaseOnly ? null : choice.conversion,
-        defaultSide: defaultSide,
-        shopItemId: shopItemId,
-        baseUnitId: baseUnitId,
-        soldUnitId: soldUnitId,
-        clientOpId: itemOpId,
-      ).timeout(const Duration(seconds: 8));
-      if (needsReceiveDefault) {
-        await api.setShopItemUnitDefaultFlags(
-          shopId: widget.shop.id,
-          shopItemUnitId: soldUnitId,
-          isDefaultSale: true,
-          isDefaultReceive: true,
-          clientOpId: flagsOpId,
-        );
-      }
-      await writeMirror();
-      finish();
-    } on PostgrestException catch (error, stackTrace) {
-      _handleFailure(error, stackTrace, l.addNewItemFailedMessage);
-    } catch (error, stackTrace) {
-      // Transient (offline / network) — mirror + queue with the client ids.
-      // Stagger queued_at so the create drains before the flags post that
-      // depends on the item/unit existing. Thin-client → surface.
-      if (repo == null) {
-        _handleFailure(error, stackTrace, l.addNewItemFailedMessage);
-      } else {
-        await writeMirror();
-        final now = DateTime.now();
-        await queue.enqueue(PendingPost(
-          id: generateClientOpId('post'),
-          clientOpId: itemOpId,
-          shopId: widget.shop.id,
-          originalActorUserId: actorId,
-          rpc: 'create_shop_item',
-          params: buildCreateShopItemParams(
-            shopItemId: shopItemId,
-            baseUnitId: baseUnitId,
-            name: name,
-            languageCode: languageCode,
-            baseUnitCode: choice.baseUnitCode,
-            salePrice: price,
-            categoryId: _categoryId,
-            soldUnitCode: choice.isBaseOnly ? null : choice.soldUnitCode,
-            soldConversion: choice.isBaseOnly ? null : choice.conversion,
-            soldUnitId: soldUnitId,
-            defaultSide: defaultSide,
-          ),
-          queuedAt: now,
-        ));
-        if (needsReceiveDefault) {
-          await queue.enqueue(PendingPost(
-            id: generateClientOpId('post'),
-            clientOpId: flagsOpId,
-            shopId: widget.shop.id,
-            originalActorUserId: actorId,
-            rpc: 'set_shop_item_unit_default_flags',
-            params: buildSetShopItemUnitDefaultFlagsParams(
-              shopItemUnitId: soldUnitId,
-              isDefaultSale: true,
-              isDefaultReceive: true,
-            ),
-            queuedAt: now.add(const Duration(milliseconds: 1)),
-          ));
-        }
-        finish();
+        Navigator.of(context).pop(result);
       }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  void _handleFailure(Object error, StackTrace stackTrace, String message) {
-    FlutterError.reportError(
-      FlutterErrorDetails(
-        exception: error,
-        stack: stackTrace,
-        library: 'dukan add-new-item',
-        context: ErrorDescription('create_shop_item'),
-      ),
-    );
-    if (!mounted) return;
-    showError(context, message);
   }
 
   @override

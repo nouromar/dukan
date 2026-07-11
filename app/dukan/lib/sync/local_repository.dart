@@ -2067,6 +2067,12 @@ class LocalRepository {
     required String packagingLabel,
     required num conversionToBase,
     num? salePrice,
+    // Optional default flags so an optimistically-created item's units land
+    // with the right defaults (base = default-sale, pack = default-receive) —
+    // instant-correct Products/detail readout instead of stale-until-sync.
+    // Default false (a plain "+ Add packaging" adds a non-default unit).
+    bool isDefaultSale = false,
+    bool isDefaultReceive = false,
   }) async {
     final db = await _db;
     await db.insert(
@@ -2081,8 +2087,8 @@ class LocalRepository {
         'last_cost': null,
         'last_sale_qty': null,
         'last_receive_qty': null,
-        'is_default_sale': 0,
-        'is_default_receive': 0,
+        'is_default_sale': isDefaultSale ? 1 : 0,
+        'is_default_receive': isDefaultReceive ? 1 : 0,
         'is_active': 1,
         'server_updated_at': 0,
       },

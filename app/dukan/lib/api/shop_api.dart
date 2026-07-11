@@ -70,6 +70,7 @@ class BonoSuggestion {
     this.suggestedBaseUnitCode,
     this.suggestedPackUnitCode,
     this.suggestedPackSize,
+    this.newPackaging = false,
   });
 
   factory BonoSuggestion.fromJson(Map<String, dynamic> json) => BonoSuggestion(
@@ -93,6 +94,7 @@ class BonoSuggestion {
         suggestedBaseUnitCode: json['suggested_base_unit_code'] as String?,
         suggestedPackUnitCode: json['suggested_pack_unit_code'] as String?,
         suggestedPackSize: (json['suggested_pack_size'] as num?)?.toDouble(),
+        newPackaging: json['new_packaging'] as bool? ?? false,
       );
 
   final int lineNo;
@@ -119,6 +121,14 @@ class BonoSuggestion {
   final String? suggestedBaseUnitCode;
   final String? suggestedPackUnitCode;
   final double? suggestedPackSize;
+
+  /// True (0114) when the line MATCHED an existing item but the AI's detected
+  /// packaging is NOT one of the item's active packagings — a genuinely new
+  /// size to add. When set, `suggestedPackUnitCode`/`suggestedPackSize` carry
+  /// the pack to add (against `suggestedBaseUnitCode` = the item's base). The
+  /// review offers a one-tap "Add packaging"; the resolved existing unit
+  /// (`suggestedShopItemUnitId`) is still the fallback binding.
+  final bool newPackaging;
 
   /// True when the line is bound to a concrete item + packaging (can be
   /// applied directly). A `'low'`/no-match line needs the cashier to pick.
