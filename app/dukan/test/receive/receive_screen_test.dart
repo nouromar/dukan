@@ -745,9 +745,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  // Remove the (single remaining) amber line via its status ▾ menu.
-  Future<void> removeAmberLine(WidgetTester tester) async {
-    await tester.tap(find.text(en.bonoReviewStatusNeedsReview));
+  // Remove the (single remaining) new-item line via its status ▾ menu.
+  Future<void> removeNewItemLine(WidgetTester tester) async {
+    await tester.tap(find.text(en.bonoReviewStatusNewItem));
     await tester.pumpAndSettle();
     await tester.tap(find.text(en.bonoReviewRemove));
     await tester.pumpAndSettle();
@@ -766,18 +766,19 @@ void main() {
       // Banner announces the 3 read lines.
       expect(find.text(en.bonoSuggestionsFound(3)), findsOneWidget);
 
-      // Full-screen review: line 1 (high) starts Ready (green); lines 2 (med)
-      // and 3 (new) start amber, so Accept is gated.
+      // Full-screen review: line 1 (high) starts Ready (green); line 2 (med)
+      // is amber with "Mark ready"; line 3 (new) is amber with "Create …", so
+      // Accept is gated.
       await openReview(tester);
-      expect(find.text(en.bonoReviewMarkReady), findsNWidgets(2));
+      expect(find.text(en.bonoReviewMarkReady), findsOneWidget); // only the med
       expect(find.text(en.bonoReviewAcceptGate(2, 3)), findsOneWidget);
 
-      // Mark the med line (first amber card) ready.
-      await tester.tap(find.text(en.bonoReviewMarkReady).first);
+      // Mark the med line ready.
+      await tester.tap(find.text(en.bonoReviewMarkReady));
       await tester.pumpAndSettle();
 
       // Remove the remaining amber (new-item) line → both survivors green.
-      await removeAmberLine(tester);
+      await removeNewItemLine(tester);
       expect(find.text(en.bonoReviewAccept(2)), findsOneWidget);
 
       await tester.tap(find.text(en.bonoReviewAccept(2)));
@@ -817,9 +818,9 @@ void main() {
 
     await openReview(tester);
     // Make everything green: mark the med line ready, drop the new-item line.
-    await tester.tap(find.text(en.bonoReviewMarkReady).first);
+    await tester.tap(find.text(en.bonoReviewMarkReady));
     await tester.pumpAndSettle();
-    await removeAmberLine(tester);
+    await removeNewItemLine(tester);
     await tester.tap(find.text(en.bonoReviewAccept(2)));
     await tester.pumpAndSettle();
 
@@ -873,7 +874,7 @@ void main() {
     // The lone new-item line is amber → Accept gated. Bind it via the status
     // ▾ menu → "Pick existing product".
     expect(find.text(en.bonoReviewAcceptGate(1, 1)), findsOneWidget);
-    await tester.tap(find.text(en.bonoReviewStatusNeedsReview));
+    await tester.tap(find.text(en.bonoReviewStatusNewItem));
     await tester.pumpAndSettle();
     await tester.tap(find.text(en.bonoReviewPickExisting));
     await tester.pumpAndSettle(); // picker opens + initial search

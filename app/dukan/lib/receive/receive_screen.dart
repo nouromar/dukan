@@ -122,6 +122,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
   // times out, or the cashier dismisses it — drives the "Reading the bono…"
   // banner so there's no silence between attach and the review appearing.
   bool _bonoLoading = false;
+  // OCR poll finished with nothing (failed / junk photo). Shows a brief
+  // dismissible "enter by hand" note so the miss is visible, not silent.
+  bool _bonoOcrMissed = false;
   bool _bonoSuggestionsDismissed = false;
   // First-use teaching hint in the empty state. Session-scoped (no persistence):
   // it vanishes the moment a line is added or a bono attached, so an experienced
@@ -634,9 +637,13 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       if (_bonoSuggestions.isNotEmpty || _bonoPollTicks > 10) {
         timer.cancel();
         // Timed out with no result (OCR failed / junk image) → drop the spinner
-        // so it never hangs; the cashier just keeps entering by hand.
+        // so it never hangs, and surface a dismissible "enter by hand" note so
+        // the miss is visible rather than silent.
         if (mounted && _bonoLoading && _bonoSuggestions.isEmpty) {
-          setState(() => _bonoLoading = false);
+          setState(() {
+            _bonoLoading = false;
+            _bonoOcrMissed = true;
+          });
         }
         return;
       }
@@ -665,6 +672,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       setState(() {
         _bonoSuggestions = rows;
         _bonoLoading = false;
+        _bonoOcrMissed = false; // a late tick can still land after a timeout
       });
     } catch (_) {
       // Offline or OCR not ready — a later poll/realtime tick retries.
@@ -738,6 +746,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     _bonoSuggestions = const [];
     _bonoSuggestionsDismissed = false;
     _bonoLoading = false;
+    _bonoOcrMissed = false;
   }
 
   void _onChangeSupplier() {
@@ -1369,6 +1378,15 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
                 count: 0,
                 onReview: () {},
                 onDismiss: () => setState(() => _bonoLoading = false),
+              )
+            // OCR read nothing → a visible, dismissible "enter by hand" note.
+            else if (_bonoOcrMissed)
+              BonoSuggestionBanner(
+                loading: false,
+                missed: true,
+                count: 0,
+                onReview: () {},
+                onDismiss: () => setState(() => _bonoOcrMissed = false),
               ),
             if (!linesFull)
               Expanded(

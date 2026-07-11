@@ -47,6 +47,7 @@
   "bonoAttachedToast": "Bono photo attached",
   "bonoAttachFailedMessage": "Could not attach the bono. Try again.",
   "bonoSuggestionsReading": "Reading the bono…",
+  "bonoSuggestionsFailed": "Couldn't read the bono — enter the lines by hand",
   "bonoSuggestionsFound": "{count, plural, =1{1 line read from the bono} other{{count} lines read from the bono}}",
   "@bonoSuggestionsFound": {
     "placeholders": {
@@ -82,6 +83,18 @@
   "bonoReviewStatusNeedsReview": "Needs review",
   "bonoReviewNewItem": "New",
   "bonoReviewMarkReady": "Mark ready",
+  "bonoReviewCreateItem": "Create “{name}”",
+  "@bonoReviewCreateItem": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "bonoReviewAddPackaging": "Add packaging — {label}",
+  "@bonoReviewAddPackaging": {
+    "placeholders": { "label": { "type": "String" } }
+  },
+  "bonoReviewStatusNewItem": "New item",
+  "bonoReviewStatusNewSize": "New size",
+  "bonoReviewEditNew": "Edit before creating",
+  "bonoReviewKeepPackaging": "Keep current packaging",
   "bonoReviewPickExisting": "Pick existing product",
   "bonoReviewChangeItem": "Change item",
   "bonoReviewViewPhoto": "View bono photo",

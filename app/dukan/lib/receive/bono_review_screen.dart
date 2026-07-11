@@ -15,15 +15,18 @@
 // docs/bono-ocr-prepopulate.md and .claude/plans/we-want-create-app-happy-toast.md.
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/products/item_creator.dart';
 import 'package:dukan/receive/add_new_item_sheet.dart';
 import 'package:dukan/receive/bono_bind_item_sheet.dart';
 import 'package:dukan/receive/bono_suggestion_review_sheet.dart' show BonoApplyLine;
 import 'package:dukan/receive/unit_picker_sheet.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/packaging_label.dart';
 import 'package:dukan/shared/quantity_chips.dart';
 
 /// Push the full-screen review and resolve with the lines the cashier accepted
@@ -70,7 +73,44 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
   late final List<_Line> _lines =
       widget.suggestions.map(_Line.fromSuggestion).toList();
 
+  // Unit code → display label, for synthesizing packaging labels when
+  // materializing the AI's detected pack (Create / Add packaging). Falls back
+  // to raw codes until it loads; the create/add paths work either way.
+  Map<String, String> _unitLabels = {};
+
   Iterable<_Line> get _active => _lines.where((l) => !l.removed);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnitLabels();
+  }
+
+  Future<void> _loadUnitLabels() async {
+    try {
+      final units = await context.read<ShopApi>().listUnits();
+      if (!mounted) return;
+      setState(() {
+        _unitLabels = {for (final u in units) u.code: u.label};
+      });
+    } catch (_) {
+      // Raw codes are an acceptable fallback for the label synthesis.
+    }
+  }
+
+  String _labelFor(String? code) =>
+      code == null ? '' : (_unitLabels[code] ?? code);
+
+  // The packaging the AI wants us to materialize (new item pack, or the new
+  // size to add to a matched item), rendered as "Carton (12 pcs)".
+  String _newPackLabel(_Line line) {
+    if (line.packSize == null || line.packUnitCode == null) return '';
+    return packagingLabel(
+      line.packSize!,
+      _labelFor(line.baseUnitCode),
+      _labelFor(line.packUnitCode),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -202,11 +242,7 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
                         SizedBox(
                           width: double.infinity,
                           height: 44,
-                          child: FilledButton.tonalIcon(
-                            onPressed: () => _markReady(line),
-                            icon: const Icon(Icons.check, size: 18),
-                            label: Text(l.bonoReviewMarkReady),
-                          ),
+                          child: _primaryAction(line),
                         ),
                       ],
                     ],
@@ -220,8 +256,45 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
     );
   }
 
+  // Per-case primary CTA: new item → Create; matched item with a new pack →
+  // Add packaging (materialize the AI's size); otherwise a plain confirm.
+  Widget _primaryAction(_Line line) {
+    final l = tr(context);
+    if (line.isNew) {
+      return FilledButton.tonalIcon(
+        onPressed: () => _createNewItem(line),
+        icon: const Icon(Icons.add, size: 18),
+        label: Text(
+          l.bonoReviewCreateItem(line.displayName),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+    }
+    if (line.newPackaging) {
+      return FilledButton.tonalIcon(
+        onPressed: () => _addNewPackaging(line),
+        icon: const Icon(Icons.add_box_outlined, size: 18),
+        label: Text(
+          l.bonoReviewAddPackaging(_newPackLabel(line)),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+    }
+    return FilledButton.tonalIcon(
+      onPressed: () => _markReady(line),
+      icon: const Icon(Icons.check, size: 18),
+      label: Text(l.bonoReviewMarkReady),
+    );
+  }
+
   String _detailLine(_Line line) {
-    final pkg = line.packagingLabel.isNotEmpty ? line.packagingLabel : '—';
+    // For a new-size line, show the pack we'll add — more useful than the
+    // fallback binding it currently resolves to.
+    final labelText =
+        line.newPackaging ? _newPackLabel(line) : line.packagingLabel;
+    final pkg = labelText.isNotEmpty ? labelText : '—';
     final qty = '× ${_fmtQty(line.quantity)}';
     final total = line.lineTotal != null
         ? ' · ${formatMoney(line.lineTotal!, widget.shop)}'
@@ -234,21 +307,26 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
     final theme = Theme.of(context);
     final ready = line.ready;
     final color = ready ? _green(theme) : _amber(theme);
-    final label = ready ? l.bonoReviewStatusReady : l.bonoReviewStatusNeedsReview;
+    final label = ready
+        ? l.bonoReviewStatusReady
+        : line.isNew
+            ? l.bonoReviewStatusNewItem
+            : line.newPackaging
+                ? l.bonoReviewStatusNewSize
+                : l.bonoReviewStatusNeedsReview;
     return PopupMenuButton<String>(
       tooltip: label,
       onSelected: (v) => _onMenu(line, v),
       itemBuilder: (context) => [
-        if (line.isNew)
-          PopupMenuItem(
-            value: 'pick',
-            child: Text(l.bonoReviewPickExisting),
-          )
-        else
-          PopupMenuItem(
-            value: 'change',
-            child: Text(l.bonoReviewChangeItem),
-          ),
+        if (line.isNew) ...[
+          PopupMenuItem(value: 'pick', child: Text(l.bonoReviewPickExisting)),
+          PopupMenuItem(value: 'edit_new', child: Text(l.bonoReviewEditNew)),
+        ] else ...[
+          PopupMenuItem(value: 'change', child: Text(l.bonoReviewChangeItem)),
+          if (line.newPackaging)
+            PopupMenuItem(
+                value: 'keep_pack', child: Text(l.bonoReviewKeepPackaging)),
+        ],
         if (widget.onViewPhoto != null)
           PopupMenuItem(value: 'photo', child: Text(l.bonoReviewViewPhoto)),
         if (ready)
@@ -278,6 +356,14 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
       case 'pick':
       case 'change':
         await _pickExisting(line);
+      case 'edit_new':
+        await _editNewInSheet(line);
+      case 'keep_pack':
+        // Bind to the existing pack the matcher resolved; don't add the size.
+        setState(() {
+          line.newPackaging = false;
+          line.ready = true;
+        });
       case 'photo':
         widget.onViewPhoto?.call();
       case 'flag':
@@ -288,10 +374,10 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
   }
 
   // Tap the card body → edit. Matched lines open the light edit sheet; new
-  // lines open the new-item creator (its editor IS the edit surface).
+  // lines open the full new-item sheet (base-only override of one-tap Create).
   Future<void> _editLine(_Line line) async {
     if (line.isNew) {
-      await _createNewItem(line);
+      await _editNewInSheet(line);
       return;
     }
     final result = await showModalBottomSheet<_EditResult>(
@@ -312,16 +398,57 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
   }
 
   Future<void> _markReady(_Line line) async {
-    if (line.isNew) {
-      await _createNewItem(line);
-      return;
-    }
     // A verify/low match that already resolves to a real item + packaging:
-    // confirming is the whole gesture.
+    // confirming is the whole gesture. (New items / new sizes route to their
+    // own one-tap actions; this stays a plain confirm.)
     setState(() => line.ready = true);
   }
 
+  // One-tap Create: materialize the AI's item AND its detected pack in a single
+  // create_shop_item call (base = small unit, received pack = default-receive).
+  // No sheet — the full editor is still reachable via "Edit before creating".
   Future<void> _createNewItem(_Line line) async {
+    final l = tr(context);
+    final baseCode = line.baseUnitCode;
+    if (baseCode == null) {
+      // OCR gave no base unit to build on — fall back to the full sheet.
+      await _editNewInSheet(line);
+      return;
+    }
+    final hasPack = line.packUnitCode != null &&
+        line.packSize != null &&
+        line.packSize! > 1;
+    final result = await createShopItemDraft(
+      context,
+      shop: widget.shop,
+      name: line.displayName,
+      categoryId: line.suggestedCategoryId,
+      baseUnitCode: baseCode,
+      baseUnitLabel: _labelFor(baseCode),
+      soldUnitCode: hasPack ? line.packUnitCode : null,
+      soldUnitLabel: hasPack ? _labelFor(line.packUnitCode) : null,
+      soldConversion: hasPack ? line.packSize : null,
+      languageCode: Localizations.localeOf(context).languageCode,
+      defaultSide: 'receive',
+      errorMessage: l.addNewItemFailedMessage,
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      line.shopItemId = result.shopItemId;
+      line.shopItemUnitId = result.shopItemUnitId;
+      line.itemId = null; // shop-local new item
+      line.displayName = result.displayName;
+      line.packagingLabel = result.packagingLabel;
+      line.baseUnitLabel = result.baseUnitLabel;
+      line.newPackaging = false;
+      line.learnConfidence = 1; // explicit cashier creation
+      line.ready = true;
+    });
+  }
+
+  // Full new-item sheet — the base-only override of one-tap Create (and the
+  // fallback when OCR gave no base unit).
+  Future<void> _editNewInSheet(_Line line) async {
     final result = await AddNewItemSheet.show(
       context,
       widget.shop,
@@ -339,7 +466,36 @@ class _BonoReviewScreenState extends State<BonoReviewScreen> {
       line.displayName = result.displayName;
       line.packagingLabel = result.packagingLabel;
       line.baseUnitLabel = result.baseUnitLabel;
+      line.newPackaging = false;
       line.learnConfidence = 1; // explicit cashier creation
+      line.ready = true;
+    });
+  }
+
+  // One-tap Add packaging: add the AI's detected size to the matched item and
+  // rebind the line to it (as a NON-default unit; the learned alias resolves
+  // future bonos to it).
+  Future<void> _addNewPackaging(_Line line) async {
+    final l = tr(context);
+    final packCode = line.packUnitCode;
+    final size = line.packSize;
+    if (line.shopItemId == null || packCode == null || size == null) return;
+    final added = await addShopItemUnitDraft(
+      context,
+      shop: widget.shop,
+      shopItemId: line.shopItemId!,
+      unitCode: packCode,
+      unitLabel: _labelFor(packCode),
+      baseUnitLabel: _labelFor(line.baseUnitCode),
+      conversionToBase: size,
+      errorMessage: l.addNewItemFailedMessage,
+    );
+    if (added == null || !mounted) return;
+    setState(() {
+      line.shopItemUnitId = added.shopItemUnitId;
+      line.packagingLabel = added.packagingLabel;
+      line.newPackaging = false;
+      line.learnConfidence = 1; // explicit cashier add
       line.ready = true;
     });
   }
@@ -409,12 +565,20 @@ class _Line {
     required this.lineTotal,
     required this.ready,
     required this.learnConfidence,
+    this.newPackaging = false,
   });
 
   factory _Line.fromSuggestion(BonoSuggestion s) {
     final total = s.lineTotal ??
         (s.unitPrice != null ? s.unitPrice! * s.quantity : null);
     if (s.isBound) {
+      // A matched line whose OCR pack is NEW to the item (0114) carries the
+      // AI pack to add and can't be "Ready" until the cashier resolves it
+      // (Add packaging, or Keep current packaging) — regardless of match
+      // confidence, because the resolved fallback unit is the wrong size.
+      final newPack = s.newPackaging &&
+          s.suggestedPackUnitCode != null &&
+          s.suggestedPackSize != null;
       return _Line(
         rawText: s.rawText,
         shopItemId: s.suggestedShopItemId,
@@ -426,12 +590,12 @@ class _Line {
         packagingLabel: s.unitCode ?? s.baseUnitCode ?? '',
         baseUnitLabel: s.baseUnitCode ?? '',
         baseUnitCode: s.baseUnitCode,
-        // Matched line packaging is the item's real unit; no AI pack to prefill.
-        packUnitCode: null,
-        packSize: null,
+        packUnitCode: newPack ? s.suggestedPackUnitCode : null,
+        packSize: newPack ? s.suggestedPackSize : null,
+        newPackaging: newPack,
         quantity: s.quantity,
         lineTotal: total,
-        ready: s.confidence == 'high',
+        ready: s.confidence == 'high' && !newPack,
         learnConfidence: s.confidence == 'high' ? 0.9 : 0.6,
       );
     }
@@ -473,6 +637,9 @@ class _Line {
   bool ready;
   bool removed = false;
   double learnConfidence;
+  // Matched line whose OCR pack is new to the item — flips false once the
+  // cashier adds the packaging or keeps the existing binding.
+  bool newPackaging;
 
   bool get isNew => shopItemId == null;
 }

@@ -308,6 +308,12 @@ abstract class AppLocalizations {
   /// **'Reading the bono…'**
   String get bonoSuggestionsReading;
 
+  /// No description provided for @bonoSuggestionsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the bono — enter the lines by hand'**
+  String get bonoSuggestionsFailed;
+
   /// No description provided for @bonoSuggestionsFound.
   ///
   /// In en, this message translates to:
@@ -397,6 +403,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mark ready'**
   String get bonoReviewMarkReady;
+
+  /// No description provided for @bonoReviewCreateItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Create “{name}”'**
+  String bonoReviewCreateItem(String name);
+
+  /// No description provided for @bonoReviewAddPackaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Add packaging — {label}'**
+  String bonoReviewAddPackaging(String label);
+
+  /// No description provided for @bonoReviewStatusNewItem.
+  ///
+  /// In en, this message translates to:
+  /// **'New item'**
+  String get bonoReviewStatusNewItem;
+
+  /// No description provided for @bonoReviewStatusNewSize.
+  ///
+  /// In en, this message translates to:
+  /// **'New size'**
+  String get bonoReviewStatusNewSize;
+
+  /// No description provided for @bonoReviewEditNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit before creating'**
+  String get bonoReviewEditNew;
+
+  /// No description provided for @bonoReviewKeepPackaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep current packaging'**
+  String get bonoReviewKeepPackaging;
 
   /// No description provided for @bonoReviewPickExisting.
   ///

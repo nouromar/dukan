@@ -118,23 +118,29 @@ class BonoSuggestionBanner extends StatelessWidget {
     required this.count,
     required this.onReview,
     required this.onDismiss,
+    this.missed = false,
   });
 
   final bool loading;
   final int count;
   final VoidCallback onReview;
   final VoidCallback onDismiss;
+  // OCR read nothing (failed / junk photo) — a dismissible "enter by hand"
+  // note so the graceful degradation is visible, not a silently dropped spinner.
+  final bool missed;
 
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final warn = missed;
+    final fg = warn ? scheme.onErrorContainer : scheme.onSecondaryContainer;
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: scheme.secondaryContainer,
+        color: warn ? scheme.errorContainer : scheme.secondaryContainer,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -146,21 +152,24 @@ class BonoSuggestionBanner extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           else
-            Icon(Icons.receipt_long, color: scheme.onSecondaryContainer),
+            Icon(warn ? Icons.error_outline : Icons.receipt_long, color: fg),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              loading ? l.bonoSuggestionsReading : l.bonoSuggestionsFound(count),
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: scheme.onSecondaryContainer),
+              warn
+                  ? l.bonoSuggestionsFailed
+                  : loading
+                      ? l.bonoSuggestionsReading
+                      : l.bonoSuggestionsFound(count),
+              style: theme.textTheme.bodyMedium?.copyWith(color: fg),
             ),
           ),
-          if (!loading)
+          if (!loading && !warn)
             FilledButton(
               onPressed: onReview,
               child: Text(l.bonoSuggestionsReview),
             ),
-          // Dismissible in both states — "Reading…" and "N lines · Review".
+          // Dismissible in every state — "Reading…", "N lines · Review", miss.
           IconButton(
             icon: const Icon(Icons.close),
             onPressed: onDismiss,

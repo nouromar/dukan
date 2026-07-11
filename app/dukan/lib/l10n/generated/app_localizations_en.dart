@@ -118,6 +118,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bonoSuggestionsReading => 'Reading the bono…';
 
   @override
+  String get bonoSuggestionsFailed =>
+      'Couldn\'t read the bono — enter the lines by hand';
+
+  @override
   String bonoSuggestionsFound(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -181,6 +185,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bonoReviewMarkReady => 'Mark ready';
+
+  @override
+  String bonoReviewCreateItem(String name) {
+    return 'Create “$name”';
+  }
+
+  @override
+  String bonoReviewAddPackaging(String label) {
+    return 'Add packaging — $label';
+  }
+
+  @override
+  String get bonoReviewStatusNewItem => 'New item';
+
+  @override
+  String get bonoReviewStatusNewSize => 'New size';
+
+  @override
+  String get bonoReviewEditNew => 'Edit before creating';
+
+  @override
+  String get bonoReviewKeepPackaging => 'Keep current packaging';
 
   @override
   String get bonoReviewPickExisting => 'Pick existing product';

@@ -121,6 +121,10 @@ class AppLocalizationsSo extends AppLocalizations {
   String get bonoSuggestionsReading => 'Bonoga waa la akhrinayaa…';
 
   @override
+  String get bonoSuggestionsFailed =>
+      'Bonoga lama akhriyi karin — gacanta ku qor xariiqaha';
+
+  @override
   String bonoSuggestionsFound(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -184,6 +188,28 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get bonoReviewMarkReady => 'Diyaari';
+
+  @override
+  String bonoReviewCreateItem(String name) {
+    return 'Samee “$name”';
+  }
+
+  @override
+  String bonoReviewAddPackaging(String label) {
+    return 'Ku dar baakidh — $label';
+  }
+
+  @override
+  String get bonoReviewStatusNewItem => 'Alaab cusub';
+
+  @override
+  String get bonoReviewStatusNewSize => 'Cabbir cusub';
+
+  @override
+  String get bonoReviewEditNew => 'Wax ka beddel';
+
+  @override
+  String get bonoReviewKeepPackaging => 'Sii hay baakidhka';
 
   @override
   String get bonoReviewPickExisting => 'Dooro alaab jirta';

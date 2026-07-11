@@ -8208,6 +8208,91 @@ end;
 $$;
 reset role;
 
+-- =====================================================================
+-- §NN3 Bono new-packaging flag for a MATCHED item (0114)
+-- =====================================================================
+-- A matched line whose OCR pack is a size the item has no active unit for gets
+-- new_packaging=true + the pack fields + item base surfaced (one-tap "Add
+-- packaging"); a pack the item already has stays new_packaging=false with the
+-- pack fields suppressed. Isolated on a fresh item so the size checks are exact.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+do $$
+declare
+  v_shop_id  uuid;
+  v_supplier uuid;
+  v_item     uuid;
+  v_unit     uuid;
+  v_doc      uuid := '00000000-0000-4000-8000-00000000d003'::uuid;
+  r          record;
+begin
+  select shop_id into v_shop_id from test_ids;
+  select id into v_supplier from public.party where shop_id = v_shop_id and name = 'Hodan Beverages';
+  if v_supplier is null then
+    raise exception '0114: supplier fixture missing';
+  end if;
+
+  -- Fresh item: base 'piece' + one pack at conversion 12. No conv-24 unit, so
+  -- a size-24 OCR pack is unambiguously new.
+  select shop_item_id into v_item from public.create_shop_item(
+    v_shop_id, 'NP Test Item', 'en', 'piece', null, null);
+  perform public.create_shop_item_unit(v_shop_id, v_item, 'packet', 12, null);
+  select id into v_unit from public.shop_item_unit
+   where shop_id = v_shop_id and shop_item_id = v_item
+     and conversion_to_base = 1 and is_active;
+
+  perform public.create_bono_document(
+    v_shop_id, v_doc,
+    v_shop_id::text || '/documents/' || v_doc::text || '/image.jpg',
+    'image/jpeg', 1000);
+  update public.document set ocr_result = pg_catalog.jsonb_build_object(
+    'lines', pg_catalog.jsonb_build_array(
+      -- line 1: pack size 12 → the item already has it → new_packaging=false.
+      pg_catalog.jsonb_build_object(
+        'raw_text','NP EXISTING','quantity',1,'confidence',0.9,
+        'suggested_pack_unit_code','packet','suggested_pack_size',12),
+      -- line 2: pack size 24 → new size → new_packaging=true.
+      pg_catalog.jsonb_build_object(
+        'raw_text','NP NEWSIZE','quantity',1,'confidence',0.9,
+        'suggested_pack_unit_code','packet','suggested_pack_size',24)
+    ))
+  where shop_id = v_shop_id and id = v_doc;
+
+  perform public.confirm_bono_suggestion(v_shop_id, v_doc, v_supplier, 'NP EXISTING', v_item, v_unit, 1.0);
+  perform public.confirm_bono_suggestion(v_shop_id, v_doc, v_supplier, 'NP NEWSIZE', v_item, v_unit, 1.0);
+
+  -- (a) matched + existing pack (size 12) → new_packaging false, pack fields null.
+  select * into r from public.suggest_receive_lines_from_bono(v_shop_id, v_doc, v_supplier) where line_no = 1;
+  if r.reason <> 'supplier_alias' then
+    raise exception '0114: line 1 expected a match, got %', r.reason;
+  end if;
+  if r.new_packaging then
+    raise exception '0114: existing pack (size 12) wrongly flagged new_packaging';
+  end if;
+  if r.suggested_pack_unit_code is not null or r.suggested_pack_size is not null then
+    raise exception '0114: existing-pack line surfaced pack fields (% / %)',
+      r.suggested_pack_unit_code, r.suggested_pack_size;
+  end if;
+
+  -- (b) matched + genuinely new size (24) → new_packaging true, pack fields +
+  --     item base code surfaced for one-tap Add packaging.
+  select * into r from public.suggest_receive_lines_from_bono(v_shop_id, v_doc, v_supplier) where line_no = 2;
+  if not r.new_packaging then
+    raise exception '0114: new size (24) not flagged new_packaging';
+  end if;
+  if r.suggested_pack_unit_code <> 'packet' or r.suggested_pack_size <> 24 then
+    raise exception '0114: new-size pack fields not surfaced (% / %)',
+      r.suggested_pack_unit_code, r.suggested_pack_size;
+  end if;
+  if r.suggested_base_unit_code <> 'piece' then
+    raise exception '0114: new-size base code not the item base (%)', r.suggested_base_unit_code;
+  end if;
+
+  raise notice 'NN3: bono new_packaging flag tests passed';
+end;
+$$;
+reset role;
+
 -- ocr_bono_context now includes the category + unit vocabulary. It is granted to
 -- service_role only; run as the superuser session (bypasses the grant).
 reset role;

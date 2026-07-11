@@ -35,6 +35,7 @@
   "bonoAttachedToast": "Sawirka bonoga waa la raaciyay",
   "bonoAttachFailedMessage": "Bonoga lama raacin karin. Isku day mar kale.",
   "bonoSuggestionsReading": "Bonoga waa la akhrinayaa…",
+  "bonoSuggestionsFailed": "Bonoga lama akhriyi karin — gacanta ku qor xariiqaha",
   "bonoSuggestionsFound": "{count, plural, =1{1 sadar ayaa laga akhriyay bonoga} other{{count} sadar ayaa laga akhriyay bonoga}}",
   "@bonoSuggestionsFound": {
     "placeholders": {
@@ -70,6 +71,18 @@
   "bonoReviewStatusNeedsReview": "Hubi",
   "bonoReviewNewItem": "Cusub",
   "bonoReviewMarkReady": "Diyaari",
+  "bonoReviewCreateItem": "Samee “{name}”",
+  "@bonoReviewCreateItem": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "bonoReviewAddPackaging": "Ku dar baakidh — {label}",
+  "@bonoReviewAddPackaging": {
+    "placeholders": { "label": { "type": "String" } }
+  },
+  "bonoReviewStatusNewItem": "Alaab cusub",
+  "bonoReviewStatusNewSize": "Cabbir cusub",
+  "bonoReviewEditNew": "Wax ka beddel",
+  "bonoReviewKeepPackaging": "Sii hay baakidhka",
   "bonoReviewPickExisting": "Dooro alaab jirta",
   "bonoReviewChangeItem": "Bedel alaabta",
   "bonoReviewViewPhoto": "Eeg sawirka bono-ga",
