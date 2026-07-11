@@ -45,6 +45,12 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   late Future<List<ExpenseCategoryOption>> _categoriesFuture;
   String? _locale;
 
+  /// Re-entrancy guard for SAVE. Expense has no `saving` UI state (the
+  /// optimistic shell clears + pops), so a fast double-tap would otherwise
+  /// run _save twice against the still-filled form, minting two client_op_ids
+  /// and recording the expense TWICE.
+  bool _saving = false;
+
   @override
   void initState() {
     super.initState();
@@ -106,6 +112,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   }
 
   Future<void> _save() async {
+    // Re-entrancy guard (synchronous, before any await) — see [_saving].
+    if (_saving) return;
     final l = tr(context);
     final controller = context.read<ExpenseController>();
     final category = controller.category;
@@ -117,7 +125,22 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       showError(context, l.expenseNeedAmountMessage);
       return;
     }
+    // Set AFTER validation; cleared in the finally after the direct post or
+    // after the optimistic path schedules its background post (form cleared
+    // by then, so re-entry is harmless and input re-opens immediately).
+    _saving = true;
+    try {
+      await _saveInner(controller, category, l);
+    } finally {
+      _saving = false;
+    }
+  }
 
+  Future<void> _saveInner(
+    ExpenseController controller,
+    ExpenseCategoryOption category,
+    L10n l,
+  ) async {
     final api = context.read<ShopApi>();
     final categoryId = category.id;
     final amount = controller.amount;
@@ -204,6 +227,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       _postExpenseInBackground(
         api: api,
         queue: queue,
+        repo: context.read<LocalRepository>(),
         shopId: widget.shop.id,
         actorId: actorId,
         categoryId: categoryId,
@@ -270,6 +294,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   Future<void> _postExpenseInBackground({
     required ShopApi api,
     required OfflineQueueController queue,
+    required LocalRepository repo,
     required String shopId,
     required String actorId,
     required String categoryId,
@@ -293,7 +318,14 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         txnId: txnId,
       );
     } on PostgrestException catch (error, stackTrace) {
-      // Server-side reject — retry won't help. Toast.
+      // Server-side reject — retry won't help. Drop the phantom expense from
+      // history first (no server row shares its client_op_id, so sync would
+      // never remove it), then toast. Best-effort; sync reconciles regardless.
+      try {
+        await repo.deleteOptimisticTransaction(txnId: txnId);
+      } catch (_) {
+        /* best-effort revert */
+      }
       reportBackgroundFailure(
         error: error,
         stackTrace: stackTrace,

@@ -55,6 +55,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final _amountController = TextEditingController();
   final _notesController = TextEditingController();
 
+  /// Re-entrancy guard for SAVE. Payment has no `saving` UI state (the
+  /// optimistic shell clears + pops), so a fast double-tap would otherwise
+  /// run _save twice against the still-filled form, minting two client_op_ids
+  /// and posting the payment TWICE — double-settling the debt.
+  bool _saving = false;
+
   @override
   void initState() {
     super.initState();
@@ -122,6 +128,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _save() async {
+    // Re-entrancy guard (synchronous, before any await) — see [_saving].
+    if (_saving) return;
     final l = tr(context);
     final controller = context.read<PaymentController>();
     final party = controller.party;
@@ -145,7 +153,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
       return;
     }
+    // Set AFTER validation (so a rejected-input save doesn't wedge the flag);
+    // cleared in the finally below — after the direct post OR after the
+    // optimistic path schedules its background post (the form is cleared by
+    // then, so re-entry is harmless and input re-opens immediately).
+    _saving = true;
+    try {
+      await _saveInner(controller, party, l);
+    } finally {
+      _saving = false;
+    }
+  }
 
+  Future<void> _saveInner(
+    PaymentController controller,
+    PartySearchResult party,
+    L10n l,
+  ) async {
     final api = context.read<ShopApi>();
     final amount = controller.amount;
     final partyId = party.id;
@@ -263,6 +287,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _postPaymentInBackground(
         api: api,
         queue: queue,
+        repo: repo,
         shopId: widget.shop.id,
         actorId: actorId,
         partyId: partyId,
@@ -334,6 +359,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Future<void> _postPaymentInBackground({
     required ShopApi api,
     required OfflineQueueController queue,
+    required LocalRepository repo,
     required String shopId,
     required String actorId,
     required String partyId,
@@ -361,9 +387,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
         paymentId: paymentId,
       );
     } on PostgrestException catch (error, stackTrace) {
-      // Server-side reject — retry won't help. Surface a toast; the
-      // screen has already popped so the cashier needs the visible
-      // signal to re-attempt manually.
+      // Server-side reject — retry won't help. Revert the optimistic mirror
+      // writes BEFORE surfacing the error: re-charge the party balance
+      // (undo the optimistic payment decrement — else the debt would show as
+      // settled when it isn't) and drop the phantom payment from history.
+      // Both are best-effort; the next parties/txn sync reconciles regardless.
+      try {
+        await repo.applyOptimisticPartyCharge(
+          partyId: partyId,
+          direction: direction,
+          amount: amount,
+        );
+        await repo.deleteOptimisticTransaction(txnId: paymentId);
+      } catch (_) {
+        /* best-effort revert; sync reconciles */
+      }
+      // Screen has already popped, so the cashier needs the visible toast to
+      // re-attempt manually.
       reportBackgroundFailure(
         error: error,
         stackTrace: stackTrace,

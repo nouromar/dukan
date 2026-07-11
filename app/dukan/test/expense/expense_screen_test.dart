@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -168,6 +170,38 @@ void main() {
     expect(captured!['amount'], 120);
     expect(captured!['methodCode'], 'cash');
   });
+
+  testWidgets(
+    'double-tapping SAVE records the expense only once (re-entrancy guard)',
+    (tester) async {
+      api.onListExpenseCategories = (_, _) async => const [
+        ExpenseCategoryOption(id: 'c1', code: 'rent', name: 'Rent'),
+      ];
+      var postCalls = 0;
+      // Hang the post so _saving stays true across the second tap.
+      final gate = Completer<String>();
+      api.onPostExpense = (_, _, _, _, _, _) {
+        postCalls++;
+        return gate.future;
+      };
+
+      await pumpExpense(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Rent'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, '120');
+      await tester.pump();
+
+      // Two taps, no rebuild between — only the synchronous _saving guard
+      // stops the second post (two client_op_ids → a duplicate expense).
+      final save = find.widgetWithText(FilledButton, en.expenseSaveButton);
+      await tester.tap(save);
+      await tester.tap(save);
+      await tester.pump();
+
+      expect(postCalls, 1);
+    },
+  );
 
   testWidgets(
     '#367 transient post_expense failure enqueues to the offline queue',

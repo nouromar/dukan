@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -122,6 +124,38 @@ void main() {
       expect(captured!['direction'], 'I');
       expect(captured!['amount'], 20);
       expect(captured!['methodCode'], 'cash');
+    },
+  );
+
+  testWidgets(
+    'double-tapping SAVE posts the payment only once (re-entrancy guard)',
+    (tester) async {
+      api.onSearchParties = (_, _, _, _) async => [_ahmed()];
+      var postCalls = 0;
+      // Hang the post so _saving stays true across the second tap.
+      final gate = Completer<String>();
+      api.onPostPayment = (_, _, _, _, _, _, _, _) {
+        postCalls++;
+        return gate.future;
+      };
+
+      await pumpPayment(tester);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(en.paymentPickCustomerButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ahmed'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, '20');
+      await tester.pump();
+
+      // Two taps, no rebuild between — without the synchronous _saving guard
+      // this double-settles the debt (two client_op_ids → two payments).
+      final save = find.widgetWithText(FilledButton, en.paymentSaveButton);
+      await tester.tap(save);
+      await tester.tap(save);
+      await tester.pump();
+
+      expect(postCalls, 1);
     },
   );
 
