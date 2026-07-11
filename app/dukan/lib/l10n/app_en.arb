@@ -159,6 +159,7 @@
   "partyDetailReceivesHeader": "Receives",
   "partyDetailPaymentsHeader": "Payments",
   "homeTodayHeader": "Today",
+  "homeSummaryLabel": "Summary",
   "homeSalesTodayLabel": "Sales",
   "homeReceivedLabel": "Received",
   "homeMoneyInLabel": "Money in",

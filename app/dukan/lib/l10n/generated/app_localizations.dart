@@ -776,6 +776,12 @@ abstract class AppLocalizations {
   /// **'Today'**
   String get homeTodayHeader;
 
+  /// No description provided for @homeSummaryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get homeSummaryLabel;
+
   /// No description provided for @homeSalesTodayLabel.
   ///
   /// In en, this message translates to:

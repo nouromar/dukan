@@ -157,8 +157,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // Card defaults to COLLAPSED — shows the "Summary" teaser, body hidden.
+      expect(find.text(en.homeSummaryLabel), findsOneWidget);
+      expect(find.text(en.homeSalesTodayLabel), findsNothing);
+
+      // Tap the header to expand.
+      await tester.tap(find.text(en.homeSummaryLabel));
+      await tester.pumpAndSettle();
+
+      // Header now reads "Today"; the five activity rows + attention show.
       expect(find.text(en.homeTodayHeader), findsOneWidget);
-      // Five activity rows (labels drop "today" — the header carries it).
       expect(find.text(en.homeSalesTodayLabel), findsOneWidget);
       expect(find.text(en.homeReceivedLabel), findsOneWidget);
       expect(find.text(en.homeMoneyInLabel), findsOneWidget);
@@ -176,7 +184,7 @@ void main() {
     },
   );
 
-  testWidgets('tapping the Today header collapses (and re-expands) the card', (
+  testWidgets('the Today card expands and re-collapses on header tap', (
     tester,
   ) async {
     shopApi.onGetTodaySummary = (_, _) async => const TodaySummary(
@@ -196,22 +204,22 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Expanded by default: activity + attention rows visible.
+    // Collapsed by default: "Summary" header, body hidden.
+    expect(find.text(en.homeSummaryLabel), findsOneWidget);
+    expect(find.text(en.homeSalesTodayLabel), findsNothing);
+
+    // Tap to expand → header becomes "Today", body shows.
+    await tester.tap(find.text(en.homeSummaryLabel));
+    await tester.pumpAndSettle();
+    expect(find.text(en.homeTodayHeader), findsOneWidget);
     expect(find.text(en.homeSalesTodayLabel), findsOneWidget);
     expect(find.text(en.homeNeedsAttentionLabel), findsOneWidget);
 
-    // Tap the "Today" header to collapse.
+    // Tap the "Today" header to collapse again.
     await tester.tap(find.text(en.homeTodayHeader));
     await tester.pumpAndSettle();
-
-    expect(find.text(en.homeTodayHeader), findsOneWidget); // header stays
-    expect(find.text(en.homeSalesTodayLabel), findsNothing); // body hidden
-    expect(find.text(en.homeNeedsAttentionLabel), findsNothing);
-
-    // Tap again to re-expand.
-    await tester.tap(find.text(en.homeTodayHeader));
-    await tester.pumpAndSettle();
-    expect(find.text(en.homeSalesTodayLabel), findsOneWidget);
+    expect(find.text(en.homeSummaryLabel), findsOneWidget);
+    expect(find.text(en.homeSalesTodayLabel), findsNothing);
   });
 
   testWidgets('tapping low-stock row navigates into the low-stock report', (
@@ -232,6 +240,10 @@ void main() {
         shopApi: shopApi,
       ),
     );
+    await tester.pumpAndSettle();
+
+    // Card is collapsed by default — expand it to reach the low-stock row.
+    await tester.tap(find.text(en.homeSummaryLabel));
     await tester.pumpAndSettle();
 
     // The Today card sits in a scroll view above the action grid; on a

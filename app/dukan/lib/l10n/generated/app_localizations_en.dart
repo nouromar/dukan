@@ -386,6 +386,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTodayHeader => 'Today';
 
   @override
+  String get homeSummaryLabel => 'Summary';
+
+  @override
   String get homeSalesTodayLabel => 'Sales';
 
   @override

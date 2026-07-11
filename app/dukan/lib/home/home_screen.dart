@@ -325,12 +325,12 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
   TodaySummary? _lastKnown;
 
   /// Collapse state for the card, remembered across launches (DeviceConfigDao)
-  /// so a shopkeeper who prefers "buttons first" isn't fighting the card every
-  /// time. Defaults to expanded (first-timers get the glance); the stored
-  /// value loads on mount. _TodayCard mounts once per Home lifetime, so the
-  /// async load can't cause a repeated flash.
+  /// so the choice sticks. Defaults to COLLAPSED so the Sale/Receive buttons
+  /// sit high — the day summary is one tap away under the "Summary" header.
+  /// The stored value loads on mount; _TodayCard mounts once per Home
+  /// lifetime, so the async load can't cause a repeated flash.
   static const String _kExpandedKey = 'home_today_expanded';
-  bool _expanded = true;
+  bool _expanded = false;
 
   @override
   void initState() {
@@ -483,9 +483,9 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
     try {
       final raw =
           await DeviceConfigDao(AppDatabase.instance()).get(_kExpandedKey);
-      // Only a stored '0' collapses; missing/anything else stays expanded.
-      if (raw == '0' && mounted && _expanded) {
-        setState(() => _expanded = false);
+      // Only a stored '1' expands; missing/anything else stays collapsed.
+      if (raw == '1' && mounted && !_expanded) {
+        setState(() => _expanded = true);
       }
     } catch (_) {
       // Best-effort — default (expanded) stands if the store is unavailable.
@@ -575,7 +575,12 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  Text(l.homeTodayHeader, style: sectionLabelStyle),
+                  // Reads "Summary" when collapsed (a teaser to tap open) and
+                  // "Today" once expanded (the day it's showing).
+                  Text(
+                    _expanded ? l.homeTodayHeader : l.homeSummaryLabel,
+                    style: sectionLabelStyle,
+                  ),
                   const Spacer(),
                   Icon(
                     _expanded ? Icons.expand_less : Icons.expand_more,
