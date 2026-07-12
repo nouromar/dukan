@@ -560,6 +560,41 @@ class LocalRepository {
     );
   }
 
+  /// Resolve a scanned barcode against the local mirror to an
+  /// [ItemSearchResult] — the offline analog of the online `search_items`
+  /// barcode probe. Forces the SCANNED packaging as the default unit (not the
+  /// item's default packaging), so scanning a carton's label adds the carton,
+  /// not the single. Null on a miss (unknown code, or the item isn't mirrored).
+  Future<ItemSearchResult?> resolveBarcode(
+    String code, {
+    required String screen,
+  }) async {
+    final unit = await lookupBarcode(code);
+    if (unit == null) return null;
+    final item = await getShopItem(unit.shopItemId);
+    if (item == null) return null;
+    return ItemSearchResult(
+      shopItemId: item.shopItemId,
+      itemId: item.itemId,
+      displayName: item.displayName,
+      baseUnitCode: item.baseUnitCode,
+      baseUnitLabel: item.baseUnitCode, // we don't cache unit label
+      defaultShopItemUnitId: unit.shopItemUnitId,
+      defaultUnitCode: unit.unitCode,
+      defaultUnitLabel: unit.packagingLabel,
+      defaultUnitConversionToBase: unit.conversionToBase.toDouble(),
+      defaultUnitSalePrice: unit.salePrice?.toDouble(),
+      defaultUnitLastCost: unit.lastCost?.toDouble(),
+      currentStock: item.currentStock.toDouble(),
+      reorderThreshold: item.reorderThreshold?.toDouble(),
+      packagingLabel: unit.packagingLabel,
+      isActivated: true, // local rows are by definition activated
+      rankReason: 'barcode_match',
+      learnedQty:
+          screen == 'sale' ? unit.lastSaleQty : unit.lastReceiveQty,
+    );
+  }
+
   LocalShopItemUnit _emptyUnit(LocalShopItem item) => LocalShopItemUnit(
         shopItemUnitId: '${item.shopItemId}-base',
         shopItemId: item.shopItemId,

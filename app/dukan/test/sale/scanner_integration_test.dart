@@ -7,8 +7,10 @@ import 'package:dukan/sale/cart_controller.dart';
 import 'package:dukan/sale/sale_screen.dart';
 import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
+import 'package:dukan/sync/local_repository.dart';
 
 import '../shared/fakes.dart';
+import '../shared/test_database.dart';
 import '../shared/wrap.dart';
 
 void main() {
@@ -128,6 +130,94 @@ void main() {
         find.text(en.scanUnknownPillLabel('0000000000000')),
         findsNothing,
       );
+    },
+  );
+
+  testWidgets(
+    'offline (use_local_db): scan resolves from the mirror, no network call',
+    (tester) async {
+      // Seed a local mirror with Cola + a carton packaging carrying the code.
+      final db = await openTestDatabase();
+      final repo = LocalRepository(Future.value(db));
+      await repo.applyItemsPayload({
+        'items': [
+          {
+            'shop_item_id': 'si-cola',
+            'shop_id': 'shop-1',
+            'item_id': null,
+            'display_name': 'Cola',
+            'category_id': null,
+            'base_unit_code': 'bottle',
+            'current_stock': 40,
+            'avg_cost': 0,
+            'reorder_threshold': null,
+            'sale_count': 0,
+            'last_sold_at_ms': null,
+            'is_active': true,
+            'server_updated_at_ms': 1700000000000,
+          },
+        ],
+        'units': [
+          {
+            'shop_item_unit_id': 'siu-carton',
+            'shop_item_id': 'si-cola',
+            'unit_code': 'carton',
+            'packaging_label': 'Carton (12)',
+            'conversion_to_base': 12,
+            'sale_price': 5500,
+            'last_cost': 3400,
+            'is_default_sale': false,
+            'is_default_receive': false,
+            'is_active': true,
+            'server_updated_at_ms': 1700000000000,
+          },
+        ],
+        'aliases': const [],
+        'barcodes': [
+          {
+            'barcode': '5000000000012',
+            'shop_item_unit_id': 'siu-carton',
+            'is_primary': true,
+          },
+        ],
+      });
+
+      var searchCalled = false;
+      api.onSearchItems = (_, _, _, _, _, _) async {
+        searchCalled = true;
+        return const <ItemSearchResult>[];
+      };
+
+      restoreScanner();
+      restoreScanner = Scanner.overrideOpener(
+        (_) async => const ScanEvent(
+          code: '5000000000012',
+          source: ScanSource.camera,
+          symbology: 'ean13',
+        ),
+      );
+
+      await tester.pumpWidget(
+        wrapWithApp(
+          SaleScreen(shop: shop),
+          authController: auth,
+          shopApi: api,
+          cartController: cart,
+          localRepository: repo,
+          configResolver:
+              FakeConfigResolver(values: const {'use_local_db': true}),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip(en.scanCameraTooltip));
+      await tester.pumpAndSettle();
+
+      // Added to the cart from the mirror — network search never called.
+      expect(cart.lines, hasLength(1));
+      expect(cart.lines.values.first.displayName, 'Cola');
+      expect(searchCalled, isFalse,
+          reason: 'offline scan must resolve locally, not via the network');
     },
   );
 

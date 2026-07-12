@@ -25,6 +25,7 @@ import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/queue/queue_status_pill.dart';
 import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/scan_event.dart';
+import 'package:dukan/scanner/scan_lookup.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/party_picker_sheet.dart';
@@ -261,26 +262,27 @@ class _SaleScreenState extends State<SaleScreen> {
 
   Future<void> _handleScan(ScanEvent event) async {
     try {
-      // Reuse the search_items pipeline so an alias-matched barcode,
-      // a global-catalog match, and a shop_item_barcode hit all land
-      // in the same dispatch logic.
-      final results = await context.read<ShopApi>().searchItems(
+      // Offline-first: when the shop runs the local mirror, resolve the code
+      // from it (instant, works with no signal) — same hard-branch as _fetch.
+      // Thin client falls back to the network search_items barcode probe.
+      final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
+      final result = await resolveScannedCode(
+        repo: repo,
+        api: context.read<ShopApi>(),
         shopId: widget.shop.id,
-        query: event.code,
+        code: event.code,
         screen: 'sale',
         locale: Localizations.localeOf(context).languageCode,
       );
       if (!mounted) return;
-      if (results.isEmpty) {
+      if (result == null) {
         setState(() => _unknownScan = event.code);
         return;
       }
-      // Matched: dismiss any stale unknown pill, then route as if the
-      // first result were tapped. Multi-match is rare (barcodes are
-      // unique per shop) — picking the first preserves the speed
-      // contract; a v2 disambiguation sheet covers the edge case.
+      // Matched: dismiss any stale unknown pill, then route as if the tile
+      // were tapped (uses the barcode's forced packaging).
       setState(() => _unknownScan = null);
-      await _onTapTile(results.first);
+      await _onTapTile(result);
     } catch (error, stackTrace) {
       if (!mounted) return;
       FlutterError.reportError(

@@ -52,6 +52,7 @@ import 'package:dukan/queue/post_executor.dart';
 import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/multi_scan_sheet.dart';
 import 'package:dukan/scanner/scan_event.dart';
+import 'package:dukan/scanner/scan_lookup.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
@@ -173,6 +174,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     // Capture state we'll need across the async gap before any await.
     final shopId = widget.shop.id;
     final api = context.read<ShopApi>();
+    final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
     final receiveCtrl = context.read<ReceiveController>();
     final locale = Localizations.localeOf(context).languageCode;
     final supplierId = receiveCtrl.supplier?.id;
@@ -180,17 +182,16 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
 
     final result = await MultiScan.open(
       context,
-      resolver: (code) async {
-        final rows = await api.searchItems(
-          shopId: shopId,
-          query: code,
-          screen: 'receive',
-          locale: locale,
-          partyId: supplierId,
-        );
-        if (rows.isEmpty) return null;
-        return rows.first;
-      },
+      // Offline-first per scan, same resolution as single-scan.
+      resolver: (code) => resolveScannedCode(
+        repo: repo,
+        api: api,
+        shopId: shopId,
+        code: code,
+        screen: 'receive',
+        locale: locale,
+        partyId: supplierId,
+      ),
     );
     if (result == null || !mounted) return;
 
@@ -226,22 +227,27 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
 
   Future<void> _handleScan(ScanEvent event) async {
     try {
-      final results = await context.read<ShopApi>().searchItems(
+      // Offline-first via the local mirror when use_local_db; thin client
+      // uses the network search_items barcode probe.
+      final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
+      final result = await resolveScannedCode(
+        repo: repo,
+        api: context.read<ShopApi>(),
         shopId: widget.shop.id,
-        query: event.code,
+        code: event.code,
         screen: 'receive',
         locale: Localizations.localeOf(context).languageCode,
         partyId: context.read<ReceiveController>().supplier?.id,
       );
       if (!mounted) return;
-      if (results.isEmpty) {
+      if (result == null) {
         setState(() => _unknownScan = event.code);
         return;
       }
       setState(() => _unknownScan = null);
       // Reuse the normal tile-tap path so the form pre-fills from the
       // matched packaging's defaults, exactly like a manual tap would.
-      await _onTapTile(results.first);
+      await _onTapTile(result);
     } catch (error, stackTrace) {
       if (!mounted) return;
       FlutterError.reportError(

@@ -18,6 +18,7 @@ class ScannerSettings {
     this.hidMaxInterKeyGapMs = 50,
     this.hidMaxBurstWindowMs = 200,
     this.hidMinBurstLength = 4,
+    this.soundEnabled = true,
   });
 
   /// The v1 baseline. Matches the migration's column default exactly.
@@ -33,6 +34,7 @@ class ScannerSettings {
           _intOr(json['hid_max_burst_window_ms'], defaults.hidMaxBurstWindowMs),
       hidMinBurstLength:
           _intOr(json['hid_min_burst_length'], defaults.hidMinBurstLength),
+      soundEnabled: _boolOr(json['sound_enabled'], defaults.soundEnabled),
     );
   }
 
@@ -42,10 +44,18 @@ class ScannerSettings {
     return fallback;
   }
 
+  static bool _boolOr(Object? raw, bool fallback) {
+    if (raw is bool) return raw;
+    return fallback;
+  }
+
   final int rearmMs;
   final int hidMaxInterKeyGapMs;
   final int hidMaxBurstWindowMs;
   final int hidMinBurstLength;
+  // Play a beep on a successful/duplicate scan (haptics always fire). Off lets
+  // a shop run silent. Sourced from the scanner_settings jsonb `sound_enabled`.
+  final bool soundEnabled;
 
   Duration get rearm => Duration(milliseconds: rearmMs);
   Duration get hidMaxInterKeyGap =>
@@ -78,7 +88,8 @@ class ScannerSettings {
       other.rearmMs == rearmMs &&
       other.hidMaxInterKeyGapMs == hidMaxInterKeyGapMs &&
       other.hidMaxBurstWindowMs == hidMaxBurstWindowMs &&
-      other.hidMinBurstLength == hidMinBurstLength;
+      other.hidMinBurstLength == hidMinBurstLength &&
+      other.soundEnabled == soundEnabled;
 
   @override
   int get hashCode => Object.hash(
@@ -86,10 +97,12 @@ class ScannerSettings {
         hidMaxInterKeyGapMs,
         hidMaxBurstWindowMs,
         hidMinBurstLength,
+        soundEnabled,
       );
 
   @override
   String toString() =>
       'ScannerSettings(rearm=${rearmMs}ms, hidGap=${hidMaxInterKeyGapMs}ms, '
-      'hidWindow=${hidMaxBurstWindowMs}ms, hidMinLen=$hidMinBurstLength)';
+      'hidWindow=${hidMaxBurstWindowMs}ms, hidMinLen=$hidMinBurstLength, '
+      'sound=$soundEnabled)';
 }

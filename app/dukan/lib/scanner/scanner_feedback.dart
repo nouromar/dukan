@@ -2,28 +2,42 @@
 // point (camera viewfinder, HID listener, multi-scan) gives the
 // cashier the same cue — see docs/scanner.md §9.
 //
-// V1 policy:
-//   success     → medium-impact haptic. Audio beep deferred until
-//                  we wire a tiny on-device sample (or fall back to
-//                  the platform success-feedback). HapticFeedback is
-//                  immediate and free.
-//   duplicate   → selection-click haptic (multi-scan "+1" feedback).
+// V1 policy (haptics always fire; the beep is gated by
+// ScannerSettings.soundEnabled so a shop can run silent):
+//   success     → medium-impact haptic + alert beep.
+//   duplicate   → selection-click haptic + soft click (multi-scan "+1").
 //   unknown     → light vibrate ONLY in multi-scan mode; otherwise
-//                  silent (the inline pill is the cue).
+//                  silent (the inline pill is the cue). No tone — a
+//                  same-as-success tone would be ambiguous.
 //   error       → vibrate (camera busy, permission denied mid-scan).
 //
-// Future work: wire SystemSound.play(SystemSoundType.click) when the
-// platform offers a softer alternative; ship a custom .wav asset
-// later if user research validates it.
+// The beep uses the platform's own SystemSound (zero deps, no asset).
+// [soundPlayer] is an injection seam so tests can assert what plays.
 
 import 'package:flutter/services.dart';
+
+import 'package:dukan/scanner/scanner_settings.dart';
 
 class ScannerFeedback {
   ScannerFeedback._();
 
-  static Future<void> success() => HapticFeedback.mediumImpact();
+  /// Plays a platform system sound. Overridable in tests.
+  static Future<void> Function(SystemSoundType) soundPlayer = SystemSound.play;
 
-  static Future<void> duplicate() => HapticFeedback.selectionClick();
+  static Future<void> _beep(SystemSoundType type) async {
+    if (!ScannerSettings.current.soundEnabled) return;
+    await soundPlayer(type);
+  }
+
+  static Future<void> success() async {
+    await HapticFeedback.mediumImpact();
+    await _beep(SystemSoundType.alert);
+  }
+
+  static Future<void> duplicate() async {
+    await HapticFeedback.selectionClick();
+    await _beep(SystemSoundType.click);
+  }
 
   static Future<void> unknownInMultiScan() => HapticFeedback.lightImpact();
 

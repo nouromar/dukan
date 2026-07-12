@@ -9,9 +9,24 @@ void main() {
     expect(d.hidMaxInterKeyGapMs, 50);
     expect(d.hidMaxBurstWindowMs, 200);
     expect(d.hidMinBurstLength, 4);
+    expect(d.soundEnabled, isTrue);
     expect(d.rearm, const Duration(milliseconds: 800));
     expect(d.hidMaxInterKeyGap, const Duration(milliseconds: 50));
     expect(d.hidMaxBurstWindow, const Duration(milliseconds: 200));
+  });
+
+  test('sound_enabled parses; defaults on; false honored', () {
+    expect(ScannerSettings.fromJson(<String, dynamic>{}).soundEnabled, isTrue);
+    expect(
+      ScannerSettings.fromJson(<String, dynamic>{'sound_enabled': false})
+          .soundEnabled,
+      isFalse,
+    );
+    expect(
+      ScannerSettings.fromJson(<String, dynamic>{'sound_enabled': true})
+          .soundEnabled,
+      isTrue,
+    );
   });
 
   test('fromJson parses every knob', () {

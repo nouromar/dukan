@@ -298,6 +298,45 @@ void main() {
     expect(miss, isNull);
   });
 
+  test('resolveBarcode forces the scanned packaging + carries item fields',
+      () async {
+    await repo.applyItemsPayload({
+      'items': [_item('si-1', 'Cola', stock: 42)],
+      'units': [
+        _unit('siu-single', 'si-1', 'bottle', 'Cola — bottle', 1,
+            price: 500, lastCost: 300),
+        _unit('siu-carton', 'si-1', 'carton', 'Cola — carton (12)', 12,
+            price: 5500, lastCost: 3400),
+      ],
+      'aliases': [],
+      'barcodes': [
+        {
+          'barcode': '5000000000012',
+          'shop_item_unit_id': 'siu-carton',
+          'is_primary': true,
+        },
+      ],
+    });
+
+    final r = await repo.resolveBarcode('5000000000012', screen: 'sale');
+    expect(r, isNotNull);
+    expect(r!.shopItemId, 'si-1');
+    expect(r.displayName, 'Cola');
+    expect(r.currentStock, 42);
+    // Resolves to the SCANNED (carton) packaging, not the single/base.
+    expect(r.defaultShopItemUnitId, 'siu-carton');
+    expect(r.defaultUnitCode, 'carton');
+    expect(r.defaultUnitConversionToBase, 12);
+    expect(r.defaultUnitSalePrice, 5500);
+    expect(r.defaultUnitLastCost, 3400);
+    expect(r.packagingLabel, 'Cola — carton (12)');
+    expect(r.rankReason, 'barcode_match');
+    expect(r.isActivated, isTrue);
+
+    // Unknown barcode → null (caller shows the unknown-scan pill).
+    expect(await repo.resolveBarcode('9999999999999', screen: 'sale'), isNull);
+  });
+
   test('packagingsForItem returns active packagings sorted by conversion',
       () async {
     await repo.applyItemsPayload({
