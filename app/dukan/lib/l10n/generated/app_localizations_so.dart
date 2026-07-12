@@ -1134,6 +1134,15 @@ class AppLocalizationsSo extends AppLocalizations {
       'Lacagta lama beddeli karo marka dukaanku diiwaangeliyo wax ganacsi. La xiriir taageerada si aad u beddesho.';
 
   @override
+  String get settingsAboutRow => 'Ku saabsan';
+
+  @override
+  String get aboutTitle => 'Ku saabsan';
+
+  @override
+  String get aboutVersionLabel => 'Nooca';
+
+  @override
   String get productsTitle => 'Alaab';
 
   @override

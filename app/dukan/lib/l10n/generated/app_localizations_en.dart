@@ -1129,6 +1129,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Currency can\'t be changed once the shop has recorded a transaction. Contact support to change it.';
 
   @override
+  String get settingsAboutRow => 'About';
+
+  @override
+  String get aboutTitle => 'About';
+
+  @override
+  String get aboutVersionLabel => 'Version';
+
+  @override
   String get productsTitle => 'Products';
 
   @override

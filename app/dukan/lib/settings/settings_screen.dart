@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
+import 'package:dukan/settings/about_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -173,7 +174,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ? const CircularProgressIndicator()
                       : Text(l.settingsSaveButton),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 20),
+                const Divider(),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.info_outline),
+                  title: Text(l.settingsAboutRow),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AboutScreen(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
               ],
             );
           },
