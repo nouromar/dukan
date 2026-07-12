@@ -177,7 +177,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final shopId = widget.shop.id;
     final api = context.read<ShopApi>();
     final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
-    final online = context.read<ConnectivityStatus>().online;
+    // Capture the notifier (not a bool snapshot) so a long multi-scan session
+    // reads the live online state on each scan, not the value at open time.
+    final connectivity = context.read<ConnectivityStatus>();
     final receiveCtrl = context.read<ReceiveController>();
     final locale = Localizations.localeOf(context).languageCode;
     final supplierId = receiveCtrl.supplier?.id;
@@ -189,7 +191,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       resolver: (code) => resolveScannedCode(
         repo: repo,
         api: api,
-        online: online,
+        online: connectivity.online,
         shopId: shopId,
         code: code,
         screen: 'receive',
@@ -327,26 +329,36 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     }
   }
 
-  Future<List<ItemSearchResult>> _fetch(String query) async {
+  Future<List<ItemSearchResult>> _fetch(String query) {
+    // Resolve every dependency synchronously up front so nothing reads context
+    // after the (possible) supplier-basket await.
     final supplier = context.read<ReceiveController>().supplier;
+    final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
+    final api = context.read<ShopApi>();
+    final online = context.read<ConnectivityStatus>().online;
+    final locale = Localizations.localeOf(context).languageCode;
+    final shopId = widget.shop.id;
+
+    Future<List<ItemSearchResult>> search() => runItemSearch(
+          repo: repo,
+          api: api,
+          online: online,
+          shopId: shopId,
+          query: query,
+          screen: 'receive',
+          partyId: supplier?.id,
+          locale: locale,
+        );
+
     // Slice 3: empty query + a chosen supplier → their usual items first (the
-    // supplier basket, from the local mirror), ranked by how recently received.
-    // A supplier with no history, or any typed query, falls through to the
-    // shared local-first + online-fallback item search — never a blank grid.
-    if (query.trim().isEmpty && supplier != null && useLocalDb(context)) {
-      final basket = await context.read<LocalRepository>().supplierBasket(
-            supplier.id,
-            shopId: widget.shop.id,
-          );
-      if (basket.isNotEmpty) return basket;
+    // supplier basket from the local mirror). Otherwise (or an empty basket)
+    // fall through to the shared local-first + online-fallback search.
+    if (query.trim().isEmpty && supplier != null && repo != null) {
+      return repo
+          .supplierBasket(supplier.id, shopId: shopId)
+          .then((basket) => basket.isNotEmpty ? basket : search());
     }
-    return searchItems(
-      context,
-      shopId: widget.shop.id,
-      query: query,
-      screen: 'receive',
-      partyId: supplier?.id,
-    );
+    return search();
   }
 
   void _onSearchChanged(String value) {

@@ -145,6 +145,20 @@ void main() {
       expect(r.single.displayName, 'Cola');
     });
 
+    test('thin client + offline → empty, no doomed request', () async {
+      var calls = 0;
+      api.onSearchItems = (_, _, _, _, _, _) async {
+        calls++;
+        return [_catalog('Cola')];
+      };
+      final r = await runItemSearch(
+        repo: null, api: api, online: false,
+        shopId: 'shop-1', query: 'Cola', screen: 'sale',
+      );
+      expect(r, isEmpty);
+      expect(calls, 0);
+    });
+
     test('discover → network-first even with local hits; local when offline',
         () async {
       api.onSearchItems = (_, _, _, _, _, _) async => [_catalog('Cola Zero')];

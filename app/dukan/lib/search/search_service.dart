@@ -68,7 +68,12 @@ Future<List<ItemSearchResult>> runItemSearch({
     }
   }
 
-  if (repo == null) return network(); // thin client
+  if (repo == null) {
+    // Thin client: no mirror to fall back on. Offline → instant empty rather
+    // than a doomed request that hangs to the timeout.
+    if (!online) return const [];
+    return network();
+  }
   if (discover) {
     if (online) {
       final n = await network();
@@ -145,7 +150,10 @@ Future<List<PartySearchResult>> runPartySearch({
     }
   }
 
-  if (repo == null) return network();
+  if (repo == null) {
+    if (!online) return const [];
+    return network();
+  }
   final l = await local();
   if (l.isNotEmpty || !online) return l;
   return network();
