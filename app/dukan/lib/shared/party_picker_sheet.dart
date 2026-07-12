@@ -1,16 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
+import 'package:dukan/search/search_service.dart';
 import 'package:dukan/shared/add_party_sheet.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
-import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/use_local_db.dart';
 
 /// Bottom-sheet party picker, used by both Sale (typeCode='customer'
 /// for debt sales) and Payment (either type). Returns the chosen party
@@ -59,24 +56,15 @@ class _PartyPickerBodyState extends State<_PartyPickerBody> {
     super.dispose();
   }
 
-  Future<List<PartySearchResult>> _fetch(String query) async {
-    // #374: local mirror when offline_mode = full.
-    if (useLocalDb(context)) {
-      final repo = context.read<LocalRepository>();
-      // Default rankBy:'balance' — for parties, who owes (or is owed) matters
-      // more than recency. The recency capability stays available for a
-      // future "Recent" toggle.
-      final rows = await repo.searchParties(
-        query,
-        shopId: widget.shop.id,
-        typeCode: widget.typeCode,
-      );
-      return rows.map(repo.toPartySearchResult).toList(growable: false);
-    }
-    return context.read<ShopApi>().searchParties(
+  Future<List<PartySearchResult>> _fetch(String query) {
+    // Local-first (offline) + online fallback-on-empty (catches a party added
+    // on another device that hasn't synced here yet). Default rankBy 'balance'
+    // — who owes / is owed matters more than recency.
+    return searchParties(
+      context,
       shopId: widget.shop.id,
       query: query,
-      type: widget.typeCode,
+      typeCode: widget.typeCode,
     );
   }
 

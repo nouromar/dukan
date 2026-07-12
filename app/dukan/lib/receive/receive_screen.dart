@@ -53,6 +53,8 @@ import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/multi_scan_sheet.dart';
 import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scan_lookup.dart';
+import 'package:dukan/search/connectivity_status.dart';
+import 'package:dukan/search/search_service.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/bono_image_picker.dart';
@@ -175,6 +177,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     final shopId = widget.shop.id;
     final api = context.read<ShopApi>();
     final repo = useLocalDb(context) ? context.read<LocalRepository>() : null;
+    final online = context.read<ConnectivityStatus>().online;
     final receiveCtrl = context.read<ReceiveController>();
     final locale = Localizations.localeOf(context).languageCode;
     final supplierId = receiveCtrl.supplier?.id;
@@ -186,6 +189,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       resolver: (code) => resolveScannedCode(
         repo: repo,
         api: api,
+        online: online,
         shopId: shopId,
         code: code,
         screen: 'receive',
@@ -233,6 +237,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       final result = await resolveScannedCode(
         repo: repo,
         api: context.read<ShopApi>(),
+        online: context.read<ConnectivityStatus>().online,
         shopId: widget.shop.id,
         code: event.code,
         screen: 'receive',
@@ -324,33 +329,22 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
 
   Future<List<ItemSearchResult>> _fetch(String query) async {
     final supplier = context.read<ReceiveController>().supplier;
-    // #374: local mirror when offline_mode = full. Shop-wide last_cost from the
-    // cached unit row is good enough for v1.
-    if (useLocalDb(context)) {
-      final repo = context.read<LocalRepository>();
-      // Slice 3: empty query + a chosen supplier → their usual items first
-      // (the supplier basket), ranked by how recently received. A supplier with
-      // no history (empty basket), or any typed query, falls back to the normal
-      // alphabetical item search — never a blank grid.
-      if (query.trim().isEmpty && supplier != null) {
-        final basket = await repo.supplierBasket(
-          supplier.id,
-          shopId: widget.shop.id,
-        );
-        if (basket.isNotEmpty) return basket;
-      }
-      final items = await repo.searchItems(query, shopId: widget.shop.id);
-      final results = <ItemSearchResult>[];
-      for (final item in items) {
-        results.add(await repo.toItemSearchResult(item, screen: 'receive'));
-      }
-      return results;
+    // Slice 3: empty query + a chosen supplier → their usual items first (the
+    // supplier basket, from the local mirror), ranked by how recently received.
+    // A supplier with no history, or any typed query, falls through to the
+    // shared local-first + online-fallback item search — never a blank grid.
+    if (query.trim().isEmpty && supplier != null && useLocalDb(context)) {
+      final basket = await context.read<LocalRepository>().supplierBasket(
+            supplier.id,
+            shopId: widget.shop.id,
+          );
+      if (basket.isNotEmpty) return basket;
     }
-    return context.read<ShopApi>().searchItems(
+    return searchItems(
+      context,
       shopId: widget.shop.id,
       query: query,
       screen: 'receive',
-      locale: Localizations.localeOf(context).languageCode,
       partyId: supplier?.id,
     );
   }

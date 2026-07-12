@@ -26,6 +26,8 @@ import 'package:dukan/queue/queue_status_pill.dart';
 import 'package:dukan/scanner/hid_listener.dart';
 import 'package:dukan/scanner/scan_event.dart';
 import 'package:dukan/scanner/scan_lookup.dart';
+import 'package:dukan/search/connectivity_status.dart';
+import 'package:dukan/search/search_service.dart';
 import 'package:dukan/scanner/scanner_settings.dart';
 import 'package:dukan/scanner/scanner_sheet.dart';
 import 'package:dukan/shared/party_picker_sheet.dart';
@@ -163,29 +165,16 @@ class _SaleScreenState extends State<SaleScreen> {
     }
   }
 
-  Future<List<ItemSearchResult>> _fetch(String query) async {
-    // #374: when offline_mode = full, read from the local mirror.
-    // Light mode keeps the existing live RPC path (search_items
-    // with server-side ranking).
-    if (useLocalDb(context)) {
-      final repo = context.read<LocalRepository>();
-      // Sale ranks the items you sell most/most-recently first.
-      final items = await repo.searchItems(
-        query,
-        shopId: widget.shop.id,
-        rankBy: 'recency',
-      );
-      final results = <ItemSearchResult>[];
-      for (final item in items) {
-        results.add(await repo.toItemSearchResult(item, screen: 'sale'));
-      }
-      return results;
-    }
-    return context.read<ShopApi>().searchItems(
+  Future<List<ItemSearchResult>> _fetch(String query) {
+    // Local-first (instant, offline); on an empty local result while online,
+    // the shared service falls back to the network — which also surfaces
+    // global-catalog rows to activate. Sale ranks by what sells most/recently.
+    return searchItems(
+      context,
       shopId: widget.shop.id,
       query: query,
       screen: 'sale',
-      locale: Localizations.localeOf(context).languageCode,
+      rankBy: 'recency',
     );
   }
 
@@ -269,6 +258,7 @@ class _SaleScreenState extends State<SaleScreen> {
       final result = await resolveScannedCode(
         repo: repo,
         api: context.read<ShopApi>(),
+        online: context.read<ConnectivityStatus>().online,
         shopId: widget.shop.id,
         code: event.code,
         screen: 'sale',

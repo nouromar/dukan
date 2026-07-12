@@ -20,6 +20,7 @@ import 'package:dukan/observability/crash_reporter.dart';
 import 'package:dukan/payment/payment_controller.dart';
 import 'package:dukan/queue/offline_queue_controller.dart';
 import 'package:dukan/queue/post_executor.dart';
+import 'package:dukan/search/connectivity_status.dart';
 import 'package:dukan/storage/app_database.dart';
 import 'package:dukan/storage/cache_dao.dart';
 import 'package:dukan/storage/device_config_dao.dart';
@@ -86,6 +87,8 @@ class _AuthBootstrapState extends State<AuthBootstrap>
   // Assume connected at launch so the first connectivity event doesn't fire a
   // redundant recovery; we only act on a none -> connected transition.
   bool _lastHadConnectivity = true;
+  // Queryable online signal for the search layer (gates the network fallback).
+  final ConnectivityStatus _connectivityStatus = ConnectivityStatus();
 
   @override
   void initState() {
@@ -97,6 +100,13 @@ class _AuthBootstrapState extends State<AuthBootstrap>
     WidgetsBinding.instance.addObserver(this);
     _connectivitySub =
         Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
+    // Seed the online signal from the current interface state.
+    unawaited(Connectivity().checkConnectivity().then((results) {
+      if (!mounted) return;
+      final hasNet = results.any((r) => r != ConnectivityResult.none);
+      _lastHadConnectivity = hasNet;
+      _connectivityStatus.set(hasNet);
+    }));
     _shopApi = ShopApi(widget.supabaseClient);
     _authController =
         AuthController(client: widget.supabaseClient, shopApi: _shopApi)
@@ -226,6 +236,7 @@ class _AuthBootstrapState extends State<AuthBootstrap>
       unawaited(_recoverConnection());
     }
     _lastHadConnectivity = hasNet;
+    _connectivityStatus.set(hasNet);
   }
 
   /// Re-establish the live connection after a network drop / suspension:
@@ -391,6 +402,7 @@ class _AuthBootstrapState extends State<AuthBootstrap>
     unawaited(_realtimeListener.dispose());
     _syncEngine.dispose();
     _offlineQueueController.dispose();
+    _connectivityStatus.dispose();
     _expenseController.dispose();
     _paymentController.dispose();
     _receiveController.dispose();
@@ -422,6 +434,9 @@ class _AuthBootstrapState extends State<AuthBootstrap>
         Provider<PendingPostDao>.value(value: _pendingPostDao),
         Provider<CacheDao>.value(value: _cacheDao),
         Provider<LocalRepository>.value(value: _localRepository),
+        ChangeNotifierProvider<ConnectivityStatus>.value(
+          value: _connectivityStatus,
+        ),
         Provider<BonoImageCache>.value(value: _bonoImageCache),
         ChangeNotifierProvider<SyncEngine>.value(value: _syncEngine),
       ],

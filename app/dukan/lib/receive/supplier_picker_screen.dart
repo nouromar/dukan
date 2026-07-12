@@ -10,16 +10,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/receive/receive_screen.dart';
+import 'package:dukan/search/search_service.dart';
 import 'package:dukan/shared/add_party_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/money.dart';
-import 'package:dukan/sync/local_repository.dart';
-import 'package:dukan/sync/use_local_db.dart';
 
 class SupplierPickerScreen extends StatefulWidget {
   const SupplierPickerScreen({required this.shop, super.key});
@@ -49,21 +47,13 @@ class _SupplierPickerScreenState extends State<SupplierPickerScreen> {
     super.dispose();
   }
 
-  Future<List<PartySearchResult>> _fetch(String query) async {
-    // #374: local mirror when offline_mode = full.
-    if (useLocalDb(context)) {
-      final repo = context.read<LocalRepository>();
-      final rows = await repo.searchParties(
-        query,
-        shopId: widget.shop.id,
-        typeCode: 'supplier',
-      );
-      return rows.map(repo.toPartySearchResult).toList(growable: false);
-    }
-    return context.read<ShopApi>().searchParties(
+  Future<List<PartySearchResult>> _fetch(String query) {
+    // Local-first (offline) + online fallback-on-empty via the shared service.
+    return searchParties(
+      context,
       shopId: widget.shop.id,
       query: query,
-      type: 'supplier',
+      typeCode: 'supplier',
     );
   }
 

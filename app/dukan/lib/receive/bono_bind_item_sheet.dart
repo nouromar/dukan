@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/receive/add_new_item_sheet.dart';
+import 'package:dukan/search/search_service.dart';
 import 'package:dukan/shared/l10n.dart';
 
 /// A concrete shop item + packaging to attach an unmatched bono line to.
@@ -91,12 +92,15 @@ class _BonoBindItemBodyState extends State<_BonoBindItemBody> {
   }
 
   Future<List<ItemSearchResult>> _fetch(String query) {
-    return context.read<ShopApi>().searchItems(
+    // Was network-only (blank offline). Now local-first via the shared service:
+    // shows the shop's matching items offline, and falls back to the network
+    // (incl. global-catalog rows) when local is empty and online.
+    return searchItems(
+      context,
       shopId: widget.shop.id,
       query: query,
       screen: 'receive',
       partyId: widget.supplierPartyId,
-      locale: Localizations.localeOf(context).languageCode,
     );
   }
 

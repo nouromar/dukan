@@ -21,6 +21,7 @@ import 'package:dukan/receive/receive_controller.dart';
 import 'package:dukan/storage/app_database.dart';
 import 'package:dukan/storage/pending_post_dao.dart';
 import 'package:dukan/sale/cart_controller.dart';
+import 'package:dukan/search/connectivity_status.dart';
 import 'package:dukan/shared/fallback_localizations.dart';
 import 'package:dukan/shared/locale_controller.dart';
 import 'package:dukan/sync/local_repository.dart';
@@ -47,6 +48,7 @@ Widget wrapWithApp(
   OfflineQueueController? offlineQueueController,
   ConfigResolver? configResolver,
   LocalRepository? localRepository,
+  ConnectivityStatus? connectivityStatus,
   BonoImageCache? bonoImageCache,
   Locale locale = const Locale('en'),
 }) {
@@ -122,6 +124,12 @@ Widget wrapWithApp(
           FakeLocalRepository(
             shopApi: (shopApi is FakeShopApi) ? shopApi : FakeShopApi(),
           ),
+    ),
+    // Search reads this to gate the network fallback. Default online so tests
+    // exercise the network branch as before; pass one with online:false to
+    // test offline behaviour.
+    ChangeNotifierProvider<ConnectivityStatus>.value(
+      value: connectivityStatus ?? ConnectivityStatus(),
     ),
     Provider<BonoImageCache>.value(value: bonoCache),
   ];

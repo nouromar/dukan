@@ -23,6 +23,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
+import 'package:dukan/search/search_service.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -66,11 +67,14 @@ class _CatalogPickerScreenState extends State<CatalogPickerScreen> {
   }
 
   Future<List<ItemSearchResult>> _fetch(String query) {
-    return context.read<ShopApi>().searchItems(
+    // Browsing the global catalog IS the job here → network-first (discover),
+    // degrading to the local activated items when offline instead of blank.
+    return searchItems(
+      context,
       shopId: widget.shop.id,
       query: query,
       screen: 'sale',
-      locale: Localizations.localeOf(context).languageCode,
+      discover: true,
     );
   }
 

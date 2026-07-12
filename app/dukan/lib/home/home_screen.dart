@@ -24,6 +24,7 @@ import 'package:dukan/reports/low_stock_screen.dart';
 import 'package:dukan/reports/reports_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/sale/sale_screen.dart';
+import 'package:dukan/search/connectivity_status.dart';
 import 'package:dukan/settings/language_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/storage/app_database.dart';
@@ -372,6 +373,9 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
   }
 
   void _prefetchFavorites() {
+    // Best-effort network warm-up — skip it entirely when offline so we don't
+    // fire a doomed request (the cache just stays as-is until reconnect).
+    if (!context.read<ConnectivityStatus>().online) return;
     final api = context.read<ShopApi>();
     final locale = Localizations.localeOf(context).languageCode;
     for (final screen in const ['sale', 'receive']) {
