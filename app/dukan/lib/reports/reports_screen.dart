@@ -230,14 +230,19 @@ class _ReportCard extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        m.label,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                      // Flexible so a long (e.g. Somali) label wraps instead of
+                      // colliding with the value and shoving the margin % off-screen.
+                      Expanded(
+                        child: Text(
+                          m.label,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 12),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         textBaseline: TextBaseline.alphabetic,
