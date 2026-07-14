@@ -2334,11 +2334,11 @@ class AppLocalizationsSo extends AppLocalizations {
   String get deactivateItemTooltip => 'Qari alaabta';
 
   @override
-  String get deactivateItemConfirmTitle => 'Ma qarinaysaa alaabtan?';
+  String get deactivateItemConfirmTitle => 'Ma rabtaa inaad qariso alaabtan?';
 
   @override
   String get deactivateItemConfirmBody =>
-      'Waxaa laga saari doonaa Iibinta, Dejinta, iyo Alaabta. Iibkii hore way sii jiri doonaan. Waxaad weydiisan kartaa taageerada inay soo celiyaan.';
+      'Alaabtan waxaa laga saari doonaa liiska iibinta, dejinta, iyo alaabta. Xogtii hore way sii jiri doontaa. Haddii aad rabto in dib loo soo celiyo, waxaad la xiriiri kartaa kooxda taageerada.';
 
   @override
   String get deactivateItemConfirmAction => 'QARI';
