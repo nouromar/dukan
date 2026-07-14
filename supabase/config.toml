@@ -288,6 +288,21 @@ max_frequency = "5s"
 # enabled = true
 # uri = "pg-functions://<database>/<schema>/<hook_name>"
 
+# Send SMS Hook — delivers the GoTrue-generated phone OTP over the WhatsApp
+# Cloud API instead of an SMS provider (see supabase/functions/whatsapp-otp-hook
+# and docs/whatsapp-otp-setup.md). GoTrue still GENERATES and VERIFIES the code,
+# so verifyOTP + sessions stay entirely native — the hook only delivers.
+#
+# Leave this DISABLED locally: [auth.sms.test_otp] short-circuits GoTrue before
+# the hook fires, so `+252612345678 → 123456` keeps working with no WhatsApp
+# round-trip. Production enables the hook in the dashboard (Auth → Hooks → Send
+# SMS) pointing at the deployed function, with SEND_SMS_HOOK_SECRET set. To
+# exercise real delivery locally, uncomment and set the secret:
+# [auth.hook.send_sms]
+# enabled = true
+# uri = "http://host.docker.internal:54321/functions/v1/whatsapp-otp-hook"
+# secrets = "env(SEND_SMS_HOOK_SECRET)"
+
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
 [auth.sms.twilio]
 # Local development only: fake provider values are needed so Supabase Auth
@@ -398,6 +413,15 @@ deno_version = 2
 # OCR_DISPATCH_TOKEN. Secrets (ANTHROPIC_API_KEY, OCR_DISPATCH_TOKEN,
 # SUPABASE_SERVICE_ROLE_KEY) are set via `supabase secrets set`, never committed.
 [functions.ocr-bono]
+verify_jwt = false
+
+# whatsapp-otp-hook is the Send SMS Hook (see [auth.hook.send_sms] above). GoTrue
+# calls it with a Standard Webhooks signature that the function verifies against
+# SEND_SMS_HOOK_SECRET — not a Supabase JWT — so JWT verification is disabled.
+# Secrets (WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_OTP_TEMPLATE,
+# WHATSAPP_OTP_LANG, WHATSAPP_GRAPH_VERSION, SEND_SMS_HOOK_SECRET) are set via
+# `supabase secrets set`, never committed.
+[functions.whatsapp-otp-hook]
 verify_jwt = false
 
 [analytics]
