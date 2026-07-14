@@ -77,7 +77,7 @@
 
   /* ---------- hero ---------- */
   .hero{padding:clamp(40px,7vw,84px) 0 clamp(48px,7vw,92px)}
-  .hero .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,5vw,64px);align-items:center}
+  .hero .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,5vw,64px);align-items:start}
   @media (max-width:900px){ .hero .grid{grid-template-columns:1fr;gap:40px} }
   .kicker{display:inline-flex;align-items:center;gap:10px;margin-bottom:22px}
   .kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--marigold)}
@@ -247,6 +247,7 @@
 <header class="hero">
   <div class="wrap grid">
     <div data-reveal>
+      <div class="kicker"><span class="dot"></span><span class="eyebrow">Point of sale · Inventory · Payments</span></div>
       <h1>Your whole shop,<br><em>in your pocket.</em></h1>
       <p class="lede">DukanPro is a fast point‑of‑sale and inventory app that runs the same
         online or offline — built for real shops, and ready to grow with them. <b>Sell in seconds</b>,
