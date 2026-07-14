@@ -236,7 +236,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get bonoReviewEditCategory => 'Qayb';
 
   @override
-  String get bonoReviewEditPackaging => 'Baakid';
+  String get bonoReviewEditPackaging => 'Xirmo';
 
   @override
   String get bonoReviewEditTotal => 'Wadar';
