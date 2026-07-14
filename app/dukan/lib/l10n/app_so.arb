@@ -809,8 +809,8 @@
     }
   },
   "addPackagingPickedPriceLabel": "Qiimaha iibka mid kasta {packaging} (ikhtiyaari)",
-  "addPackagingNoSuggestionsHint": "Halbeegan wali xirmooyin la isticmaalo uma jiraan — hoosta ka qor mid gaar ah.",
-  "addPackagingLoadFailedHint": "Soo jeedimaha lama soo dejin karin. Hoosta ka qor mid gaar ah.",
+  "addPackagingNoSuggestionsHint": "Halbeegan wali xirmooyin la isticmaalo kuma jiraan — hoosta ku qor mid gaar ah.",
+  "addPackagingLoadFailedHint": "Soo jeedimaha lama soo dejin karin. Hoosta ku qor mid gaar ah.",
   "lineEditorCostHintLabel": "Qiimaha aad ku iibsatay ugu dambeysay: {cost}. Ku dar dheeraadkaaga caadi ah.",
   "@lineEditorCostHintLabel": {
     "placeholders": {

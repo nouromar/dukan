@@ -2058,11 +2058,11 @@ class AppLocalizationsSo extends AppLocalizations {
 
   @override
   String get addPackagingNoSuggestionsHint =>
-      'Halbeegan wali xirmooyin la isticmaalo uma jiraan — hoosta ka qor mid gaar ah.';
+      'Halbeegan wali xirmooyin la isticmaalo kuma jiraan — hoosta ku qor mid gaar ah.';
 
   @override
   String get addPackagingLoadFailedHint =>
-      'Soo jeedimaha lama soo dejin karin. Hoosta ka qor mid gaar ah.';
+      'Soo jeedimaha lama soo dejin karin. Hoosta ku qor mid gaar ah.';
 
   @override
   String lineEditorCostHintLabel(String cost) {
