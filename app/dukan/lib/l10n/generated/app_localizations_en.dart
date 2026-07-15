@@ -1205,7 +1205,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get saleSaveButton => 'SAVE';
+  String get saleSaveButton => 'COMPLETE';
 
   @override
   String get salePostFailedMessage =>
@@ -1301,7 +1301,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentAmountLabel => 'Amount paid';
 
   @override
-  String get paymentSaveButton => 'SAVE';
+  String get paymentSaveButton => 'COMPLETE';
 
   @override
   String get paymentNotesLabel => 'Note';
@@ -1400,7 +1400,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseAmountLabel => 'Amount';
 
   @override
-  String get expenseSaveButton => 'SAVE';
+  String get expenseSaveButton => 'COMPLETE';
 
   @override
   String get expenseNotesLabel => 'Note';
@@ -1555,7 +1555,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saleReceiptShareButton => 'SHARE RECEIPT';
 
   @override
-  String get saleReceiptDoneButton => 'DONE';
+  String get saleReceiptDoneButton => 'CLOSE';
 
   @override
   String get saleHistoryReceiptTooltip => 'Open receipt';
@@ -1855,7 +1855,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiveLinesClearConfirmNo => 'CANCEL';
 
   @override
-  String get receiveSaveButton => 'SAVE';
+  String get receiveSaveButton => 'COMPLETE';
 
   @override
   String get saleSavedToast => 'Sale saved';

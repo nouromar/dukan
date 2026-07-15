@@ -2135,7 +2135,7 @@ abstract class AppLocalizations {
   /// No description provided for @saleSaveButton.
   ///
   /// In en, this message translates to:
-  /// **'SAVE'**
+  /// **'COMPLETE'**
   String get saleSaveButton;
 
   /// No description provided for @salePostFailedMessage.
@@ -2303,7 +2303,7 @@ abstract class AppLocalizations {
   /// No description provided for @paymentSaveButton.
   ///
   /// In en, this message translates to:
-  /// **'SAVE'**
+  /// **'COMPLETE'**
   String get paymentSaveButton;
 
   /// No description provided for @paymentNotesLabel.
@@ -2441,7 +2441,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseSaveButton.
   ///
   /// In en, this message translates to:
-  /// **'SAVE'**
+  /// **'COMPLETE'**
   String get expenseSaveButton;
 
   /// No description provided for @expenseNotesLabel.
@@ -2722,7 +2722,7 @@ abstract class AppLocalizations {
   /// No description provided for @saleReceiptDoneButton.
   ///
   /// In en, this message translates to:
-  /// **'DONE'**
+  /// **'CLOSE'**
   String get saleReceiptDoneButton;
 
   /// No description provided for @saleHistoryReceiptTooltip.
@@ -3183,7 +3183,7 @@ abstract class AppLocalizations {
   /// No description provided for @receiveSaveButton.
   ///
   /// In en, this message translates to:
-  /// **'SAVE'**
+  /// **'COMPLETE'**
   String get receiveSaveButton;
 
   /// No description provided for @saleSavedToast.

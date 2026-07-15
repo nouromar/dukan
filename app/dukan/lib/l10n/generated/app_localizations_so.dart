@@ -1209,7 +1209,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get saleSaveButton => 'KAYDI';
+  String get saleSaveButton => 'DHAMMEE';
 
   @override
   String get salePostFailedMessage =>
@@ -1305,7 +1305,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get paymentAmountLabel => 'Lacagta la bixiyay';
 
   @override
-  String get paymentSaveButton => 'KAYDI';
+  String get paymentSaveButton => 'DHAMMEE';
 
   @override
   String get paymentNotesLabel => 'Qoraal';
@@ -1404,7 +1404,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get expenseAmountLabel => 'Lacagta';
 
   @override
-  String get expenseSaveButton => 'KAYDI';
+  String get expenseSaveButton => 'DHAMMEE';
 
   @override
   String get expenseNotesLabel => 'Qoraal';
@@ -1561,7 +1561,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get saleReceiptShareButton => 'U DIR RASIID';
 
   @override
-  String get saleReceiptDoneButton => 'DHAMMEE';
+  String get saleReceiptDoneButton => 'XIR';
 
   @override
   String get saleHistoryReceiptTooltip => 'Fur rasiidka';
@@ -1864,7 +1864,7 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiveLinesClearConfirmNo => 'JOOJI';
 
   @override
-  String get receiveSaveButton => 'KAYDI';
+  String get receiveSaveButton => 'DHAMMEE';
 
   @override
   String get saleSavedToast => 'Iibka waa la kaydiyay';
