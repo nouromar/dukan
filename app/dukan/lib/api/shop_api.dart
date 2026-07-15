@@ -9,6 +9,7 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:dukan/api/auth_error.dart';
 import 'package:dukan/api/types.dart';
 
 /// Bundle returned by `getShopItem` — header + every packaging + every
@@ -411,6 +412,21 @@ class ShopApi {
   ShopApi(this._client);
 
   final SupabaseClient _client;
+
+  /// Money-post RPC wrapper: refreshes the session and retries ONCE on a
+  /// transient auth reject (expired/missing JWT) so a stale token can't
+  /// hard-fail a write right after a cold start or idle resume. Genuine server
+  /// rejects (non-auth errors) pass straight through to the caller's handling.
+  /// Retries are safe — the posting RPCs dedupe on `client_op_id`. See
+  /// lib/api/auth_error.dart.
+  Future<dynamic> _postRpc(String fn, Map<String, dynamic> params) {
+    return withAuthRetry(
+      () => _client.rpc(fn, params: params),
+      refresh: () async {
+        await _client.auth.refreshSession();
+      },
+    );
+  }
 
   // ----- Templates / setup --------------------------------------------------
 
@@ -1064,9 +1080,9 @@ class ShopApi {
     if (lines.isEmpty) {
       throw ArgumentError('post_sale requires at least one line');
     }
-    final result = await _client.rpc(
+    final result = await _postRpc(
       'post_sale',
-      params: {
+      {
         'p_shop_id': shopId,
         'p_party_id': partyId,
         'p_lines': lines.map((l) => l.toJson()).toList(),
@@ -1284,9 +1300,9 @@ class ShopApi {
     // Client-minted txn UUID (offline-void support); null → server mints it.
     String? txnId,
   }) async {
-    final result = await _client.rpc(
+    final result = await _postRpc(
       'post_expense',
-      params: {
+      {
         'p_shop_id': shopId,
         'p_expense_category_id': expenseCategoryId,
         'p_amount': amount,
@@ -1654,9 +1670,9 @@ class ShopApi {
     // Client-minted payment UUID (offline-void support); null → server mints it.
     String? paymentId,
   }) async {
-    final result = await _client.rpc(
+    final result = await _postRpc(
       'post_payment',
-      params: {
+      {
         'p_shop_id': shopId,
         'p_party_id': partyId,
         'p_direction': direction,
@@ -1741,9 +1757,9 @@ class ShopApi {
     if (lines.isEmpty) {
       throw ArgumentError('post_receive requires at least one line');
     }
-    final result = await _client.rpc(
+    final result = await _postRpc(
       'post_receive',
-      params: {
+      {
         'p_shop_id': shopId,
         'p_party_id': partyId,
         'p_lines': lines.map((l) => l.toJson()).toList(),

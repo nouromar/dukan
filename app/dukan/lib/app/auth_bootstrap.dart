@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:dukan/api/auth_error.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/receive/bono_image_cache.dart';
 import 'package:dukan/auth/auth_controller.dart';
@@ -148,7 +149,7 @@ class _AuthBootstrapState extends State<AuthBootstrap>
       // Failure-type-aware, never-expiring retry: an expired token
       // refreshes and retries without penalty; a genuine server reject
       // parks quietly; everything else retries forever.
-      isAuthError: _isQueueAuthError,
+      isAuthError: isAuthReject,
       refreshSession: () async {
         await widget.supabaseClient.auth.refreshSession();
       },
@@ -534,22 +535,11 @@ class AuthRouter extends StatelessWidget {
 }
 
 // --- Queue failure classification --------------------------------------
-// Keep these consistent with the app's inline boundary: a
-// PostgrestException is a structured server reject (won't succeed on
-// retry), everything else is transient. The expired-token case is
-// carved out first so it refreshes rather than parking.
-
-bool _isQueueAuthError(Object error) {
-  if (error is AuthException) return true;
-  if (error is PostgrestException) {
-    // PostgREST returns PGRST301/302 (and HTTP 401) for a missing/expired
-    // JWT; the message mentions "JWT" in practice.
-    final code = error.code ?? '';
-    if (code == 'PGRST301' || code == 'PGRST302') return true;
-    if (error.message.toLowerCase().contains('jwt')) return true;
-  }
-  return false;
-}
+// The expired-token case (isAuthReject, lib/api/auth_error.dart — the same
+// classifier ShopApi's inline post retry uses) is carved out first by the
+// drain so it refreshes rather than parking. Everything else: a
+// PostgrestException is a structured server reject (won't succeed on retry),
+// transient otherwise.
 
 bool _isQueuePermanentError(Object error) {
   // A structured server reject (business rule / constraint) fails
