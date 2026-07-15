@@ -916,6 +916,103 @@ class LocalRepository {
         .toList(growable: false);
   }
 
+  /// Computes the Home "Today" summary from the local mirror — instant and
+  /// offline, and (unlike a cache of the server RPC) it counts the day's own
+  /// optimistic activity live. Mirrors `get_today_summary`'s rules exactly so
+  /// the online reconcile agrees: void-excluded (`is_voided = 0`, which after
+  /// 0116 covers reversed originals *and* reversal markers), money-in excludes
+  /// settlement legs, money-out counts all outbound payments, balances come
+  /// from the denormalized party projections, and low-stock uses the SERVER's
+  /// condition (`current_stock < 1 OR stock <= threshold`) — deliberately the
+  /// same as get_today_summary, which differs from `lowStockLocal`.
+  ///
+  /// Day boundary = device-local midnight (the app-wide convention, see
+  /// `DateRange.today`); correct for the on-site shopkeeper. The online
+  /// reconcile uses the server's shop-timezone value as the authority.
+  Future<TodaySummary> getTodaySummaryLocal(String shopId, {DateTime? now}) async {
+    final n = now ?? DateTime.now();
+    final todayStartMs =
+        DateTime(n.year, n.month, n.day).millisecondsSinceEpoch;
+    final db = await _db;
+
+    // Today's non-voided money-spine rows (one indexed range scan; today is a
+    // small set). Aggregate by type in Dart — payments need direction +
+    // settlement-leg parsing from the payload.
+    final rows = await db.query(
+      'local_transaction',
+      where: 'shop_id = ? AND occurred_at >= ? AND is_voided = 0',
+      whereArgs: [shopId, todayStartMs],
+    );
+
+    double sales = 0, received = 0, expenses = 0, moneyIn = 0, moneyOut = 0;
+    int salesN = 0, receivedN = 0, expensesN = 0, moneyInN = 0, moneyOutN = 0;
+    for (final r in rows) {
+      final t = LocalTransaction._fromRow(r);
+      final amount = t.total.toDouble();
+      switch (t.typeCode) {
+        case 'sale':
+          sales += amount;
+          salesN++;
+          break;
+        case 'receive':
+          received += amount;
+          receivedN++;
+          break;
+        case 'expense':
+          expenses += amount;
+          expensesN++;
+          break;
+        case 'payment':
+          final dir = (t.payload['direction'] as String?) ?? 'I';
+          if (dir == 'O') {
+            moneyOut += amount;
+            moneyOutN++;
+          } else if (!_isSettlementLegOp(t.clientOpId)) {
+            // Inbound, excluding the cash-sale till leg (double-count guard).
+            moneyIn += amount;
+            moneyInN++;
+          }
+          break;
+      }
+    }
+
+    // Denormalized balances — bounded by party count, not transaction history.
+    final bal = (await db.rawQuery(
+      'SELECT '
+      'COALESCE(SUM(CASE WHEN receivable > 0 THEN receivable ELSE 0 END), 0) AS r, '
+      'COALESCE(SUM(CASE WHEN payable    > 0 THEN payable    ELSE 0 END), 0) AS p '
+      'FROM local_party WHERE shop_id = ? AND is_active = 1',
+      [shopId],
+    ))
+        .first;
+
+    // Low stock — SERVER's get_today_summary condition (NOT lowStockLocal's).
+    final low = (await db.rawQuery(
+      'SELECT COUNT(*) AS c FROM local_shop_item '
+      'WHERE shop_id = ? AND is_active = 1 AND '
+      '(current_stock < 1 OR (reorder_threshold IS NOT NULL '
+      'AND current_stock <= reorder_threshold))',
+      [shopId],
+    ))
+        .first;
+
+    return TodaySummary(
+      salesToday: sales,
+      salesCount: salesN,
+      receivedToday: received,
+      receivedCount: receivedN,
+      moneyInToday: moneyIn,
+      moneyInCount: moneyInN,
+      moneyOutToday: moneyOut,
+      moneyOutCount: moneyOutN,
+      expensesToday: expenses,
+      expensesCount: expensesN,
+      receivablesTotal: (bal['r'] as num).toDouble(),
+      payablesTotal: (bal['p'] as num).toDouble(),
+      lowStockCount: (low['c'] as num).toInt(),
+    );
+  }
+
   /// Recent expenses — most-recent first. Used by Expense History.
   Future<List<LocalTransaction>> historyExpenses({
     required String shopId,
