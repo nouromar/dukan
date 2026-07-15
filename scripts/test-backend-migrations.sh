@@ -8653,6 +8653,102 @@ end;
 $$;
 reset role;
 
+-- =====================================================================
+-- §TV Void state converges via sync (0116). A voided sale/payment must
+--     derive is_voided=true for the ORIGINAL (not just the reversal
+--     marker), and the delta must RE-EMIT the original when its reversal
+--     is newer than the cursor — else other devices show it unvoided and
+--     the Today summary counts it. Also guards is_reversal (the command
+--     row the client hides from history). Post and void run in SEPARATE
+--     transactions so created_at differs and the re-emit path is real.
+-- =====================================================================
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000001';
+
+-- Block A: post a cash sale + an inbound payment (their own transaction).
+do $$
+declare
+  v_shop_id uuid;
+  v_unit_id uuid;
+  v_cust_id uuid;
+begin
+  select id into v_shop_id from public.shop where name = 'Main Shop' limit 1;
+  select siu.id into v_unit_id
+  from public.shop_item_unit siu
+  join public.shop_item si on si.id = siu.shop_item_id
+  where si.shop_id = v_shop_id and si.is_active
+  limit 1;
+  perform public.post_sale(
+    v_shop_id, null,
+    jsonb_build_array(jsonb_build_object(
+      'shop_item_unit_id', v_unit_id, 'quantity', 1, 'unit_price', 5)),
+    5, 'cash', null, 'tv-sale-1', null, 'void-sync sale');
+  select id into v_cust_id from public.party
+    where shop_id = v_shop_id and receivable > 0
+    limit 1;
+  perform public.post_payment(
+    v_shop_id, v_cust_id, 'I', 0.50, 'cash', 'tv-pay-1', null, null, null);
+end;
+$$;
+
+-- Block B (new transaction → newer created_at): void both, then assert the
+-- delta since the ORIGINALS' own created_at still returns them, flagged voided.
+do $$
+declare
+  v_shop_id uuid;
+  v_sale_id uuid;
+  v_pay_id  uuid;
+  v_cursor  timestamptz;
+  v_txns    jsonb;
+begin
+  select id into v_shop_id from public.shop where name = 'Main Shop' limit 1;
+  -- The originals share Block A's transaction time; use it as the cursor so
+  -- `created_at > p_since` is FALSE for them — only the re-emit arm can surface them.
+  select id, created_at into v_sale_id, v_cursor
+    from public.txn where shop_id = v_shop_id and client_op_id = 'tv-sale-1';
+  select id into v_pay_id
+    from public.payment where shop_id = v_shop_id and client_op_id = 'tv-pay-1';
+
+  perform public.void_sale(v_shop_id, v_sale_id, 'tv-void-sale-1');
+  perform public.void_payment(v_shop_id, v_pay_id, 'tv-void-pay-1');
+
+  v_txns := public.get_transactions_delta(v_shop_id, v_cursor, 500) -> 'transactions';
+
+  -- Sale original: re-emitted despite created_at = cursor, flagged voided, NOT a reversal.
+  if not exists (
+    select 1 from jsonb_array_elements(v_txns) x
+    where (x->>'txn_id')::uuid = v_sale_id
+      and (x->>'is_voided')::boolean is true
+      and (x->>'is_reversal')::boolean is false
+  ) then
+    raise exception '0116: voided sale original not re-emitted/flagged (device would show it unvoided)';
+  end if;
+  -- Sale reversal marker: the command row (is_reversal + is_voided both true).
+  if not exists (
+    select 1 from jsonb_array_elements(v_txns) x
+    where (x->>'type_code') = 'sale'
+      and (x->>'is_reversal')::boolean is true
+      and (x->>'is_voided')::boolean is true
+      and (x->>'txn_id')::uuid <> v_sale_id
+  ) then
+    raise exception '0116: sale reversal marker missing is_reversal/is_voided';
+  end if;
+  -- Payment original: is_voided was hardcoded false pre-0116 — now derived + re-emitted.
+  if not exists (
+    select 1 from jsonb_array_elements(v_txns) x
+    where (x->>'txn_id')::uuid = v_pay_id
+      and (x->>'is_voided')::boolean is true
+      and (x->>'is_reversal')::boolean is false
+  ) then
+    raise exception '0116: voided payment original not flagged is_voided (was hardcoded false)';
+  end if;
+
+  raise notice 'TV: void state syncs (0116) — original re-emitted + flagged, payment void syncs';
+end;
+$$;
+
+reset role;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';
