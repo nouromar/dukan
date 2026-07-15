@@ -40,10 +40,19 @@ class CachedAuthState {
 class AuthStateCache {
   AuthStateCache._();
 
-  /// Matches the Phase-3 `cache_ttl_auth_state_s` default. 1 hour is
-  /// long enough that warm cold-starts stay fast and short enough
-  /// that a stale shop list can't survive a major change.
-  static const Duration _kDefaultTtl = Duration(hours: 1);
+  /// The warm-paint entry must survive long enough that a cold start
+  /// after the OS kills an idle app still paints Home instantly instead
+  /// of blocking on loadShops. The old 1h TTL expired in lockstep with
+  /// the ~1h Supabase JWT, so any reopen after ~an hour missed the cache
+  /// AND hit an expired token → the "spinner after a couple hours" bug.
+  ///
+  /// Staleness is bounded by the background revalidation in
+  /// AuthController.start()/loadShops (which replaces the shop list and
+  /// re-checks access — a deactivated/removed user is still routed out
+  /// within a second or two), NOT by this TTL. So a long backstop is
+  /// safe: it's refreshed on every successful loadShops, meaning only a
+  /// user dormant for >30 days falls back to the blocking cold path.
+  static const Duration _kDefaultTtl = Duration(days: 30);
 
   static String _key(String userId) => 'auth_state:$userId';
 
