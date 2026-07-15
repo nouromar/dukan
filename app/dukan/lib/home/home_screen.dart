@@ -35,6 +35,8 @@ import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/today_summary_cache.dart';
 import 'package:dukan/observability/timing.dart';
 import 'package:dukan/sync/cache_miss_boundary.dart';
+import 'package:dukan/sync/local_repository.dart';
+import 'package:dukan/sync/use_local_db.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.shop, this.onSignOut});
@@ -419,6 +421,14 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
   /// value returns instantly and the prefetch can ride along with
   /// the background refresh.
   Future<TodaySummary> _swrLoad() async {
+    // Local-first: the sqflite mirror already holds the day's activity —
+    // including sales/payments rung up OFFLINE (written optimistically) — so we
+    // compute the summary on-device instantly (no spinner, no network/auth
+    // wait, correct offline) and reconcile against the server in the background.
+    if (useLocalDb(context)) {
+      return _loadLocalThenReconcile();
+    }
+    // Thin-client (no mirror): server stale-while-revalidate.
     final cached = await TodaySummaryCache.get(widget.shop.id);
     if (cached != null) {
       // Warm cache — render immediately. Background refresh +
@@ -428,12 +438,57 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
       return cached;
     }
     // Cold cache — the summary RPC IS the user's wait. Fire favorites
-    // prefetch only after it lands. (Previously this path also fired
-    // a redundant _refreshFromNetwork in parallel with _fetchFromNetwork
-    // for the same data; the duplicate is gone with this rewrite.)
+    // prefetch only after it lands.
     final summary = await _fetchFromNetwork();
     _prefetchFavorites();
     return summary;
+  }
+
+  /// Local-first path (useLocalDb): compute from the mirror instantly, then —
+  /// when online — reconcile against the server (authoritative for cross-device
+  /// activity). Offline, the local value is correct for the day's own activity,
+  /// so there's nothing to warn about and no error state to render.
+  Future<TodaySummary> _loadLocalThenReconcile() async {
+    final repo = context.read<LocalRepository>();
+    final online = context.read<ConnectivityStatus>().online;
+    TodaySummary local;
+    try {
+      local = await repo.getTodaySummaryLocal(widget.shop.id);
+    } catch (error, stack) {
+      // Local read failed unexpectedly — fall back to the server so the card
+      // still fills rather than showing an error.
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: error,
+        stack: stack,
+        library: 'dukan home',
+        context: ErrorDescription('local today summary — falling back to network'),
+      ));
+      final summary = await _fetchFromNetwork();
+      _prefetchFavorites();
+      return summary;
+    }
+    if (online) unawaited(_reconcileFromNetwork());
+    _prefetchFavorites();
+    return local;
+  }
+
+  /// Background reconcile: overwrite the local value with the server's (the
+  /// authority for another cashier's activity + the shop-tz day boundary). A
+  /// failure is swallowed — the local value stays, which is correct for this
+  /// device's own day.
+  Future<void> _reconcileFromNetwork() async {
+    final api = context.read<ShopApi>();
+    final resolver = _readResolverOrNull();
+    final shopId = widget.shop.id;
+    final locale = _locale ?? 'en';
+    try {
+      final fresh = await api.getTodaySummary(shopId: shopId, locale: locale);
+      unawaited(TodaySummaryCache.put(shopId, fresh, resolver: resolver));
+      if (!mounted) return;
+      setState(() => _future = Future.value(fresh));
+    } catch (_) {
+      // Offline / transient — keep the local value.
+    }
   }
 
   Future<TodaySummary> _fetchFromNetwork() async {
@@ -479,7 +534,11 @@ class _TodayCardState extends State<_TodayCard> with RouteAware {
 
   void _reload() {
     setState(() {
-      _future = _fetchFromNetwork();
+      // Local-first: recompute from the mirror (instant, reflects the sale/
+      // payment just posted) + reconcile. Thin-client: fresh network fetch.
+      _future = useLocalDb(context)
+          ? _loadLocalThenReconcile()
+          : _fetchFromNetwork();
     });
   }
 
