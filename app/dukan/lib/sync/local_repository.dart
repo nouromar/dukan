@@ -245,6 +245,14 @@ class LocalTransaction {
   /// screens, etc.
   bool get isOptimistic => serverUpdatedAtMs == 0;
 
+  /// True when this row is a void/reversal COMMAND row (the append that
+  /// reverses another txn), not a business transaction. The server flags it
+  /// in the sync payload (`is_reversal`, migration 0116). History lists hide
+  /// it — the void is shown by the struck-through original — but it stays in
+  /// the mirror (it carries `is_voided=1`, so the Today summary excludes it
+  /// too). Null/absent on rows synced before 0116 → treated as not-a-reversal.
+  bool get isReversal => payload['is_reversal'] == true;
+
   factory LocalTransaction._fromRow(Map<String, Object?> r) {
     Map<String, dynamic> payload;
     try {
@@ -898,7 +906,10 @@ class LocalRepository {
       orderBy: 'occurred_at DESC',
       limit: limit,
     );
-    final all = rows.map(LocalTransaction._fromRow).toList(growable: false);
+    final all = rows
+        .map(LocalTransaction._fromRow)
+        .where((t) => !t.isReversal) // hide void command rows (see isReversal)
+        .toList(growable: false);
     if (direction == null) return all;
     return all
         .where((t) => (t.payload['direction'] as String?) == direction)
@@ -949,7 +960,13 @@ class LocalRepository {
       orderBy: 'occurred_at DESC',
       limit: limit,
     );
-    return rows.map(LocalTransaction._fromRow).toList(growable: false);
+    // Hide void/reversal command rows — the void shows via the struck-through
+    // original (which the sync now flags is_voided). Rare, so filtering after
+    // the SQL limit is fine.
+    return rows
+        .map(LocalTransaction._fromRow)
+        .where((t) => !t.isReversal)
+        .toList(growable: false);
   }
 
   /// Read one transaction by txn_id. Returns null if it hasn't been

@@ -96,6 +96,42 @@ void main() {
     });
   });
 
+  group('reversal command rows (0116)', () {
+    test('historySales hides is_reversal rows; the voided original stays tagged',
+        () async {
+      await repo.applyTransactionsPayload({
+        'transactions': [
+          // Reversed original — is_voided, shown (the UI strikes it through).
+          _txn('s-void', 'sale', occurredMs: 1000, total: 10,
+              extra: {'is_voided': true}),
+          // The reversal/command row — is_voided + is_reversal, must be hidden.
+          _txn('s-rev', 'sale', occurredMs: 1001, total: 10,
+              extra: {'is_voided': true, 'is_reversal': true}),
+          // A normal sale.
+          _txn('s-ok', 'sale', occurredMs: 1002, total: 20),
+        ],
+      });
+      final sales = await repo.historySales(shopId: shopId);
+      expect(sales.map((t) => t.txnId), ['s-ok', 's-void'],
+          reason: 'reversal command row hidden; voided original still listed');
+      expect(sales.firstWhere((t) => t.txnId == 's-void').isVoided, isTrue,
+          reason: 'voided original keeps the tag signal for the UI');
+    });
+
+    test('historyPayments hides reversal command rows', () async {
+      await repo.applyTransactionsPayload({
+        'transactions': [
+          _txn('p-ok', 'payment', occurredMs: 1000, total: 50,
+              extra: {'direction': 'I'}),
+          _txn('p-rev', 'payment', occurredMs: 1001, total: 50,
+              extra: {'direction': 'I', 'is_voided': true, 'is_reversal': true}),
+        ],
+      });
+      final pays = await repo.historyPayments(shopId: shopId);
+      expect(pays.map((t) => t.txnId), ['p-ok']);
+    });
+  });
+
   group('summary converters', () {
     test('toSaleSummary reads denormalized payload fields', () async {
       await repo.applyTransactionsPayload({
