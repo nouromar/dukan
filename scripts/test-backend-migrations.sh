@@ -1168,6 +1168,49 @@ begin
     raise exception 'zero-qty sale was accepted';
   end if;
 
+  -- §TS get_today_summary (0113 semantics, 0115 perf rewrite). State now (all
+  -- posted today): receive $80 (x1); sales $2.40 credit + $1.50 walk-in cash =
+  -- $3.90 (x2); Asha's real $1.00 inbound payment; expense $12 (x1). The $1.50
+  -- till cash from the walk-in sale is a SETTLEMENT LEG and must NOT inflate
+  -- money_in. Asha still owes $1.40; supplier payable $50. This pins the
+  -- combined-FILTER rewrite to the same numbers + the settlement-leg exclusion.
+  declare
+    v_ts jsonb;
+  begin
+    v_ts := public.get_today_summary(v_shop_id, 'en');
+    if (v_ts->>'sales_today')::numeric <> 3.90 then
+      raise exception '0115: sales_today % <> 3.90', v_ts->>'sales_today';
+    end if;
+    if (v_ts->>'sales_count')::int <> 2 then
+      raise exception '0115: sales_count % <> 2', v_ts->>'sales_count';
+    end if;
+    if (v_ts->>'received_today')::numeric <> 80 then
+      raise exception '0115: received_today % <> 80', v_ts->>'received_today';
+    end if;
+    if (v_ts->>'received_count')::int <> 1 then
+      raise exception '0115: received_count % <> 1', v_ts->>'received_count';
+    end if;
+    if (v_ts->>'expenses_today')::numeric <> 12 then
+      raise exception '0115: expenses_today % <> 12', v_ts->>'expenses_today';
+    end if;
+    if (v_ts->>'expenses_count')::int <> 1 then
+      raise exception '0115: expenses_count % <> 1', v_ts->>'expenses_count';
+    end if;
+    -- Key check: settlement leg ($1.50) excluded — only Asha's real $1.00.
+    if (v_ts->>'money_in_today')::numeric <> 1.00 then
+      raise exception '0115: money_in_today % <> 1.00 (settlement leg leaked?)', v_ts->>'money_in_today';
+    end if;
+    if (v_ts->>'money_in_count')::int <> 1 then
+      raise exception '0115: money_in_count % <> 1', v_ts->>'money_in_count';
+    end if;
+    if (v_ts->>'receivables_total')::numeric <> 1.40 then
+      raise exception '0115: receivables_total % <> 1.40', v_ts->>'receivables_total';
+    end if;
+    if (v_ts->>'payables_total')::numeric <> 50 then
+      raise exception '0115: payables_total % <> 50', v_ts->>'payables_total';
+    end if;
+  end;
+
   -- Direct insert on txn table is blocked.
   v_failed := false;
   begin
