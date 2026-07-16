@@ -79,4 +79,31 @@ void main() {
     expect(captured!['timezone'], 'Africa/Mogadishu');
   });
 
+  testWidgets('currency is locked once the shop is set up', (tester) async {
+    // fakeShop defaults setupStatus:'ready' — a set-up shop.
+    await pumpSettings(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text(en.settingsCurrencyLockedHint), findsOneWidget);
+    final currency = tester.widget<DropdownButtonFormField<String>>(
+      find.byType(DropdownButtonFormField<String>).first,
+    );
+    expect(currency.onChanged, isNull,
+        reason: 'currency dropdown disabled after setup');
+  });
+
+  testWidgets('currency stays editable before setup (not_started)', (
+    tester,
+  ) async {
+    shop = fakeShop(setupStatus: 'not_started');
+    await pumpSettings(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text(en.settingsCurrencyLockedHint), findsNothing);
+    final currency = tester.widget<DropdownButtonFormField<String>>(
+      find.byType(DropdownButtonFormField<String>).first,
+    );
+    expect(currency.onChanged, isNotNull,
+        reason: 'currency editable pre-setup');
+  });
 }

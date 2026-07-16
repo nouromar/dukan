@@ -117,6 +117,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               return Center(child: Text(l.settingsSaveFailedMessage));
             }
             final refs = snapshot.data!;
+            // Currency is a setup-time decision. Once the shop is set up, it's
+            // locked in Settings (the server also hard-locks it after the first
+            // transaction, 0081; support/admin can still change it pre-sale).
+            final currencyLocked = widget.shop.setupStatus != 'not_started';
             return ListView(
               padding: const EdgeInsets.all(20),
               children: [
@@ -130,6 +134,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   initialValue: _currencyCode,
                   decoration: InputDecoration(
                     labelText: l.settingsCurrencyLabel,
+                    helperText:
+                        currencyLocked ? l.settingsCurrencyLockedHint : null,
                   ),
                   items: [
                     for (final c in refs.currencies)
@@ -138,9 +144,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text('${c.code} (${c.label})'),
                       ),
                   ],
-                  onChanged: (value) {
-                    if (value != null) setState(() => _currencyCode = value);
-                  },
+                  // null onChanged disables the field once the shop is set up.
+                  onChanged: currencyLocked
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            setState(() => _currencyCode = value);
+                          }
+                        },
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(

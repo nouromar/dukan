@@ -468,6 +468,7 @@
   "settingsSavedToast": "Diyaarinta waa la kaydiyay",
   "settingsSaveFailedMessage": "Diyaarinta lama kaydin karin. Isku day mar kale.",
   "settingsCurrencyLockedMessage": "Lacagta lama beddeli karo marka dukaanku diiwaangeliyo wax ganacsi. La xiriir taageerada si aad u beddesho.",
+  "settingsCurrencyLockedHint": "Waxaa la dooranayaa marka la dejinayo. La xiriir taageerada si loo beddelo.",
   "settingsAboutRow": "Ku saabsan",
   "aboutTitle": "Ku saabsan",
   "aboutVersionLabel": "Nooca",

@@ -1134,6 +1134,10 @@ class AppLocalizationsSo extends AppLocalizations {
       'Lacagta lama beddeli karo marka dukaanku diiwaangeliyo wax ganacsi. La xiriir taageerada si aad u beddesho.';
 
   @override
+  String get settingsCurrencyLockedHint =>
+      'Waxaa la dooranayaa marka la dejinayo. La xiriir taageerada si loo beddelo.';
+
+  @override
   String get settingsAboutRow => 'Ku saabsan';
 
   @override

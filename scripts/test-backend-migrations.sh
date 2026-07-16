@@ -8749,6 +8749,18 @@ $$;
 
 reset role;
 
+-- §CUR Regional currencies (0081 + 0117): the East African set the pilot needs
+-- is present and active.
+do $$
+begin
+  if (select count(*) from public.currency
+       where code in ('TZS', 'UGX', 'SSP', 'ETB') and is_active) <> 4 then
+    raise exception '0117: missing/inactive regional currency (TZS/UGX/SSP/ETB)';
+  end if;
+  raise notice 'CUR: regional currencies present (TZS/UGX/SSP/ETB)';
+end;
+$$;
+
 do $$
 begin
   raise notice 'Backend migration tests passed';

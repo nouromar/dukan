@@ -2018,6 +2018,12 @@ abstract class AppLocalizations {
   /// **'Currency can\'t be changed once the shop has recorded a transaction. Contact support to change it.'**
   String get settingsCurrencyLockedMessage;
 
+  /// No description provided for @settingsCurrencyLockedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Set during setup. Contact support to change it.'**
+  String get settingsCurrencyLockedHint;
+
   /// No description provided for @settingsAboutRow.
   ///
   /// In en, this message translates to:
