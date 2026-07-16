@@ -1,17 +1,16 @@
-// Optional item-onboarding step shown once after a fresh shop reaches
-// setup_status='ready'. Three skippable cards push the shopkeeper into
-// helper flows (Add my items, Set prices on top items, Browse the
-// catalog) and a SKIP — START SELLING primary CTA pops them straight
-// into Home.
+// Getting-started guide shown once after a fresh shop reaches
+// setup_status='ready'. Pure INSTRUCTIONS (not action cards): a short numbered
+// guide of how to run the shop, plus a single START SELLING primary CTA that
+// dismisses the guide and pops into Home. It orients a new owner without
+// pushing them into a flow — the template already seeded the catalog.
 //
-// Dismissal is one-shot: tapping any card or SKIP fires
-// `dismissOnboarding`, which sets `shop.onboarding_dismissed_at` (a
-// timestamp column on shop, see 0003 + 0010). After that, the
-// AuthRouter goes straight to HomeScreen on subsequent sign-ins.
+// Dismissal is one-shot: START SELLING fires `dismissOnboarding`, which sets
+// `shop.onboarding_dismissed_at` (a timestamp column on shop, see 0003 + 0010).
+// After that, the AuthRouter goes straight to HomeScreen on subsequent sign-ins.
 //
-// Per data-model-v2 §3 locked decision: this is a *recommendation*, not
-// a gate. The shop is "ready" the moment template_applied completes;
-// this screen never blocks selling.
+// Per data-model-v2 §3 locked decision: this is a *recommendation*, not a gate.
+// The shop is "ready" the moment template_applied completes; this never blocks
+// selling.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -19,9 +18,6 @@ import 'package:provider/provider.dart';
 import 'package:dukan/api/shop_api.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/auth/auth_controller.dart';
-import 'package:dukan/products/catalog_picker_screen.dart';
-import 'package:dukan/products/products_screen.dart';
-import 'package:dukan/sale/add_new_item_sheet.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
@@ -48,9 +44,8 @@ class _SetupItemOnboardingScreenState extends State<SetupItemOnboardingScreen> {
     try {
       await api.dismissOnboarding(shopId: widget.shop.id);
       await auth.refreshSelectedShop();
-      // AuthRouter watches selectedShop; once
-      // shop.onboardingDismissedAt is non-null, it falls through to
-      // HomeScreen and this screen unmounts.
+      // AuthRouter watches selectedShop; once shop.onboardingDismissedAt is
+      // non-null, it falls through to HomeScreen and this screen unmounts.
     } catch (error, stackTrace) {
       FlutterError.reportError(
         FlutterErrorDetails(
@@ -66,25 +61,6 @@ class _SetupItemOnboardingScreenState extends State<SetupItemOnboardingScreen> {
     }
   }
 
-  Future<void> _pushAndDismiss(Widget destination) async {
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => destination));
-    // Whatever the shopkeeper did inside, dismiss the onboarding card
-    // so they don't see it again next time.
-    if (mounted) await _dismissAndPushHome();
-  }
-
-  /// "Add my own items" — the simplified product-create sheet ("Save & add
-  /// another" lets them add many in a row), then dismiss the onboarding card.
-  Future<void> _addProductsAndDismiss() async {
-    await AddNewItemSheet.show(
-      context,
-      widget.shop,
-      initialName: '',
-      variant: AddNewItemVariant.product,
-    );
-    if (mounted) await _dismissAndPushHome();
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = tr(context);
@@ -97,45 +73,26 @@ class _SetupItemOnboardingScreenState extends State<SetupItemOnboardingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                // Body uses count + template placeholders; v1.5 will
-                // wire the real counts. For now, generic-ish:
-                l.setupOnboardingBody(
-                  '—',
-                  widget.shop.name,
+              Text(l.setupGuideIntro, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 18),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _Step(1, l.setupGuideStep1Title, l.setupGuideStep1Body),
+                    _Step(2, l.setupGuideStep2Title, l.setupGuideStep2Body),
+                    _Step(3, l.setupGuideStep3Title, l.setupGuideStep3Body),
+                    _Step(4, l.setupGuideStep4Title, l.setupGuideStep4Body),
+                    const SizedBox(height: 10),
+                    Text(
+                      l.setupGuideFootnote,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
                 ),
-                style: theme.textTheme.bodyLarge,
               ),
-              const SizedBox(height: 20),
-              _OnboardingCard(
-                title: l.setupOnboardingAddItemsTitle,
-                body: l.setupOnboardingAddItemsBody,
-                icon: Icons.add_box_outlined,
-                onTap: _dismissing ? null : _addProductsAndDismiss,
-              ),
-              const SizedBox(height: 12),
-              _OnboardingCard(
-                title: l.setupOnboardingSetPricesTitle,
-                body: l.setupOnboardingSetPricesBody,
-                icon: Icons.attach_money,
-                onTap: _dismissing
-                    ? null
-                    : () => _pushAndDismiss(
-                          ProductsScreen(shop: widget.shop),
-                        ),
-              ),
-              const SizedBox(height: 12),
-              _OnboardingCard(
-                title: l.setupOnboardingBrowseCatalogTitle,
-                body: l.setupOnboardingBrowseCatalogBody,
-                icon: Icons.library_books_outlined,
-                onTap: _dismissing
-                    ? null
-                    : () => _pushAndDismiss(
-                          CatalogPickerScreen(shop: widget.shop),
-                        ),
-              ),
-              const Spacer(),
               FilledButton(
                 onPressed: _dismissing ? null : _dismissAndPushHome,
                 child: _dismissing
@@ -154,55 +111,56 @@ class _SetupItemOnboardingScreenState extends State<SetupItemOnboardingScreen> {
   }
 }
 
-class _OnboardingCard extends StatelessWidget {
-  const _OnboardingCard({
-    required this.title,
-    required this.body,
-    required this.icon,
-    required this.onTap,
-  });
+/// One instruction line: a numbered badge + title + explanation. Read-only —
+/// it tells the owner what to do, it doesn't launch a flow.
+class _Step extends StatelessWidget {
+  const _Step(this.number, this.title, this.body);
 
+  final int number;
   final String title;
   final String body;
-  final IconData icon;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(icon, size: 32, color: theme.colorScheme.primary),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      body,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '$number',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onPrimary,
+                fontWeight: FontWeight.w700,
               ),
-              const Icon(Icons.chevron_right),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(
+                  body,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

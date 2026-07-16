@@ -4071,7 +4071,7 @@ abstract class AppLocalizations {
   /// No description provided for @setupOnboardingTitle.
   ///
   /// In en, this message translates to:
-  /// **'Set up your products'**
+  /// **'Getting started'**
   String get setupOnboardingTitle;
 
   /// No description provided for @setupOnboardingBody.
@@ -4119,8 +4119,68 @@ abstract class AppLocalizations {
   /// No description provided for @setupOnboardingSkipButton.
   ///
   /// In en, this message translates to:
-  /// **'SKIP — START SELLING'**
+  /// **'START SELLING'**
   String get setupOnboardingSkipButton;
+
+  /// No description provided for @setupGuideIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shop is ready. Here\'s how to run it:'**
+  String get setupGuideIntro;
+
+  /// No description provided for @setupGuideStep1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your products'**
+  String get setupGuideStep1Title;
+
+  /// No description provided for @setupGuideStep1Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Products to add items and set prices — or pick from the catalog.'**
+  String get setupGuideStep1Body;
+
+  /// No description provided for @setupGuideStep2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Restock with a photo'**
+  String get setupGuideStep2Title;
+
+  /// No description provided for @setupGuideStep2Body.
+  ///
+  /// In en, this message translates to:
+  /// **'On Receive, take a photo of the supplier\'s bono — it reads the lines for you.'**
+  String get setupGuideStep2Body;
+
+  /// No description provided for @setupGuideStep3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell in seconds'**
+  String get setupGuideStep3Title;
+
+  /// No description provided for @setupGuideStep3Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap Sale, pick items, Complete. Cash or credit.'**
+  String get setupGuideStep3Body;
+
+  /// No description provided for @setupGuideStep4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Know who owes what'**
+  String get setupGuideStep4Title;
+
+  /// No description provided for @setupGuideStep4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Money In and Money Out — and the home summary — keep every balance.'**
+  String get setupGuideStep4Body;
+
+  /// No description provided for @setupGuideFootnote.
+  ///
+  /// In en, this message translates to:
+  /// **'You can do all of this any time from the menu.'**
+  String get setupGuideFootnote;
 
   /// No description provided for @scanCameraTooltip.
   ///

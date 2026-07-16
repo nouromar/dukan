@@ -2420,7 +2420,7 @@ class AppLocalizationsSo extends AppLocalizations {
   }
 
   @override
-  String get setupOnboardingTitle => 'U habee alaabadaada';
+  String get setupOnboardingTitle => 'Sida loo bilaabo';
 
   @override
   String setupOnboardingBody(Object count, Object template) {
@@ -2448,7 +2448,43 @@ class AppLocalizationsSo extends AppLocalizations {
       'Ka dhaqaaji alaabo dheeraad ah liiskayaga';
 
   @override
-  String get setupOnboardingSkipButton => 'BOOD — BILOW IIBKA';
+  String get setupOnboardingSkipButton => 'BILOW IIBKA';
+
+  @override
+  String get setupGuideIntro =>
+      'Dukaankaagu wuu diyaar yahay. Sidan ayaad u maamushaa:';
+
+  @override
+  String get setupGuideStep1Title => 'Ku dar alaabtaada';
+
+  @override
+  String get setupGuideStep1Body =>
+      'Taabo Alaabta si aad ugu darto alaab oo aad qiimo ugu dhigto — ama ka dooro liiska.';
+
+  @override
+  String get setupGuideStep2Title => 'Ku buuxi sawir';
+
+  @override
+  String get setupGuideStep2Body =>
+      'Marka aad alaab dejinayso, sawir bonada alaab-qeybiyaha — waxay kuu akhridaa xariiqyada.';
+
+  @override
+  String get setupGuideStep3Title => 'Iibi daqiiqado gudahood';
+
+  @override
+  String get setupGuideStep3Body =>
+      'Taabo Iib, dooro alaabta, Dhammee. Lacag caddaan ah ama deyn.';
+
+  @override
+  String get setupGuideStep4Title => 'Ogow cidda wax kaa qabta';
+
+  @override
+  String get setupGuideStep4Body =>
+      'Lacag Soo Gal iyo Lacag Bax — iyo koobka guriga — ayaa hayn doona dhammaan hadhaaga.';
+
+  @override
+  String get setupGuideFootnote =>
+      'Waxaad tan oo dhan samayn kartaa wakhti kasta oo aad rabto adigoo isticmaalaya liiska.';
 
   @override
   String get scanCameraTooltip => 'Akhri jeegga';

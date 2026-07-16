@@ -2407,7 +2407,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get setupOnboardingTitle => 'Set up your products';
+  String get setupOnboardingTitle => 'Getting started';
 
   @override
   String setupOnboardingBody(Object count, Object template) {
@@ -2436,7 +2436,42 @@ class AppLocalizationsEn extends AppLocalizations {
       'Activate more items from our list';
 
   @override
-  String get setupOnboardingSkipButton => 'SKIP — START SELLING';
+  String get setupOnboardingSkipButton => 'START SELLING';
+
+  @override
+  String get setupGuideIntro => 'Your shop is ready. Here\'s how to run it:';
+
+  @override
+  String get setupGuideStep1Title => 'Add your products';
+
+  @override
+  String get setupGuideStep1Body =>
+      'Tap Products to add items and set prices — or pick from the catalog.';
+
+  @override
+  String get setupGuideStep2Title => 'Restock with a photo';
+
+  @override
+  String get setupGuideStep2Body =>
+      'On Receive, take a photo of the supplier\'s bono — it reads the lines for you.';
+
+  @override
+  String get setupGuideStep3Title => 'Sell in seconds';
+
+  @override
+  String get setupGuideStep3Body =>
+      'Tap Sale, pick items, Complete. Cash or credit.';
+
+  @override
+  String get setupGuideStep4Title => 'Know who owes what';
+
+  @override
+  String get setupGuideStep4Body =>
+      'Money In and Money Out — and the home summary — keep every balance.';
+
+  @override
+  String get setupGuideFootnote =>
+      'You can do all of this any time from the menu.';
 
   @override
   String get scanCameraTooltip => 'Scan barcode';
