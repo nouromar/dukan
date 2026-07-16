@@ -9,6 +9,8 @@
 // won't go deeper on day one. The RPC accepts a `before` cursor so
 // "load more" is mechanical when we need it.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -26,6 +28,7 @@ import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
 import 'package:dukan/shared/relative_time.dart';
+import 'package:dukan/shared/voided_visibility.dart';
 import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/use_local_db.dart';
 
@@ -41,19 +44,35 @@ class SaleHistoryScreen extends StatefulWidget {
 class _SaleHistoryScreenState extends State<SaleHistoryScreen> {
   late SaleHistoryFilters _filters;
   late Future<List<SaleSummary>> _future;
+  // Device pref (default show). The chip can still override for this visit.
+  bool _showVoided = true;
 
   @override
   void initState() {
     super.initState();
     _filters = SaleHistoryFilters.initial();
     _future = _fetch();
+    unawaited(_applyVoidedPref());
   }
 
-  /// True when no filters have been applied — only this case is
-  /// cached (per-filter keys would explode the cache).
+  /// Apply the "Show voided" device pref as the initial default. Only acts when
+  /// the pref is HIDE (default is show) — so the common case does no re-fetch.
+  Future<void> _applyVoidedPref() async {
+    final show = await VoidedVisibility.showVoided();
+    if (!mounted || show) return;
+    setState(() {
+      _showVoided = false;
+      _filters = _filters.copyWith(hideVoided: true);
+      _future = _fetch();
+    });
+  }
+
+  /// True when filters are at their (pref-derived) default — only this case is
+  /// cached (per-filter keys would explode the cache). `hideVoided` matching the
+  /// pref default still counts as default, so caching survives a hide-default.
   bool get _isDefaultFilters =>
       _filters.partyId == null &&
-      !_filters.hideVoided &&
+      _filters.hideVoided == !_showVoided &&
       _filters.dateRange.preset == DateRangePreset.all;
 
   Future<List<SaleSummary>> _fetch() async {

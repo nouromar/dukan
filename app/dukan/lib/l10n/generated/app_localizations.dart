@@ -2036,6 +2036,18 @@ abstract class AppLocalizations {
   /// **'About'**
   String get settingsAboutRow;
 
+  /// No description provided for @settingsShowVoidedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show voided transactions'**
+  String get settingsShowVoidedTitle;
+
+  /// No description provided for @settingsShowVoidedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voided sales, receives, payments and expenses stay visible in history.'**
+  String get settingsShowVoidedSubtitle;
+
   /// No description provided for @aboutTitle.
   ///
   /// In en, this message translates to:

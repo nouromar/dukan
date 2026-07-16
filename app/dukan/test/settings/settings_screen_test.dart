@@ -4,8 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/settings/settings_screen.dart';
+import 'package:dukan/shared/voided_visibility.dart';
+import 'package:dukan/storage/app_database.dart';
 
 import '../shared/fakes.dart';
+import '../shared/test_database.dart';
 import '../shared/wrap.dart';
 
 void main() {
@@ -105,5 +108,28 @@ void main() {
     );
     expect(currency.onChanged, isNotNull,
         reason: 'currency editable pre-setup');
+  });
+
+  testWidgets('Show voided toggle defaults ON and persists when turned off', (
+    tester,
+  ) async {
+    AppDatabase.seedSingletonForTesting(await openTestDatabase());
+    addTearDown(AppDatabase.resetForTesting);
+
+    await pumpSettings(tester);
+    await tester.pumpAndSettle();
+
+    final tile =
+        find.widgetWithText(SwitchListTile, en.settingsShowVoidedTitle);
+    expect(tile, findsOneWidget);
+    expect(tester.widget<SwitchListTile>(tile).value, isTrue,
+        reason: 'default shows voided');
+
+    await tester.tap(tile);
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<SwitchListTile>(tile).value, isFalse);
+    expect(await VoidedVisibility.showVoided(), isFalse,
+        reason: 'toggle persisted to the device pref');
   });
 }

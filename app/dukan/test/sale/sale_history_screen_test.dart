@@ -4,8 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dukan/api/types.dart';
 import 'package:dukan/l10n/generated/app_localizations.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
+import 'package:dukan/shared/voided_visibility.dart';
+import 'package:dukan/storage/app_database.dart';
 
 import '../shared/fakes.dart';
+import '../shared/test_database.dart';
 import '../shared/wrap.dart';
 
 SaleSummary _sale({
@@ -112,5 +115,24 @@ void main() {
 
     // Default: the voided badge IS visible.
     expect(find.text(en.saleHistoryVoidedBadge), findsOneWidget);
+  });
+
+  testWidgets('pref hide → voided hidden by default; "Hiding voided" chip shows',
+      (tester) async {
+    AppDatabase.seedSingletonForTesting(await openTestDatabase());
+    addTearDown(AppDatabase.resetForTesting);
+    await VoidedVisibility.setShowVoided(false);
+
+    api.onListSales = (_, _, _) async => [
+      _sale(txnId: 's1', total: 1.5),
+      _sale(txnId: 's2', partyName: 'Ahmed', total: 12, voided: true),
+    ];
+
+    await pumpHistory(tester);
+    await tester.pumpAndSettle();
+
+    // Hidden by default (no chip tap needed); the active-filter chip shows.
+    expect(find.text(en.saleHistoryVoidedBadge), findsNothing);
+    expect(find.text(en.filterChipHideVoided), findsOneWidget);
   });
 }

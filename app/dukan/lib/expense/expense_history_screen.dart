@@ -3,6 +3,8 @@
 // subtitle showing the active date range, optional dismissible chip
 // row for the category filter.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +19,7 @@ import 'package:dukan/shared/future_list_scaffold.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/voided_visibility.dart';
 import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/use_local_db.dart';
 
@@ -32,11 +35,26 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
   late ExpenseHistoryFilters _filters;
   Future<List<ExpenseSummary>>? _future;
   String? _locale;
+  // Device pref (default show). No per-screen chip — the global setting is the
+  // only control for voided visibility here.
+  bool _showVoided = true;
 
   @override
   void initState() {
     super.initState();
     _filters = ExpenseHistoryFilters.initial();
+    unawaited(_loadShowVoided());
+  }
+
+  /// Apply the "Show voided" device pref. Only acts when it's HIDE (default is
+  /// show), so the common case does no extra fetch.
+  Future<void> _loadShowVoided() async {
+    final show = await VoidedVisibility.showVoided();
+    if (!mounted || show == _showVoided) return;
+    setState(() {
+      _showVoided = show;
+      _future = _fetch();
+    });
   }
 
   @override
@@ -59,8 +77,12 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
         dateFrom: _filters.dateRange.from,
         dateTo: _filters.dateRange.to,
       );
-      var summaries =
-          rows.map(repo.toExpenseSummary).toList(growable: false);
+      // Voided filter runs on the mirror rows (real is_voided) — the network
+      // list RPC omits is_voided, so filtering there wouldn't work anyway.
+      var summaries = rows
+          .where((t) => _showVoided || !t.isVoided)
+          .map(repo.toExpenseSummary)
+          .toList(growable: false);
       if (_filters.categoryId != null) {
         summaries = summaries
             .where((e) => e.categoryId == _filters.categoryId)
@@ -68,6 +90,8 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
       }
       return summaries;
     }
+    // Thin-client: list_expenses omits voided status, so the "show voided"
+    // setting is honored only on the local-first path above.
     return context.read<ShopApi>().listExpenses(
           shopId: widget.shop.id,
           limit: historyPageLimit,

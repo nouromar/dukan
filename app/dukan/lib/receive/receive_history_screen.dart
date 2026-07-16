@@ -2,6 +2,8 @@
 // Mirrors SaleHistoryScreen — same filter surface (date / supplier /
 // hide voided), same scope-subtitle pattern in the app bar.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,6 +20,7 @@ import 'package:dukan/config/business_rules.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/voided_visibility.dart';
 import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/use_local_db.dart';
 
@@ -33,17 +36,32 @@ class ReceiveHistoryScreen extends StatefulWidget {
 class _ReceiveHistoryScreenState extends State<ReceiveHistoryScreen> {
   late ReceiveHistoryFilters _filters;
   late Future<List<ReceiveSummary>> _future;
+  // Device pref (default show). The chip can still override for this visit.
+  bool _showVoided = true;
 
   @override
   void initState() {
     super.initState();
     _filters = ReceiveHistoryFilters.initial();
     _future = _fetch();
+    unawaited(_applyVoidedPref());
+  }
+
+  /// Apply the "Show voided" device pref as the initial default. Only acts when
+  /// the pref is HIDE (default is show) — so the common case does no re-fetch.
+  Future<void> _applyVoidedPref() async {
+    final show = await VoidedVisibility.showVoided();
+    if (!mounted || show) return;
+    setState(() {
+      _showVoided = false;
+      _filters = _filters.copyWith(hideVoided: true);
+      _future = _fetch();
+    });
   }
 
   bool get _isDefaultFilters =>
       _filters.supplierId == null &&
-      !_filters.hideVoided &&
+      _filters.hideVoided == !_showVoided &&
       _filters.dateRange.preset == DateRangePreset.all;
 
   Future<List<ReceiveSummary>> _fetch() async {

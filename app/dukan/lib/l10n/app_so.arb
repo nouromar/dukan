@@ -471,6 +471,8 @@
   "settingsCurrencyLockedMessage": "Lacagta lama beddeli karo marka dukaanku diiwaangeliyo wax ganacsi. La xiriir taageerada si aad u beddesho.",
   "settingsCurrencyLockedHint": "Waxaa la dooranayaa marka la dejinayo. La xiriir taageerada si loo beddelo.",
   "settingsAboutRow": "Ku saabsan",
+  "settingsShowVoidedTitle": "Muuji kuwa laga noqday",
+  "settingsShowVoidedSubtitle": "Iibka, dejinta, lacagta iyo kharashka laga noqday ayaa ku sii muuqan doona taariikhda.",
   "aboutTitle": "Ku saabsan",
   "aboutVersionLabel": "Nooca",
   "productsTitle": "Alaab",

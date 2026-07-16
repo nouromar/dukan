@@ -1144,6 +1144,13 @@ class AppLocalizationsSo extends AppLocalizations {
   String get settingsAboutRow => 'Ku saabsan';
 
   @override
+  String get settingsShowVoidedTitle => 'Muuji kuwa laga noqday';
+
+  @override
+  String get settingsShowVoidedSubtitle =>
+      'Iibka, dejinta, lacagta iyo kharashka laga noqday ayaa ku sii muuqan doona taariikhda.';
+
+  @override
   String get aboutTitle => 'Ku saabsan';
 
   @override

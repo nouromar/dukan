@@ -1139,6 +1139,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAboutRow => 'About';
 
   @override
+  String get settingsShowVoidedTitle => 'Show voided transactions';
+
+  @override
+  String get settingsShowVoidedSubtitle =>
+      'Voided sales, receives, payments and expenses stay visible in history.';
+
+  @override
   String get aboutTitle => 'About';
 
   @override

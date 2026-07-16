@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,6 +11,7 @@ import 'package:dukan/settings/about_screen.dart';
 import 'package:dukan/shared/dukan_app_bar.dart';
 import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
+import 'package:dukan/shared/voided_visibility.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({required this.shop, super.key});
@@ -26,10 +29,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late String _languageCode;
   late Future<_SettingsReferenceData> _refsFuture;
   bool _saving = false;
+  // Device-level display pref (default show). Loaded async; toggling it writes
+  // through immediately, independent of the Save button.
+  bool _showVoided = true;
 
   @override
   void initState() {
     super.initState();
+    unawaited(_loadShowVoided());
     _nameController = TextEditingController(text: widget.shop.name);
     _timezoneController = TextEditingController(text: widget.shop.timezone);
     _currencyCode = widget.shop.currencyCode;
@@ -63,6 +70,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _nameController.dispose();
     _timezoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadShowVoided() async {
+    final show = await VoidedVisibility.showVoided();
+    if (mounted && show != _showVoided) setState(() => _showVoided = show);
+  }
+
+  void _toggleShowVoided(bool value) {
+    setState(() => _showVoided = value);
+    unawaited(VoidedVisibility.setShowVoided(value));
   }
 
   Future<void> _save() async {
@@ -185,7 +202,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ? const CircularProgressIndicator()
                       : Text(l.settingsSaveButton),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  secondary: const Icon(Icons.visibility_outlined),
+                  title: Text(l.settingsShowVoidedTitle),
+                  subtitle: Text(l.settingsShowVoidedSubtitle),
+                  value: _showVoided,
+                  onChanged: _toggleShowVoided,
+                ),
                 const Divider(),
                 ListTile(
                   contentPadding: EdgeInsets.zero,

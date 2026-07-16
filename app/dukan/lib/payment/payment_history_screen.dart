@@ -2,6 +2,8 @@
 // history (date subtitle, funnel, chips). Inbound and outbound are
 // visually distinguished by an arrow icon on the row leading edge.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +18,7 @@ import 'package:dukan/shared/future_list_scaffold.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/shared/list_filter_bar.dart';
 import 'package:dukan/shared/money.dart';
+import 'package:dukan/shared/voided_visibility.dart';
 import 'package:dukan/sync/local_repository.dart';
 import 'package:dukan/sync/use_local_db.dart';
 
@@ -31,11 +34,26 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   late PaymentHistoryFilters _filters;
   Future<List<PaymentSummary>>? _future;
   String? _locale;
+  // Device pref (default show). No per-screen chip here — the global setting
+  // is the only control for voided visibility on this screen.
+  bool _showVoided = true;
 
   @override
   void initState() {
     super.initState();
     _filters = PaymentHistoryFilters.initial();
+    unawaited(_loadShowVoided());
+  }
+
+  /// Apply the "Show voided" device pref. Only acts when it's HIDE (default is
+  /// show), so the common case does no extra fetch.
+  Future<void> _loadShowVoided() async {
+    final show = await VoidedVisibility.showVoided();
+    if (!mounted || show == _showVoided) return;
+    setState(() {
+      _showVoided = show;
+      _future = _fetch();
+    });
   }
 
   @override
@@ -62,11 +80,16 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       );
       // Hide walk-in cash-sale legs by default (the server's list_payments
       // does the same for the online path). Show-mode keeps them.
+      // Voided filter runs on the mirror rows (real is_voided) before the
+      // conversion — PaymentSummary itself doesn't carry voided status.
       return rows
+          .where((t) => _showVoided || !t.isVoided)
           .map(repo.toPaymentSummary)
           .where((p) => !widget.shop.hideSettlementLegs || !p.isSettlementLeg)
           .toList(growable: false);
     }
+    // Thin-client: list_payments doesn't expose voided status, so the "show
+    // voided" setting is honored only on the local-first path above.
     return context.read<ShopApi>().listPayments(
       shopId: widget.shop.id,
       limit: historyPageLimit,
