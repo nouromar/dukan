@@ -2719,6 +2719,18 @@ abstract class AppLocalizations {
   /// **'Receipt'**
   String get receiptNumberLabel;
 
+  /// No description provided for @receiptQtyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty'**
+  String get receiptQtyLabel;
+
+  /// No description provided for @receiptPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get receiptPriceLabel;
+
   /// No description provided for @receiptDateLabel.
   ///
   /// In en, this message translates to:

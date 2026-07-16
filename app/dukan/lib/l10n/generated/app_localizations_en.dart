@@ -1557,6 +1557,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiptNumberLabel => 'Receipt';
 
   @override
+  String get receiptQtyLabel => 'Qty';
+
+  @override
+  String get receiptPriceLabel => 'Price';
+
+  @override
   String get receiptDateLabel => 'Date';
 
   @override

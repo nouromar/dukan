@@ -647,6 +647,8 @@
   "saleDetailCashLabel": "Cash",
   "saleDetailDebtLabel": "Debt",
   "receiptNumberLabel": "Receipt",
+  "receiptQtyLabel": "Qty",
+  "receiptPriceLabel": "Price",
   "receiptDateLabel": "Date",
   "receiptThankYou": "Thank you!",
   "saleDetailLoadFailedMessage": "Could not load this sale.",

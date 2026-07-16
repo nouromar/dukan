@@ -80,23 +80,43 @@ Future<Uint8List> buildSaleReceiptPdf({
           ),
           pw.Divider(),
           for (final line in lines) ...[
-            pw.Text(line.itemName,
-                style: pw.TextStyle(
-                    fontSize: 11, fontWeight: pw.FontWeight.bold)),
+            // Product name (bold) · packaging — the pack sits with the name so
+            // it never runs into the quantity.
+            pw.RichText(
+              text: pw.TextSpan(
+                children: [
+                  pw.TextSpan(
+                    text: line.itemName,
+                    style: pw.TextStyle(
+                        fontSize: 11, fontWeight: pw.FontWeight.bold),
+                  ),
+                  if ((line.packagingLabel ?? line.unitLabel).isNotEmpty)
+                    pw.TextSpan(
+                      text: ' · ${line.packagingLabel ?? line.unitLabel}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                ],
+              ),
+            ),
+            // Labeled qty + unit price, then the line total — each piece is
+            // clearly separated ("Tirada: 1   Qiimo: $80.00") for semi-literate
+            // readers, instead of the old "1 100 Sack × $80.00" run-on.
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  '${qtyText(line.quantity)} '
-                  '${line.packagingLabel ?? line.unitLabel}'
-                  '${line.unitAmount == null ? '' : ' × ${formatMoney(line.unitAmount!, shop)}'}',
+                  line.unitAmount == null
+                      ? '${l.receiptQtyLabel}: ${qtyText(line.quantity)}'
+                      : '${l.receiptQtyLabel}: ${qtyText(line.quantity)}'
+                          '    ${l.receiptPriceLabel}: '
+                          '${formatMoney(line.unitAmount!, shop)}',
                   style: const pw.TextStyle(fontSize: 10),
                 ),
                 pw.Text(formatMoney(line.lineTotal, shop),
                     style: const pw.TextStyle(fontSize: 10)),
               ],
             ),
-            pw.SizedBox(height: 4),
+            pw.SizedBox(height: 6),
           ],
           pw.Divider(),
           totalRow(l.saleDetailTotalLabel,

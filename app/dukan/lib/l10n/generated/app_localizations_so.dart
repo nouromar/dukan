@@ -1563,6 +1563,12 @@ class AppLocalizationsSo extends AppLocalizations {
   String get receiptNumberLabel => 'Rasiidka';
 
   @override
+  String get receiptQtyLabel => 'Tirada';
+
+  @override
+  String get receiptPriceLabel => 'Qiimo';
+
+  @override
   String get receiptDateLabel => 'Taariikhda';
 
   @override

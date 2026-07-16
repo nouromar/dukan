@@ -621,6 +621,8 @@
   "saleDetailCashLabel": "Kaash",
   "saleDetailDebtLabel": "Deyn",
   "receiptNumberLabel": "Rasiidka",
+  "receiptQtyLabel": "Tirada",
+  "receiptPriceLabel": "Qiimo",
   "receiptDateLabel": "Taariikhda",
   "receiptThankYou": "Mahadsanid!",
   "saleDetailLoadFailedMessage": "Iibkaan lama soo dejin karin.",
