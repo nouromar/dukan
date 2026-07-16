@@ -1496,6 +1496,12 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get drawerSettings;
 
+  /// No description provided for @drawerGettingStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting started'**
+  String get drawerGettingStarted;
+
   /// No description provided for @receiveFrom.
   ///
   /// In en, this message translates to:
@@ -4181,6 +4187,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can do all of this any time from the menu.'**
   String get setupGuideFootnote;
+
+  /// No description provided for @setupGuideDoneButton.
+  ///
+  /// In en, this message translates to:
+  /// **'GOT IT'**
+  String get setupGuideDoneButton;
 
   /// No description provided for @scanCameraTooltip.
   ///

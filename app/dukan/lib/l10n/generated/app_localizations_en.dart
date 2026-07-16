@@ -828,6 +828,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get drawerSettings => 'Settings';
 
   @override
+  String get drawerGettingStarted => 'Getting started';
+
+  @override
   String receiveFrom(Object supplier) {
     return 'Receive from $supplier';
   }
@@ -2472,6 +2475,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get setupGuideFootnote =>
       'You can do all of this any time from the menu.';
+
+  @override
+  String get setupGuideDoneButton => 'GOT IT';
 
   @override
   String get scanCameraTooltip => 'Scan barcode';

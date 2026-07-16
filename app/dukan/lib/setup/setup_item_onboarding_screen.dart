@@ -23,9 +23,18 @@ import 'package:dukan/shared/feedback.dart';
 import 'package:dukan/shared/l10n.dart';
 
 class SetupItemOnboardingScreen extends StatefulWidget {
-  const SetupItemOnboardingScreen({required this.shop, super.key});
+  const SetupItemOnboardingScreen({
+    required this.shop,
+    this.asGuide = false,
+    super.key,
+  });
 
   final ShopSummary shop;
+
+  /// When opened from the menu as a reference (a pushed route), the CTA just
+  /// closes the guide and it does NOT dismiss onboarding. The default (false)
+  /// is the one-shot setup step the AuthRouter mounts after a fresh shop.
+  final bool asGuide;
 
   @override
   State<SetupItemOnboardingScreen> createState() =>
@@ -94,14 +103,22 @@ class _SetupItemOnboardingScreenState extends State<SetupItemOnboardingScreen> {
                 ),
               ),
               FilledButton(
-                onPressed: _dismissing ? null : _dismissAndPushHome,
+                onPressed: _dismissing
+                    ? null
+                    : (widget.asGuide
+                        ? () => Navigator.of(context).pop()
+                        : _dismissAndPushHome),
                 child: _dismissing
                     ? const SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(l.setupOnboardingSkipButton),
+                    : Text(
+                        widget.asGuide
+                            ? l.setupGuideDoneButton
+                            : l.setupOnboardingSkipButton,
+                      ),
               ),
             ],
           ),

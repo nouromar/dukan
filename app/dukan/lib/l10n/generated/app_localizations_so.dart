@@ -830,6 +830,9 @@ class AppLocalizationsSo extends AppLocalizations {
   String get drawerSettings => 'Qaabeyn';
 
   @override
+  String get drawerGettingStarted => 'Sida loo bilaabo';
+
+  @override
   String receiveFrom(Object supplier) {
     return 'Ka qaado $supplier';
   }
@@ -2485,6 +2488,9 @@ class AppLocalizationsSo extends AppLocalizations {
   @override
   String get setupGuideFootnote =>
       'Waxaad tan oo dhan samayn kartaa wakhti kasta oo aad rabto adigoo isticmaalaya liiska.';
+
+  @override
+  String get setupGuideDoneButton => 'WAAN FAHMAY';
 
   @override
   String get scanCameraTooltip => 'Akhri jeegga';

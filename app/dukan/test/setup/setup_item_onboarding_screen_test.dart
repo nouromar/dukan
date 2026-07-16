@@ -67,4 +67,45 @@ void main() {
       expect(auth.refreshSelectedShopCalls, 1);
     },
   );
+
+  testWidgets('guide mode (from the menu): GOT IT closes without dismissing', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrapWithApp(
+        // A host with a button that pushes the guide, so we can verify it pops.
+        Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        SetupItemOnboardingScreen(shop: shop, asGuide: true),
+                  ),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+        authController: auth,
+        shopApi: api,
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    // Guide shows the steps + a GOT IT button (not START SELLING).
+    expect(find.text(en.setupGuideStep1Title), findsOneWidget);
+    await tester.tap(
+      find.widgetWithText(FilledButton, en.setupGuideDoneButton),
+    );
+    await tester.pumpAndSettle();
+
+    // Popped back to the host; onboarding was NOT dismissed.
+    expect(find.text('open'), findsOneWidget);
+    expect(find.byType(SetupItemOnboardingScreen), findsNothing);
+    expect(api.dismissOnboardingCalls, isEmpty);
+  });
 }

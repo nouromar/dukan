@@ -24,6 +24,7 @@ import 'package:dukan/reports/reports_screen.dart';
 import 'package:dukan/sale/sale_history_screen.dart';
 import 'package:dukan/settings/manage_categories_screen.dart';
 import 'package:dukan/settings/settings_screen.dart';
+import 'package:dukan/setup/setup_item_onboarding_screen.dart';
 import 'package:dukan/shared/l10n.dart';
 import 'package:dukan/storage/storage_sync_screen.dart';
 
@@ -139,6 +140,14 @@ class DukanDrawer extends StatelessWidget {
               icon: Icons.settings,
               label: l.drawerSettings,
               builder: (_) => SettingsScreen(shop: shop),
+            ),
+            _DrawerItem(
+              icon: Icons.help_outline,
+              label: l.drawerGettingStarted,
+              // Re-openable reference (asGuide) — closes on GOT IT, doesn't
+              // re-dismiss onboarding.
+              builder: (_) =>
+                  SetupItemOnboardingScreen(shop: shop, asGuide: true),
             ),
             if (caps.canManageCategories)
               _DrawerItem(
